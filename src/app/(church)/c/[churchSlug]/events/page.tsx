@@ -1,0 +1,27 @@
+import { getEventsWorkspaceData } from "@/features/events/queries";
+import { EventsWorkspaceUnified } from "./components/EventsWorkspaceUnified";
+
+interface EventsPageProps {
+  params: Promise<{ churchSlug: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+}
+
+function pickSingle(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value ?? "";
+}
+
+export default async function EventsPage({ params, searchParams }: EventsPageProps) {
+  const { churchSlug } = await params;
+  const filters = (await searchParams) ?? {};
+
+  const data = await getEventsWorkspaceData(churchSlug, {
+    q: pickSingle(filters.q),
+    status: pickSingle(filters.status),
+    dateFrom: pickSingle(filters.dateFrom),
+    dateTo: pickSingle(filters.dateTo),
+    eventId: pickSingle(filters.eventId),
+    tab: pickSingle(filters.tab),
+  });
+
+  return <EventsWorkspaceUnified churchSlug={churchSlug} data={data} />;
+}

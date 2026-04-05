@@ -1,0 +1,217 @@
+import { Bell, CreditCard, Globe, Save, Shield } from "lucide-react";
+import { getPlatformSettings } from "@/features/platform/queries";
+import { savePlatformSettingsAction } from "@/features/platform/actions";
+
+function SettingsCard({
+  icon: Icon,
+  title,
+  description,
+  children,
+}: {
+  icon: React.ComponentType<{ className?: string }>;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <div className="mb-5 flex items-center gap-3">
+        <div className="rounded-xl bg-blue-50 p-3 text-blue-600">
+          <Icon className="h-5 w-5" />
+        </div>
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
+          <p className="text-sm text-gray-500">{description}</p>
+        </div>
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function ToggleRow({
+  name,
+  title,
+  description,
+  enabled,
+}: {
+  name: string;
+  title: string;
+  description: string;
+  enabled: boolean;
+}) {
+  return (
+    <label className="flex items-center justify-between gap-4 rounded-lg border border-gray-200 p-4 cursor-pointer">
+      <div>
+        <p className="text-sm font-medium text-gray-900">{title}</p>
+        <p className="mt-1 text-sm text-gray-500">{description}</p>
+      </div>
+      <input type="checkbox" name={name} defaultChecked={enabled} className="h-4 w-4" />
+    </label>
+  );
+}
+
+export default async function PlatformSettingsPage() {
+  const settings = await getPlatformSettings();
+
+  return (
+    <form action={savePlatformSettingsAction} className="space-y-6">
+      <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+          <p className="mt-1 text-sm text-gray-500">
+            Manage your platform settings and administrative preferences.
+          </p>
+        </div>
+
+        <button
+          type="submit"
+          className="inline-flex items-center gap-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+        >
+          <Save className="h-4 w-4" />
+          Save Changes
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <SettingsCard
+          icon={Globe}
+          title="General Settings"
+          description="Core platform branding and regional defaults"
+        >
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Platform name</label>
+              <input
+                name="platform_name"
+                defaultValue={settings?.platform_name ?? "MPG Church System"}
+                className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Support email</label>
+              <input
+                name="support_email"
+                defaultValue={settings?.support_email ?? ""}
+                className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Default timezone</label>
+              <input
+                name="default_timezone"
+                defaultValue={settings?.default_timezone ?? "UTC"}
+                className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Default language</label>
+              <select
+                name="default_language"
+                defaultValue={settings?.default_language ?? "en"}
+                className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="en">English</option>
+                <option value="fr">French</option>
+              </select>
+            </div>
+          </div>
+        </SettingsCard>
+
+        <SettingsCard
+          icon={Shield}
+          title="Security"
+          description="Access protection and admin control defaults"
+        >
+          <div className="space-y-4">
+            <ToggleRow
+              name="require_strong_passwords"
+              title="Require strong passwords"
+              description="Enforce stronger password quality for platform users."
+              enabled={settings?.require_strong_passwords ?? true}
+            />
+            <ToggleRow
+              name="allow_platform_admin_override"
+              title="Allow platform-wide admin overrides"
+              description="Permit platform owner access across church workspaces."
+              enabled={settings?.allow_platform_admin_override ?? true}
+            />
+            <ToggleRow
+              name="enable_login_alerts"
+              title="Enable login alerts"
+              description="Notify admins about suspicious or notable logins."
+              enabled={settings?.enable_login_alerts ?? false}
+            />
+          </div>
+        </SettingsCard>
+
+        <SettingsCard
+          icon={Bell}
+          title="Notifications"
+          description="Choose which admin events should trigger platform notifications"
+        >
+          <div className="space-y-4">
+            <ToggleRow
+              name="notify_new_church_registration"
+              title="New church registration"
+              description="Alert platform owner whenever a new church joins."
+              enabled={settings?.notify_new_church_registration ?? true}
+            />
+            <ToggleRow
+              name="notify_support_ticket_alerts"
+              title="Support ticket alerts"
+              description="Notify when new support tickets are created."
+              enabled={settings?.notify_support_ticket_alerts ?? true}
+            />
+            <ToggleRow
+              name="notify_billing_reminders"
+              title="Billing reminders"
+              description="Send reminders for plan renewals and payment issues."
+              enabled={settings?.notify_billing_reminders ?? false}
+            />
+          </div>
+        </SettingsCard>
+
+        <SettingsCard
+          icon={CreditCard}
+          title="Billing Preferences"
+          description="Plan and billing defaults for subscription controls"
+        >
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Default plan code</label>
+              <input
+                name="default_plan_code"
+                defaultValue={settings?.default_plan_code ?? "starter"}
+                className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Trial duration (days)</label>
+              <input
+                name="trial_duration_days"
+                type="number"
+                defaultValue={settings?.trial_duration_days ?? 14}
+                className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Grace period (days)</label>
+              <input
+                name="grace_period_days"
+                type="number"
+                defaultValue={settings?.grace_period_days ?? 7}
+                className="h-10 w-full rounded-md border border-gray-300 px-3 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+        </SettingsCard>
+      </div>
+    </form>
+  );
+}
