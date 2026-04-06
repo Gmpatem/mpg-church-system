@@ -23,50 +23,49 @@ export async function createChurchAction(
     city: getString(formData, "city"),
   };
 
-  try {
-    validateCreateChurchInput(input);
-
-    const supabase = await createClient();
-
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
-
-    if (userError || !user) {
-      return { ok: false, error: "You must be logged in to create a church." };
-    }
-
-    const { data, error } = await supabase.rpc("create_church_with_owner", {
-      p_name: input.name,
-      p_slug: input.slug,
-      p_country: input.country || null,
-      p_city: input.city || null,
-      p_timezone: input.timezone || "UTC",
-      p_user_id: user.id,
-    });
-
-    if (error) {
-      if (error.message?.includes("churches_slug_unique")) {
-        return {
-          ok: false,
-          error: "That church slug is already in use. Please choose another one.",
-        };
-      }
-
-      return { ok: false, error: error.message };
-    }
-
-    const slug =
-      typeof data === "string"
-        ? data
-        : data?.slug ?? input.slug;
-
-    redirect(`/c/${slug}/dashboard`);
-  } catch (error) {
-    return {
-      ok: false,
-      error: error instanceof Error ? error.message : "Failed to create church.",
-    };
+  // Validate input before any side effects
+  const validationError = validateCreateChurchInput(input);
+  if (validationError) {
+    return { ok: false, error: validationError };
   }
+
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError || !user) {
+    return { ok: false, error: "You must be logged in to create a church." };
+  }
+
+  const { data, error } = await supabase.rpc("create_church_with_owner", {
+    p_name: input.name,
+    p_slug: input.slug,
+    p_country: input.country || null,
+    p_city: input.city || null,
+    p_timezone: input.timezone || "UTC",
+    p_user_id: user.id,
+  });
+
+  if (error) {
+    if (error.message?.includes("churches_slug_unique")) {
+      return {
+        ok: false,
+        error: "That church slug is already in use. Please choose another one.",
+      };
+    }
+
+    return { ok: false, error: error.message };
+  }
+
+  const slug =
+    typeof data === "string"
+      ? data
+      : data?.slug ?? input.slug;
+
+  // Redirect to the final destination - NOT inside try-catch
+  // redirect() throws NEXT_REDIRECT which must not be caught
+  redirect(`/c/${slug}`);
 }

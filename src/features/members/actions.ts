@@ -48,7 +48,7 @@ async function ensureHouseholdBelongsToChurch(supabase: any, churchId: string, h
 }
 
 async function ensureDepartmentBelongsToChurch(supabase: any, churchId: string, departmentId: string | null) {
-  if (!departmentId) return true;
+  if (!departmentId) return null;
 
   const { data, error } = await supabase
     .from("church_departments")
@@ -160,7 +160,13 @@ export async function createMemberAction(
       return { ok: false, error: error.message };
     }
 
-    if (createdMember?.id && selectedDepartment) {
+    // Only insert member_departments if a valid department was selected and resolved
+    if (
+      createdMember?.id &&
+      selectedDepartment &&
+      selectedDepartment.id &&
+      selectedDepartment.department_name
+    ) {
       const { error: deptError } = await supabase.from("member_departments").insert({
         member_id: createdMember.id,
         church_id: ctx.churchId,
@@ -476,22 +482,37 @@ export async function assignMemberDepartmentAction(
 ): Promise<ActionState> {
   const churchSlug = getString(formData, "churchSlug");
   const memberId = getString(formData, "memberId");
-  const departmentName = getString(formData, "departmentName");
+  const departmentId = getString(formData, "departmentId");
   const roleInDepartment = getString(formData, "roleInDepartment");
   const joinedDate = getString(formData, "joinedDate");
 
-  await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
+  const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
   const supabase = await createClient();
 
-  if (!memberId || !departmentName) {
+  if (!memberId || !departmentId) {
     return { ok: false, error: "Member and department are required." };
+  }
+
+  // Resolve department name server-side from church_departments
+  const { data: departmentRow, error: deptFetchError } = await supabase
+    .from("church_departments")
+    .select("id, department_name")
+    .eq("church_id", ctx.churchId)
+    .eq("id", departmentId)
+    .maybeSingle();
+
+  if (deptFetchError) {
+    return { ok: false, error: deptFetchError.message };
+  }
+  if (!departmentRow) {
+    return { ok: false, error: "Department not found in this church." };
   }
 
   const { data: existing, error: existingError } = await supabase
     .from("member_departments")
     .select("id")
     .eq("member_id", memberId)
-    .eq("department_name", departmentName)
+    .eq("department_id", departmentId)
     .maybeSingle();
 
   if (existingError) {
@@ -503,10 +524,13 @@ export async function assignMemberDepartmentAction(
   }
 
   const { error } = await supabase.from("member_departments").insert({
+    church_id: ctx.churchId,
     member_id: memberId,
-    department_name: departmentName,
+    department_id: departmentRow.id,
+    department_name: departmentRow.department_name,
     role_in_department: roleInDepartment || null,
     joined_date: joinedDate || null,
+    is_active: true,
   });
 
   if (error) {

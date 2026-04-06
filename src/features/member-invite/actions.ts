@@ -107,7 +107,8 @@ async function enrichMemberRecord(params: {
     baptism_date: params.baptismDate,
     membership_type: params.membershipType ?? "regular",
     profile_id: params.userId,
-    portal_joined_at: new Date().toISOString(),
+    // Note: portal_joined_at is NOT set here.
+    // It must only be set after password change is complete (see completeFirstLoginPasswordChangeAction)
     updated_at: new Date().toISOString(),
   };
 
@@ -196,14 +197,43 @@ async function syncMemberDepartments(params: {
 
   if (missingIds.length === 0) return;
 
-  const inserts = missingIds.map((departmentId) => ({
-    church_id: params.churchId,
-    member_id: params.memberId,
-    department_id: departmentId,
-    department_name: "Pending sync",
-    is_active: true,
-    start_date: new Date().toISOString().slice(0, 10),
-  }));
+  // Resolve department names server-side before inserting
+  const { data: departments, error: deptError } = await supabase
+    .from("church_departments")
+    .select("id, department_name")
+    .eq("church_id", params.churchId)
+    .in("id", missingIds);
+
+  if (deptError) {
+    throw new Error(deptError.message);
+  }
+
+  const deptMap = new Map((departments ?? []).map((d: any) => [d.id, d.department_name]));
+
+  const inserts = missingIds
+    .map((departmentId) => {
+      const deptName = deptMap.get(departmentId);
+      // Skip if department not found or has no name - don't insert invalid data
+      if (!deptName) return null;
+      return {
+        church_id: params.churchId,
+        member_id: params.memberId,
+        department_id: departmentId,
+        department_name: deptName,
+        is_active: true,
+        start_date: new Date().toISOString().slice(0, 10),
+      };
+    })
+    .filter(Boolean) as Array<{
+      church_id: string;
+      member_id: string;
+      department_id: string;
+      department_name: string;
+      is_active: boolean;
+      start_date: string;
+    }>;
+
+  if (inserts.length === 0) return;
 
   const { error: insertError } = await supabase
     .from("member_departments")
@@ -722,6 +752,9 @@ export async function completeRichInviteOnboardingAction(
   let memberId = inviteContext.memberId ?? null;
 
   if (inviteContext.memberId) {
+    // Existing member invite claim - uses DB RPC for RLS-safe privileged writes
+    // NOTE: The RPC complete_member_onboarding_from_invite should NOT set portal_joined_at
+    // portal_joined_at will be set later by completeFirstLoginPasswordChangeAction
     const { data: claimedChurchSlug, error: claimError } = await supabase.rpc(
       "complete_member_onboarding_from_invite",
       {
@@ -774,6 +807,23 @@ export async function completeRichInviteOnboardingAction(
       membershipType,
     });
   } else {
+    if (!churchId) {
+      const { data: inviteRow, error: inviteLookupError } = await supabase
+        .from("member_onboarding_invites")
+        .select("id, church_id")
+        .eq("token", token)
+        .single();
+
+      if (inviteLookupError) {
+        return { ok: false, error: inviteLookupError.message };
+      }
+
+      churchId = inviteRow.church_id as string;
+    }
+
+    // Open invite claim - uses DB RPC for RLS-safe privileged writes
+    // NOTE: The RPC complete_open_member_onboarding_from_invite should NOT set portal_joined_at
+    // portal_joined_at will be set later by completeFirstLoginPasswordChangeAction
     if (!churchId) {
       const { data: inviteRow, error: inviteLookupError } = await supabase
         .from("member_onboarding_invites")
@@ -884,6 +934,28 @@ export async function completeRichInviteOnboardingAction(
         title: item.title,
       })),
   });
+
+  // Verify the invite was properly claimed (RPC should set claimed_at and claimed_by_user_id)
+  const { data: claimedInvite, error: verifyError } = await supabase
+    .from("member_onboarding_invites")
+    .select("status, claimed_at, claimed_by_user_id")
+    .eq("token", token)
+    .single();
+
+  if (verifyError || !claimedInvite) {
+    return { ok: false, error: "Failed to verify invite claim. Please contact support." };
+  }
+
+  if (claimedInvite.status !== "claimed" || !claimedInvite.claimed_at || !claimedInvite.claimed_by_user_id) {
+    // The RPC didn't properly lock the invite - this is a server configuration issue
+    console.error("Invite claim verification failed:", {
+      token,
+      status: claimedInvite.status,
+      hasClaimedAt: !!claimedInvite.claimed_at,
+      hasClaimedByUserId: !!claimedInvite.claimed_by_user_id,
+    });
+    return { ok: false, error: "Invite claim incomplete. Please contact support." };
+  }
 
   revalidateInviteSurfaces(finalChurchSlug);
 

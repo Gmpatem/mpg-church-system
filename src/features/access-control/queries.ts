@@ -142,11 +142,11 @@ export async function getAccessControlOverview(
       .order("name", { ascending: true }),
     supabase
       .from("church_permission_assignments")
-      .select("*", { count: "exact", head: true })
+      .select("id", { count: "exact", head: true })
       .eq("church_id", ctx.churchId),
     supabase
       .from("church_permission_assignments")
-      .select("*", { count: "exact", head: true })
+      .select("id", { count: "exact", head: true })
       .eq("church_id", ctx.churchId)
       .eq("is_active", true),
     supabase

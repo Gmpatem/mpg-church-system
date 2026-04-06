@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import type { ChurchAccessContext, RoleCode } from "./types";
@@ -137,7 +138,12 @@ export async function requireUser() {
   return data.user;
 }
 
-export async function getCurrentProfile(userId?: string) {
+/**
+ * Get current user profile - cached per userId for request deduplication.
+ * Safe to cache: profile data changes infrequently within a request.
+ * Cache key: userId
+ */
+export const getCurrentProfile = cache(async (userId?: string) => {
   const fallbackUser = userId ? null : await requireUser();
   const resolvedUserId = userId ?? fallbackUser?.id;
 
@@ -168,9 +174,14 @@ export async function getCurrentProfile(userId?: string) {
       must_change_password: false,
     }
   );
-}
+});
 
-export async function getPlatformRoles(userId: string) {
+/**
+ * Get platform-level roles for a user - cached per userId for request deduplication.
+ * Safe to cache: platform roles rarely change within a request lifecycle.
+ * Cache key: userId
+ */
+export const getPlatformRoles = cache(async (userId: string) => {
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -186,9 +197,16 @@ export async function getPlatformRoles(userId: string) {
   }
 
   return (data ?? []).map((row: any) => row.role_code).filter(Boolean);
-}
+});
 
-export async function getUserAccessState(userId?: string): Promise<UserAccessState> {
+/**
+ * Get comprehensive user access state - cached per userId for request deduplication.
+ * HIGH IMPACT: This aggregates memberships, roles, and links across multiple tables.
+ * Safe to cache: Access state is stable within a request lifecycle.
+ * Cache key: userId
+ * Note: Uses cached getCurrentProfile and getPlatformRoles internally.
+ */
+export const getUserAccessState = cache(async (userId?: string): Promise<UserAccessState> => {
   const user = userId ? { id: userId, email: null, user_metadata: {} } : await requireUser();
   const resolvedUserId = userId ?? user.id;
   const supabase = await createClient();
@@ -272,7 +290,7 @@ export async function getUserAccessState(userId?: string): Promise<UserAccessSta
     platformRoles,
     churches,
   };
-}
+});
 
 export async function resolvePostAuthDestination(userId?: string): Promise<string> {
   const state = await getUserAccessState(userId);
@@ -288,7 +306,8 @@ export async function resolvePostAuthDestination(userId?: string): Promise<strin
   }
 
   if (primaryChurch.hasOperationalAccess) {
-    return `/c/${primaryChurch.churchSlug}/dashboard`;
+    // Redirect directly to church workspace (avoids unnecessary /dashboard redirect hop)
+    return `/c/${primaryChurch.churchSlug}`;
   }
 
   if (primaryChurch.hasMemberLink) {
@@ -346,9 +365,9 @@ async function getChurchRouteAccessContext(
   };
 }
 
-export async function requireChurchAccess(churchSlug: string): Promise<ChurchAccessContext> {
+export const requireChurchAccess = cache(async (churchSlug: string): Promise<ChurchAccessContext> => {
   return getChurchRouteAccessContext(churchSlug);
-}
+});
 
 export async function requireChurchWorkspaceAccess(
   churchSlug: string

@@ -5,6 +5,19 @@ import { createClient } from "@/lib/supabase/server";
 import { requireChurchRole } from "@/features/access/queries";
 import type { ActionState } from "@/features/access/types";
 
+/**
+ * Helper to revalidate treasury-related caches for a church.
+ * Uses path-based invalidation for comprehensive cache clearing.
+ * Note: Tag-based invalidation can be added when upgrading to Next.js 15+ with full unstable_cache support.
+ */
+function revalidateTreasuryData(churchSlug: string) {
+  // Path-based revalidation (existing behavior)
+  revalidatePath(`/c/${churchSlug}/treasury`);
+  revalidatePath(`/c/${churchSlug}/treasury/in`);
+  revalidatePath(`/c/${churchSlug}/treasury/out`);
+  revalidatePath(`/c/${churchSlug}/reports`);
+}
+
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
@@ -149,9 +162,7 @@ export async function createTreasuryInflowAction(
       return { ok: false, error: error.message };
     }
 
-    revalidatePath(`/c/${churchSlug}/treasury`);
-    revalidatePath(`/c/${churchSlug}/treasury/in`);
-    revalidatePath(`/c/${churchSlug}/reports`);
+    revalidateTreasuryData(churchSlug);
     return { ok: true, message: "Money-in entry recorded successfully." };
   } catch (error) {
     return {
@@ -223,9 +234,7 @@ export async function createTreasuryOutflowAction(
       return { ok: false, error: error.message };
     }
 
-    revalidatePath(`/c/${churchSlug}/treasury`);
-    revalidatePath(`/c/${churchSlug}/treasury/out`);
-    revalidatePath(`/c/${churchSlug}/reports`);
+    revalidateTreasuryData(churchSlug);
     return { ok: true, message: "Money-out entry recorded successfully." };
   } catch (error) {
     return {
@@ -316,10 +325,8 @@ export async function updateTreasuryInflowAction(
       return { ok: false, error: error.message };
     }
 
-    revalidatePath(`/c/${churchSlug}/treasury`);
-    revalidatePath(`/c/${churchSlug}/treasury/in`);
+    revalidateTreasuryData(churchSlug);
     revalidatePath(`/c/${churchSlug}/treasury/in/${entryId}/edit`);
-    revalidatePath(`/c/${churchSlug}/reports`);
 
     return { ok: true, message: "Money-in entry updated successfully." };
   } catch (error) {
@@ -402,10 +409,8 @@ export async function updateTreasuryOutflowAction(
       return { ok: false, error: error.message };
     }
 
-    revalidatePath(`/c/${churchSlug}/treasury`);
-    revalidatePath(`/c/${churchSlug}/treasury/out`);
+    revalidateTreasuryData(churchSlug);
     revalidatePath(`/c/${churchSlug}/treasury/out/${entryId}/edit`);
-    revalidatePath(`/c/${churchSlug}/reports`);
 
     return { ok: true, message: "Money-out entry updated successfully." };
   } catch (error) {
@@ -446,8 +451,7 @@ export async function createTreasuryFundAction(
     return { ok: false, error: error.message };
   }
 
-  revalidatePath(`/c/${churchSlug}/treasury`);
-  revalidatePath(`/c/${churchSlug}/reports`);
+  revalidateTreasuryData(churchSlug);
   return { ok: true, message: "Treasury fund created successfully." };
 }
 
@@ -491,7 +495,6 @@ export async function toggleTreasuryFundAction(
 
   if (error) return { ok: false, error: error.message };
 
-  revalidatePath(`/c/${churchSlug}/treasury`);
-  revalidatePath(`/c/${churchSlug}/reports`);
+  revalidateTreasuryData(churchSlug);
   return { ok: true, message: nextState ? "Fund activated." : "Fund deactivated." };
 }

@@ -59,6 +59,9 @@ export async function completeMemberOnboardingAction(
     return { ok: false, error: "Account creation succeeded but no user was returned." };
   }
 
+  // Public join onboarding - uses DB RPC for RLS-safe privileged writes
+  // NOTE: The RPC complete_member_onboarding should NOT set portal_joined_at
+  // portal_joined_at will be set later by completeFirstLoginPasswordChangeAction
   const { data: resolvedSlug, error: onboardingError } = await supabase.rpc(
     "complete_member_onboarding",
     {

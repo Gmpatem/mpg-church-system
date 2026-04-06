@@ -50,19 +50,25 @@ export async function getChurchHouseholds(churchSlug: string) {
     );
   }
 
-  const { data: memberCounts, error: countError } = await supabase
-    .from("members")
-    .select("household_id")
-    .eq("church_id", ctx.churchId)
-    .not("household_id", "is", null);
+  // Optimized member counting: fetch only household_id for members in our households
+  // This reduces data transfer from O(all members) to O(households with members)
+  const householdIds = households.map((h) => h.id);
+  let countMap = new Map<string, number>();
 
-  if (countError) throw new Error(countError.message);
+  if (householdIds.length > 0) {
+    const { data: memberCounts, error: countError } = await supabase
+      .from("members")
+      .select("household_id")
+      .eq("church_id", ctx.churchId)
+      .in("household_id", householdIds);
 
-  const countMap = new Map<string, number>();
-  for (const row of memberCounts ?? []) {
-    const hid = row.household_id as string | null;
-    if (!hid) continue;
-    countMap.set(hid, (countMap.get(hid) ?? 0) + 1);
+    if (countError) throw new Error(countError.message);
+
+    for (const row of memberCounts ?? []) {
+      const hid = row.household_id as string | null;
+      if (!hid) continue;
+      countMap.set(hid, (countMap.get(hid) ?? 0) + 1);
+    }
   }
 
   return households.map((household) => ({

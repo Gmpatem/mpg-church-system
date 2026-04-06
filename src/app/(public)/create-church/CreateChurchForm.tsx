@@ -2,6 +2,8 @@
 
 import { useActionState } from "react";
 import { createChurchAction } from "@/features/churches/actions";
+import { CountrySelect } from "./components/CountrySelect";
+import { TimezoneSelect } from "./components/TimezoneSelect";
 
 export function CreateChurchForm() {
   const [state, formAction, isPending] = useActionState(createChurchAction, null);
@@ -17,31 +19,33 @@ export function CreateChurchForm() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="md:col-span-2">
           <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-1">
-            Church name
+            Church name <span className="text-red-500">*</span>
           </label>
           <input
             id="name"
             name="name"
             type="text"
             required
+            placeholder="e.g., Grace Community Church"
             className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
 
         <div className="md:col-span-2">
           <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-1">
-            Church slug
+            Church slug <span className="text-red-500">*</span>
           </label>
           <input
             id="slug"
             name="slug"
             type="text"
             required
-            placeholder="central-sda-church"
+            placeholder="grace-community-church"
             className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
           />
           <p className="mt-1 text-xs text-gray-500">
-            Lowercase letters, numbers, and hyphens only.
+            Lowercase letters, numbers, and hyphens only. Used in URLs like{" "}
+            <code className="bg-gray-100 px-1 rounded">/c/your-church-slug</code>
           </p>
         </div>
 
@@ -64,23 +68,23 @@ export function CreateChurchForm() {
           <label htmlFor="timezone" className="block text-sm font-medium text-gray-700 mb-1">
             Timezone
           </label>
-          <input
+          <TimezoneSelect
             id="timezone"
             name="timezone"
-            type="text"
-            defaultValue="UTC"
             className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
           />
+          <p className="mt-1 text-xs text-gray-500">
+            Automatically detected based on your location
+          </p>
         </div>
 
         <div>
           <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1">
             Country
           </label>
-          <input
+          <CountrySelect
             id="country"
             name="country"
-            type="text"
             className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -93,6 +97,7 @@ export function CreateChurchForm() {
             id="city"
             name="city"
             type="text"
+            placeholder="e.g., New York"
             className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>

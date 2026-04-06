@@ -75,7 +75,8 @@ export async function registerAction(
   }
 
   if (data.session) {
-    redirect("/create-church");
+    const destination = await getPostLoginDestination(data.session.user.id);
+    redirect(destination);
   }
 
   redirect("/login?registered=1&check_email=1");

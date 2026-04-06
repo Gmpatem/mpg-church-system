@@ -78,15 +78,25 @@ export async function setChurchActiveStateAction(
       return { ok: false, error: error.message };
     }
 
-    await createPlatformNotification(supabase, {
-      targetUserId: "7678429e-07f3-4686-9811-07a5bfa7cd73",
-      eventType: "system",
-      entityType: "church",
-      entityId: churchId,
-      title: nextActive ? "Church activated" : "Church deactivated",
-      message: (church?.name ?? "Church") + (nextActive ? " was activated." : " was deactivated."),
-      href: "/platform/churches/" + churchId,
-    });
+    // Get all platform owners for notifications
+    const { data: platformOwners } = await supabase
+      .from("platform_role_assignments")
+      .select("user_id")
+      .eq("role_code", "platform_owner");
+
+    if (platformOwners && platformOwners.length > 0) {
+      for (const owner of platformOwners) {
+        await createPlatformNotification(supabase, {
+          targetUserId: owner.user_id,
+          eventType: "system",
+          entityType: "church",
+          entityId: churchId,
+          title: nextActive ? "Church activated" : "Church deactivated",
+          message: (church?.name ?? "Church") + (nextActive ? " was activated." : " was deactivated."),
+          href: "/platform/churches/" + churchId,
+        });
+      }
+    }
 
     revalidatePath("/platform");
     revalidatePath("/platform/churches");
@@ -236,15 +246,25 @@ export async function updatePlatformSupportTicketStatusAction(formData: FormData
 
   if (error) throw new Error(error.message);
 
-  await createPlatformNotification(supabase, {
-    targetUserId: "7678429e-07f3-4686-9811-07a5bfa7cd73",
-    eventType: "support_ticket",
-    entityType: "platform_support_ticket",
-    entityId: ticketId,
-    title: "Support ticket updated",
-    message: (ticket?.subject ?? "Support ticket") + " is now " + status.replace("_", " ") + ".",
-    href: "/platform/support",
-  });
+  // Get all platform owners for notifications
+  const { data: platformOwners } = await supabase
+    .from("platform_role_assignments")
+    .select("user_id")
+    .eq("role_code", "platform_owner");
+
+  if (platformOwners && platformOwners.length > 0) {
+    for (const owner of platformOwners) {
+      await createPlatformNotification(supabase, {
+        targetUserId: owner.user_id,
+        eventType: "support_ticket",
+        entityType: "platform_support_ticket",
+        entityId: ticketId,
+        title: "Support ticket updated",
+        message: (ticket?.subject ?? "Support ticket") + " is now " + status.replace("_", " ") + ".",
+        href: "/platform/support",
+      });
+    }
+  }
 
   revalidatePath("/platform/support");
   revalidatePath("/platform");

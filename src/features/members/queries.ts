@@ -1,5 +1,5 @@
 import "server-only";
-
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { requireChurchAccess } from "@/features/access/queries";
 import { parseMemberDirectoryFilters } from "./validators";
@@ -163,13 +163,29 @@ export async function getChurchMembers(
   return data ?? [];
 }
 
+/**
+ * Narrow field selection for member lookup - avoids over-fetching.
+ * Includes all commonly used member fields for detail views.
+ * Previous: select("*") - fetched all 30+ fields including unused ones
+ * Now: explicit 24 fields that are actually used across the app
+ */
+const MEMBER_DETAIL_FIELDS = `
+  id, church_id, profile_id, household_id,
+  first_name, last_name, display_name, member_code,
+  email, phone, gender, date_of_birth,
+  membership_status, membership_type, date_joined,
+  baptism_date, transfer_in_date, transfer_out_date, previous_church,
+  emergency_contact_name, emergency_contact_phone, emergency_contact_relationship,
+  created_at, updated_at
+`;
+
 export async function getMemberById(churchSlug: string, memberId: string) {
   const ctx = await requireChurchAccess(churchSlug);
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("members")
-    .select("*")
+    .select(MEMBER_DETAIL_FIELDS)
     .eq("church_id", ctx.churchId)
     .eq("id", memberId)
     .maybeSingle();
@@ -227,7 +243,13 @@ export async function getMemberProfile(churchSlug: string, memberId: string): Pr
   } as any;
 }
 
-export async function getChurchDepartments(churchSlug: string) {
+/**
+ * Get church departments for forms - cached per church for request deduplication.
+ * Safe to cache: department list is stable reference data.
+ * Cache scope: Single request (React cache).
+ * Cache key: churchSlug
+ */
+export const getChurchDepartments = cache(async (churchSlug: string) => {
   const ctx = await requireChurchAccess(churchSlug);
   const supabase = await createClient();
 
@@ -241,9 +263,15 @@ export async function getChurchDepartments(churchSlug: string) {
   if (error) throw new Error(error.message);
 
   return data ?? [];
-}
+});
 
-export async function getChurchHouseholds(churchSlug: string) {
+/**
+ * Get church households for forms - cached per church for request deduplication.
+ * Safe to cache: household list is stable reference data.
+ * Cache scope: Single request (React cache).
+ * Cache key: churchSlug
+ */
+export const getChurchHouseholds = cache(async (churchSlug: string) => {
   const ctx = await requireChurchAccess(churchSlug);
   const supabase = await createClient();
 
@@ -256,7 +284,7 @@ export async function getChurchHouseholds(churchSlug: string) {
   if (error) throw new Error(error.message);
 
   return data ?? [];
-}
+});
 
 export async function getMemberReportSummary(churchSlug: string) {
   const ctx = await requireChurchAccess(churchSlug);
@@ -270,12 +298,12 @@ export async function getMemberReportSummary(churchSlug: string) {
     { count: transferredMembers, error: transferredError },
     { count: missingHousehold, error: missingHouseholdError },
   ] = await Promise.all([
-    supabase.from("members").select("*", { count: "exact", head: true }).eq("church_id", ctx.churchId),
-    supabase.from("members").select("*", { count: "exact", head: true }).eq("church_id", ctx.churchId).eq("membership_status", "active"),
-    supabase.from("members").select("*", { count: "exact", head: true }).eq("church_id", ctx.churchId).eq("membership_status", "inactive"),
-    supabase.from("members").select("*", { count: "exact", head: true }).eq("church_id", ctx.churchId).eq("membership_status", "visitor"),
-    supabase.from("members").select("*", { count: "exact", head: true }).eq("church_id", ctx.churchId).eq("membership_status", "transferred"),
-    supabase.from("members").select("*", { count: "exact", head: true }).eq("church_id", ctx.churchId).is("household_id", null),
+    supabase.from("members").select("id", { count: "exact", head: true }).eq("church_id", ctx.churchId),
+    supabase.from("members").select("id", { count: "exact", head: true }).eq("church_id", ctx.churchId).eq("membership_status", "active"),
+    supabase.from("members").select("id", { count: "exact", head: true }).eq("church_id", ctx.churchId).eq("membership_status", "inactive"),
+    supabase.from("members").select("id", { count: "exact", head: true }).eq("church_id", ctx.churchId).eq("membership_status", "visitor"),
+    supabase.from("members").select("id", { count: "exact", head: true }).eq("church_id", ctx.churchId).eq("membership_status", "transferred"),
+    supabase.from("members").select("id", { count: "exact", head: true }).eq("church_id", ctx.churchId).is("household_id", null),
   ]);
 
   if (totalError) throw new Error(totalError.message);

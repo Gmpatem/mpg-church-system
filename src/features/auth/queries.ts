@@ -15,14 +15,17 @@ export async function getCurrentUser() {
  *
  * Priority:
  *  1. Platform owner / admin / support → /platform
- *  2. Church operational staff          → /c/[churchSlug]/dashboard
+ *  2. Church operational staff          → /c/[churchSlug]
  *  3. Linked church member              → /my/[churchSlug]?tab=overview
  *  4. No church at all                  → /create-church
- *  5. Fallback with church access       → /c/[churchSlug]/dashboard
+ * 
+ * This function guarantees a stable destination that will not cause redirect loops.
+ * All returned paths are absolute and resolve to actual routes in the application.
  */
 export async function getPostLoginDestination(userId: string): Promise<string> {
   const supabase = await createClient();
 
+  // Check for platform admin roles first
   const { data: platformRoles, error: platformError } = await supabase
     .from("platform_role_assignments")
     .select("role_code")
@@ -36,10 +39,12 @@ export async function getPostLoginDestination(userId: string): Promise<string> {
     ["platform_owner", "platform_admin", "platform_support"].includes(row.role_code)
   );
 
+  // Priority 1: Platform admins go to platform dashboard
   if (isPlatformAdmin) {
     return "/platform";
   }
 
+  // Check for church memberships
   const { data: memberships, error: membershipError } = await supabase
     .from("church_users")
     .select("church_id, churches!inner(slug)")
@@ -62,6 +67,7 @@ export async function getPostLoginDestination(userId: string): Promise<string> {
       }
     : null;
 
+  // Priority 4: No church membership - go create one
   if (!firstChurch?.churches?.slug) {
     return "/create-church";
   }
@@ -69,6 +75,7 @@ export async function getPostLoginDestination(userId: string): Promise<string> {
   const churchId = firstChurch.church_id;
   const churchSlug = firstChurch.churches.slug;
 
+  // Check for operational roles in this church
   const { data: roleRows, error: roleError } = await supabase
     .from("church_role_assignments")
     .select("role_definitions(code)")
@@ -89,10 +96,12 @@ export async function getPostLoginDestination(userId: string): Promise<string> {
     ["church_admin", "pastor", "elder", "clerk", "treasurer"].includes(code)
   );
 
+  // Priority 2: Operational staff go to church workspace
   if (isOperationalUser) {
-    return "/c/" + churchSlug + "/dashboard";
+    return "/c/" + churchSlug;
   }
 
+  // Check for member link
   const { data: linkedMember, error: memberError } = await supabase
     .from("members")
     .select("id")
@@ -104,10 +113,11 @@ export async function getPostLoginDestination(userId: string): Promise<string> {
     throw new Error(memberError.message);
   }
 
+  // Priority 3: Linked members go to member portal
   if (linkedMember) {
     return "/my/" + churchSlug + "?tab=overview";
   }
 
-  return "/c/" + churchSlug + "/dashboard";
+  // Fallback: Go to church workspace (user has membership but no specific role)
+  return "/c/" + churchSlug;
 }
-

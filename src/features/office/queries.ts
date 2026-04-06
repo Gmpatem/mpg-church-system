@@ -28,7 +28,7 @@ type SecretaryCalendarItem = {
 async function safeCountPendingAccessRequests(supabase: any, churchId: string) {
   const { count, error } = await supabase
     .from("church_access_requests")
-    .select("*", { count: "exact", head: true })
+    .select("id", { count: "exact", head: true })
     .eq("church_id", churchId)
     .eq("status", "pending");
 
@@ -39,7 +39,7 @@ async function safeCountPendingAccessRequests(supabase: any, churchId: string) {
 async function safeCountPendingLeadershipRequests(supabase: any, churchId: string) {
   const { count, error } = await supabase
     .from("department_leadership_requests")
-    .select("*", { count: "exact", head: true })
+    .select("id", { count: "exact", head: true })
     .eq("church_id", churchId)
     .eq("status", "pending");
 
@@ -48,55 +48,44 @@ async function safeCountPendingLeadershipRequests(supabase: any, churchId: strin
 }
 
 async function safeCountAnnouncementsNeedingPublish(supabase: any, churchId: string) {
-  const attempts = [
-    () =>
-      supabase
-        .from("church_announcements")
-        .select("*", { count: "exact", head: true })
-        .eq("church_id", churchId)
-        .in("status", ["draft", "pending_approval"]),
-    () =>
-      supabase
-        .from("church_announcements")
-        .select("*", { count: "exact", head: true })
-        .eq("church_id", churchId)
-        .eq("status", "draft"),
-    () =>
-      supabase
-        .from("department_announcements")
-        .select("*", { count: "exact", head: true })
-        .eq("church_id", churchId)
-        .in("status", ["draft", "pending_approval"]),
-  ];
+  // Try primary table first with narrow select
+  const { count, error } = await supabase
+    .from("church_announcements")
+    .select("id", { count: "exact", head: true })
+    .eq("church_id", churchId)
+    .in("status", ["draft", "pending_approval"]);
 
-  for (const attempt of attempts) {
-    const { count, error } = await attempt();
-    if (!error) return count ?? 0;
-  }
+  if (!error) return count ?? 0;
+
+  // Fallback to draft-only if schema differs
+  const { count: draftCount, error: draftError } = await supabase
+    .from("church_announcements")
+    .select("id", { count: "exact", head: true })
+    .eq("church_id", churchId)
+    .eq("status", "draft");
+
+  if (!draftError) return draftCount ?? 0;
 
   return 0;
 }
 
 async function safeCountDepartmentEventsAwaitingApproval(supabase: any, churchId: string) {
-  const attempts = [
-    () =>
-      supabase
-        .from("church_events")
-        .select("*", { count: "exact", head: true })
-        .eq("church_id", churchId)
-        .in("workflow_state", ["pending_approval", "draft"]),
-    () =>
-      supabase
-        .from("church_events")
-        .select("*", { count: "exact", head: true })
-        .eq("church_id", churchId)
-        .eq("workflow_state", "pending_approval"),
-  ];
+  const { count, error } = await supabase
+    .from("church_events")
+    .select("id", { count: "exact", head: true })
+    .eq("church_id", churchId)
+    .in("workflow_state", ["pending_approval", "draft"]);
 
-  for (const attempt of attempts) {
-    const { count, error } = await attempt();
-    if (!error) return count ?? 0;
-  }
+  if (!error) return count ?? 0;
+
+  // Fallback if schema differs
+  const { count: pendingCount, error: pendingError } = await supabase
+    .from("church_events")
+    .select("id", { count: "exact", head: true })
+    .eq("church_id", churchId)
+    .eq("workflow_state", "pending_approval");
+
+  if (!pendingError) return pendingCount ?? 0;
 
   return 0;
 }
@@ -402,12 +391,12 @@ export async function getOfficeWorkspaceData(churchSlug: string) {
   ] = await Promise.all([
     supabase
       .from("members")
-      .select("*", { count: "exact", head: true })
+      .select("id", { count: "exact", head: true })
       .eq("church_id", ctx.churchId),
 
     supabase
       .from("church_departments")
-      .select("*", { count: "exact", head: true })
+      .select("id", { count: "exact", head: true })
       .eq("church_id", ctx.churchId)
       .eq("is_active", true),
 

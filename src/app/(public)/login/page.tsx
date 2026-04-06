@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getPostLoginDestination } from "@/features/auth/queries";
 import { LoginForm } from "./LoginForm";
 
 interface LoginPageProps {
@@ -6,6 +9,15 @@ interface LoginPageProps {
 }
 
 export default async function LoginPage({ searchParams }: LoginPageProps) {
+  // Check if already logged in
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (user) {
+    const destination = await getPostLoginDestination(user.id);
+    redirect(destination);
+  }
+  
   const params = (await searchParams) ?? {};
   const registered = params.registered === "1";
   const checkEmail = params.check_email === "1";

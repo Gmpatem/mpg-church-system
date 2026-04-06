@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { requireChurchAccess, requireChurchRole } from "@/features/access/queries";
 import type {
@@ -82,7 +83,16 @@ export async function getDepartments(
   });
 }
 
-export async function getDepartmentById(churchSlug: string, departmentId: string): Promise<DepartmentRecord | null> {
+/**
+ * Request-level cache for single department lookup.
+ * Safe because: scoped to specific departmentId within tenant context.
+ * Cache scope: Single request (React cache).
+ * Invalidation: Automatic at request end.
+ */
+export const getDepartmentById = cache(async (
+  churchSlug: string,
+  departmentId: string
+): Promise<DepartmentRecord | null> => {
   const ctx = await requireChurchAccess(churchSlug);
   const supabase = await createClient();
 
@@ -95,7 +105,7 @@ export async function getDepartmentById(churchSlug: string, departmentId: string
 
   if (error) throw new Error(error.message);
   return (data as DepartmentRecord | null) ?? null;
-}
+});
 
 export async function getDepartmentMembers(
   churchSlug: string,
@@ -271,10 +281,16 @@ export async function getMemberDepartmentAssignments(
   return (data ?? []) as DepartmentAssignmentRecord[];
 }
 
-export async function getMemberDepartmentOptions(
+/**
+ * Get department options for member assignment - cached per church/member.
+ * Safe to cache: reference data for assignment forms.
+ * Cache scope: Single request (React cache).
+ * Cache key: churchSlug + memberId
+ */
+export const getMemberDepartmentOptions = cache(async (
   churchSlug: string,
   memberId: string
-) {
+) => {
   const ctx = await requireChurchAccess(churchSlug);
   const supabase = await createClient();
 
@@ -304,9 +320,15 @@ export async function getMemberDepartmentOptions(
       is_active: item.is_active,
     })),
   };
-}
+});
 
-export async function getDepartmentFilterOptions(churchSlug: string) {
+/**
+ * Get department filter options - cached per church for request deduplication.
+ * Safe to cache: reference data for filters, changes infrequently.
+ * Cache scope: Single request (React cache).
+ * Cache key: churchSlug (tenant-scoped)
+ */
+export const getDepartmentFilterOptions = cache(async (churchSlug: string) => {
   const ctx = await requireChurchAccess(churchSlug);
   const supabase = await createClient();
 
@@ -324,7 +346,7 @@ export async function getDepartmentFilterOptions(churchSlug: string) {
     code: item.code,
     is_active: item.is_active,
   }));
-}
+});
 
 export async function getDepartmentsWorkspaceData(
   churchSlug: string,

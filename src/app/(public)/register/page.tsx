@@ -1,7 +1,19 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { createClient } from "@/lib/supabase/server";
+import { getPostLoginDestination } from "@/features/auth/queries";
 import { RegisterForm } from "./RegisterForm";
 
-export default function RegisterPage() {
+export default async function RegisterPage() {
+  // Check if already logged in
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  
+  if (user) {
+    const destination = await getPostLoginDestination(user.id);
+    redirect(destination);
+  }
+  
   return (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-10">
       <div className="w-full max-w-md bg-white border border-gray-200 rounded-xl shadow-sm p-6">

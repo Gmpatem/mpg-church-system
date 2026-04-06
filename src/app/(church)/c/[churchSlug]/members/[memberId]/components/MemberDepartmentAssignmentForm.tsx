@@ -47,16 +47,16 @@ export function MemberDepartmentAssignmentForm({
       ) : null}
 
       <div>
-        <label htmlFor="departmentName" className="block text-sm font-medium text-gray-700 mb-1">Department</label>
+        <label htmlFor="departmentId" className="block text-sm font-medium text-gray-700 mb-1">Department</label>
         <select
-          id="departmentName"
-          name="departmentName"
+          id="departmentId"
+          name="departmentId"
           required
           className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">Select a department</option>
           {departments.map((dept) => (
-            <option key={dept.id} value={dept.department_name}>
+            <option key={dept.id} value={dept.id}>
               {dept.department_name}
             </option>
           ))}

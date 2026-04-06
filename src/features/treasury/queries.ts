@@ -1,5 +1,5 @@
 import "server-only";
-
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { requireChurchAccess, requireChurchRole } from "@/features/access/queries";
 
@@ -66,7 +66,14 @@ export async function getTreasuryDashboard(churchSlug: string) {
   };
 }
 
-export async function getTreasuryFunds(churchSlug: string) {
+/**
+ * Request-level cache for treasury funds list.
+ * Safe because: scoped to churchSlug, returns stable reference data.
+ * Cache scope: Single request (React cache).
+ * Invalidation: Automatic at request end.
+ * Note: Funds are relatively stable; mutations should use revalidateTag for cross-request freshness.
+ */
+export const getTreasuryFunds = cache(async (churchSlug: string) => {
   const ctx = await requireChurchAccess(churchSlug);
   const supabase = await createClient();
 
@@ -79,7 +86,13 @@ export async function getTreasuryFunds(churchSlug: string) {
   if (error) throw new Error(error.message);
 
   return data ?? [];
-}
+});
+
+// Tag-based cache keys for treasury data (for use with unstable_cache if needed)
+export const treasuryCacheTags = {
+  funds: (churchSlug: string) => `church-${churchSlug}-funds`,
+  treasury: (churchSlug: string) => `church-${churchSlug}-treasury`,
+};
 
 export async function getTreasuryRecentInflows(churchSlug: string) {
   const ctx = await requireChurchAccess(churchSlug);
@@ -113,7 +126,13 @@ export async function getTreasuryRecentOutflows(churchSlug: string) {
   return data ?? [];
 }
 
-export async function getTreasuryFormOptions(churchSlug: string) {
+/**
+ * Get treasury form options - cached per church for request deduplication.
+ * Safe to cache: form reference data (funds, members, departments) changes infrequently.
+ * Cache scope: Single request (React cache).
+ * Cache key: churchSlug
+ */
+export const getTreasuryFormOptions = cache(async (churchSlug: string) => {
   const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
   const supabase = await createClient();
 
@@ -150,7 +169,7 @@ export async function getTreasuryFormOptions(churchSlug: string) {
     members: members ?? [],
     departments: departments ?? [],
   };
-}
+});
 
 export async function getTreasuryInflows(
   churchSlug: string,
@@ -237,13 +256,24 @@ export async function getTreasuryOutflows(
   return data ?? [];
 }
 
+/**
+ * Narrow field selection for treasury inflow lookup.
+ * Previous: select("*") - fetched all fields including internal metadata
+ * Now: explicit fields needed for editing and display
+ */
+const INFLOW_DETAIL_FIELDS = `
+  id, church_id, member_id, fund_id, 
+  inflow_type, amount, inflow_date, is_anonymous,
+  note, reference_number, created_at, updated_at
+`;
+
 export async function getTreasuryInflowById(churchSlug: string, entryId: string) {
   const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("treasury_inflows")
-    .select("*")
+    .select(INFLOW_DETAIL_FIELDS)
     .eq("church_id", ctx.churchId)
     .eq("id", entryId)
     .maybeSingle();
@@ -253,13 +283,24 @@ export async function getTreasuryInflowById(churchSlug: string, entryId: string)
   return data;
 }
 
+/**
+ * Narrow field selection for treasury outflow lookup.
+ * Previous: select("*") - fetched all fields including internal metadata
+ * Now: explicit fields needed for editing and display
+ */
+const OUTFLOW_DETAIL_FIELDS = `
+  id, church_id, fund_id, department_id,
+  outflow_type, amount, outflow_date, payee, purpose, project_name,
+  note, reference_number, created_at, updated_at
+`;
+
 export async function getTreasuryOutflowById(churchSlug: string, entryId: string) {
   const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
   const supabase = await createClient();
 
   const { data, error } = await supabase
     .from("treasury_outflows")
-    .select("*")
+    .select(OUTFLOW_DETAIL_FIELDS)
     .eq("church_id", ctx.churchId)
     .eq("id", entryId)
     .maybeSingle();

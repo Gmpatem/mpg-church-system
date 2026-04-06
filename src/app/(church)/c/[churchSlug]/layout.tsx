@@ -1,5 +1,4 @@
 import { requireChurchAccess } from "@/features/access/queries";
-import { canCurrentUserViewAccessControl } from "@/features/access-control/queries";
 import { getChurchNotifications } from "@/features/church-notifications/queries";
 import { ChurchShell } from "@/components/navigation/ChurchShell";
 
@@ -21,15 +20,17 @@ function getRoleLabel(roles: string[]) {
   return "Member";
 }
 
+function canViewAccessControl(roles: string[]): boolean {
+  return roles.some((role) =>
+    ["pastor", "church_admin", "tech_team", "clerk", "church_secretary"].includes(role)
+  );
+}
+
 export default async function ChurchLayout({ children, params }: ChurchLayoutProps) {
   const { churchSlug } = await params;
 
-  const [canViewAccessControl, ctx] = await Promise.all([
-    canCurrentUserViewAccessControl(churchSlug),
-    requireChurchAccess(churchSlug),
-  ]);
-
-  const notifications = await getChurchNotifications(ctx.churchId, churchSlug);
+  const ctx = await requireChurchAccess(churchSlug);
+  const notifications = await getChurchNotifications(ctx.churchId);
 
   return (
     <ChurchShell
@@ -49,7 +50,7 @@ export default async function ChurchLayout({ children, params }: ChurchLayoutPro
           : null
       }
       roleLabel={getRoleLabel(ctx.roles)}
-      showAccessControl={canViewAccessControl}
+      showAccessControl={canViewAccessControl(ctx.roles)}
       notifications={notifications}
     >
       {children}
