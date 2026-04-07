@@ -27,7 +27,7 @@ export async function DashboardStatsSection({
   ]);
 
   return (
-    <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
       {[
         { label: "Members", value: membersCount ?? 0, href: `/c/${churchSlug}/members` },
         { label: "Households", value: householdsCount ?? 0, href: `/c/${churchSlug}/households` },

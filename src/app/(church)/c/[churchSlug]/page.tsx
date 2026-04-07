@@ -1,7 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { DashboardShell } from "./DashboardShell";
+import { WorkspaceHero } from "@/components/workspace";
 import { DashboardStatsSection } from "./DashboardStatsSection";
 import { DashboardRecentSection } from "./DashboardRecentSection";
 import { DashboardSectionLoading } from "./DashboardSectionLoading";
@@ -111,7 +111,17 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
 
   return (
     <div className="space-y-8">
-      <DashboardShell churchName={church.name} churchSlug={churchSlug} />
+      <WorkspaceHero
+        eyebrow="Church Dashboard"
+        title={church.name ?? churchSlug}
+        description="Central operations view for members, departments, treasury, events, and reporting."
+        badges={["Live workspace"]}
+        actions={[
+          { label: "Manage Members", href: `/c/${churchSlug}/members`, variant: "primary" },
+          { label: "Open Events", href: `/c/${churchSlug}/events`, variant: "secondary" },
+          { label: "Open Reports", href: `/c/${churchSlug}/reports`, variant: "secondary" },
+        ]}
+      />
 
       <Suspense fallback={<div className="h-12 animate-pulse rounded-xl bg-slate-200" />}>
         <OfficeAttentionStripAsync churchSlug={churchSlug} />
