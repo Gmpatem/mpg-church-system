@@ -134,7 +134,7 @@ export function MoneyOutForm({ churchSlug, options, defaults, modeLabel }: Money
 
         <div>
           <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-          <input id="amount" name="amount" type="number" step="0.01" min="0.01" required className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
+          <input id="amount" name="amount" type="number" step="0.01" min="0.01" required inputMode="decimal" className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>

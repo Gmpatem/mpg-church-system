@@ -15,9 +15,7 @@ import {
   type WorkspaceTabItem,
 } from "@/components/workspace";
 
-type MainTab = "weekly_entry" | "money_out" | "review_ledger" | "funds";
-type WeeklyTab = "tithe" | "offering" | "donation";
-type OutflowTab = "expense" | "project" | "mission" | "department";
+type MainTab = "record_income" | "record_expenses" | "ledger" | "funds";
 
 interface TreasuryWorkspaceProps {
   churchSlug: string;
@@ -42,23 +40,10 @@ interface TreasuryWorkspaceProps {
 }
 
 const MAIN_TABS: WorkspaceTabItem[] = [
-  { key: "weekly_entry", label: "Weekly Entry" },
-  { key: "money_out", label: "Money Out" },
-  { key: "review_ledger", label: "Review Ledger" },
+  { key: "record_income", label: "Record Income" },
+  { key: "record_expenses", label: "Record Expenses" },
+  { key: "ledger", label: "Ledger" },
   { key: "funds", label: "Funds" },
-];
-
-const WEEKLY_TABS: WorkspaceTabItem[] = [
-  { key: "tithe", label: "Tithe" },
-  { key: "offering", label: "Offering" },
-  { key: "donation", label: "Gift / Donation", shortLabel: "Donation" },
-];
-
-const OUTFLOW_TABS: WorkspaceTabItem[] = [
-  { key: "expense", label: "Expense" },
-  { key: "project", label: "Project" },
-  { key: "mission", label: "Mission / District", shortLabel: "Mission" },
-  { key: "department", label: "Department" },
 ];
 
 function formatAmount(value: number) {
@@ -191,45 +176,15 @@ export function TreasuryWorkspace({
   recentOutflows,
   formOptions,
 }: TreasuryWorkspaceProps) {
-  const [mainTab, setMainTab] = useState<MainTab>("weekly_entry");
-  const [weeklyTab, setWeeklyTab] = useState<WeeklyTab>("tithe");
-  const [outflowTab, setOutflowTab] = useState<OutflowTab>("expense");
+  const [mainTab, setMainTab] = useState<MainTab>("record_income");
 
-  const needsMembers = mainTab === "weekly_entry" || mainTab === "money_out";
+  const needsMembers = mainTab === "record_income" || mainTab === "record_expenses";
   const memberLoader = useTreasuryMembers(churchSlug, needsMembers);
 
   const mergedFormOptions = useMemo(() => ({
     ...formOptions,
     members: memberLoader.loaded ? memberLoader.members : formOptions.members,
   }), [formOptions, memberLoader.loaded, memberLoader.members]);
-
-  const moneyInDefaults = useMemo(() => {
-    if (weeklyTab === "tithe") {
-      return {
-        inflowType: "tithe",
-        fundCode: "tithe",
-      };
-    }
-
-    if (weeklyTab === "offering") {
-      return {
-        inflowType: "offering",
-        fundCode: "local_budget",
-      };
-    }
-
-    return {
-      inflowType: "donation",
-      fundCode: "special_donation",
-    };
-  }, [weeklyTab]);
-
-  const moneyOutDefaults = useMemo(() => {
-    if (outflowTab === "project") return { outflowType: "project" };
-    if (outflowTab === "mission") return { outflowType: "mission_remittance" };
-    if (outflowTab === "department") return { outflowType: "department_expense" };
-    return { outflowType: "operations" };
-  }, [outflowTab]);
 
   const inflowTypeSummary = dashboard.inflowByType
     .map((item) => `${item.type}: ${formatAmount(Number(item.amount || 0))}`)
@@ -263,14 +218,19 @@ export function TreasuryWorkspace({
         <WorkspaceStatCard label="Funds" value={dashboard.fundCount} hint="Active treasury funds" />
         <WorkspaceStatCard label="Total In" value={formatAmount(dashboard.totalIn)} hint={inflowTypeSummary || "No inflow activity yet"} />
         <WorkspaceStatCard label="Total Out" value={formatAmount(dashboard.totalOut)} hint={outflowTypeSummary || "No outflow activity yet"} />
-        <WorkspaceStatCard label="Net Balance" value={formatAmount(dashboard.netBalance)} hint="Treasury inflow minus outflow" />
+        <WorkspaceStatCard
+          label="Net Balance"
+          value={formatAmount(dashboard.netBalance)}
+          hint="Treasury inflow minus outflow"
+          valueClassName={dashboard.netBalance >= 0 ? "text-emerald-600" : "text-red-600"}
+        />
         <WorkspaceStatCard label="Linked Contributions" value={dashboard.linkedInflowsCount} hint="Member-linked entries" />
         <WorkspaceStatCard label="Anonymous Contributions" value={dashboard.anonymousInflowsCount} hint="Anonymous inflow entries" />
       </div>
 
       <WorkspaceControlRail
         title="Treasury Modes"
-        description="Switch between weekly entry, spending, ledger review, and fund management without leaving the workspace."
+        description="Switch between income entry, expense recording, ledger review, and fund management without leaving the workspace."
       >
         <WorkspaceTabs
           items={MAIN_TABS}
@@ -280,111 +240,70 @@ export function TreasuryWorkspace({
         />
       </WorkspaceControlRail>
 
-      {(mainTab === "weekly_entry" || mainTab === "money_out") && memberLoader.loading && !memberLoader.loaded ? (
+      {(mainTab === "record_income" || mainTab === "record_expenses") && memberLoader.loading && !memberLoader.loaded ? (
         <MemberOptionsLoading />
       ) : null}
 
-      {(mainTab === "weekly_entry" || mainTab === "money_out") && memberLoader.error ? (
+      {(mainTab === "record_income" || mainTab === "record_expenses") && memberLoader.error ? (
         <MemberOptionsError message={memberLoader.error} />
       ) : null}
 
-      {mainTab === "weekly_entry" ? (
-        <div className="space-y-6">
-          <WorkspaceControlRail
-            title="Weekly Entry Types"
-            description="Use fast tabs for tithe, offering, and gift or donation entry."
-          >
-            <WorkspaceTabs
-              items={WEEKLY_TABS}
-              activeKey={weeklyTab}
-              onChange={(key) => setWeeklyTab(key as WeeklyTab)}
-              className="border-0 bg-transparent p-0 shadow-none"
-            />
-          </WorkspaceControlRail>
-
-          <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.95fr)]">
-            <div className="space-y-6">
-              {weeklyTab === "tithe" ? (
-                <TitheEntryForm churchSlug={churchSlug} options={mergedFormOptions} />
-              ) : (
-                <MoneyInForm
-                  churchSlug={churchSlug}
-                  options={mergedFormOptions}
-                  defaults={moneyInDefaults}
-                  modeLabel={weeklyTab === "offering" ? "Offering Entry" : "Gift / Donation Entry"}
-                />
-              )}
-            </div>
-
-            <div className="space-y-6">
-              <LedgerList
-                title="Recent Money In"
-                description="Latest treasury inflow records for fast verification."
-                rows={recentInflows}
-                mode="inflow"
-              />
-              <LedgerList
-                title="Recent Money Out"
-                description="Latest treasury spending records for quick oversight."
-                rows={recentOutflows}
-                mode="outflow"
-              />
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {mainTab === "money_out" ? (
-        <div className="space-y-6">
-          <WorkspaceControlRail
-            title="Spending Modes"
-            description="Switch between operating expense, project, mission, and department disbursement entry."
-          >
-            <WorkspaceTabs
-              items={OUTFLOW_TABS}
-              activeKey={outflowTab}
-              onChange={(key) => setOutflowTab(key as OutflowTab)}
-              className="border-0 bg-transparent p-0 shadow-none"
-            />
-          </WorkspaceControlRail>
-
-          <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.95fr)]">
-            <div className="space-y-6">
-              <MoneyOutForm
+      {mainTab === "record_income" ? (
+        <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.95fr)]">
+          <div className="space-y-6">
+            <WorkspaceSectionCard title="Tithe">
+              <TitheEntryForm churchSlug={churchSlug} options={mergedFormOptions} />
+            </WorkspaceSectionCard>
+            <WorkspaceSectionCard title="Offering / Donation">
+              <MoneyInForm
                 churchSlug={churchSlug}
                 options={mergedFormOptions}
-                defaults={moneyOutDefaults}
-                modeLabel={
-                  outflowTab === "expense"
-                    ? "Expense Entry"
-                    : outflowTab === "project"
-                      ? "Project Spending Entry"
-                      : outflowTab === "mission"
-                        ? "Mission / District Entry"
-                        : "Department Expense Entry"
-                }
+                modeLabel="Offering / Donation Entry"
               />
-            </div>
+            </WorkspaceSectionCard>
+          </div>
 
-            <div className="space-y-6">
-              <LedgerList
-                title="Recent Money In"
-                description="Latest treasury inflow records for context while recording spending."
-                rows={recentInflows}
-                mode="inflow"
-              />
-              <LedgerList
-                title="Recent Money Out"
-                description="Latest treasury spending records for quick review."
-                rows={recentOutflows}
-                mode="outflow"
-              />
-            </div>
+          <div className="space-y-6">
+            <LedgerList
+              title="Recent Money In"
+              description="Latest treasury inflow records for fast verification."
+              rows={recentInflows}
+              mode="inflow"
+            />
+            <LedgerList
+              title="Recent Money Out"
+              description="Latest treasury spending records for quick oversight."
+              rows={recentOutflows}
+              mode="outflow"
+            />
           </div>
         </div>
       ) : null}
 
-      {mainTab === "review_ledger" ? (
+      {mainTab === "record_expenses" ? (
+        <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.95fr)]">
+          <div className="space-y-6">
+            <MoneyOutForm churchSlug={churchSlug} options={mergedFormOptions} />
+          </div>
+
+          <div className="space-y-6">
+            <LedgerList
+              title="Recent Money In"
+              description="Latest treasury inflow records for context while recording spending."
+              rows={recentInflows}
+              mode="inflow"
+            />
+            <LedgerList
+              title="Recent Money Out"
+              description="Latest treasury spending records for quick review."
+              rows={recentOutflows}
+              mode="outflow"
+            />
+          </div>
+        </div>
+      ) : null}
+
+      {mainTab === "ledger" ? (
         <div className="grid grid-cols-1 gap-6 2xl:grid-cols-2">
           <LedgerList
             title="Recent Inflows"

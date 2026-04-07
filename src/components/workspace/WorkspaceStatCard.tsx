@@ -5,6 +5,7 @@ interface WorkspaceStatCardProps {
   value: string | number;
   hint?: string;
   className?: string;
+  valueClassName?: string;
 }
 
 export function WorkspaceStatCard({
@@ -12,6 +13,7 @@ export function WorkspaceStatCard({
   value,
   hint,
   className,
+  valueClassName,
 }: WorkspaceStatCardProps) {
   return (
     <div className={cn("overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm", className)}>
@@ -20,7 +22,7 @@ export function WorkspaceStatCard({
         <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
           {label}
         </p>
-        <p className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
+        <p className={cn("mt-3 text-3xl font-bold tracking-tight text-slate-950", valueClassName)}>
           {typeof value === "number" ? value.toLocaleString("en-US") : value}
         </p>
         {hint ? (
