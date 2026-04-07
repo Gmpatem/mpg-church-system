@@ -1,6 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { useActionState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,6 +18,8 @@ export function MemberJoinForm({ church }: MemberJoinFormProps) {
     completeMemberOnboardingAction,
     null
   );
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -88,37 +92,64 @@ export function MemberJoinForm({ church }: MemberJoinFormProps) {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="memberCode">Member code</Label>
+            <Label htmlFor="memberCode">Member Code (optional)</Label>
             <Input
               id="memberCode"
               name="memberCode"
-              placeholder="Optional if you know it"
+              placeholder="e.g. MC-001"
             />
+            <p className="text-xs text-muted-foreground">
+              Your member code was given to you by your church administrator. Leave this blank if you don't have one.
+            </p>
           </div>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="password">Password</Label>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            placeholder="Create a password"
-            autoComplete="new-password"
-            required
-          />
+          <div className="relative">
+            <Input
+              id="password"
+              name="password"
+              type={showPassword ? "text" : "password"}
+              placeholder="Create a password"
+              autoComplete="new-password"
+              required
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword((v) => !v)}
+              tabIndex={-1}
+              aria-label={showPassword ? "Hide password" : "Show password"}
+              className="absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
 
         <div className="space-y-2">
           <Label htmlFor="confirmPassword">Confirm password</Label>
-          <Input
-            id="confirmPassword"
-            name="confirmPassword"
-            type="password"
-            placeholder="Confirm your password"
-            autoComplete="new-password"
-            required
-          />
+          <div className="relative">
+            <Input
+              id="confirmPassword"
+              name="confirmPassword"
+              type={showConfirmPassword ? "text" : "password"}
+              placeholder="Confirm your password"
+              autoComplete="new-password"
+              required
+              className="pr-10"
+            />
+            <button
+              type="button"
+              onClick={() => setShowConfirmPassword((v) => !v)}
+              tabIndex={-1}
+              aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+              className="absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground"
+            >
+              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
         </div>
 
         <Button type="submit" className="w-full" disabled={isPending}>
