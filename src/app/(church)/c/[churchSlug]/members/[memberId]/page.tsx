@@ -57,8 +57,8 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
       />
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{memberLabel}</h2>
-          <p className="mt-1 text-sm text-gray-600">
+          <h2 className="text-2xl font-bold text-slate-900">{memberLabel}</h2>
+          <p className="mt-1 text-sm text-slate-600">
             Member profile, finance overview, and department assignments.
           </p>
         </div>
@@ -66,13 +66,13 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
         <div className="flex flex-wrap gap-3">
           <Link
             href={`/c/${churchSlug}/members`}
-            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
           >
             Back to Members
           </Link>
           <Link
             href={`/c/${churchSlug}/members/${memberId}/edit`}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="inline-flex items-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
           >
             Edit Member
           </Link>
@@ -80,55 +80,55 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-          <div className="text-xs uppercase tracking-wide text-gray-500">Member Code</div>
-          <div className="mt-2 text-lg font-semibold text-gray-900">{member.member_code ?? "—"}</div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-slate-500">Member Code</div>
+          <div className="mt-2 text-lg font-semibold text-slate-900">{member.member_code ?? "—"}</div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-          <div className="text-xs uppercase tracking-wide text-gray-500">Status</div>
-          <div className="mt-2 text-lg font-semibold text-gray-900">{getLabel(memberStatusLabels, member.membership_status)}</div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-slate-500">Status</div>
+          <div className="mt-2 text-lg font-semibold text-slate-900">{getLabel(memberStatusLabels, member.membership_status)}</div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-          <div className="text-xs uppercase tracking-wide text-gray-500">Phone</div>
-          <div className="mt-2 text-lg font-semibold text-gray-900">{member.phone ?? "—"}</div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-slate-500">Phone</div>
+          <div className="mt-2 text-lg font-semibold text-slate-900">{member.phone ?? "—"}</div>
         </div>
 
-        <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-          <div className="text-xs uppercase tracking-wide text-gray-500">Email</div>
-          <div className="mt-2 text-lg font-semibold text-gray-900">{member.email ?? "—"}</div>
+        <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="text-xs uppercase tracking-wide text-slate-500">Email</div>
+          <div className="mt-2 text-lg font-semibold text-slate-900">{member.email ?? "—"}</div>
         </div>
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-gray-900">Finance Overview</h3>
+      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-slate-900">Finance Overview</h3>
 
         <div className="mt-4 grid gap-4 md:grid-cols-4">
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <div className="text-xs uppercase tracking-wide text-gray-500">Total Tithe</div>
-            <div className="mt-2 text-lg font-semibold text-gray-900">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div className="text-xs uppercase tracking-wide text-slate-500">Total Tithe</div>
+            <div className="mt-2 text-lg font-semibold text-slate-900">
               {formatMoney(finance?.totalTithe)}
             </div>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <div className="text-xs uppercase tracking-wide text-gray-500">Total Offering</div>
-            <div className="mt-2 text-lg font-semibold text-gray-900">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div className="text-xs uppercase tracking-wide text-slate-500">Total Offering</div>
+            <div className="mt-2 text-lg font-semibold text-slate-900">
               {formatMoney(finance?.totalOffering)}
             </div>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <div className="text-xs uppercase tracking-wide text-gray-500">Total Giving</div>
-            <div className="mt-2 text-lg font-semibold text-gray-900">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div className="text-xs uppercase tracking-wide text-slate-500">Total Giving</div>
+            <div className="mt-2 text-lg font-semibold text-slate-900">
               {formatMoney(finance?.totalGiving)}
             </div>
           </div>
 
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <div className="text-xs uppercase tracking-wide text-gray-500">Recent Contributions</div>
-            <div className="mt-2 text-lg font-semibold text-gray-900">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div className="text-xs uppercase tracking-wide text-slate-500">Recent Contributions</div>
+            <div className="mt-2 text-lg font-semibold text-slate-900">
               {Array.isArray(finance?.recentContributions) ? finance.recentContributions.length : 0}
             </div>
           </div>

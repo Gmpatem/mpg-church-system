@@ -27,50 +27,50 @@ export default async function TreasuryOutflowsPage({ params, searchParams }: Tre
     <div className="space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Money Out Records</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <h2 className="text-2xl font-bold text-slate-900">Money Out Records</h2>
+          <p className="text-sm text-slate-600 mt-1">
             Review project expenses, remittances, and other outgoing finance records.
           </p>
         </div>
 
         <div className="flex flex-wrap gap-3">
-<Link
-  href={`/c/${churchSlug}/treasury/audit`}
-  className="rounded-md border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-900 hover:bg-amber-100"
->
-  Audit Trail
-</Link>
+          <Link
+            href={`/c/${churchSlug}/treasury/audit`}
+            className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-900 hover:bg-amber-100"
+          >
+            Audit Trail
+          </Link>
           <Link
             href={`/c/${churchSlug}/treasury`}
-            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
           >
             Back to Treasury
           </Link>
           <Link
             href={`/c/${churchSlug}/treasury/out/new`}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+            className="inline-flex items-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
           >
             Record Money Out
           </Link>
         </div>
       </div>
 
-      <form method="get" className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
+      <form method="get" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-6">
           <div className="xl:col-span-2">
-            <label htmlFor="q" className="block text-sm font-medium text-gray-700 mb-1">Search</label>
+            <label htmlFor="q" className="block text-sm font-medium text-slate-700 mb-1">Search</label>
             <input
               id="q"
               name="q"
               defaultValue={q}
               placeholder="Purpose, payee, project, reference"
-              className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
           <div>
-            <label htmlFor="outflowType" className="block text-sm font-medium text-gray-700 mb-1">Type</label>
-            <select id="outflowType" name="outflowType" defaultValue={outflowType} className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+            <label htmlFor="outflowType" className="block text-sm font-medium text-slate-700 mb-1">Type</label>
+            <select id="outflowType" name="outflowType" defaultValue={outflowType} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
               <option value="">All</option>
               <option value="project">Project</option>
               <option value="evangelism">Evangelism</option>
@@ -84,8 +84,8 @@ export default async function TreasuryOutflowsPage({ params, searchParams }: Tre
           </div>
 
           <div>
-            <label htmlFor="fundId" className="block text-sm font-medium text-gray-700 mb-1">Fund</label>
-            <select id="fundId" name="fundId" defaultValue={fundId} className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+            <label htmlFor="fundId" className="block text-sm font-medium text-slate-700 mb-1">Fund</label>
+            <select id="fundId" name="fundId" defaultValue={fundId} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
               <option value="">All</option>
               {options.funds.map((fund) => (
                 <option key={fund.id} value={fund.id}>{fund.name}</option>
@@ -94,8 +94,8 @@ export default async function TreasuryOutflowsPage({ params, searchParams }: Tre
           </div>
 
           <div>
-            <label htmlFor="departmentId" className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-            <select id="departmentId" name="departmentId" defaultValue={departmentId} className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+            <label htmlFor="departmentId" className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+            <select id="departmentId" name="departmentId" defaultValue={departmentId} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
               <option value="">All</option>
               {options.departments.map((dept) => (
                 <option key={dept.id} value={dept.id}>{dept.department_name}</option>
@@ -104,54 +104,54 @@ export default async function TreasuryOutflowsPage({ params, searchParams }: Tre
           </div>
 
           <div>
-            <label htmlFor="dateFrom" className="block text-sm font-medium text-gray-700 mb-1">From</label>
-            <input id="dateFrom" name="dateFrom" type="date" defaultValue={dateFrom} className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
+            <label htmlFor="dateFrom" className="block text-sm font-medium text-slate-700 mb-1">From</label>
+            <input id="dateFrom" name="dateFrom" type="date" defaultValue={dateFrom} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
 
           <div>
-            <label htmlFor="dateTo" className="block text-sm font-medium text-gray-700 mb-1">To</label>
-            <input id="dateTo" name="dateTo" type="date" defaultValue={dateTo} className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
+            <label htmlFor="dateTo" className="block text-sm font-medium text-slate-700 mb-1">To</label>
+            <input id="dateTo" name="dateTo" type="date" defaultValue={dateTo} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
         </div>
 
         <div className="mt-4 flex flex-wrap gap-3">
-          <button type="submit" className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700">
+          <button type="submit" className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800">
             Apply Filters
           </button>
-          <Link href={`/c/${churchSlug}/treasury/out`} className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">
+          <Link href={`/c/${churchSlug}/treasury/out`} className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50">
             Reset
           </Link>
         </div>
       </form>
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         {outflows.length === 0 ? (
-          <div className="px-6 py-10 text-sm text-gray-600">No outflow records matched your filters.</div>
+          <div className="px-6 py-10 text-sm text-slate-600">No outflow records matched your filters.</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Payee</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Purpose</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Reference</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Action</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Date</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Type</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Amount</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Payee</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Purpose</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Reference</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-200 bg-white">
+              <tbody className="divide-y divide-slate-200 bg-white">
                 {outflows.map((item: any) => (
                   <tr key={item.id}>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.outflow_date}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.outflow_type}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-gray-900">{Number(item.amount).toFixed(2)}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.payee ?? "—"}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.purpose}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">{item.reference_number ?? "—"}</td>
-                    <td className="px-6 py-4 text-sm">
-                      <Link href={`/c/${churchSlug}/treasury/out/${item.id}/edit`} className="text-blue-600 hover:underline">
+                    <td className="px-6 py-4 text-sm text-slate-600">{item.outflow_date}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{item.outflow_type}</td>
+                    <td className="px-6 py-4 text-sm font-medium text-slate-900">{Number(item.amount).toFixed(2)}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{item.payee ?? "—"}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{item.purpose}</td>
+                    <td className="px-6 py-4 text-sm text-slate-600">{item.reference_number ?? "—"}</td>
+                    <td className="px-6 py-4 text-sm flex gap-3">
+                      <Link href={`/c/${churchSlug}/treasury/out/${item.id}/edit`} className="text-slate-700 hover:underline">
                         Edit
                       </Link>
                       <Link
@@ -171,5 +171,3 @@ export default async function TreasuryOutflowsPage({ params, searchParams }: Tre
     </div>
   );
 }
-
-

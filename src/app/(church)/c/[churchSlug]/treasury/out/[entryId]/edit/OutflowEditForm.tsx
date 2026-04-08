@@ -16,7 +16,7 @@ export function OutflowEditForm({ churchSlug, entry, options }: OutflowEditFormP
   const [state, formAction, isPending] = useActionState(updateTreasuryOutflowAction, null);
 
   return (
-    <form action={formAction} className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <form action={formAction} className="space-y-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <input type="hidden" name="churchSlug" value={churchSlug} />
       <input type="hidden" name="entryId" value={entry.id} />
 
@@ -34,8 +34,8 @@ export function OutflowEditForm({ churchSlug, entry, options }: OutflowEditFormP
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label htmlFor="outflowType" className="block text-sm font-medium text-gray-700 mb-1">Outflow Type</label>
-          <select id="outflowType" name="outflowType" defaultValue={entry.outflow_type} required className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+          <label htmlFor="outflowType" className="block text-sm font-medium text-slate-700 mb-1">Outflow Type</label>
+          <select id="outflowType" name="outflowType" defaultValue={entry.outflow_type} required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
             <option value="project">Project</option>
             <option value="evangelism">Evangelism</option>
             <option value="mission_remittance">Mission / District Remittance</option>
@@ -48,8 +48,8 @@ export function OutflowEditForm({ churchSlug, entry, options }: OutflowEditFormP
         </div>
 
         <div>
-          <label htmlFor="fundId" className="block text-sm font-medium text-gray-700 mb-1">Fund Source</label>
-          <select id="fundId" name="fundId" defaultValue={entry.fund_id ?? ""} className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+          <label htmlFor="fundId" className="block text-sm font-medium text-slate-700 mb-1">Fund Source</label>
+          <select id="fundId" name="fundId" defaultValue={entry.fund_id ?? ""} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
             <option value="">Not specified</option>
             {options.funds.map((fund) => (
               <option key={fund.id} value={fund.id}>{fund.name}</option>
@@ -58,8 +58,8 @@ export function OutflowEditForm({ churchSlug, entry, options }: OutflowEditFormP
         </div>
 
         <div>
-          <label htmlFor="departmentId" className="block text-sm font-medium text-gray-700 mb-1">Department</label>
-          <select id="departmentId" name="departmentId" defaultValue={entry.department_id ?? ""} className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+          <label htmlFor="departmentId" className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+          <select id="departmentId" name="departmentId" defaultValue={entry.department_id ?? ""} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
             <option value="">Not specified</option>
             {options.departments.map((dept) => (
               <option key={dept.id} value={dept.id}>{dept.department_name}</option>
@@ -68,43 +68,43 @@ export function OutflowEditForm({ churchSlug, entry, options }: OutflowEditFormP
         </div>
 
         <div>
-          <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-          <input id="amount" name="amount" type="number" step="0.01" min="0.01" defaultValue={entry.amount} required className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
+          <label htmlFor="amount" className="block text-sm font-medium text-slate-700 mb-1">Amount</label>
+          <input id="amount" name="amount" type="number" step="0.01" min="0.01" defaultValue={entry.amount} required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
-          <label htmlFor="outflowDate" className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-          <input id="outflowDate" name="outflowDate" type="date" defaultValue={entry.outflow_date} required className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
+          <label htmlFor="outflowDate" className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+          <input id="outflowDate" name="outflowDate" type="date" defaultValue={entry.outflow_date} required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
-          <label htmlFor="payee" className="block text-sm font-medium text-gray-700 mb-1">Payee / Recipient</label>
-          <input id="payee" name="payee" defaultValue={entry.payee ?? ""} className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
+          <label htmlFor="payee" className="block text-sm font-medium text-slate-700 mb-1">Payee / Recipient</label>
+          <input id="payee" name="payee" defaultValue={entry.payee ?? ""} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div className="md:col-span-2">
-          <label htmlFor="purpose" className="block text-sm font-medium text-gray-700 mb-1">Purpose</label>
-          <input id="purpose" name="purpose" defaultValue={entry.purpose ?? ""} required className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
+          <label htmlFor="purpose" className="block text-sm font-medium text-slate-700 mb-1">Purpose</label>
+          <input id="purpose" name="purpose" defaultValue={entry.purpose ?? ""} required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
-          <label htmlFor="projectName" className="block text-sm font-medium text-gray-700 mb-1">Project Name</label>
-          <input id="projectName" name="projectName" defaultValue={entry.project_name ?? ""} className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
+          <label htmlFor="projectName" className="block text-sm font-medium text-slate-700 mb-1">Project Name</label>
+          <input id="projectName" name="projectName" defaultValue={entry.project_name ?? ""} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
-          <label htmlFor="referenceNumber" className="block text-sm font-medium text-gray-700 mb-1">Reference</label>
-          <input id="referenceNumber" name="referenceNumber" defaultValue={entry.reference_number ?? ""} className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
+          <label htmlFor="referenceNumber" className="block text-sm font-medium text-slate-700 mb-1">Reference</label>
+          <input id="referenceNumber" name="referenceNumber" defaultValue={entry.reference_number ?? ""} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
       </div>
 
       <div>
-        <label htmlFor="note" className="block text-sm font-medium text-gray-700 mb-1">Note</label>
-        <textarea id="note" name="note" rows={4} defaultValue={entry.note ?? ""} className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
+        <label htmlFor="note" className="block text-sm font-medium text-slate-700 mb-1">Note</label>
+        <textarea id="note" name="note" rows={4} defaultValue={entry.note ?? ""} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
 
       <div>
-        <label htmlFor="correctionNote" className="block text-sm font-medium text-gray-700 mb-1">Correction Note</label>
+        <label htmlFor="correctionNote" className="block text-sm font-medium text-slate-700 mb-1">Correction Note</label>
         <textarea id="correctionNote" name="correctionNote" rows={3} required placeholder="Explain why this treasury entry is being corrected." className="w-full rounded-md border border-amber-300 bg-amber-50 px-3 py-2 outline-none focus:ring-2 focus:ring-amber-500" />
       </div>
 
@@ -112,7 +112,7 @@ export function OutflowEditForm({ churchSlug, entry, options }: OutflowEditFormP
         <button
           type="submit"
           disabled={isPending}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
         >
           {isPending ? "Saving..." : "Save Correction"}
         </button>

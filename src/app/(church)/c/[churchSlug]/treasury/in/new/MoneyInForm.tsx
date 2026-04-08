@@ -46,15 +46,15 @@ export function MoneyInForm({ churchSlug, options, defaults, modeLabel }: MoneyI
   const today = getTodayLocalDate();
 
   return (
-    <form action={formAction} className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <form action={formAction} className="space-y-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <input type="hidden" name="churchSlug" value={churchSlug} />
 
       {isFixedType ? <input type="hidden" name="inflowType" value={defaults?.inflowType ?? ""} /> : null}
       {isFixedFund ? <input type="hidden" name="fundId" value={defaultFundId} /> : null}
 
       <div>
-        <h3 className="text-lg font-semibold text-gray-900">{modeLabel ?? "Record Money In"}</h3>
-        <p className="mt-1 text-sm text-gray-600">
+        <h3 className="text-lg font-semibold text-slate-900">{modeLabel ?? "Record Money In"}</h3>
+        <p className="mt-1 text-sm text-slate-600">
           Enter tithe, offering, donation, or other incoming funds quickly.
         </p>
       </div>
@@ -74,8 +74,8 @@ export function MoneyInForm({ churchSlug, options, defaults, modeLabel }: MoneyI
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {!isFixedType ? (
           <div>
-            <label htmlFor="inflowType" className="block text-sm font-medium text-gray-700 mb-1">Entry Type</label>
-            <select id="inflowType" name="inflowType" defaultValue={defaults?.inflowType ?? ""} required className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+            <label htmlFor="inflowType" className="block text-sm font-medium text-slate-700 mb-1">Entry Type</label>
+            <select id="inflowType" name="inflowType" defaultValue={defaults?.inflowType ?? ""} required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
               <option value="">Select type</option>
               <option value="tithe">Tithe</option>
               <option value="offering">Offering</option>
@@ -85,8 +85,8 @@ export function MoneyInForm({ churchSlug, options, defaults, modeLabel }: MoneyI
           </div>
         ) : (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Entry Type</label>
-            <div className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+            <label className="block text-sm font-medium text-slate-700 mb-1">Entry Type</label>
+            <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
               {getLockedLabel(defaults?.inflowType)}
             </div>
           </div>
@@ -94,8 +94,8 @@ export function MoneyInForm({ churchSlug, options, defaults, modeLabel }: MoneyI
 
         {!isFixedFund ? (
           <div>
-            <label htmlFor="fundId" className="block text-sm font-medium text-gray-700 mb-1">Fund</label>
-            <select id="fundId" name="fundId" defaultValue={defaultFundId} required className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+            <label htmlFor="fundId" className="block text-sm font-medium text-slate-700 mb-1">Fund</label>
+            <select id="fundId" name="fundId" defaultValue={defaultFundId} required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
               <option value="">Select fund</option>
               {options.funds.map((fund) => (
                 <option key={fund.id} value={fund.id}>
@@ -106,16 +106,16 @@ export function MoneyInForm({ churchSlug, options, defaults, modeLabel }: MoneyI
           </div>
         ) : (
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">Fund</label>
-            <div className="w-full rounded-md border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+            <label className="block text-sm font-medium text-slate-700 mb-1">Fund</label>
+            <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
               {options.funds.find((fund) => fund.id === defaultFundId)?.name ?? "Auto selected"}
             </div>
           </div>
         )}
 
         <div>
-          <label htmlFor="memberId" className="block text-sm font-medium text-gray-700 mb-1">Member</label>
-          <select id="memberId" name="memberId" className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+          <label htmlFor="memberId" className="block text-sm font-medium text-slate-700 mb-1">Member</label>
+          <select id="memberId" name="memberId" className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
             <option value="">Unlinked / not selected</option>
             {options.members.map((member) => (
               <option key={member.id} value={member.id}>
@@ -126,49 +126,49 @@ export function MoneyInForm({ churchSlug, options, defaults, modeLabel }: MoneyI
         </div>
 
         <div>
-          <label htmlFor="isAnonymous" className="block text-sm font-medium text-gray-700 mb-1">Anonymous</label>
-          <select id="isAnonymous" name="isAnonymous" defaultValue="false" className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+          <label htmlFor="isAnonymous" className="block text-sm font-medium text-slate-700 mb-1">Anonymous</label>
+          <select id="isAnonymous" name="isAnonymous" defaultValue="false" className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
             <option value="false">No</option>
             <option value="true">Yes</option>
           </select>
         </div>
 
         <div>
-          <label htmlFor="amount" className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
-          <input id="amount" name="amount" type="number" step="0.01" min="0.01" required inputMode="decimal" className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
+          <label htmlFor="amount" className="block text-sm font-medium text-slate-700 mb-1">Amount</label>
+          <input id="amount" name="amount" type="number" step="0.01" min="0.01" required inputMode="decimal" className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
-          <label htmlFor="inflowDate" className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-          <input id="inflowDate" name="inflowDate" type="date" defaultValue={today} required className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
+          <label htmlFor="inflowDate" className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+          <input id="inflowDate" name="inflowDate" type="date" defaultValue={today} required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
       </div>
 
       <div>
-        <label htmlFor="referenceNumber" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="referenceNumber" className="block text-sm font-medium text-slate-700 mb-1">
           Reference
         </label>
         <input
           id="referenceNumber"
           name="referenceNumber"
           placeholder="Leave blank to auto-generate"
-          className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
         />
-        <p className="mt-1 text-xs text-gray-500">
+        <p className="mt-1 text-xs text-slate-500">
           Tithe and offering can now flow into automatic remittance and local allocation rules.
         </p>
       </div>
 
       <div>
-        <label htmlFor="note" className="block text-sm font-medium text-gray-700 mb-1">Note</label>
-        <textarea id="note" name="note" rows={4} className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
+        <label htmlFor="note" className="block text-sm font-medium text-slate-700 mb-1">Note</label>
+        <textarea id="note" name="note" rows={4} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
 
       <div className="flex justify-end">
         <button
           type="submit"
           disabled={isPending || (Boolean(defaults?.fundCode) && !defaultFundId)}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
         >
           {isPending ? "Saving..." : "Record Money In"}
         </button>

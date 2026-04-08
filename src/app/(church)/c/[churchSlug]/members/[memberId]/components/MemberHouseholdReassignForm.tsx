@@ -24,13 +24,13 @@ export function MemberHouseholdReassignForm({
   const [state, formAction, isPending] = useActionState(reassignMemberHouseholdAction, null);
 
   return (
-    <form action={formAction} className="space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <form action={formAction} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <input type="hidden" name="churchSlug" value={churchSlug} />
       <input type="hidden" name="memberId" value={memberId} />
 
       <div>
-        <h3 className="text-lg font-semibold text-gray-900">Household Link</h3>
-        <p className="mt-1 text-sm text-gray-600">
+        <h3 className="text-lg font-semibold text-slate-900">Household Link</h3>
+        <p className="mt-1 text-sm text-slate-600">
           Reassign this member to a household or remove the household link.
         </p>
       </div>
@@ -48,12 +48,12 @@ export function MemberHouseholdReassignForm({
       ) : null}
 
       <div>
-        <label htmlFor="householdId" className="block text-sm font-medium text-gray-700 mb-1">Household</label>
+        <label htmlFor="householdId" className="block text-sm font-medium text-slate-700 mb-1">Household</label>
         <select
           id="householdId"
           name="householdId"
           defaultValue={currentHouseholdId ?? ""}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="">No household</option>
           {households.map((household) => (
@@ -68,7 +68,7 @@ export function MemberHouseholdReassignForm({
         <button
           type="submit"
           disabled={isPending}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
         >
           {isPending ? "Saving..." : "Update Household"}
         </button>

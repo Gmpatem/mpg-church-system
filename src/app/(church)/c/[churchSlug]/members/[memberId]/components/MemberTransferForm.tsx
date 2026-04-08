@@ -17,13 +17,13 @@ export function MemberTransferForm({
   const [state, formAction, isPending] = useActionState(processMemberTransferAction, null);
 
   return (
-    <form action={formAction} className="space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <form action={formAction} className="space-y-4 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
       <input type="hidden" name="churchSlug" value={churchSlug} />
       <input type="hidden" name="memberId" value={memberId} />
 
       <div>
-        <h3 className="text-lg font-semibold text-gray-900">Transfer Workflow</h3>
-        <p className="mt-1 text-sm text-gray-600">
+        <h3 className="text-lg font-semibold text-slate-900">Transfer Workflow</h3>
+        <p className="mt-1 text-sm text-slate-600">
           Process transfer in or transfer out safely with history preserved.
         </p>
       </div>
@@ -41,12 +41,12 @@ export function MemberTransferForm({
       ) : null}
 
       <div>
-        <label htmlFor="transferType" className="block text-sm font-medium text-gray-700 mb-1">Transfer Type</label>
+        <label htmlFor="transferType" className="block text-sm font-medium text-slate-700 mb-1">Transfer Type</label>
         <select
           id="transferType"
           name="transferType"
           defaultValue="in"
-          className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
         >
           <option value="in">Transfer In</option>
           <option value="out">Transfer Out</option>
@@ -54,36 +54,36 @@ export function MemberTransferForm({
       </div>
 
       <div>
-        <label htmlFor="transferDate" className="block text-sm font-medium text-gray-700 mb-1">Transfer Date</label>
+        <label htmlFor="transferDate" className="block text-sm font-medium text-slate-700 mb-1">Transfer Date</label>
         <input
           id="transferDate"
           name="transferDate"
           type="date"
           required
-          className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
       <div>
-        <label htmlFor="previousChurch" className="block text-sm font-medium text-gray-700 mb-1">
+        <label htmlFor="previousChurch" className="block text-sm font-medium text-slate-700 mb-1">
           Previous / Related Church
         </label>
         <input
           id="previousChurch"
           name="previousChurch"
           defaultValue={previousChurch ?? ""}
-          className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
       <div>
-        <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-1">Reason</label>
+        <label htmlFor="reason" className="block text-sm font-medium text-slate-700 mb-1">Reason</label>
         <textarea
           id="reason"
           name="reason"
           rows={3}
           required
-          className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
@@ -91,7 +91,7 @@ export function MemberTransferForm({
         <button
           type="submit"
           disabled={isPending}
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+          className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
         >
           {isPending ? "Processing..." : "Process Transfer"}
         </button>

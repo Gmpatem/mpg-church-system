@@ -34,10 +34,10 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-xl border border-gray-200 bg-gray-50/50 p-5">
+    <section className="rounded-xl border border-slate-200 bg-slate-50/50 p-5">
       <div className="mb-4">
-        <h3 className="text-base font-semibold text-gray-900">{title}</h3>
-        <p className="mt-1 text-sm text-gray-600">{description}</p>
+        <h3 className="text-base font-semibold text-slate-900">{title}</h3>
+        <p className="mt-1 text-sm text-slate-600">{description}</p>
       </div>
       {children}
     </section>
@@ -82,21 +82,21 @@ export function NewMemberForm({
     <div className="mx-auto max-w-5xl">
       <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Add New Member</h2>
-          <p className="text-sm text-gray-600">
+          <h2 className="text-2xl font-bold text-slate-900">Add New Member</h2>
+          <p className="text-sm text-slate-600">
             Create a member record now. Staff can enter essentials first, and the member can complete missing profile details later.
           </p>
         </div>
 
         <Link
           href={`/c/${churchSlug}/members`}
-          className="text-sm text-blue-600 hover:text-blue-800 underline"
+          className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
         >
           Back to Members
         </Link>
       </div>
 
-      <form action={formAction} className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+      <form action={formAction} className="space-y-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <input type="hidden" name="churchSlug" value={churchSlug} />
 
         {state && !state.ok && (
@@ -138,7 +138,7 @@ export function NewMemberForm({
         >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
-              <label htmlFor="firstName" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="firstName" className="mb-1 block text-sm font-medium text-slate-700">
                 First Name *
               </label>
               <input
@@ -146,12 +146,12 @@ export function NewMemberForm({
                 name="firstName"
                 type="text"
                 required
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label htmlFor="lastName" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="lastName" className="mb-1 block text-sm font-medium text-slate-700">
                 Last Name *
               </label>
               <input
@@ -159,12 +159,12 @@ export function NewMemberForm({
                 name="lastName"
                 type="text"
                 required
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label htmlFor="displayName" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="displayName" className="mb-1 block text-sm font-medium text-slate-700">
                 Display Name
               </label>
               <input
@@ -172,36 +172,36 @@ export function NewMemberForm({
                 name="displayName"
                 type="text"
                 placeholder="Optional custom display name"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label htmlFor="phone" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="phone" className="mb-1 block text-sm font-medium text-slate-700">
                 Phone
               </label>
               <input
                 id="phone"
                 name="phone"
                 type="text"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label htmlFor="email" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="mb-1 block text-sm font-medium text-slate-700">
                 Email
               </label>
               <input
                 id="email"
                 name="email"
                 type="email"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label htmlFor="memberCode" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="memberCode" className="mb-1 block text-sm font-medium text-slate-700">
                 Member Code
               </label>
               <input
@@ -209,7 +209,7 @@ export function NewMemberForm({
                 name="memberCode"
                 type="text"
                 placeholder="Leave blank to auto-generate"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -221,14 +221,14 @@ export function NewMemberForm({
         >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div>
-              <label htmlFor="membershipStatus" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="membershipStatus" className="mb-1 block text-sm font-medium text-slate-700">
                 Membership Status
               </label>
               <select
                 id="membershipStatus"
                 name="membershipStatus"
                 defaultValue="active"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="active">Active</option>
                 <option value="visitor">Visitor</option>
@@ -238,14 +238,14 @@ export function NewMemberForm({
             </div>
 
             <div>
-              <label htmlFor="membershipType" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="membershipType" className="mb-1 block text-sm font-medium text-slate-700">
                 Membership Type
               </label>
               <select
                 id="membershipType"
                 name="membershipType"
                 defaultValue=""
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select type</option>
                 <option value="regular">Regular</option>
@@ -257,50 +257,50 @@ export function NewMemberForm({
             </div>
 
             <div>
-              <label htmlFor="dateJoined" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="dateJoined" className="mb-1 block text-sm font-medium text-slate-700">
                 Date Joined
               </label>
               <input
                 id="dateJoined"
                 name="dateJoined"
                 type="date"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label htmlFor="baptismDate" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="baptismDate" className="mb-1 block text-sm font-medium text-slate-700">
                 Baptism Date
               </label>
               <input
                 id="baptismDate"
                 name="baptismDate"
                 type="date"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label htmlFor="previousChurch" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="previousChurch" className="mb-1 block text-sm font-medium text-slate-700">
                 Previous Church
               </label>
               <input
                 id="previousChurch"
                 name="previousChurch"
                 type="text"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label htmlFor="departmentId" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="departmentId" className="mb-1 block text-sm font-medium text-slate-700">
                 Initial Department
               </label>
               <select
                 id="departmentId"
                 name="departmentId"
                 defaultValue=""
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">No department yet</option>
                 {departments.map((dept) => (
@@ -310,7 +310,7 @@ export function NewMemberForm({
                 ))}
               </select>
               {departments.length === 0 && (
-                <p className="mt-1 text-sm text-gray-500">No active departments found yet.</p>
+                <p className="mt-1 text-sm text-slate-500">No active departments found yet.</p>
               )}
             </div>
           </div>
@@ -322,26 +322,26 @@ export function NewMemberForm({
         >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
             <div>
-              <label htmlFor="dateOfBirth" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="dateOfBirth" className="mb-1 block text-sm font-medium text-slate-700">
                 Date of Birth
               </label>
               <input
                 id="dateOfBirth"
                 name="dateOfBirth"
                 type="date"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label htmlFor="gender" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="gender" className="mb-1 block text-sm font-medium text-slate-700">
                 Gender
               </label>
               <select
                 id="gender"
                 name="gender"
                 defaultValue=""
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select gender</option>
                 <option value="male">Male</option>
@@ -351,14 +351,14 @@ export function NewMemberForm({
             </div>
 
             <div>
-              <label htmlFor="maritalStatus" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="maritalStatus" className="mb-1 block text-sm font-medium text-slate-700">
                 Marital Status
               </label>
               <select
                 id="maritalStatus"
                 name="maritalStatus"
                 defaultValue=""
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select status</option>
                 <option value="single">Single</option>
@@ -370,14 +370,14 @@ export function NewMemberForm({
             </div>
 
             <div>
-              <label htmlFor="profession" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="profession" className="mb-1 block text-sm font-medium text-slate-700">
                 Profession
               </label>
               <input
                 id="profession"
                 name="profession"
                 type="text"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -389,38 +389,38 @@ export function NewMemberForm({
         >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="md:col-span-3">
-              <label htmlFor="address" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="address" className="mb-1 block text-sm font-medium text-slate-700">
                 Address
               </label>
               <textarea
                 id="address"
                 name="address"
                 rows={3}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label htmlFor="city" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="city" className="mb-1 block text-sm font-medium text-slate-700">
                 City
               </label>
               <input
                 id="city"
                 name="city"
                 type="text"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label htmlFor="country" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="country" className="mb-1 block text-sm font-medium text-slate-700">
                 Country
               </label>
               <input
                 id="country"
                 name="country"
                 type="text"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -432,14 +432,14 @@ export function NewMemberForm({
         >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label htmlFor="householdId" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="householdId" className="mb-1 block text-sm font-medium text-slate-700">
                 Household
               </label>
               <select
                 id="householdId"
                 name="householdId"
                 defaultValue=""
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">No household yet</option>
                 {households.map((household) => (
@@ -451,14 +451,14 @@ export function NewMemberForm({
             </div>
 
             <div>
-              <label htmlFor="householdRole" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="householdRole" className="mb-1 block text-sm font-medium text-slate-700">
                 Household Role
               </label>
               <select
                 id="householdRole"
                 name="householdRole"
                 defaultValue=""
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Select household role</option>
                 <option value="head">Head</option>
@@ -471,26 +471,26 @@ export function NewMemberForm({
             </div>
 
             <div>
-              <label htmlFor="emergencyContactName" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="emergencyContactName" className="mb-1 block text-sm font-medium text-slate-700">
                 Emergency Contact Name
               </label>
               <input
                 id="emergencyContactName"
                 name="emergencyContactName"
                 type="text"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label htmlFor="emergencyContactPhone" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="emergencyContactPhone" className="mb-1 block text-sm font-medium text-slate-700">
                 Emergency Contact Phone
               </label>
               <input
                 id="emergencyContactPhone"
                 name="emergencyContactPhone"
                 type="text"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -502,38 +502,38 @@ export function NewMemberForm({
         >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
-              <label htmlFor="transferInDate" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="transferInDate" className="mb-1 block text-sm font-medium text-slate-700">
                 Transfer In Date
               </label>
               <input
                 id="transferInDate"
                 name="transferInDate"
                 type="date"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label htmlFor="transferOutDate" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="transferOutDate" className="mb-1 block text-sm font-medium text-slate-700">
                 Transfer Out Date
               </label>
               <input
                 id="transferOutDate"
                 name="transferOutDate"
                 type="date"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div className="md:col-span-2">
-              <label htmlFor="notes" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="notes" className="mb-1 block text-sm font-medium text-slate-700">
                 Notes
               </label>
               <textarea
                 id="notes"
                 name="notes"
                 rows={4}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -555,7 +555,7 @@ export function NewMemberForm({
         <div className="flex items-center justify-end gap-3">
           <Link
             href={`/c/${churchSlug}/members`}
-            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+            className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
           >
             Cancel
           </Link>
@@ -563,7 +563,7 @@ export function NewMemberForm({
           <button
             type="submit"
             disabled={isPending}
-            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+            className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
           >
             {isPending ? "Creating..." : "Create Member"}
           </button>
