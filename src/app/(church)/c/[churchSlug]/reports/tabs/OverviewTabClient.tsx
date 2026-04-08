@@ -1,7 +1,6 @@
 "use client";
 
 import { ReportsExportActions } from "./ReportsExportActions";
-import { PrintReadySummaryStrip } from "./PrintReadySummaryStrip";
 
 import {
   Area,
@@ -61,16 +60,9 @@ interface OverviewTabClientProps {
 export function OverviewTabClient({ overview }: OverviewTabClientProps) {
   return (
     <div className="space-y-6">
-      <ReportsExportActions
-        title="Overview Reporting Actions"
-        subtitle="Export, print, or prepare a leadership-ready summary from the overview panel."
-      />
+      <ReportsExportActions />
 
-      <PrintReadySummaryStrip
-        title="Overview Print Summary"
-        items={overview.stats.slice(0, 4)}
-      />
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {overview.stats.map((stat) => (
           <div key={stat.label} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-500" />
@@ -91,7 +83,7 @@ export function OverviewTabClient({ overview }: OverviewTabClientProps) {
         ))}
       </div>
 
-      <div className="grid gap-6 2xl:grid-cols-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 px-5 py-4">
             <h3 className="text-lg font-semibold tracking-tight text-slate-950">Membership Status</h3>
@@ -143,6 +135,33 @@ export function OverviewTabClient({ overview }: OverviewTabClientProps) {
 
         <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 px-5 py-4">
+            <h3 className="text-lg font-semibold tracking-tight text-slate-950">Treasury Trend</h3>
+            <p className="mt-1 text-sm text-slate-500">High-level treasury movement over time.</p>
+          </div>
+          <div className="p-5">
+            {overview.treasuryTrend.length === 0 ? (
+              <EmptyChart message="No treasury trend data available yet." />
+            ) : (
+              <div className="h-[320px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={overview.treasuryTrend} margin={{ left: 6, right: 12, top: 8, bottom: 8 }}>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
+                    <XAxis dataKey="label" tickLine={false} axisLine={false} />
+                    <YAxis tickLine={false} axisLine={false} />
+                    <Tooltip />
+                    <Area type="monotone" dataKey="inflow" name="Inflow" stroke="#1d4ed8" fill="#93c5fd" />
+                    <Area type="monotone" dataKey="outflow" name="Outflow" stroke="#ea580c" fill="#fdba74" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        </section>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="border-b border-slate-200 px-5 py-4">
             <h3 className="text-lg font-semibold tracking-tight text-slate-950">Event Status</h3>
             <p className="mt-1 text-sm text-slate-500">Operational event state inside the reporting window.</p>
           </div>
@@ -185,33 +204,6 @@ export function OverviewTabClient({ overview }: OverviewTabClientProps) {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
-          </div>
-        </section>
-      </div>
-
-      <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.4fr)_minmax(320px,0.9fr)]">
-        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-4">
-            <h3 className="text-lg font-semibold tracking-tight text-slate-950">Treasury Trend</h3>
-            <p className="mt-1 text-sm text-slate-500">High-level treasury movement over time.</p>
-          </div>
-          <div className="p-5">
-            {overview.treasuryTrend.length === 0 ? (
-              <EmptyChart message="No treasury trend data available yet." />
-            ) : (
-              <div className="h-[320px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={overview.treasuryTrend} margin={{ left: 6, right: 12, top: 8, bottom: 8 }}>
-                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                    <XAxis dataKey="label" tickLine={false} axisLine={false} />
-                    <YAxis tickLine={false} axisLine={false} />
-                    <Tooltip />
-                    <Area type="monotone" dataKey="inflow" name="Inflow" stroke="#1d4ed8" fill="#93c5fd" />
-                    <Area type="monotone" dataKey="outflow" name="Outflow" stroke="#ea580c" fill="#fdba74" />
-                  </AreaChart>
-                </ResponsiveContainer>
               </div>
             )}
           </div>

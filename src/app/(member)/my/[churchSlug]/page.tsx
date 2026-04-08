@@ -15,9 +15,7 @@ type PageProps = {
 const VALID_TABS: MemberPortalTabKey[] = [
   "overview",
   "profile",
-  "giving",
   "departments",
-  "events",
 ];
 
 function normalizeTab(value: string | undefined): MemberPortalTabKey {

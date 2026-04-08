@@ -33,6 +33,7 @@ interface ChurchShellProps {
   roleLabel?: string;
   children: React.ReactNode;
   showAccessControl?: boolean;
+  pendingApprovalCount?: number;
   notifications?: ChurchNotificationItem[];
 }
 
@@ -42,6 +43,7 @@ export function ChurchShell({
   roleLabel,
   children,
   showAccessControl = false,
+  pendingApprovalCount = 0,
   notifications = [],
 }: ChurchShellProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -54,6 +56,7 @@ export function ChurchShell({
           user={user}
           roleLabel={roleLabel}
           showAccessControl={showAccessControl}
+          pendingApprovalCount={pendingApprovalCount}
         />
       </aside>
 
@@ -69,6 +72,7 @@ export function ChurchShell({
             roleLabel={roleLabel}
             onNavigate={() => setMobileOpen(false)}
             showAccessControl={showAccessControl}
+            pendingApprovalCount={pendingApprovalCount}
           />
         </SheetContent>
       </Sheet>

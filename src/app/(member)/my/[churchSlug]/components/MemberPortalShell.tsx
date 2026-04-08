@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Bell, LogOut, User2, CalendarDays, Wallet, Users, Home } from "lucide-react";
+import { LogOut, User2, Users, Home } from "lucide-react";
 import { signOutMemberPortalAction } from "@/features/member-portal/actions";
 import type {
   MemberPortalFoundationData,
@@ -21,9 +21,7 @@ const NAV_ITEMS: Array<{
 }> = [
   { key: "overview", label: "Overview", icon: Home },
   { key: "profile", label: "Profile", icon: User2 },
-  { key: "giving", label: "Giving", icon: Wallet },
-  { key: "departments", label: "Roles & Departments", icon: Users },
-  { key: "events", label: "Events", icon: CalendarDays },
+  { key: "departments", label: "My Involvement", icon: Users },
 ];
 
 function buildTabHref(churchSlug: string, tab: MemberPortalTabKey) {
@@ -120,15 +118,6 @@ export function MemberPortalShell({
               </div>
 
               <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  className="inline-flex h-11 w-11 items-center justify-center rounded-2xl border bg-background text-muted-foreground transition hover:bg-accent hover:text-foreground"
-                  aria-label="Notifications"
-                  title="Notifications"
-                >
-                  <Bell className="h-4 w-4" />
-                </button>
-
                 <form action={signOutMemberPortalAction} className="lg:hidden">
                   <button
                     type="submit"

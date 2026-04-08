@@ -1,11 +1,10 @@
-import Link from "next/link";
-
 import {
   WorkspaceEmptyState,
   WorkspaceHero,
   WorkspaceSectionCard,
   WorkspaceStatCard
 } from "@/components/workspace";
+import { getLabel, memberStatusLabels, memberTypeLabels } from "@/lib/display-maps";
 import type {
   MemberPortalDepartmentsData,
   MemberPortalFoundationData,
@@ -28,14 +27,8 @@ const TAB_ITEMS: Array<{
 }> = [
   { key: "overview", label: "Overview" },
   { key: "profile", label: "Profile" },
-  { key: "giving", label: "Giving" },
-  { key: "departments", label: "Roles & Departments" },
-  { key: "events", label: "Events" },
+  { key: "departments", label: "My Involvement" },
 ];
-
-function buildTabHref(churchSlug: string, tab: MemberPortalTabKey) {
-  return `/my/${churchSlug}?tab=${tab}`;
-}
 
 function formatMemberName(foundation: MemberPortalFoundationData) {
   const member = foundation.identity?.member;
@@ -80,64 +73,6 @@ function formatDateTime(value: string | null | undefined) {
     hour: "numeric",
     minute: "2-digit",
   });
-}
-
-function renderPlaceholderTab(
-  activeTab: MemberPortalTabKey,
-  churchSlug: string
-) {
-  const copy: Record<MemberPortalTabKey, { title: string; body: string }> = {
-    overview: {
-      title: "Overview is next",
-      body:
-        "This tab will become the member’s church home view with profile highlights, giving summary, active departments, and upcoming events.",
-    },
-    profile: {
-      title: "Profile is next",
-      body:
-        "This tab will show the member’s church profile details in a clean read-only layout before we add carefully scoped self-service edits later.",
-    },
-    giving: {
-      title: "Giving is next",
-      body:
-        "This tab will show tithe, offering, donations, recent contributions, and a personal giving trend built from linked treasury inflows.",
-    },
-    departments: {
-      title: "Roles & Departments are next",
-      body:
-        "This tab will show department assignments, role titles, church roles, and service history foundations.",
-    },
-    events: {
-      title: "Events are next",
-      body:
-        "This tab will surface upcoming church events and later prioritize the ones most relevant to the member.",
-    },
-  };
-
-  const item = copy[activeTab];
-
-  return (
-    <WorkspaceSectionCard
-      title={item.title}
-      description={item.body}
-      contentClassName="space-y-4"
-    >
-      <p className="text-sm text-muted-foreground">
-        Current tab: <span className="font-medium text-foreground">{activeTab}</span>
-      </p>
-      <div className="flex flex-wrap gap-2">
-        {TAB_ITEMS.map((tab) => (
-          <Link
-            key={tab.key}
-            href={buildTabHref(churchSlug, tab.key)}
-            className="inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition hover:bg-accent"
-          >
-            Open {tab.label}
-          </Link>
-        ))}
-      </div>
-    </WorkspaceSectionCard>
-  );
 }
 
 function renderOverviewTab(data: MemberPortalOverviewData) {
@@ -189,11 +124,11 @@ function renderOverviewTab(data: MemberPortalOverviewData) {
             </div>
             <div>
               <p className="text-muted-foreground">Membership status</p>
-              <p className="font-medium capitalize">{data.identity.member.membership_status}</p>
+              <p className="font-medium">{getLabel(memberStatusLabels, data.identity.member.membership_status)}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Membership type</p>
-              <p className="font-medium capitalize">{data.identity.member.membership_type ?? "Not set"}</p>
+              <p className="font-medium">{getLabel(memberTypeLabels, data.identity.member.membership_type)}</p>
             </div>
             <div>
               <p className="text-muted-foreground">Joined date</p>
@@ -424,13 +359,6 @@ export function MemberPortalWorkspace({
   const isLinked = foundation.linkStatus === "linked";
   const identity = foundation.identity;
 
-  const tabItems = TAB_ITEMS.map((tab) => ({
-    key: tab.key,
-    label: tab.label,
-    href: buildTabHref(churchSlug, tab.key),
-    isActive: activeTab === tab.key,
-  }));
-
   if (!isLinked || !identity) {
     return (
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
@@ -457,22 +385,6 @@ export function MemberPortalWorkspace({
         title={`Welcome, ${memberName}`}
         description={`This is your personal workspace for ${churchName}. Review your profile, service roles, events, and giving in one place.`}
       />
-
-      <div className="flex flex-wrap gap-2 rounded-3xl border bg-card p-2">
-  {tabItems.map((item) => (
-    <Link
-      key={item.key}
-      href={item.href}
-      className={
-        item.isActive
-          ? "inline-flex items-center rounded-2xl bg-foreground px-4 py-2.5 text-sm font-medium text-background transition"
-          : "inline-flex items-center rounded-2xl px-4 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
-      }
-    >
-      {item.label}
-    </Link>
-  ))}
-</div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <WorkspaceStatCard
@@ -507,10 +419,6 @@ export function MemberPortalWorkspace({
 
       {activeTab === "departments" && tabData.tab === "departments" && tabData.data
         ? renderDepartmentsTab(tabData.data)
-        : null}
-
-      {activeTab !== "overview" && activeTab !== "profile" && activeTab !== "departments"
-        ? renderPlaceholderTab(activeTab, churchSlug)
         : null}
     </div>
   );

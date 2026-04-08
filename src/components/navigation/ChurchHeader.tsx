@@ -284,38 +284,40 @@ export function ChurchHeader({
 
               <DropdownMenuSeparator />
 
-              {decoratedNotifications.length === 0 ? (
-                <div className="p-3 text-sm text-slate-500">No notifications yet.</div>
-              ) : (
-                decoratedNotifications.map((item) => (
-                  <DropdownMenuItem key={item.id} asChild>
-                    <Link
-                      aria-disabled={isPending}
-                      href={item.href}
-                      onClick={() => {
-                        if (!item.is_read) {
-                          markOneRead(item);
-                        }
-                      }}
-                      className="flex cursor-pointer flex-col items-start gap-1 p-3 disabled:pointer-events-none disabled:opacity-60"
-                    >
-                      <div className="flex w-full items-start justify-between gap-3">
-                        <p className="text-sm font-medium text-slate-900">{item.title}</p>
-                        {!item.is_read ? (
-                          <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-600" />
+              <div className="max-h-[400px] overflow-y-auto">
+                {decoratedNotifications.length === 0 ? (
+                  <div className="p-3 text-sm text-slate-500">No notifications yet.</div>
+                ) : (
+                  decoratedNotifications.map((item) => (
+                    <DropdownMenuItem key={item.id} asChild>
+                      <Link
+                        aria-disabled={isPending}
+                        href={item.href}
+                        onClick={() => {
+                          if (!item.is_read) {
+                            markOneRead(item);
+                          }
+                        }}
+                        className="flex cursor-pointer flex-col items-start gap-1 p-3 disabled:pointer-events-none disabled:opacity-60"
+                      >
+                        <div className="flex w-full items-start justify-between gap-3">
+                          <p className="text-sm font-medium text-slate-900">{item.title}</p>
+                          {!item.is_read ? (
+                            <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-blue-600" />
+                          ) : null}
+                        </div>
+                        <p className="text-xs text-slate-600">{item.message}</p>
+                        {getNotificationBadgeLabel(item.event_type, item.entity_type, item.kind) ? (
+                          <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
+                            {getNotificationBadgeLabel(item.event_type, item.entity_type, item.kind)}
+                          </span>
                         ) : null}
-                      </div>
-                      <p className="text-xs text-slate-600">{item.message}</p>
-                      {getNotificationBadgeLabel(item.event_type, item.entity_type, item.kind) ? (
-                        <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-700">
-                          {getNotificationBadgeLabel(item.event_type, item.entity_type, item.kind)}
-                        </span>
-                      ) : null}
-                      <p className="text-xs text-slate-400">{formatDateStable(item.created_at)}</p>
-                    </Link>
-                  </DropdownMenuItem>
-                ))
-              )}
+                        <p className="text-xs text-slate-400">{formatDateStable(item.created_at)}</p>
+                      </Link>
+                    </DropdownMenuItem>
+                  ))
+                )}
+              </div>
             </DropdownMenuContent>
           </DropdownMenu>
 

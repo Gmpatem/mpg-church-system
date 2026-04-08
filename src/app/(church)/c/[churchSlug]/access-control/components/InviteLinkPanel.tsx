@@ -6,6 +6,7 @@ import {
   createOpenOnboardingInviteAction,
 } from "@/features/member-invite/actions";
 import type { InviteCreationMode, MemberInviteManagementData } from "@/features/member-invite/types";
+import { CopyableLink } from "@/components/ui/CopyableLink";
 import { InviteHistoryList } from "./InviteHistoryList";
 
 type InviteLinkPanelProps = {
@@ -73,14 +74,6 @@ export function InviteLinkPanel({ churchSlug, data }: InviteLinkPanelProps) {
         await navigator.clipboard.writeText(full);
       } catch {
       }
-    });
-  }
-
-  function handleCopyGenerated() {
-    if (!fullGeneratedLink) return;
-
-    navigator.clipboard.writeText(fullGeneratedLink).catch(() => {
-      window.prompt("Copy invite link", fullGeneratedLink);
     });
   }
 
@@ -217,30 +210,15 @@ export function InviteLinkPanel({ churchSlug, data }: InviteLinkPanelProps) {
           >
             {isPending ? "Generating..." : "Generate secure invite"}
           </button>
-
-          {fullGeneratedLink ? (
-            <button
-              type="button"
-              onClick={handleCopyGenerated}
-              className="inline-flex h-11 items-center justify-center rounded-xl border px-4 text-sm font-medium transition hover:bg-accent"
-            >
-              Copy latest link
-            </button>
-          ) : null}
         </div>
 
-        <div className="space-y-2">
-          <label htmlFor="generated-secure-invite" className="text-sm font-medium">
-            Latest secure invite
-          </label>
-          <input
-            id="generated-secure-invite"
-            readOnly
-            value={fullGeneratedLink}
-            placeholder="Generate an invite to see the secure link here"
-            className="h-11 w-full rounded-xl border bg-muted/30 px-3 text-sm"
+        {fullGeneratedLink ? (
+          <CopyableLink
+            url={fullGeneratedLink}
+            label="Secure invite link"
+            showWhatsApp={true}
           />
-        </div>
+        ) : null}
 
         {statusMessage ? (
           <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-3 text-sm text-muted-foreground">

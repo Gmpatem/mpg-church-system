@@ -79,3 +79,22 @@ export async function getPendingApprovalQueue(
 
   return ((data ?? []) as ApprovalRequestRecord[]);
 }
+
+export async function getMyPendingApprovalCount(
+  churchId: string,
+  userId: string,
+  roles: string[]
+): Promise<number> {
+  try {
+    const supabase = await createClient();
+    const { count } = await supabase
+      .from("approval_requests")
+      .select("*", { count: "exact", head: true })
+      .eq("church_id", churchId)
+      .eq("status", "pending")
+      .in("current_assignee_role_code", roles);
+    return count ?? 0;
+  } catch {
+    return 0;
+  }
+}

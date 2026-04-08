@@ -1,5 +1,6 @@
 import { requireChurchAccess } from "@/features/access/queries";
 import { getChurchNotifications } from "@/features/church-notifications/queries";
+import { getMyPendingApprovalCount } from "@/features/approvals/queries";
 import { ChurchShell } from "@/components/navigation/ChurchShell";
 
 interface ChurchLayoutProps {
@@ -22,7 +23,10 @@ function getRoleLabel(roles: string[]) {
 
 function canViewAccessControl(roles: string[]): boolean {
   return roles.some((role) =>
-    ["pastor", "church_admin", "tech_team", "clerk", "church_secretary"].includes(role)
+    [
+      "pastor", "church_admin", "tech_team", "clerk", "church_secretary",
+      "platform_owner", "platform_admin", "platform_support",
+    ].includes(role)
   );
 }
 
@@ -30,7 +34,10 @@ export default async function ChurchLayout({ children, params }: ChurchLayoutPro
   const { churchSlug } = await params;
 
   const ctx = await requireChurchAccess(churchSlug);
-  const notifications = await getChurchNotifications(ctx.churchId);
+  const [notifications, pendingApprovalCount] = await Promise.all([
+    getChurchNotifications(ctx.churchId),
+    getMyPendingApprovalCount(ctx.churchId, ctx.userId, ctx.roles),
+  ]);
 
   return (
     <ChurchShell
@@ -51,6 +58,7 @@ export default async function ChurchLayout({ children, params }: ChurchLayoutPro
       }
       roleLabel={getRoleLabel(ctx.roles)}
       showAccessControl={canViewAccessControl(ctx.roles)}
+      pendingApprovalCount={pendingApprovalCount}
       notifications={notifications}
     >
       {children}

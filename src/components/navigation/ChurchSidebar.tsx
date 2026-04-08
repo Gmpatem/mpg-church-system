@@ -23,6 +23,7 @@ import {
 
 interface ChurchSidebarProps {
   showAccessControl?: boolean;
+  pendingApprovalCount?: number;
   church: {
     id: string;
     name: string;
@@ -44,6 +45,7 @@ export function ChurchSidebar({
   roleLabel,
   onNavigate,
   showAccessControl = false,
+  pendingApprovalCount = 0,
 }: ChurchSidebarProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -56,10 +58,10 @@ export function ChurchSidebar({
     { name: "Departments", href: `/c/${church.slug}/departments`, icon: Building2 },
     { name: "Treasury", href: `/c/${church.slug}/treasury`, icon: Wallet },
     { name: "Events", href: `/c/${church.slug}/events`, icon: Calendar },
-    { name: "Office", href: `/c/${church.slug}/office`, icon: Briefcase, requiresOffice: true },
+    { name: "Church Office", href: `/c/${church.slug}/office`, icon: Briefcase, requiresOffice: true },
     { name: "Reports", href: `/c/${church.slug}/reports`, icon: BarChart3 },
     { name: "Approvals", href: `/c/${church.slug}/approvals`, icon: ClipboardCheck, requiresAuthority: true },
-    { name: "Access Control", href: `/c/${church.slug}/access-control`, icon: Shield, requiresAuthority: true },
+    { name: "Invites & Access", href: `/c/${church.slug}/access-control`, icon: Shield, requiresAuthority: true },
   ];
 
   function isActive(href: string, exact?: boolean) {
@@ -100,9 +102,6 @@ export function ChurchSidebar({
               <p className="mt-1 truncate text-sm font-semibold text-white">
                 {church.name}
               </p>
-              <p className="mt-1 truncate text-xs text-slate-400">
-                /c/{church.slug}
-              </p>
             </div>
           </div>
         </Link>
@@ -116,11 +115,7 @@ export function ChurchSidebar({
 
       <ScrollArea className="flex-1">
         <div className="px-4 py-5">
-          <p className="px-2 text-[11px] uppercase tracking-[0.2em] text-slate-500">
-            Navigation
-          </p>
-
-          <nav className="mt-4 grid gap-1.5">
+          <nav className="grid gap-1.5">
             {navigation
               .filter((item) => !item.requiresAuthority || showAccessControl)
               .filter((item) => {
@@ -156,6 +151,11 @@ export function ChurchSidebar({
                 >
                   <item.icon className="h-4 w-4 shrink-0" />
                   <span>{item.name}</span>
+                  {item.name === "Approvals" && pendingApprovalCount > 0 ? (
+                    <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
+                      {pendingApprovalCount}
+                    </span>
+                  ) : null}
                 </Link>
               );
             })}

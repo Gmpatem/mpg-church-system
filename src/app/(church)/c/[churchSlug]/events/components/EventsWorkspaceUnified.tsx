@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { getLabel, eventStatusLabels, workflowStateLabels } from "@/lib/display-maps";
 import { useEventDepartments } from "@/features/events/hooks";
 import {
   WorkspaceControlRail,
@@ -15,6 +16,24 @@ import {
 } from "@/components/workspace";
 import { EventForm } from "@/features/events/components/EventForm";
 import { createEventAction, updateEventAction } from "@/features/events/actions";
+
+const eventTypeLabels: Record<string, string> = {
+  worship_service: "Worship Service",
+  prayer_meeting: "Prayer Meeting",
+  board_meeting: "Board Meeting",
+  department_meeting: "Department Meeting",
+  youth_meeting: "Youth Meeting",
+  evangelism: "Evangelism",
+  youth_program: "Youth Program",
+  sabbath_school: "Sabbath School",
+  community_outreach: "Community Outreach",
+  special_program: "Special Program",
+  outreach: "Outreach",
+  seminar: "Seminar",
+  social: "Social Event",
+  fundraiser: "Fundraiser",
+  other: "Other",
+};
 
 type EventsMainTab =
   | "all_events"
@@ -111,8 +130,8 @@ function EventStatusBadge({ status }: { status: string }) {
         : "border-blue-200 bg-blue-50 text-blue-800";
 
   return (
-    <span className={`rounded-full border px-2.5 py-1 text-xs font-medium capitalize ${statusClasses}`}>
-      {status}
+    <span className={`rounded-full border px-2.5 py-1 text-xs font-medium ${statusClasses}`}>
+      {getLabel(eventStatusLabels, status)}
     </span>
   );
 }
@@ -122,7 +141,7 @@ function EventWorkflowBadge({ value }: { value?: string | null }) {
 
   return (
     <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700">
-      {value.replaceAll("_", " ")}
+      {getLabel(workflowStateLabels, value)}
     </span>
   );
 }
@@ -164,7 +183,7 @@ function EventsList({
                   </div>
 
                   <p className="mt-1 text-sm text-slate-600">
-                    {event.event_type}
+                    {getLabel(eventTypeLabels, event.event_type)}
                     {event.department_name ? ` • ${event.department_name}` : ""}
                     {event.location ? ` • ${event.location}` : ""}
                   </p>
@@ -225,7 +244,7 @@ function EventDetailPanel({
         <div className="grid gap-3 md:grid-cols-2">
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
             <p className="text-xs font-medium uppercase tracking-wide text-slate-500">Event Type</p>
-            <p className="mt-1 text-sm font-medium text-slate-900">{event.event_type}</p>
+            <p className="mt-1 text-sm font-medium text-slate-900">{getLabel(eventTypeLabels, event.event_type)}</p>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">

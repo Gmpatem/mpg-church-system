@@ -1,4 +1,6 @@
 import Link from "next/link";
+import { Breadcrumb } from "@/components/navigation/Breadcrumb";
+import { getLabel, memberStatusLabels } from "@/lib/display-maps";
 import { getMemberById } from "@/features/members/queries";
 import { getMemberFinancialProfile } from "@/features/treasury/queries";
 import { MemberDepartmentsPanel } from "@/features/departments/components/MemberDepartmentsPanel";
@@ -47,6 +49,12 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
 
   return (
     <div className="space-y-6">
+      <Breadcrumb
+        items={[
+          { label: "Members", href: `/c/${churchSlug}/members` },
+          { label: memberLabel },
+        ]}
+      />
       <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">{memberLabel}</h2>
@@ -79,7 +87,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
 
         <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
           <div className="text-xs uppercase tracking-wide text-gray-500">Status</div>
-          <div className="mt-2 text-lg font-semibold text-gray-900">{member.membership_status ?? "—"}</div>
+          <div className="mt-2 text-lg font-semibold text-gray-900">{getLabel(memberStatusLabels, member.membership_status)}</div>
         </div>
 
         <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">

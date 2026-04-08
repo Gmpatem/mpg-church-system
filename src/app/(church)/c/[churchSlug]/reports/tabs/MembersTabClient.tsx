@@ -1,7 +1,6 @@
 "use client";
 
 import { ReportsExportActions } from "./ReportsExportActions";
-import { PrintReadySummaryStrip } from "./PrintReadySummaryStrip";
 
 import {
   Bar,
@@ -161,16 +160,9 @@ function BarCard({
 export function MembersTabClient({ members }: MembersTabClientProps) {
   return (
     <div className="space-y-6">
-      <ReportsExportActions
-        title="Members Reporting Actions"
-        subtitle="Prepare membership summaries for print, meetings, and data review workflows."
-      />
+      <ReportsExportActions />
 
-      <PrintReadySummaryStrip
-        title="Members Print Summary"
-        items={members.stats.slice(0, 4)}
-      />
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {members.stats.map((stat) => (
           <div key={stat.label} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-500" />
@@ -183,22 +175,13 @@ export function MembersTabClient({ members }: MembersTabClientProps) {
         ))}
       </div>
 
-      <div className="grid gap-6 2xl:grid-cols-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <DonutCard
           title="Membership Status"
           description="Current status mix across the church roster."
           data={members.statusBreakdown}
           emptyMessage="No membership status data available yet."
         />
-        <BarCard
-          title="Members by Department"
-          description="Department assignment strength across the church."
-          data={members.byDepartment}
-          emptyMessage="No department assignment data available yet."
-        />
-      </div>
-
-      <div className="grid gap-6 2xl:grid-cols-[minmax(0,1.35fr)_minmax(320px,0.9fr)]">
         <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
           <div className="border-b border-slate-200 px-5 py-4">
             <h3 className="text-lg font-semibold tracking-tight text-slate-950">Recent Member Additions</h3>
@@ -222,33 +205,40 @@ export function MembersTabClient({ members }: MembersTabClientProps) {
             )}
           </div>
         </section>
-
-        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-4">
-            <h3 className="text-lg font-semibold tracking-tight text-slate-950">Recent Member Records</h3>
-            <p className="mt-1 text-sm text-slate-500">Latest member additions inside the current filter.</p>
-          </div>
-          <div className="p-5">
-            {members.recentMembers.length === 0 ? (
-              <EmptyBlock message="No recent member records available yet." />
-            ) : (
-              <div className="space-y-3">
-                {members.recentMembers.map((item, index) => (
-                  <div key={`${item.label}-${index}`} className="flex items-start justify-between rounded-xl border border-slate-200 px-4 py-3">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-950">{item.label}</p>
-                      {item.sublabel ? <p className="mt-1 text-xs text-slate-500">{item.sublabel}</p> : null}
-                    </div>
-                    {item.value !== undefined ? (
-                      <span className="text-sm font-medium text-slate-700">{String(item.value)}</span>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </section>
       </div>
+
+      <BarCard
+        title="Members by Department"
+        description="Department assignment strength across the church."
+        data={members.byDepartment}
+        emptyMessage="No department assignment data available yet."
+      />
+
+      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="border-b border-slate-200 px-5 py-4">
+          <h3 className="text-lg font-semibold tracking-tight text-slate-950">Recent Member Records</h3>
+          <p className="mt-1 text-sm text-slate-500">Latest member additions inside the current filter.</p>
+        </div>
+        <div className="p-5">
+          {members.recentMembers.length === 0 ? (
+            <EmptyBlock message="No recent member records available yet." />
+          ) : (
+            <div className="space-y-3">
+              {members.recentMembers.map((item, index) => (
+                <div key={`${item.label}-${index}`} className="flex items-start justify-between rounded-xl border border-slate-200 px-4 py-3">
+                  <div>
+                    <p className="text-sm font-semibold text-slate-950">{item.label}</p>
+                    {item.sublabel ? <p className="mt-1 text-xs text-slate-500">{item.sublabel}</p> : null}
+                  </div>
+                  {item.value !== undefined ? (
+                    <span className="text-sm font-medium text-slate-700">{String(item.value)}</span>
+                  ) : null}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
 
       <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="border-b border-slate-200 px-5 py-4">

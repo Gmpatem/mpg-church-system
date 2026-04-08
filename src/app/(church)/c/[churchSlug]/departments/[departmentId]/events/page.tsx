@@ -7,25 +7,46 @@ import {
 } from "@/features/department-events/actions";
 import { getDepartmentEventsWorkflowData } from "@/features/department-events/queries";
 import { requireChurchAccess } from "@/features/access/queries";
+import { WorkspaceSectionCard } from "@/components/workspace";
+import { getLabel, eventStatusLabels, workflowStateLabels } from "@/lib/display-maps";
 
 interface DepartmentEventsPageProps {
   params: Promise<{ churchSlug: string; departmentId: string }>;
 }
 
+const eventTypeLabels: Record<string, string> = {
+  worship_service: "Worship Service",
+  prayer_meeting: "Prayer Meeting",
+  board_meeting: "Board Meeting",
+  department_meeting: "Department Meeting",
+  department_activity: "Department Activity",
+  youth_meeting: "Youth Meeting",
+  evangelism: "Evangelism",
+  youth_program: "Youth Program",
+  sabbath_school: "Sabbath School",
+  community_outreach: "Community Outreach",
+  special_program: "Special Program",
+  outreach: "Outreach",
+  seminar: "Seminar",
+  social: "Social Event",
+  fundraiser: "Fundraiser",
+  other: "Other",
+};
+
 function workflowClasses(workflowState: string) {
   switch (workflowState) {
     case "draft":
-      return "bg-gray-100 text-gray-700";
+      return "bg-slate-100 text-slate-700";
     case "pending_approval":
-      return "bg-yellow-50 text-yellow-700";
+      return "bg-amber-50 text-amber-700";
     case "approved":
-      return "bg-green-50 text-green-700";
+      return "bg-emerald-50 text-emerald-700";
     case "published":
       return "bg-blue-50 text-blue-700";
     case "rejected":
       return "bg-red-50 text-red-700";
     default:
-      return "bg-gray-100 text-gray-700";
+      return "bg-slate-100 text-slate-700";
   }
 }
 
@@ -59,68 +80,66 @@ export default async function DepartmentEventsPage({ params }: DepartmentEventsP
     <div className="space-y-6">
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">{department.department_name} Events</h2>
-          <p className="mt-1 text-sm text-gray-600">
+          <h2 className="text-2xl font-bold text-slate-900">{department.department_name} Events</h2>
+          <p className="mt-1 text-sm text-slate-600">
             Draft, submit, and manage department activities before they reach the church calendar.
           </p>
         </div>
 
         <Link
           href={`/c/${churchSlug}/departments/${departmentId}`}
-          className="text-sm text-blue-600 hover:text-blue-800 underline"
+          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
         >
           Back to Department
         </Link>
       </div>
 
       {canManage ? (
-        <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h3 className="text-lg font-semibold text-gray-900">Create Department Event Draft</h3>
-          <p className="mt-1 text-sm text-gray-600">
-            Draft the activity here, then submit it for approval when ready.
-          </p>
-
-          <form action={createDepartmentEventDraftAction} className="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
+        <WorkspaceSectionCard
+          title="Create Department Event Draft"
+          description="Draft the activity here, then submit it for approval when ready."
+        >
+          <form action={createDepartmentEventDraftAction} className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <input type="hidden" name="churchSlug" value={churchSlug} />
             <input type="hidden" name="departmentId" value={departmentId} />
 
             <div className="md:col-span-2">
-              <label htmlFor="title" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="title" className="mb-1 block text-sm font-medium text-slate-700">
                 Title
               </label>
               <input
                 id="title"
                 name="title"
                 required
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:ring-2 focus:ring-ring"
               />
             </div>
 
             <div>
-              <label htmlFor="eventType" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="eventType" className="mb-1 block text-sm font-medium text-slate-700">
                 Event Type
               </label>
               <input
                 id="eventType"
                 name="eventType"
                 defaultValue="department_activity"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:ring-2 focus:ring-ring"
               />
             </div>
 
             <div>
-              <label htmlFor="location" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="location" className="mb-1 block text-sm font-medium text-slate-700">
                 Location
               </label>
               <input
                 id="location"
                 name="location"
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:ring-2 focus:ring-ring"
               />
             </div>
 
             <div>
-              <label htmlFor="startDateTime" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="startDateTime" className="mb-1 block text-sm font-medium text-slate-700">
                 Start
               </label>
               <input
@@ -128,12 +147,12 @@ export default async function DepartmentEventsPage({ params }: DepartmentEventsP
                 name="startDateTime"
                 type="datetime-local"
                 required
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:ring-2 focus:ring-ring"
               />
             </div>
 
             <div>
-              <label htmlFor="endDateTime" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="endDateTime" className="mb-1 block text-sm font-medium text-slate-700">
                 End
               </label>
               <input
@@ -141,73 +160,74 @@ export default async function DepartmentEventsPage({ params }: DepartmentEventsP
                 name="endDateTime"
                 type="datetime-local"
                 required
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:ring-2 focus:ring-ring"
               />
             </div>
 
-            <label className="mt-7 flex items-center gap-2 text-sm text-gray-700">
+            <label className="mt-7 flex items-center gap-2 text-sm text-slate-700">
               <input type="checkbox" name="isAllDay" className="h-4 w-4" />
               All day event
             </label>
 
             <div className="md:col-span-2">
-              <label htmlFor="description" className="mb-1 block text-sm font-medium text-gray-700">
+              <label htmlFor="description" className="mb-1 block text-sm font-medium text-slate-700">
                 Description
               </label>
               <textarea
                 id="description"
                 name="description"
                 rows={4}
-                className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none transition focus:ring-2 focus:ring-ring"
               />
             </div>
 
             <div className="md:col-span-2">
               <button
                 type="submit"
-                className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+                className="inline-flex items-center justify-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
               >
                 Save Draft
               </button>
             </div>
           </form>
-        </div>
+        </WorkspaceSectionCard>
       ) : null}
 
-      <div className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm">
+      <WorkspaceSectionCard
+        title="Department Events"
+        description="Events submitted or approved for this department."
+      >
         {events.length === 0 ? (
-          <div className="px-6 py-10 text-sm text-gray-600">
-            No department events found yet.
-          </div>
+          <p className="text-sm text-slate-500">No department events found yet.</p>
         ) : (
-          <div className="divide-y divide-gray-200">
+          <div className="divide-y divide-slate-200">
             {events.map((event) => (
-              <div key={event.id} className="px-6 py-5">
+              <div key={event.id} className="py-5 first:pt-0 last:pb-0">
                 <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="text-lg font-semibold text-gray-900">{event.title}</h3>
+                      <h3 className="text-base font-semibold text-slate-900">{event.title}</h3>
                       <span className={"rounded-full px-2.5 py-1 text-xs font-medium " + workflowClasses(event.workflow_state)}>
-                        {event.workflow_state}
+                        {getLabel(workflowStateLabels, event.workflow_state)}
                       </span>
                       <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
-                        {event.event_type}
+                        {getLabel(eventTypeLabels, event.event_type)}
                       </span>
                     </div>
 
                     {event.description ? (
-                      <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{event.description}</p>
+                      <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{event.description}</p>
                     ) : null}
 
-                    <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-gray-500">
+                    <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-slate-500">
                       <span>Start: {event.start_datetime}</span>
                       <span>End: {event.end_datetime}</span>
-                      <span>Status: {event.status}</span>
+                      <span>Status: {getLabel(eventStatusLabels, event.status)}</span>
                       {event.location ? <span>Location: {event.location}</span> : null}
                     </div>
 
                     {event.approval_note ? (
-                      <div className="mt-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+                      <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
                         Approval note: {event.approval_note}
                       </div>
                     ) : null}
@@ -222,7 +242,7 @@ export default async function DepartmentEventsPage({ params }: DepartmentEventsP
                           <input type="hidden" name="eventId" value={event.id} />
                           <button
                             type="submit"
-                            className="rounded-md border border-yellow-300 bg-yellow-50 px-3 py-2 text-xs font-medium text-yellow-700 hover:bg-yellow-100"
+                            className="rounded-xl border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700 transition hover:bg-amber-100"
                           >
                             Submit for Approval
                           </button>
@@ -237,7 +257,7 @@ export default async function DepartmentEventsPage({ params }: DepartmentEventsP
                             <input type="hidden" name="eventId" value={event.id} />
                             <button
                               type="submit"
-                              className="rounded-md border border-green-300 bg-green-50 px-3 py-2 text-xs font-medium text-green-700 hover:bg-green-100"
+                              className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100"
                             >
                               Approve
                             </button>
@@ -250,11 +270,11 @@ export default async function DepartmentEventsPage({ params }: DepartmentEventsP
                             <input
                               name="approvalNote"
                               placeholder="Reason for rejection"
-                              className="rounded-md border border-gray-300 px-3 py-2 text-xs outline-none focus:ring-2 focus:ring-blue-500"
+                              className="rounded-xl border border-slate-200 px-3 py-2 text-xs outline-none transition focus:ring-2 focus:ring-ring"
                             />
                             <button
                               type="submit"
-                              className="rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 hover:bg-red-100"
+                              className="rounded-xl border border-red-300 bg-red-50 px-3 py-2 text-xs font-medium text-red-700 transition hover:bg-red-100"
                             >
                               Reject
                             </button>
@@ -268,7 +288,7 @@ export default async function DepartmentEventsPage({ params }: DepartmentEventsP
             ))}
           </div>
         )}
-      </div>
+      </WorkspaceSectionCard>
     </div>
   );
 }

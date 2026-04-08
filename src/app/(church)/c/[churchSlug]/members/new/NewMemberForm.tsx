@@ -1,8 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { createMemberAction } from "@/features/members/actions";
+import { createMemberInviteAction } from "@/features/member-invite/actions";
+import { CopyableLink } from "@/components/ui/CopyableLink";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 
 interface Department {
   id: string;
@@ -47,6 +50,33 @@ export function NewMemberForm({
   households = [],
 }: NewMemberFormProps) {
   const [state, formAction, isPending] = useActionState(createMemberAction, null);
+  const [sendInvite, setSendInvite] = useState(false);
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [invitePending, setInvitePending] = useState(false);
+
+  useEffect(() => {
+    if (!state?.ok || !state.memberId || !sendInvite) return;
+
+    setInvitePending(true);
+    setInviteError(null);
+
+    createMemberInviteAction(churchSlug, state.memberId)
+      .then((result) => {
+        if (result.ok) {
+          const fullUrl = window.location.origin + result.path;
+          setInviteUrl(fullUrl);
+        } else {
+          setInviteError(result.error);
+        }
+      })
+      .catch(() => {
+        setInviteError("Invite link could not be generated.");
+      })
+      .finally(() => {
+        setInvitePending(false);
+      });
+  }, [state]);
 
   return (
     <div className="mx-auto max-w-5xl">
@@ -76,8 +106,29 @@ export function NewMemberForm({
         )}
 
         {state && state.ok && (
-          <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-            {state.message ?? "Member created successfully."}
+          <div className="space-y-3">
+            <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+              {state.message ?? "Member created successfully."}
+            </div>
+
+            {invitePending && (
+              <p className="text-sm text-slate-500">Generating invite link...</p>
+            )}
+
+            {inviteUrl && (
+              <CopyableLink
+                url={inviteUrl}
+                label="Portal invite link"
+                showWhatsApp={true}
+              />
+            )}
+
+            {inviteError && (
+              <InlineAlert
+                variant="warning"
+                message={`Member created, but the invite link could not be generated. You can send an invite from the Invites & Access page. Error: ${inviteError}`}
+              />
+            )}
           </div>
         )}
 
@@ -487,6 +538,19 @@ export function NewMemberForm({
             </div>
           </div>
         </Section>
+
+        <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
+          <input
+            type="checkbox"
+            id="sendPortalInvite"
+            checked={sendInvite}
+            onChange={(e) => setSendInvite(e.target.checked)}
+            className="h-4 w-4 rounded border"
+          />
+          <label htmlFor="sendPortalInvite" className="text-sm text-slate-700">
+            Send a portal invite to this member after creating their record
+          </label>
+        </div>
 
         <div className="flex items-center justify-end gap-3">
           <Link

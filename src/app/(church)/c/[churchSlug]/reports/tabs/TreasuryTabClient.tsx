@@ -1,7 +1,6 @@
 "use client";
 
 import { ReportsExportActions } from "./ReportsExportActions";
-import { PrintReadySummaryStrip } from "./PrintReadySummaryStrip";
 
 import {
   Bar,
@@ -179,16 +178,9 @@ function BarCard({
 export function TreasuryTabClient({ treasury }: TreasuryTabClientProps) {
   return (
     <div className="space-y-6">
-      <ReportsExportActions
-        title="Treasury Reporting Actions"
-        subtitle="Prepare finance summaries for leadership meetings, treasury review, and print handoff."
-      />
+      <ReportsExportActions />
 
-      <PrintReadySummaryStrip
-        title="Treasury Print Summary"
-        items={treasury.stats.slice(0, 4)}
-      />
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {treasury.stats.map((stat) => (
           <div key={stat.label} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
             <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-500" />
@@ -209,7 +201,7 @@ export function TreasuryTabClient({ treasury }: TreasuryTabClientProps) {
         ))}
       </div>
 
-      <div className="grid gap-6 2xl:grid-cols-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <DonutCard
           title="Inflow by Type"
           description="Tithe, offering, donation, and contribution mix."
@@ -224,7 +216,7 @@ export function TreasuryTabClient({ treasury }: TreasuryTabClientProps) {
         />
       </div>
 
-      <div className="grid gap-6 2xl:grid-cols-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <BarCard
           title="Top Inflow Funds"
           description="Most active receiving funds in the current reporting range."

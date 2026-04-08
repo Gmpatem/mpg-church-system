@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Breadcrumb } from "@/components/navigation/Breadcrumb";
 import { getTreasuryInflowById, getTreasuryFormOptions } from "@/features/treasury/queries";
 import { InflowEditForm } from "./InflowEditForm";
 
@@ -18,6 +19,12 @@ export default async function InflowEditPage({ params }: InflowEditPageProps) {
 
   return (
     <div className="space-y-6">
+      <Breadcrumb
+        items={[
+          { label: "Treasury", href: `/c/${churchSlug}/treasury` },
+          { label: "Edit Entry" },
+        ]}
+      />
       <div className="flex items-center justify-between gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Edit Money In Entry</h2>

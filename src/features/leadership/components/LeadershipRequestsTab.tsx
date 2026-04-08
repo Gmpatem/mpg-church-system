@@ -6,25 +6,21 @@ import {
   rejectDepartmentLeadershipRequestAction,
 } from "../actions";
 import type { LeadershipRequestsData } from "../types";
+import { getLabel, approvalStageLabels } from "@/lib/display-maps";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+
+const requestSourceLabels: Record<string, string> = {
+  invite_onboarding: "From Invite",
+  manual_request: "Manual Request",
+  admin_created: "Admin Created",
+  profile_completion: "Profile Completion",
+};
 
 function formatDate(value: string | null) {
   if (!value) return "—";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "—";
   return date.toLocaleString();
-}
-
-function statusClass(status: string) {
-  if (status === "approved") {
-    return "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300";
-  }
-  if (status === "rejected") {
-    return "border-rose-500/30 bg-rose-500/10 text-rose-700 dark:text-rose-300";
-  }
-  if (status === "cancelled") {
-    return "border-zinc-500/30 bg-zinc-500/10 text-zinc-700 dark:text-zinc-300";
-  }
-  return "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300";
 }
 
 function SummaryCard({
@@ -113,11 +109,7 @@ export function LeadershipRequestsTab({
                     <p className="font-medium text-foreground">
                       {request.memberName ?? request.memberEmail ?? "Unnamed request"}
                     </p>
-                    <span
-                      className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${statusClass(request.status)}`}
-                    >
-                      {request.status}
-                    </span>
+                    <StatusBadge status={request.status} context="approval" />
                   </div>
 
                   <div className="grid gap-1 text-sm text-muted-foreground sm:grid-cols-2">
@@ -142,17 +134,17 @@ export function LeadershipRequestsTab({
                   </div>
 
                   <div className="rounded-xl bg-muted/40 p-3 text-xs text-muted-foreground">
-                    Source: <span className="font-medium text-foreground">{request.source}</span>
+                    Source: <span className="font-medium text-foreground">{getLabel(requestSourceLabels, request.source)}</span>
                     {request.approvalStage ? (
                       <>
                         {" "}• Approval stage:{" "}
-                        <span className="font-medium text-foreground">{request.approvalStage}</span>
+                        <span className="font-medium text-foreground">{getLabel(approvalStageLabels, request.approvalStage)}</span>
                       </>
                     ) : null}
                     {request.approvalStatus ? (
                       <>
                         {" "}• Approval status:{" "}
-                        <span className="font-medium text-foreground">{request.approvalStatus}</span>
+                        <StatusBadge status={request.approvalStatus} context="approval" />
                       </>
                     ) : null}
                     {request.reviewerNote ? (

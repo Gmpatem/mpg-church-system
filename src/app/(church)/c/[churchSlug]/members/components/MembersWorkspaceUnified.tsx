@@ -1,8 +1,10 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useState } from "react";
 import { createMemberInviteAction } from "@/features/member-invite/actions";
-import { buildMemberInviteLink } from "@/features/member-invite/utils";
+import { StatusBadge } from "@/components/ui/StatusBadge";
+import { CopyableLink } from "@/components/ui/CopyableLink";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 import { WorkspaceControlRail,
   WorkspaceEmptyState,
   WorkspaceHero,
@@ -75,7 +77,7 @@ interface MembersWorkspaceUnifiedProps {
 const MEMBER_TABS: WorkspaceTabItem[] = [
   { key: "directory", label: "Directory" },
   { key: "households", label: "Households" },
-  { key: "health", label: "Directory Health", shortLabel: "Health" },
+  { key: "health", label: "Profile Completeness", shortLabel: "Completeness" },
 ];
 
 function getMemberLabel(member: MembersWorkspaceUnifiedProps["data"]["members"][number]) {
@@ -96,23 +98,6 @@ function formatDate(value?: string | null) {
   });
 }
 
-function StatusBadge({ status }: { status: string }) {
-  const classes =
-    status === "active"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-      : status === "inactive"
-        ? "border-slate-200 bg-slate-50 text-slate-800"
-        : status === "visitor"
-          ? "border-amber-200 bg-amber-50 text-amber-800"
-          : "border-blue-200 bg-blue-50 text-blue-800";
-
-  return (
-    <span className={`rounded-full border px-2.5 py-1 text-xs font-medium capitalize ${classes}`}>
-      {status}
-    </span>
-  );
-}
-
 function MemberInviteButton({
   churchSlug,
   member,
@@ -120,34 +105,58 @@ function MemberInviteButton({
   churchSlug: string;
   member: MembersWorkspaceUnifiedProps["data"]["members"][number];
 }) {
-  const [copied, setCopied] = useState(false);
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  async function handleCopyInvite() {
+  async function handleGenerateInvite() {
+    setStatus("loading");
+    setErrorMsg(null);
     try {
-      const path = buildMemberInviteLink(churchSlug, {
-        email: member.email || undefined,
-        memberCode: member.member_code || undefined,
-      });
-
-      const fullLink =
-        typeof window === "undefined" ? path : `${window.location.origin}${path}`;
-
-      await navigator.clipboard.writeText(fullLink);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
+      const result = await createMemberInviteAction(churchSlug, member.id);
+      if (result.ok) {
+        const fullUrl = window.location.origin + result.path;
+        setInviteUrl(fullUrl);
+        setStatus("success");
+      } else {
+        setErrorMsg(result.error);
+        setStatus("error");
+      }
     } catch {
-      setCopied(false);
+      setErrorMsg("Could not generate invite link.");
+      setStatus("error");
     }
   }
 
+  if (status === "success" && inviteUrl) {
+    return (
+      <div className="space-y-2">
+        <CopyableLink url={inviteUrl} showWhatsApp={true} />
+        <button
+          type="button"
+          onClick={() => { setStatus("idle"); setInviteUrl(null); }}
+          className="text-xs text-slate-500 underline hover:text-slate-700"
+        >
+          Generate new link
+        </button>
+      </div>
+    );
+  }
+
   return (
-    <button
-      type="button"
-      onClick={handleCopyInvite}
-      className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-    >
-      {copied ? "Copied" : "Copy Invite"}
-    </button>
+    <div className="space-y-2">
+      <button
+        type="button"
+        onClick={handleGenerateInvite}
+        disabled={status === "loading"}
+        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+      >
+        {status === "loading" ? "Generating..." : "Invite to Portal"}
+      </button>
+      {status === "error" && errorMsg && (
+        <InlineAlert variant="error" message={errorMsg} />
+      )}
+    </div>
   );
 }
 function DepartmentPills({
@@ -209,7 +218,7 @@ function MemberDirectory({
                     <p className="text-sm font-semibold text-slate-950">
                       {getMemberLabel(member)}
                     </p>
-                    <StatusBadge status={member.membership_status} />
+                    <StatusBadge status={member.membership_status} context="member" />
                   </div>
 
                   <p className="mt-1 text-sm text-slate-600">
@@ -341,7 +350,7 @@ function HouseholdsPanel({
                   </p>
                 </div>
 
-                <StatusBadge status={member.membership_status} />
+                <StatusBadge status={member.membership_status} context="member" />
               </div>
             ))}
           </div>

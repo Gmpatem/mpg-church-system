@@ -82,18 +82,6 @@ export default function LandingPage() {
             >
               Features
             </Link>
-            <Link
-              href="#pricing"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
-              Pricing
-            </Link>
-            <Link
-              href="#about"
-              className="text-sm font-medium text-muted-foreground hover:text-foreground"
-            >
-              About
-            </Link>
           </nav>
           <div className="flex items-center gap-4">
             <Link
@@ -140,15 +128,15 @@ export default function LandingPage() {
             <div className="flex items-center gap-4 text-sm text-muted-foreground mt-8">
               <div className="flex items-center gap-1">
                 <CheckCircle2 className="h-4 w-4 text-primary" />
-                <span>Free trial</span>
+                <span>Built for SDA churches</span>
               </div>
               <div className="flex items-center gap-1">
                 <CheckCircle2 className="h-4 w-4 text-primary" />
-                <span>No credit card</span>
+                <span>Members + Staff + Treasury in one place</span>
               </div>
               <div className="flex items-center gap-1">
                 <CheckCircle2 className="h-4 w-4 text-primary" />
-                <span>Cancel anytime</span>
+                <span>Invite-based member onboarding</span>
               </div>
             </div>
           </div>
@@ -187,24 +175,24 @@ export default function LandingPage() {
         <div className="container px-4 md:px-6">
           <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
             <div className="flex flex-col items-center gap-2 text-center">
-              <div className="text-4xl font-bold text-primary">500+</div>
+              <div className="text-4xl font-bold text-primary">EN + FR</div>
               <div className="text-sm text-muted-foreground">
-                Churches Using MPG
+                English and French support
               </div>
             </div>
             <div className="flex flex-col items-center gap-2 text-center">
-              <div className="text-4xl font-bold text-primary">50K+</div>
+              <div className="text-4xl font-bold text-primary">Multi-tenant</div>
               <div className="text-sm text-muted-foreground">
-                Members Managed
+                Each church fully isolated
               </div>
             </div>
             <div className="flex flex-col items-center gap-2 text-center">
-              <div className="text-4xl font-bold text-primary">99.9%</div>
-              <div className="text-sm text-muted-foreground">Uptime</div>
+              <div className="text-4xl font-bold text-primary">Invite flow</div>
+              <div className="text-sm text-muted-foreground">Staff and member onboarding</div>
             </div>
             <div className="flex flex-col items-center gap-2 text-center">
-              <div className="text-4xl font-bold text-primary">24/7</div>
-              <div className="text-sm text-muted-foreground">Support</div>
+              <div className="text-4xl font-bold text-primary">Full audit</div>
+              <div className="text-sm text-muted-foreground">Treasury and access logs</div>
             </div>
           </div>
         </div>
@@ -252,49 +240,19 @@ export default function LandingPage() {
                     Features
                   </Link>
                 </li>
-                <li>
-                  <Link href="#pricing" className="hover:text-foreground">
-                    Pricing
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-foreground">
-                    Integrations
-                  </Link>
-                </li>
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-4">Company</h4>
+              <h4 className="font-semibold mb-4">Account</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li>
-                  <Link href="#about" className="hover:text-foreground">
-                    About
+                  <Link href="/login" className="hover:text-foreground">
+                    Sign In
                   </Link>
                 </li>
                 <li>
-                  <Link href="#" className="hover:text-foreground">
-                    Blog
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-foreground">
-                    Contact
-                  </Link>
-                </li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-semibold mb-4">Legal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>
-                  <Link href="#" className="hover:text-foreground">
-                    Privacy
-                  </Link>
-                </li>
-                <li>
-                  <Link href="#" className="hover:text-foreground">
-                    Terms
+                  <Link href="/register" className="hover:text-foreground">
+                    Register
                   </Link>
                 </li>
               </ul>

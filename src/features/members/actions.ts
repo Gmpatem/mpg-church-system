@@ -6,6 +6,10 @@ import { requireChurchRole } from "@/features/access/queries";
 import type { ActionState } from "@/features/access/types";
 import { parseCreateMemberInput, parseUpdateMemberInput } from "./validators";
 
+type CreateMemberState =
+  | { ok: true; message?: string; memberId: string; error?: undefined }
+  | { ok: false; error: string; message?: undefined; memberId?: undefined };
+
 function getString(formData: FormData, key: string) {
   const value = formData.get(key);
   return typeof value === "string" ? value.trim() : "";
@@ -62,9 +66,9 @@ async function ensureDepartmentBelongsToChurch(supabase: any, churchId: string, 
 }
 
 export async function createMemberAction(
-  _prevState: ActionState | null,
+  _prevState: CreateMemberState | null,
   formData: FormData
-): Promise<ActionState> {
+): Promise<CreateMemberState> {
   const churchSlug = getString(formData, "churchSlug");
   const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
 
@@ -186,7 +190,7 @@ export async function createMemberAction(
     revalidatePath(`/c/${churchSlug}/reports`);
     revalidatePath(`/c/${churchSlug}/households`);
 
-    return { ok: true, message: "Member created successfully." };
+    return { ok: true, message: "Member created successfully.", memberId: createdMember.id };
   } catch (error) {
     return {
       ok: false,

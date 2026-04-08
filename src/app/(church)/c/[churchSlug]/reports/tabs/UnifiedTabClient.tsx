@@ -55,10 +55,7 @@ export function UnifiedTabClient({ unified }: UnifiedTabClientProps) {
 
   return (
     <div className="space-y-6">
-      <ReportsExportActions
-        title="Unified Reporting Actions"
-        subtitle="Prepare leadership-ready cross-module summaries for meetings, councils, and conference review."
-      />
+      <ReportsExportActions />
 
       <PrintReadySummaryStrip
         title="Unified Print Summary"
