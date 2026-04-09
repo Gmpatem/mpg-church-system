@@ -1,12 +1,32 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect, useState } from "react";
 import { createChurchAction } from "@/features/churches/actions";
 import { CountrySelect } from "./components/CountrySelect";
 import { TimezoneSelect } from "./components/TimezoneSelect";
 
+function slugifyChurchName(name: string): string {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9\s-]/g, "") // Remove invalid characters (keep letters, numbers, spaces, hyphens)
+    .replace(/\s+/g, "-") // Replace spaces with hyphens
+    .replace(/-+/g, "-") // Collapse multiple hyphens
+    .replace(/^-+|-+$/g, ""); // Trim leading/trailing hyphens
+}
+
 export function CreateChurchForm() {
   const [state, formAction, isPending] = useActionState(createChurchAction, null);
+  const [churchName, setChurchName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [isSlugManuallyEdited, setIsSlugManuallyEdited] = useState(false);
+
+  // Auto-generate slug from church name until user manually edits slug
+  useEffect(() => {
+    if (!isSlugManuallyEdited) {
+      setSlug(slugifyChurchName(churchName));
+    }
+  }, [churchName, isSlugManuallyEdited]);
 
   return (
     <form action={formAction} className="space-y-5">
@@ -26,6 +46,8 @@ export function CreateChurchForm() {
             name="name"
             type="text"
             required
+            value={churchName}
+            onChange={(e) => setChurchName(e.target.value)}
             placeholder="e.g., Grace Community Church"
             className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
           />
@@ -33,19 +55,24 @@ export function CreateChurchForm() {
 
         <div className="md:col-span-2">
           <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-1">
-            Church slug <span className="text-red-500">*</span>
+            Church Link Name <span className="text-red-500">*</span>
           </label>
           <input
             id="slug"
             name="slug"
             type="text"
             required
+            value={slug}
+            onChange={(e) => {
+              setIsSlugManuallyEdited(true);
+              setSlug(e.target.value);
+            }}
             placeholder="grace-community-church"
             className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
           />
           <p className="mt-1 text-xs text-gray-500">
-            Lowercase letters, numbers, and hyphens only. Used in URLs like{" "}
-            <code className="bg-gray-100 px-1 rounded">/c/your-church-slug</code>
+            This creates your church web address. You can still edit it. Used in URLs like{" "}
+            <code className="bg-gray-100 px-1 rounded">/c/your-church-link-name</code>
           </p>
         </div>
 
