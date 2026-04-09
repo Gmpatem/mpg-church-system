@@ -2,6 +2,7 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireMemberPortalAccess } from "@/features/access/queries";
+import { getPublishedEvents } from "@/features/calendar/queries";
 import type {
   MemberPortalDepartmentItem,
   MemberPortalDepartmentsData,
@@ -490,6 +491,12 @@ export async function getMemberPortalTabData(
       return { tab: "departments", data: null as never };
     }
     return { tab: "departments", data };
+  }
+
+  if (tab === "calendar") {
+    const ctx = await requireMemberPortalAccess(churchSlug);
+    const events = await getPublishedEvents(ctx.churchId);
+    return { tab: "calendar", data: events };
   }
 
   return {

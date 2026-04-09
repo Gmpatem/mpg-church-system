@@ -8,12 +8,25 @@ import { loginAction } from "@/features/auth/actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
+import { useI18n } from "@/features/i18n";
 
 export function LoginForm() {
   const [state, formAction, isPending] = useActionState(loginAction, null);
   const searchParams = useSearchParams();
   const redirect = searchParams.get("redirect") ?? "";
   const [showPassword, setShowPassword] = useState(false);
+  const { t, language } = useI18n();
+
+  const isFr = language === "fr";
+
+  const labels = {
+    email: isFr ? "Email" : "Email",
+    emailPlaceholder: isFr ? "vous@exemple.com" : "you@example.com",
+    password: isFr ? "Mot de passe" : "Password",
+    passwordPlaceholder: isFr ? "Entrez votre mot de passe" : "Enter your password",
+    signIn: isFr ? "Se connecter" : "Sign In",
+    signingIn: isFr ? "Connexion..." : "Signing in...",
+  };
 
   return (
     <form action={formAction} className="space-y-5">
@@ -34,7 +47,7 @@ export function LoginForm() {
       {/* Email field */}
       <div className="space-y-2">
         <Label htmlFor="email" className="text-sm font-medium text-slate-700">
-          Email
+          {labels.email}
         </Label>
         <Input
           id="email"
@@ -42,7 +55,7 @@ export function LoginForm() {
           type="email"
           required
           autoComplete="email"
-          placeholder="you@example.com"
+          placeholder={labels.emailPlaceholder}
           className="h-11 rounded-lg border-slate-200 focus:border-cyan-500 focus:ring-cyan-500"
         />
       </div>
@@ -50,7 +63,7 @@ export function LoginForm() {
       {/* Password field */}
       <div className="space-y-2">
         <Label htmlFor="password" className="text-sm font-medium text-slate-700">
-          Password
+          {labels.password}
         </Label>
         <div className="relative">
           <Input
@@ -59,14 +72,14 @@ export function LoginForm() {
             type={showPassword ? "text" : "password"}
             required
             autoComplete="current-password"
-            placeholder="Enter your password"
+            placeholder={labels.passwordPlaceholder}
             className="h-11 rounded-lg border-slate-200 pr-10 focus:border-cyan-500 focus:ring-cyan-500"
           />
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
             tabIndex={-1}
-            aria-label={showPassword ? "Hide password" : "Show password"}
+            aria-label={showPassword ? (isFr ? "Masquer le mot de passe" : "Hide password") : (isFr ? "Afficher le mot de passe" : "Show password")}
             className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600 transition-colors"
           >
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -83,10 +96,10 @@ export function LoginForm() {
         {isPending ? (
           <span className="inline-flex items-center gap-2">
             <ButtonSpinner className="text-white" />
-            Signing in...
+            {labels.signingIn}
           </span>
         ) : (
-          "Sign In"
+          labels.signIn
         )}
       </button>
     </form>

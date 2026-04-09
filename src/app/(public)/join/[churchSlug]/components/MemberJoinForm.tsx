@@ -100,7 +100,7 @@ export function MemberJoinForm({ church }: MemberJoinFormProps) {
               placeholder="e.g. MC-001"
             />
             <p className="text-xs text-muted-foreground">
-              Your member code was given to you by your church administrator. Leave this blank if you don't have one.
+              Your member code was given to you by your church administrator. Leave this blank if you don&apos;t have one.
             </p>
           </div>
         </div>

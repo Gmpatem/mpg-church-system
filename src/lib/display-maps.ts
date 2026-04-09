@@ -40,6 +40,20 @@ export const eventStatusLabels: Record<string, string> = {
   cancelled: "Cancelled",
 };
 
+export const eventTypeLabels: Record<string, string> = {
+  worship: "Worship Service",
+  prayer: "Prayer Meeting",
+  youth: "Youth Program",
+  children: "Children's Ministry",
+  bible_study: "Bible Study",
+  outreach: "Outreach",
+  fellowship: "Fellowship",
+  conference: "Conference",
+  seminar: "Seminar",
+  department: "Department Event",
+  other: "Other",
+};
+
 export const approvalStageLabels: Record<string, string> = {
   submitted: "Submitted",
   office_review: "Office Review",

@@ -666,6 +666,35 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
 }
 
 
+export async function getMembersAlreadyTithedThisWeek(
+  churchSlug: string
+): Promise<string[]> {
+  const supabase = await createClient();
+  const church = await supabase
+    .from("churches")
+    .select("id")
+    .eq("slug", churchSlug)
+    .single();
+  if (!church.data) return [];
+
+  const now = new Date();
+  const day = now.getDay();
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
+  startOfWeek.setHours(0, 0, 0, 0);
+  const weekStart = startOfWeek.toISOString().split("T")[0];
+
+  const { data } = await supabase
+    .from("treasury_inflows")
+    .select("member_id")
+    .eq("church_id", church.data.id)
+    .eq("inflow_type", "tithe")
+    .gte("inflow_date", weekStart)
+    .not("member_id", "is", null);
+
+  return (data ?? []).map((r: any) => r.member_id as string);
+}
+
 export async function getMemberFinancialProfile(churchSlug: string, memberId: string) {
   const ctx = await requireChurchAccess(churchSlug);
   const supabase = await createClient();

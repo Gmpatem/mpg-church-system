@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { LogOut, User2, Users, Home } from "lucide-react";
+import { LogOut, User2, Users, Home, Calendar } from "lucide-react";
 import { signOutMemberPortalAction } from "@/features/member-portal/actions";
 import type {
   MemberPortalFoundationData,
@@ -22,6 +22,7 @@ const NAV_ITEMS: Array<{
   { key: "overview", label: "Overview", icon: Home },
   { key: "profile", label: "Profile", icon: User2 },
   { key: "departments", label: "My Involvement", icon: Users },
+  { key: "calendar", label: "Calendar", icon: Calendar },
 ];
 
 function buildTabHref(churchSlug: string, tab: MemberPortalTabKey) {

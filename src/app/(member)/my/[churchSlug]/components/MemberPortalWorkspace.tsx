@@ -5,6 +5,8 @@ import {
   WorkspaceStatCard
 } from "@/components/workspace";
 import { getLabel, memberStatusLabels, memberTypeLabels } from "@/lib/display-maps";
+import { CalendarView } from "@/components/shared/CalendarView";
+import type { CalendarEvent } from "@/features/calendar/types";
 import type {
   MemberPortalDepartmentsData,
   MemberPortalFoundationData,
@@ -28,6 +30,7 @@ const TAB_ITEMS: Array<{
   { key: "overview", label: "Overview" },
   { key: "profile", label: "Profile" },
   { key: "departments", label: "My Involvement" },
+  { key: "calendar", label: "Calendar" },
 ];
 
 function formatMemberName(foundation: MemberPortalFoundationData) {
@@ -347,6 +350,29 @@ function renderDepartmentsTab(data: MemberPortalDepartmentsData) {
   );
 }
 
+function renderCalendarTab(events: CalendarEvent[]) {
+  return (
+    <WorkspaceSectionCard
+      title="Church Calendar"
+      description="Upcoming approved events for this church."
+    >
+      <CalendarView
+        events={events.map((e) => ({
+          id: e.id,
+          title: e.title,
+          start: e.start,
+          end: e.end,
+          event_type: e.event_type,
+          location: e.location,
+          is_all_day: e.is_all_day,
+        }))}
+        showViewToggle={true}
+        emptyMessage="No upcoming events scheduled."
+      />
+    </WorkspaceSectionCard>
+  );
+}
+
 export function MemberPortalWorkspace({
   foundation,
   activeTab,
@@ -419,6 +445,10 @@ export function MemberPortalWorkspace({
 
       {activeTab === "departments" && tabData.tab === "departments" && tabData.data
         ? renderDepartmentsTab(tabData.data)
+        : null}
+
+      {activeTab === "calendar" && tabData.tab === "calendar"
+        ? renderCalendarTab(tabData.data)
         : null}
     </div>
   );

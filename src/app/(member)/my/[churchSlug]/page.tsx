@@ -16,6 +16,7 @@ const VALID_TABS: MemberPortalTabKey[] = [
   "overview",
   "profile",
   "departments",
+  "calendar",
 ];
 
 function normalizeTab(value: string | undefined): MemberPortalTabKey {

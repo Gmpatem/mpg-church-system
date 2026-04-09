@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { I18nProvider } from "@/features/i18n";
 import { Toaster } from "@/components/feedback/toaster";
+import { resolveLocale } from "@/features/i18n/locale";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -11,15 +12,18 @@ export const metadata: Metadata = {
   description: "A complete church management platform designed for modern ministries. Track members, manage departments, handle finances, and grow your community.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // Resolve locale server-side for initial render
+  const { language } = await resolveLocale();
+
   return (
-    <html lang="en">
+    <html lang={language}>
       <body className={inter.className}>
-        <I18nProvider>
+        <I18nProvider defaultLanguage={language}>
           {children}
           <Toaster />
         </I18nProvider>

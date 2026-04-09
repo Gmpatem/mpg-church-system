@@ -4,9 +4,21 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Church, Menu, X } from "lucide-react";
+import { LanguageSwitcher } from "./LanguageSwitcher";
+import { useI18n } from "@/features/i18n";
 
 export function MarketingHeader() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { t, language } = useI18n();
+
+  // Navigation labels based on language
+  const navLabels = {
+    features: language === "fr" ? "Fonctionnalités" : "Features",
+    forYou: language === "fr" ? "Pour Vous" : "For You",
+    howItWorks: language === "fr" ? "Comment Ça Marche" : "How It Works",
+    signIn: language === "fr" ? "Connexion" : "Sign In",
+    getStarted: language === "fr" ? "Commencer" : "Get Started",
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b border-slate-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
@@ -25,44 +37,48 @@ export function MarketingHeader() {
             href="#features"
             className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
           >
-            Features
+            {navLabels.features}
           </Link>
           <Link
             href="#roles"
             className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
           >
-            For You
+            {navLabels.forYou}
           </Link>
           <Link
             href="#workflow"
             className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
           >
-            How It Works
+            {navLabels.howItWorks}
           </Link>
         </nav>
 
-        {/* Desktop CTA */}
+        {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-4">
+          <LanguageSwitcher variant="minimal" />
           <Link
             href="/login"
             className="text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
           >
-            Sign In
+            {navLabels.signIn}
           </Link>
           <Button asChild className="bg-slate-900 hover:bg-slate-800">
-            <Link href="/register">Get Started</Link>
+            <Link href="/register">{navLabels.getStarted}</Link>
           </Button>
         </div>
 
         {/* Mobile Menu Button */}
-        <button
-          type="button"
-          className="md:hidden p-2 text-slate-600 hover:text-slate-900"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          aria-label="Toggle menu"
-        >
-          {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </button>
+        <div className="flex items-center gap-2 md:hidden">
+          <LanguageSwitcher variant="minimal" />
+          <button
+            type="button"
+            className="p-2 text-slate-600 hover:text-slate-900"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+          </button>
+        </div>
       </div>
 
       {/* Mobile Menu */}
@@ -74,21 +90,21 @@ export function MarketingHeader() {
               className="block text-sm font-medium text-slate-600 hover:text-slate-900"
               onClick={() => setMobileMenuOpen(false)}
             >
-              Features
+              {navLabels.features}
             </Link>
             <Link
               href="#roles"
               className="block text-sm font-medium text-slate-600 hover:text-slate-900"
               onClick={() => setMobileMenuOpen(false)}
             >
-              For You
+              {navLabels.forYou}
             </Link>
             <Link
               href="#workflow"
               className="block text-sm font-medium text-slate-600 hover:text-slate-900"
               onClick={() => setMobileMenuOpen(false)}
             >
-              How It Works
+              {navLabels.howItWorks}
             </Link>
             <div className="pt-4 border-t border-slate-100 space-y-3">
               <Link
@@ -96,11 +112,11 @@ export function MarketingHeader() {
                 className="block text-sm font-medium text-slate-600 hover:text-slate-900"
                 onClick={() => setMobileMenuOpen(false)}
               >
-                Sign In
+                {navLabels.signIn}
               </Link>
               <Button asChild className="w-full bg-slate-900 hover:bg-slate-800">
                 <Link href="/register" onClick={() => setMobileMenuOpen(false)}>
-                  Get Started
+                  {navLabels.getStarted}
                 </Link>
               </Button>
             </div>

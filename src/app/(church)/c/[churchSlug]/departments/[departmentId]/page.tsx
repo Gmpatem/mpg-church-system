@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
-import { WorkspaceHero, WorkspaceStatCard } from "@/components/workspace";
+import { WorkspaceHero, WorkspaceStatCard, WorkspaceSectionCard } from "@/components/workspace";
 import { DepartmentForm } from "@/features/departments/components/DepartmentForm";
 import { DepartmentMembers } from "@/features/departments/components/DepartmentMembers";
 import { AssignMemberToDepartment } from "@/features/departments/components/AssignMemberToDepartment";
@@ -10,6 +10,9 @@ import {
   getDepartmentOptions,
 } from "@/features/departments/queries";
 import { updateDepartmentAction } from "@/features/departments/actions";
+import { getPublishedEvents } from "@/features/calendar/queries";
+import { requireChurchAccess } from "@/features/access/queries";
+import { CalendarView } from "@/components/shared/CalendarView";
 
 interface DepartmentDetailPageProps {
   params: Promise<{ churchSlug: string; departmentId: string }>;
@@ -20,10 +23,13 @@ export default async function DepartmentDetailPage({ params, searchParams }: Dep
   const { churchSlug, departmentId } = await params;
   const filters = (await searchParams) ?? {};
 
-  const [department, assignments, options] = await Promise.all([
+  const ctx = await requireChurchAccess(churchSlug);
+
+  const [department, assignments, options, deptEvents] = await Promise.all([
     getDepartmentById(churchSlug, departmentId),
     getDepartmentMembers(churchSlug, departmentId, filters),
     getDepartmentOptions(churchSlug),
+    getPublishedEvents(ctx.churchId, departmentId),
   ]);
 
   if (!department) {
@@ -108,6 +114,25 @@ export default async function DepartmentDetailPage({ params, searchParams }: Dep
         churchSlug={churchSlug}
         assignments={assignments}
       />
+
+      <WorkspaceSectionCard
+        title="Department Events"
+        description="Upcoming approved events for this department."
+      >
+        <CalendarView
+          events={deptEvents.map((e) => ({
+            id: e.id,
+            title: e.title,
+            start: e.start,
+            end: e.end,
+            event_type: e.event_type,
+            location: e.location,
+            is_all_day: e.is_all_day,
+          }))}
+          showViewToggle={true}
+          emptyMessage="No upcoming events for this department."
+        />
+      </WorkspaceSectionCard>
     </div>
   );
 }

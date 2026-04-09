@@ -38,8 +38,11 @@ export function useTreasuryMembers(churchSlug: string, enabled: boolean) {
         }
 
         if (!cancelled) {
-          setMembers(json.members ?? []);
-          setLoaded(true);
+          const fetched = json.members ?? [];
+          setMembers(fetched);
+          if (fetched.length > 0) {
+            setLoaded(true);
+          }
         }
       } catch (err: any) {
         if (!cancelled) {

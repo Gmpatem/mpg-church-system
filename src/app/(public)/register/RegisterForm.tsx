@@ -41,7 +41,7 @@ export function RegisterForm() {
           required
           autoComplete="email"
         />
-        <p className="text-xs text-muted-foreground">We'll send your confirmation here.</p>
+        <p className="text-xs text-muted-foreground">We&apos;ll send your confirmation here.</p>
       </div>
 
       <div className="space-y-1.5">

@@ -2,6 +2,7 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireChurchAccess } from "@/features/access/queries";
+import type { CalendarEvent } from "./types";
 
 const DEPARTMENT_COLORS = [
   "#2563eb",
@@ -84,6 +85,44 @@ export async function getChurchCalendarData(churchSlug: string) {
     events: calendarEvents,
     departments: departmentOptions,
   };
+}
+
+export async function getPublishedEvents(
+  churchId: string,
+  departmentId?: string
+): Promise<CalendarEvent[]> {
+  try {
+    const supabase = await createClient();
+
+    let query = supabase
+      .from("church_events")
+      .select("id, title, start_datetime, end_datetime, event_type, department_id, location, is_all_day")
+      .eq("church_id", churchId)
+      .eq("workflow_state", "published")
+      .neq("status", "cancelled")
+      .order("start_datetime", { ascending: true });
+
+    if (departmentId) {
+      query = query.eq("department_id", departmentId);
+    }
+
+    const { data, error } = await query;
+
+    if (error) return [];
+
+    return (data ?? []).map((row) => ({
+      id: row.id,
+      title: row.title,
+      start: row.start_datetime,
+      end: row.end_datetime,
+      event_type: row.event_type,
+      department_id: row.department_id ?? null,
+      location: row.location ?? null,
+      is_all_day: row.is_all_day,
+    }));
+  } catch {
+    return [];
+  }
 }
 
 

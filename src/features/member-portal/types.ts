@@ -1,9 +1,13 @@
+import type { CalendarEvent } from "@/features/calendar/types";
+export type { CalendarEvent };
+
 export type MemberPortalTabKey =
   | "overview"
   | "profile"
   | "giving"
   | "departments"
-  | "events";
+  | "events"
+  | "calendar";
 
 export type MemberPortalProfileSummary = {
   id: string;
@@ -150,6 +154,10 @@ export type MemberPortalTabData =
   | {
       tab: "giving" | "events";
       data: null;
+    }
+  | {
+      tab: "calendar";
+      data: CalendarEvent[];
     };
 
 
