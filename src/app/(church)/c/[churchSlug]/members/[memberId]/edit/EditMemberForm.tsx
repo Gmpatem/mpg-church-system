@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useActionState } from "react";
+import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 import { updateMemberAction } from "@/features/members/actions";
 
 interface Household {
@@ -159,9 +160,14 @@ export function EditMemberForm({ churchSlug, member, households }: EditMemberFor
           <button
             type="submit"
             disabled={isPending}
-            className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+            className="inline-flex items-center justify-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
           >
-            {isPending ? "Saving..." : "Save Changes"}
+            {isPending ? (
+              <span className="inline-flex items-center gap-2">
+                <ButtonSpinner />
+                Saving...
+              </span>
+            ) : "Save Changes"}
           </button>
         </div>
       </form>

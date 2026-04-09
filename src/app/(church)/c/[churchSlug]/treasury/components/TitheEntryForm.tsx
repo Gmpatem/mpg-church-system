@@ -2,10 +2,12 @@
 
 import { useMemo } from "react";
 import { useActionState } from "react";
+import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 import { createTreasuryInflowAction } from "@/features/treasury/actions";
 
 interface TitheEntryFormProps {
   churchSlug: string;
+  alreadyTithedIds: string[];
   options: {
     funds: Array<{ id: string; name: string; code: string; fund_type: string }>;
     members: Array<{ id: string; display_name?: string | null; first_name: string; last_name: string; member_code?: string | null }>;
@@ -20,12 +22,22 @@ function getTodayLocalDate() {
   return `${year}-${month}-${day}`;
 }
 
-export function TitheEntryForm({ churchSlug, options }: TitheEntryFormProps) {
+export function TitheEntryForm({ churchSlug, options, alreadyTithedIds }: TitheEntryFormProps) {
   const [state, formAction, isPending] = useActionState(createTreasuryInflowAction, null);
 
   const titheFundId = useMemo(() => {
     return options.funds.find((fund) => fund.code === "tithe")?.id ?? "";
   }, [options.funds]);
+
+  const availableMembers = useMemo(
+    () => options.members.filter((m) => !alreadyTithedIds.includes(m.id)),
+    [options.members, alreadyTithedIds]
+  );
+
+  const tithedMembers = useMemo(
+    () => options.members.filter((m) => alreadyTithedIds.includes(m.id)),
+    [options.members, alreadyTithedIds]
+  );
 
   const today = getTodayLocalDate();
 
@@ -73,12 +85,30 @@ export function TitheEntryForm({ churchSlug, options }: TitheEntryFormProps) {
           <label htmlFor="memberId" className="block text-sm font-medium text-slate-700 mb-1">Member</label>
           <select id="memberId" name="memberId" className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
             <option value="">Unlinked / not selected</option>
-            {options.members.map((member) => (
-              <option key={member.id} value={member.id}>
-                {(member.display_name ?? `${member.first_name} ${member.last_name}`) + (member.member_code ? ` (${member.member_code})` : "")}
-              </option>
-            ))}
+            {availableMembers.length > 0 && (
+              <optgroup label="Available this week">
+                {availableMembers.map((member) => (
+                  <option key={member.id} value={member.id}>
+                    {(member.display_name ?? `${member.first_name} ${member.last_name}`) + (member.member_code ? ` (${member.member_code})` : "")}
+                  </option>
+                ))}
+              </optgroup>
+            )}
+            {tithedMembers.length > 0 && (
+              <optgroup label="Already tithed this week">
+                {tithedMembers.map((member) => (
+                  <option key={member.id} value={member.id} disabled>
+                    {(member.display_name ?? `${member.first_name} ${member.last_name}`) + " ✓"}
+                  </option>
+                ))}
+              </optgroup>
+            )}
           </select>
+          {alreadyTithedIds.length > 0 && (
+            <p className="mt-1 text-xs text-slate-500">
+              {alreadyTithedIds.length} member{alreadyTithedIds.length === 1 ? "" : "s"} already recorded tithe this week.
+            </p>
+          )}
         </div>
 
         <div>
@@ -124,9 +154,14 @@ export function TitheEntryForm({ churchSlug, options }: TitheEntryFormProps) {
         <button
           type="submit"
           disabled={isPending || !titheFundId}
-          className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+          className="inline-flex items-center justify-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
         >
-          {isPending ? "Saving..." : "Record Tithe"}
+          {isPending ? (
+            <span className="inline-flex items-center gap-2">
+              <ButtonSpinner />
+              Saving...
+            </span>
+          ) : "Record Tithe"}
         </button>
       </div>
 

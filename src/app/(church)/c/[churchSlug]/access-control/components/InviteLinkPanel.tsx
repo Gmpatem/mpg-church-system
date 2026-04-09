@@ -7,6 +7,7 @@ import {
 } from "@/features/member-invite/actions";
 import type { InviteCreationMode, MemberInviteManagementData } from "@/features/member-invite/types";
 import { CopyableLink } from "@/components/ui/CopyableLink";
+import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 import { InviteHistoryList } from "./InviteHistoryList";
 
 type InviteLinkPanelProps = {
@@ -208,7 +209,12 @@ export function InviteLinkPanel({ churchSlug, data }: InviteLinkPanelProps) {
             onClick={handleGenerate}
             className="inline-flex h-11 items-center justify-center rounded-xl bg-foreground px-4 text-sm font-medium text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isPending ? "Generating..." : "Generate secure invite"}
+            {isPending ? (
+              <span className="inline-flex items-center gap-2">
+                <ButtonSpinner />
+                Generating...
+              </span>
+            ) : "Generate secure invite"}
           </button>
         </div>
 

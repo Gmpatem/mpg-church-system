@@ -4,6 +4,7 @@ import { useState } from "react";
 import { cn } from "@/lib/utils/cn";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Check } from "lucide-react";
 
 interface CopyableLinkProps {
   url: string;
@@ -60,9 +61,19 @@ export function CopyableLink({
           variant="outline"
           size="sm"
           onClick={handleCopy}
-          className="shrink-0"
+          className={cn(
+            "shrink-0 transition-colors duration-200",
+            copied
+              ? "border-emerald-300 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800"
+              : "border-slate-200 text-slate-700"
+          )}
         >
-          {copied ? "Copied!" : "Copy"}
+          {copied ? (
+            <span className="inline-flex items-center gap-1.5">
+              <Check className="h-3.5 w-3.5" />
+              Copied!
+            </span>
+          ) : "Copy"}
         </Button>
       </div>
       {showWhatsApp ? (

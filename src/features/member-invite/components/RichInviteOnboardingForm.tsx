@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useMemo, useRef, useState } from "react";
+import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 import { completeRichInviteOnboardingAction } from "@/features/member-invite/actions";
 import type { RichSecureInvitePageData } from "@/features/member-invite/types";
 import { StepIndicator } from "@/components/ui/StepIndicator";
@@ -314,7 +315,12 @@ export function RichInviteOnboardingForm({
             disabled={isPending}
             className="inline-flex h-11 items-center justify-center rounded-xl bg-foreground px-5 text-sm font-medium text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
-            {isPending ? "Creating account..." : "Complete onboarding"}
+            {isPending ? (
+              <span className="inline-flex items-center gap-2">
+                <ButtonSpinner />
+                Creating account...
+              </span>
+            ) : "Complete onboarding"}
           </button>
         ) : null}
 

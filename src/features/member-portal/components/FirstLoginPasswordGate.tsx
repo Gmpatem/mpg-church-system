@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 import { completeFirstLoginPasswordChangeAction } from "../actions";
 
 export function FirstLoginPasswordGate({ churchSlug }: { churchSlug: string }) {
@@ -119,7 +120,12 @@ export function FirstLoginPasswordGate({ churchSlug }: { churchSlug: string }) {
           disabled={loading}
           className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-foreground px-4 text-sm font-medium text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? "Saving..." : "Save and continue"}
+          {loading ? (
+            <span className="inline-flex items-center gap-2">
+              <ButtonSpinner />
+              Saving...
+            </span>
+          ) : "Save and continue"}
         </button>
       </form>
     </div>

@@ -6,6 +6,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 import { completeMemberOnboardingAction } from "@/features/member-onboarding/actions";
 import type { MemberOnboardingChurchSummary } from "@/features/member-onboarding/types";
 
@@ -153,7 +154,12 @@ export function MemberJoinForm({ church }: MemberJoinFormProps) {
         </div>
 
         <Button type="submit" className="w-full" disabled={isPending}>
-          {isPending ? "Creating member access..." : "Continue"}
+          {isPending ? (
+            <span className="inline-flex items-center gap-2">
+              <ButtonSpinner />
+              Creating member access...
+            </span>
+          ) : "Continue"}
         </Button>
       </form>
 

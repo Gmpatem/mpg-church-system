@@ -5,6 +5,7 @@ import { createMemberInviteAction } from "@/features/member-invite/actions";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CopyableLink } from "@/components/ui/CopyableLink";
 import { InlineAlert } from "@/components/ui/InlineAlert";
+import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 import { WorkspaceControlRail,
   WorkspaceEmptyState,
   WorkspaceHero,
@@ -149,9 +150,14 @@ function MemberInviteButton({
         type="button"
         onClick={handleGenerateInvite}
         disabled={status === "loading"}
-        className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+        className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
       >
-        {status === "loading" ? "Generating..." : "Invite to Portal"}
+        {status === "loading" ? (
+          <span className="inline-flex items-center gap-2">
+            <ButtonSpinner />
+            Generating...
+          </span>
+        ) : "Invite to Portal"}
       </button>
       {status === "error" && errorMsg && (
         <InlineAlert variant="error" message={errorMsg} />

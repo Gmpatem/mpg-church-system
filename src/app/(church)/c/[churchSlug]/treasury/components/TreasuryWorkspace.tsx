@@ -19,6 +19,7 @@ type MainTab = "record_income" | "record_expenses" | "ledger" | "funds";
 
 interface TreasuryWorkspaceProps {
   churchSlug: string;
+  alreadyTithedIds?: string[];
   dashboard: {
     fundCount: number;
     totalIn: number;
@@ -171,6 +172,7 @@ function MemberOptionsError({ message }: { message: string }) {
 
 export function TreasuryWorkspace({
   churchSlug,
+  alreadyTithedIds,
   dashboard,
   recentInflows,
   recentOutflows,
@@ -183,7 +185,9 @@ export function TreasuryWorkspace({
 
   const mergedFormOptions = useMemo(() => ({
     ...formOptions,
-    members: memberLoader.loaded ? memberLoader.members : formOptions.members,
+    members: (memberLoader.loaded && memberLoader.members.length > 0)
+      ? memberLoader.members
+      : formOptions.members,
   }), [formOptions, memberLoader.loaded, memberLoader.members]);
 
   const inflowTypeSummary = dashboard.inflowByType
@@ -252,7 +256,7 @@ export function TreasuryWorkspace({
         <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.95fr)]">
           <div className="space-y-6">
             <WorkspaceSectionCard title="Tithe">
-              <TitheEntryForm churchSlug={churchSlug} options={mergedFormOptions} />
+              <TitheEntryForm churchSlug={churchSlug} options={mergedFormOptions} alreadyTithedIds={alreadyTithedIds ?? []} />
             </WorkspaceSectionCard>
             <WorkspaceSectionCard title="Offering / Donation">
               <MoneyInForm

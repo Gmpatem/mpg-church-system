@@ -7,6 +7,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { registerAction } from "@/features/auth/actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 
 export function RegisterForm() {
   const [state, formAction, isPending] = useActionState(registerAction, null);
@@ -71,7 +72,12 @@ export function RegisterForm() {
         disabled={isPending}
         className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
       >
-        {isPending ? "Creating account..." : "Register"}
+        {isPending ? (
+          <span className="inline-flex items-center justify-center gap-2">
+            <ButtonSpinner />
+            Creating account...
+          </span>
+        ) : "Register"}
       </button>
 
       <p className="text-sm text-gray-600">

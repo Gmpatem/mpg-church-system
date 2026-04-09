@@ -8,6 +8,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { loginAction } from "@/features/auth/actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 
 export function LoginForm() {
   const [state, formAction, isPending] = useActionState(loginAction, null);
@@ -64,7 +65,12 @@ export function LoginForm() {
         disabled={isPending}
         className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
       >
-        {isPending ? "Signing in..." : "Login"}
+        {isPending ? (
+          <span className="inline-flex items-center justify-center gap-2">
+            <ButtonSpinner />
+            Signing in...
+          </span>
+        ) : "Login"}
       </button>
 
       <div className="text-sm text-gray-600">
