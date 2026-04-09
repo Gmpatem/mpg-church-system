@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useActionState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
@@ -17,28 +16,42 @@ export function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
 
   return (
-    <form action={formAction} className="space-y-4">
+    <form action={formAction} className="space-y-5">
       <input type="hidden" name="redirect" value={redirect} />
 
+      {/* Error message */}
       {state && !state.ok && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {state.error}
+        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+          <div className="flex items-start gap-2">
+            <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            {state.error}
+          </div>
         </div>
       )}
 
-      <div className="space-y-1.5">
-        <Label htmlFor="email">Email</Label>
+      {/* Email field */}
+      <div className="space-y-2">
+        <Label htmlFor="email" className="text-sm font-medium text-slate-700">
+          Email
+        </Label>
         <Input
           id="email"
           name="email"
           type="email"
           required
           autoComplete="email"
+          placeholder="you@example.com"
+          className="h-11 rounded-lg border-slate-200 focus:border-cyan-500 focus:ring-cyan-500"
         />
       </div>
 
-      <div className="space-y-1.5">
-        <Label htmlFor="password">Password</Label>
+      {/* Password field */}
+      <div className="space-y-2">
+        <Label htmlFor="password" className="text-sm font-medium text-slate-700">
+          Password
+        </Label>
         <div className="relative">
           <Input
             id="password"
@@ -46,38 +59,36 @@ export function LoginForm() {
             type={showPassword ? "text" : "password"}
             required
             autoComplete="current-password"
-            className="pr-10"
+            placeholder="Enter your password"
+            className="h-11 rounded-lg border-slate-200 pr-10 focus:border-cyan-500 focus:ring-cyan-500"
           />
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
             tabIndex={-1}
             aria-label={showPassword ? "Hide password" : "Show password"}
-            className="absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground"
+            className="absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 hover:text-slate-600 transition-colors"
           >
             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
           </button>
         </div>
       </div>
 
+      {/* Submit button */}
       <button
         type="submit"
         disabled={isPending}
-        className="w-full rounded-md bg-blue-600 px-4 py-2 text-white font-medium hover:bg-blue-700 disabled:opacity-50"
+        className="w-full h-11 rounded-lg bg-gradient-to-r from-slate-900 via-blue-900 to-cyan-900 text-white font-medium hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity flex items-center justify-center"
       >
         {isPending ? (
-          <span className="inline-flex items-center justify-center gap-2">
-            <ButtonSpinner />
+          <span className="inline-flex items-center gap-2">
+            <ButtonSpinner className="text-white" />
             Signing in...
           </span>
-        ) : "Login"}
+        ) : (
+          "Sign In"
+        )}
       </button>
-
-      <div className="text-sm text-gray-600">
-        <Link href="/" className="underline hover:text-gray-800">
-          Back to home
-        </Link>
-      </div>
     </form>
   );
 }
