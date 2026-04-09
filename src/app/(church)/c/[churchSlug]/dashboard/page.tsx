@@ -3,6 +3,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { WorkspaceHero } from "@/components/workspace";
 import { OfficeAttentionStrip } from "@/features/office/components/OfficeAttentionStrip";
+import { en } from "@/features/i18n/en";
+import { fr } from "@/features/i18n/fr";
+import { cookies } from "next/headers";
 
 interface OfficeAttentionStripData {
   stats: {
@@ -23,6 +26,12 @@ interface DashboardPageProps {
   params: Promise<{ churchSlug: string }>;
 }
 
+async function getTranslations() {
+  const cookieStore = await cookies();
+  const lang = cookieStore.get("preferred_language")?.value;
+  return lang === "fr" ? fr : en;
+}
+
 async function OfficeAttentionStripAsync({ churchSlug }: { churchSlug: string }) {
   const supabase = await createClient();
   const { data: church } = await supabase
@@ -33,7 +42,6 @@ async function OfficeAttentionStripAsync({ churchSlug }: { churchSlug: string })
 
   if (!church) return null;
 
-  // Lightweight attention data - only counts, not full workspace
   const [
     { count: pendingAccessRequests },
     { count: pendingLeadershipRequests },
@@ -92,6 +100,7 @@ async function OfficeAttentionStripAsync({ churchSlug }: { churchSlug: string })
 export default async function DashboardPage({ params }: DashboardPageProps) {
   const { churchSlug } = await params;
   const supabase = await createClient();
+  const t = await getTranslations();
 
   const { data: church } = await supabase
     .from("churches")
@@ -107,14 +116,14 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   return (
     <div className="space-y-8">
       <WorkspaceHero
-        eyebrow="Church Dashboard"
+        eyebrow={t.pages.dashboard.eyebrow}
         title={church.name ?? churchSlug}
-        description="Central operations view for members, departments, treasury, events, and reporting."
-        badges={["Live workspace"]}
+        description={t.pages.dashboard.description}
+        badges={[t.pages.dashboard.liveWorkspace]}
         actions={[
-          { label: "Manage Members", href: `/c/${churchSlug}/members`, variant: "primary" },
-          { label: "Open Events", href: `/c/${churchSlug}/events`, variant: "secondary" },
-          { label: "Open Reports", href: `/c/${churchSlug}/reports`, variant: "secondary" },
+          { label: t.pages.dashboard.manageMembers, href: `/c/${churchSlug}/members`, variant: "primary" },
+          { label: t.pages.dashboard.openEvents, href: `/c/${churchSlug}/events`, variant: "secondary" },
+          { label: t.pages.dashboard.openReports, href: `/c/${churchSlug}/reports`, variant: "secondary" },
         ]}
       />
 
@@ -124,7 +133,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h3 className="text-lg font-semibold text-slate-900">Quick Links</h3>
+          <h3 className="text-lg font-semibold text-slate-900">{t.pages.dashboard.quickLinks}</h3>
           <div className="mt-4 grid gap-3">
             <a 
               href={`/c/${churchSlug}/members`}
@@ -134,8 +143,8 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
                 <span className="text-lg">👥</span>
               </div>
               <div>
-                <p className="font-medium text-slate-900">Members</p>
-                <p className="text-sm text-slate-500">Manage church membership</p>
+                <p className="font-medium text-slate-900">{t.navigation.members}</p>
+                <p className="text-sm text-slate-500">{t.members.subtitle}</p>
               </div>
             </a>
             <a 
@@ -146,8 +155,8 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
                 <span className="text-lg">💰</span>
               </div>
               <div>
-                <p className="font-medium text-slate-900">Treasury</p>
-                <p className="text-sm text-slate-500">Manage finances</p>
+                <p className="font-medium text-slate-900">{t.navigation.treasury}</p>
+                <p className="text-sm text-slate-500">{t.treasury.subtitle}</p>
               </div>
             </a>
             <a 
@@ -158,35 +167,35 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
                 <span className="text-lg">📅</span>
               </div>
               <div>
-                <p className="font-medium text-slate-900">Events</p>
-                <p className="text-sm text-slate-500">Church events & calendar</p>
+                <p className="font-medium text-slate-900">{t.navigation.events}</p>
+                <p className="text-sm text-slate-500">{t.events.subtitle}</p>
               </div>
             </a>
           </div>
         </div>
 
         <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h3 className="text-lg font-semibold text-slate-900">System Status</h3>
+          <h3 className="text-lg font-semibold text-slate-900">{t.pages.dashboard.systemStatus}</h3>
           <div className="mt-4 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-slate-600">Database</span>
+              <span className="text-slate-600">{t.pages.dashboard.database}</span>
               <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600">
                 <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                Connected
+                {t.pages.dashboard.connected}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-600">Storage</span>
+              <span className="text-slate-600">{t.pages.dashboard.storage}</span>
               <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600">
                 <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                Active
+                {t.pages.dashboard.active}
               </span>
             </div>
             <div className="flex items-center justify-between">
-              <span className="text-slate-600">Authentication</span>
+              <span className="text-slate-600">{t.pages.dashboard.authentication}</span>
               <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600">
                 <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                Secure
+                {t.pages.dashboard.secure}
               </span>
             </div>
           </div>

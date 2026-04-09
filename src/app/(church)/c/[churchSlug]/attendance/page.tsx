@@ -1,17 +1,28 @@
 import { createClient } from "@/lib/supabase/server";
 import { WorkspaceHero } from "@/components/workspace";
+import { en } from "@/features/i18n/en";
+import { fr } from "@/features/i18n/fr";
+import { cookies } from "next/headers";
 
 interface AttendancePageProps {
-  params: { churchSlug: string };
+  params: Promise<{ churchSlug: string }>;
+}
+
+async function getTranslations() {
+  const cookieStore = await cookies();
+  const lang = cookieStore.get("preferred_language")?.value;
+  return lang === "fr" ? fr : en;
 }
 
 export default async function AttendancePage({ params }: AttendancePageProps) {
+  const { churchSlug } = await params;
   const supabase = await createClient();
+  const t = await getTranslations();
 
   const { data: church } = await supabase
     .from("churches")
     .select("*")
-    .eq("slug", params.churchSlug)
+    .eq("slug", churchSlug)
     .single();
 
   if (!church) {
@@ -21,13 +32,13 @@ export default async function AttendancePage({ params }: AttendancePageProps) {
   return (
     <div className="space-y-6">
       <WorkspaceHero
-        title="Attendance"
-        description="Track event attendance for your church."
+        title={t.pages.attendance.title}
+        description={t.pages.attendance.description}
       />
 
       <div className="overflow-hidden rounded-2xl border border-dashed border-slate-200 bg-white p-12 text-center shadow-sm">
-        <p className="text-sm font-medium text-slate-600">Attendance tracking coming soon</p>
-        <p className="mt-1 text-xs text-slate-400">This feature is under development</p>
+        <p className="text-sm font-medium text-slate-600">{t.pages.attendance.comingSoon}</p>
+        <p className="mt-1 text-xs text-slate-400">{t.pages.attendance.underDevelopment}</p>
       </div>
     </div>
   );

@@ -3,9 +3,18 @@ import Link from "next/link";
 import { getChurchHouseholds } from "@/features/households/queries";
 import { requireChurchAccess } from "@/features/access/queries";
 import { WorkspaceHero } from "@/components/workspace";
+import { en } from "@/features/i18n/en";
+import { fr } from "@/features/i18n/fr";
+import { cookies } from "next/headers";
 
 interface HouseholdsPageProps {
   params: Promise<{ churchSlug: string }>;
+}
+
+async function getTranslations() {
+  const cookieStore = await cookies();
+  const lang = cookieStore.get("preferred_language")?.value;
+  return lang === "fr" ? fr : en;
 }
 
 function HouseholdsTableSkeleton() {
@@ -31,12 +40,13 @@ function HouseholdsTableSkeleton() {
 }
 
 async function HouseholdsTable({ churchSlug }: { churchSlug: string }) {
+  const t = await getTranslations();
   const households = await getChurchHouseholds(churchSlug);
 
   if (households.length === 0) {
     return (
       <div className="rounded-xl border border-slate-200 bg-white px-6 py-10 text-sm text-slate-600">
-        No households found yet.
+        {t.pages.households.noHouseholds}
       </div>
     );
   }
@@ -47,12 +57,12 @@ async function HouseholdsTable({ churchSlug }: { churchSlug: string }) {
         <table className="min-w-full divide-y divide-slate-200">
           <thead className="bg-slate-50">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Household</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Head</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Members</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Location</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Phone</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Actions</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.households.table.household}</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.households.table.head}</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.households.table.members}</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.households.table.location}</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.households.table.phone}</th>
+              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.households.table.actions}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-200 bg-white">
@@ -61,7 +71,7 @@ async function HouseholdsTable({ churchSlug }: { churchSlug: string }) {
                 <td className="px-6 py-4">
                   <div>
                     <p className="text-sm font-medium text-slate-900">{household.household_name}</p>
-                    <p className="text-xs text-slate-500">{household.email ?? "No email"}</p>
+                    <p className="text-xs text-slate-500">{household.email ?? t.common.noEmail}</p>
                   </div>
                 </td>
                 <td className="px-6 py-4 text-sm text-slate-600">
@@ -79,7 +89,7 @@ async function HouseholdsTable({ churchSlug }: { churchSlug: string }) {
                     href={`/c/${churchSlug}/households/${household.id}`}
                     className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 hover:bg-slate-50"
                   >
-                    View Household
+                    {t.pages.households.viewHousehold}
                   </Link>
                 </td>
               </tr>
@@ -94,6 +104,7 @@ async function HouseholdsTable({ churchSlug }: { churchSlug: string }) {
 export default async function HouseholdsPage({ params }: HouseholdsPageProps) {
   const { churchSlug } = await params;
   const ctx = await requireChurchAccess(churchSlug);
+  const t = await getTranslations();
 
   const canManage =
     ctx.roles.includes("platform_owner") ||
@@ -107,14 +118,14 @@ export default async function HouseholdsPage({ params }: HouseholdsPageProps) {
   return (
     <div className="space-y-6">
       <WorkspaceHero
-        title="Households"
-        description="Manage family and household groupings within your church."
+        title={t.pages.households.title}
+        description={t.pages.households.description}
       />
       <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Households</h2>
+          <h2 className="text-2xl font-bold text-slate-900">{t.pages.households.title}</h2>
           <p className="mt-1 text-sm text-slate-600">
-            Organize families, household contacts, and member grouping for church operations.
+            {t.pages.households.subtitle}
           </p>
         </div>
 
@@ -123,7 +134,7 @@ export default async function HouseholdsPage({ params }: HouseholdsPageProps) {
             href={`/c/${churchSlug}/households/new`}
             className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
           >
-            Add Household
+            {t.pages.households.addHousehold}
           </Link>
         ) : null}
       </div>

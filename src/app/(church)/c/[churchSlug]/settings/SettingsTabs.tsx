@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/select";
 import { Church, User, Shield } from "lucide-react";
 import { LanguageSwitcher } from "@/components/marketing/LanguageSwitcher";
+import { useI18n } from "@/features/i18n";
 
 type SettingsTab = "church" | "profile" | "security";
 
@@ -53,14 +54,15 @@ const TIMEZONES = [
   "Pacific/Auckland",
 ];
 
-const TABS: Array<{ key: SettingsTab; label: string }> = [
-  { key: "church", label: "Church" },
-  { key: "profile", label: "Profile" },
-  { key: "security", label: "Security" },
-];
-
 export function SettingsTabs({ church }: { church: ChurchData }) {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<SettingsTab>("church");
+  
+  const TABS: Array<{ key: SettingsTab; label: string }> = [
+    { key: "church", label: t.pages.settings.tabs.church },
+    { key: "profile", label: t.pages.settings.tabs.profile },
+    { key: "security", label: t.pages.settings.tabs.security },
+  ];
 
   return (
     <div className="flex items-start gap-6">
@@ -89,52 +91,52 @@ export function SettingsTabs({ church }: { church: ChurchData }) {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Church className="h-5 w-5 text-primary" />
-                <CardTitle>Church Information</CardTitle>
+                <CardTitle>{t.pages.settings.churchInfo}</CardTitle>
               </div>
-              <CardDescription>Update your church details</CardDescription>
+              <CardDescription>{t.settings.subtitle}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Church Name</Label>
+                  <Label htmlFor="name">{t.settings.churchName}</Label>
                   <Input id="name" defaultValue={church.name} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="slug">URL Slug</Label>
+                  <Label htmlFor="slug">{t.settings.slug}</Label>
                   <Input id="slug" defaultValue={church.slug} disabled />
                 </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
+                  <Label htmlFor="email">{t.common.email}</Label>
                   <Input id="email" type="email" defaultValue={church.email || ""} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Phone</Label>
+                  <Label htmlFor="phone">{t.common.phone}</Label>
                   <Input id="phone" defaultValue={church.phone || ""} />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="address">Address</Label>
+                <Label htmlFor="address">{t.settings.churchInfo}</Label>
                 <Input id="address" defaultValue={church.address || ""} />
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="city">City</Label>
+                  <Label htmlFor="city">{t.common.city}</Label>
                   <Input id="city" defaultValue={church.city || ""} />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="country">Country</Label>
+                  <Label htmlFor="country">{t.common.country}</Label>
                   <Input id="country" defaultValue={church.country || ""} />
                 </div>
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="timezone">Timezone</Label>
+                  <Label htmlFor="timezone">{t.settings.timezone}</Label>
                   <Select defaultValue={church.timezone}>
                     <SelectTrigger>
                       <SelectValue />
@@ -149,7 +151,7 @@ export function SettingsTabs({ church }: { church: ChurchData }) {
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="language">Default Language</Label>
+                  <Label htmlFor="language">{t.settings.language}</Label>
                   <Select defaultValue={church.default_language}>
                     <SelectTrigger>
                       <SelectValue />
@@ -163,7 +165,7 @@ export function SettingsTabs({ church }: { church: ChurchData }) {
               </div>
 
               <div className="flex justify-end">
-                <Button>Save Changes</Button>
+                <Button>{t.pages.settings.saveChanges}</Button>
               </div>
             </CardContent>
           </Card>
@@ -174,27 +176,24 @@ export function SettingsTabs({ church }: { church: ChurchData }) {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <User className="h-5 w-5 text-primary" />
-                <CardTitle>User Profile</CardTitle>
+                <CardTitle>{t.pages.settings.userProfile}</CardTitle>
               </div>
-              <CardDescription>Manage your personal settings</CardDescription>
+              <CardDescription>{t.navigation.profile}</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-3">
-                <Label>Preferred Language / Langue préférée</Label>
+                <Label>{t.pages.settings.preferredLanguage}</Label>
                 <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-200 bg-slate-50">
                   <div className="flex-1">
                     <p className="text-sm text-slate-600">
-                      Choose your preferred language for the interface.
-                    </p>
-                    <p className="text-sm text-slate-500 mt-1">
-                      Choisissez votre langue préférée pour l&apos;interface.
+                      {t.pages.settings.languageDescription}
                     </p>
                   </div>
                   <LanguageSwitcher variant="buttons" syncWithProfile />
                 </div>
               </div>
               <div className="flex justify-end">
-                <Button>Save Preferences</Button>
+                <Button>{t.common.save}</Button>
               </div>
             </CardContent>
           </Card>
@@ -205,26 +204,26 @@ export function SettingsTabs({ church }: { church: ChurchData }) {
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-primary" />
-                <CardTitle>Security</CardTitle>
+                <CardTitle>{t.pages.settings.tabs.security}</CardTitle>
               </div>
-              <CardDescription>Manage your account security</CardDescription>
+              <CardDescription>{t.auth.password}</CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="current_password">Current Password</Label>
+                  <Label htmlFor="current_password">{t.auth.password}</Label>
                   <Input id="current_password" type="password" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="new_password">New Password</Label>
+                  <Label htmlFor="new_password">{t.auth.password}</Label>
                   <Input id="new_password" type="password" />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="confirm_password">Confirm New Password</Label>
+                  <Label htmlFor="confirm_password">{t.auth.confirmPassword}</Label>
                   <Input id="confirm_password" type="password" />
                 </div>
                 <div className="flex justify-end">
-                  <Button>Change Password</Button>
+                  <Button>{t.common.save}</Button>
                 </div>
               </div>
             </CardContent>

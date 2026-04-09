@@ -1,18 +1,29 @@
 import { createClient } from "@/lib/supabase/server";
 import { WorkspaceHero } from "@/components/workspace";
 import { SettingsTabs } from "./SettingsTabs";
+import { en } from "@/features/i18n/en";
+import { fr } from "@/features/i18n/fr";
+import { cookies } from "next/headers";
 
 interface SettingsPageProps {
-  params: { churchSlug: string };
+  params: Promise<{ churchSlug: string }>;
+}
+
+async function getTranslations() {
+  const cookieStore = await cookies();
+  const lang = cookieStore.get("preferred_language")?.value;
+  return lang === "fr" ? fr : en;
 }
 
 export default async function SettingsPage({ params }: SettingsPageProps) {
+  const { churchSlug } = await params;
   const supabase = await createClient();
+  const t = await getTranslations();
 
   const { data: church } = await supabase
     .from("churches")
     .select("*")
-    .eq("slug", params.churchSlug)
+    .eq("slug", churchSlug)
     .single();
 
   if (!church) {
@@ -22,8 +33,8 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
   return (
     <div className="space-y-6">
       <WorkspaceHero
-        title="Church Settings"
-        description="Manage your church profile, preferences, and security."
+        title={t.pages.settings.title}
+        description={t.pages.settings.description}
       />
       <SettingsTabs church={church} />
     </div>

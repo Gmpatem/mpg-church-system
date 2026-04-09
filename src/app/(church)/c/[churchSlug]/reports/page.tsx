@@ -4,6 +4,9 @@ import { ReportsWorkspace } from "./ReportsWorkspace";
 import { ReportsOverviewSection } from "./ReportsOverviewSection";
 import { ReportsSectionLoading } from "./ReportsSectionLoading";
 import { ReportsFilterRail } from "./ReportsFilterRail";
+import { en } from "@/features/i18n/en";
+import { fr } from "@/features/i18n/fr";
+import { cookies } from "next/headers";
 
 interface ReportsPageProps {
   params: Promise<{ churchSlug: string }>;
@@ -22,9 +25,16 @@ function normalizeTab(value: string): "overview" | "treasury" | "members" | "eve
   return "overview";
 }
 
+async function getTranslations() {
+  const cookieStore = await cookies();
+  const lang = cookieStore.get("preferred_language")?.value;
+  return lang === "fr" ? fr : en;
+}
+
 export default async function ReportsPage({ params, searchParams }: ReportsPageProps) {
   const { churchSlug } = await params;
   const filters = (await searchParams) ?? {};
+  const t = await getTranslations();
 
   const activeTab = normalizeTab(pickSingle(filters.tab));
   const dateFrom = pickSingle(filters.dateFrom);
@@ -33,9 +43,9 @@ export default async function ReportsPage({ params, searchParams }: ReportsPageP
   return (
     <div className="space-y-6">
       <WorkspaceHero
-        eyebrow="Reports"
-        title="Church Reports"
-        description="Unified reporting across treasury, members, departments, and events."
+        eyebrow={t.pages.reports.eyebrow}
+        title={t.pages.reports.title}
+        description={t.pages.reports.description}
       />
 
       <ReportsFilterRail
