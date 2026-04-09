@@ -112,6 +112,80 @@ export const maritalStatusLabels: Record<string, string> = {
  * Falls back to a capitalized, space-separated version of the raw value
  * so unknown values still render readably (e.g. "new_status" → "New Status").
  */
+// Commerce display maps
+export const paymentMethodLabels: Record<string, string> = {
+  cash: "Cash",
+  gcash: "GCash",
+  credit: "Credit",
+};
+
+export const paymentMethodBadgeColors: Record<string, string> = {
+  cash: "bg-emerald-100 text-emerald-800",
+  gcash: "bg-blue-100 text-blue-800",
+  credit: "bg-amber-100 text-amber-800",
+};
+
+export const orderStatusLabels: Record<string, string> = {
+  pending: "Pending",
+  confirmed: "Confirmed",
+  cancelled: "Cancelled",
+  completed: "Completed",
+};
+
+export const orderStatusBadgeColors: Record<string, string> = {
+  pending: "bg-yellow-100 text-yellow-800",
+  confirmed: "bg-blue-100 text-blue-800",
+  cancelled: "bg-red-100 text-red-800",
+  completed: "bg-green-100 text-green-800",
+};
+
+export const paymentStatusLabels: Record<string, string> = {
+  pending: "Pending",
+  verified: "Verified",
+  rejected: "Rejected",
+  refunded: "Refunded",
+};
+
+export const paymentStatusBadgeColors: Record<string, string> = {
+  pending: "bg-yellow-100 text-yellow-800",
+  verified: "bg-green-100 text-green-800",
+  rejected: "bg-red-100 text-red-800",
+  refunded: "bg-gray-100 text-gray-800",
+};
+
+export const printingStatusLabels: Record<string, string> = {
+  pending: "Pending",
+  processing: "Processing",
+  completed: "Completed",
+  cancelled: "Cancelled",
+};
+
+export const printingStatusBadgeColors: Record<string, string> = {
+  pending: "bg-yellow-100 text-yellow-800",
+  processing: "bg-blue-100 text-blue-800",
+  completed: "bg-green-100 text-green-800",
+  cancelled: "bg-red-100 text-red-800",
+};
+
+export const paperSizeLabels: Record<string, string> = {
+  letter: "Letter (8.5\" × 11\")",
+  legal: "Legal (8.5\" × 14\")",
+  a4: "A4 (210mm × 297mm)",
+  short: "Short (8.5\" × 11\")",
+  long: "Long (8.5\" × 13\")",
+};
+
+export const colorModeLabels: Record<string, string> = {
+  black_white: "Black & White",
+  color: "Full Color",
+  grayscale: "Grayscale",
+};
+
+/**
+ * Returns the display label for a DB enum value.
+ * Falls back to a capitalized, space-separated version of the raw value
+ * so unknown values still render readably (e.g. "new_status" → "New Status").
+ */
 export function getLabel(
   map: Record<string, string>,
   value: string | null | undefined

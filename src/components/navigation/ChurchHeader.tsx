@@ -252,6 +252,9 @@ export function ChurchHeader({
             </div>
           ) : null}
 
+          {/* Language Toggle - beside notification */}
+          <LanguageSwitcher variant="minimal" className="hidden sm:flex" />
+
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button type="button" variant="ghost" size="icon" className="relative rounded-full">
