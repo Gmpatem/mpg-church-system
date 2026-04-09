@@ -252,6 +252,9 @@ export interface Database {
           household_id: string | null;
           previous_church: string | null;
           marital_status: string | null;
+          profile_id: string | null;
+          portal_invited_at: string | null;
+          portal_joined_at: string | null;
         };
         Insert: {
           id?: string;
@@ -285,6 +288,9 @@ export interface Database {
           household_id?: string | null;
           previous_church?: string | null;
           marital_status?: string | null;
+          profile_id?: string | null;
+          portal_invited_at?: string | null;
+          portal_joined_at?: string | null;
         };
         Update: {
           id?: string;
@@ -318,6 +324,9 @@ export interface Database {
           household_id?: string | null;
           previous_church?: string | null;
           marital_status?: string | null;
+          profile_id?: string | null;
+          portal_invited_at?: string | null;
+          portal_joined_at?: string | null;
         };
       };
       member_departments: {
@@ -328,6 +337,9 @@ export interface Database {
           role_in_department: string | null;
           joined_date: string | null;
           created_at: string;
+          church_id: string | null;
+          department_id: string | null;
+          is_active: boolean | null;
         };
         Insert: {
           id?: string;
@@ -336,6 +348,9 @@ export interface Database {
           role_in_department?: string | null;
           joined_date?: string | null;
           created_at?: string;
+          church_id?: string | null;
+          department_id?: string | null;
+          is_active?: boolean | null;
         };
         Update: {
           id?: string;
@@ -344,6 +359,9 @@ export interface Database {
           role_in_department?: string | null;
           joined_date?: string | null;
           created_at?: string;
+          church_id?: string | null;
+          department_id?: string | null;
+          is_active?: boolean | null;
         };
       };
       member_status_history: {
@@ -425,6 +443,272 @@ export interface Database {
           created_by_user_id?: string | null;
         };
       };
+      // ============================================
+      // COMMERCE TABLES - Aligned with Live DB Schema
+      // ============================================
+      products: {
+        Row: {
+          id: string;
+          church_id: string;
+          name: string;
+          description: string | null;
+          price_cents: number;
+          stock_quantity: number;
+          is_active: boolean;
+          badge_text: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          name: string;
+          description?: string | null;
+          price_cents?: number;
+          stock_quantity?: number;
+          is_active?: boolean;
+          badge_text?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          name?: string;
+          description?: string | null;
+          price_cents?: number;
+          stock_quantity?: number;
+          is_active?: boolean;
+          badge_text?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      offers: {
+        Row: {
+          id: string;
+          church_id: string;
+          name: string;
+          description: string | null;
+          discount_percent: number | null;
+          discount_cents: number | null;
+          start_date: string | null;
+          end_date: string | null;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          name: string;
+          description?: string | null;
+          discount_percent?: number | null;
+          discount_cents?: number | null;
+          start_date?: string | null;
+          end_date?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          name?: string;
+          description?: string | null;
+          discount_percent?: number | null;
+          discount_cents?: number | null;
+          start_date?: string | null;
+          end_date?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      offer_products: {
+        Row: {
+          id: string;
+          offer_id: string;
+          product_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          offer_id: string;
+          product_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          offer_id?: string;
+          product_id?: string;
+          created_at?: string;
+        };
+      };
+      orders: {
+        Row: {
+          id: string;
+          church_id: string;
+          member_id: string;
+          code: string;
+          status: string;
+          payment_method: string;
+          total_cents: number;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          member_id: string;
+          code: string;
+          status?: string;
+          payment_method: string;
+          total_cents: number;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          member_id?: string;
+          code?: string;
+          status?: string;
+          payment_method?: string;
+          total_cents?: number;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      order_items: {
+        Row: {
+          id: string;
+          order_id: string;
+          product_id: string;
+          quantity: number;
+          unit_price_cents: number;
+          total_price_cents: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          product_id: string;
+          quantity: number;
+          unit_price_cents: number;
+          total_price_cents: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          order_id?: string;
+          product_id?: string;
+          quantity?: number;
+          unit_price_cents?: number;
+          total_price_cents?: number;
+          created_at?: string;
+        };
+      };
+      payments: {
+        Row: {
+          id: string;
+          order_id: string;
+          method: string;
+          amount_cents: number;
+          balance_due_cents: number;
+          status: string;
+          reference_number: string | null;
+          gcash_ref: string | null;
+          proof_url: string | null;
+          verified_at: string | null;
+          verified_by: string | null;
+          notes: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          order_id: string;
+          method: string;
+          amount_cents: number;
+          balance_due_cents?: number;
+          status?: string;
+          reference_number?: string | null;
+          gcash_ref?: string | null;
+          proof_url?: string | null;
+          verified_at?: string | null;
+          verified_by?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          order_id?: string;
+          method?: string;
+          amount_cents?: number;
+          balance_due_cents?: number;
+          status?: string;
+          reference_number?: string | null;
+          gcash_ref?: string | null;
+          proof_url?: string | null;
+          verified_at?: string | null;
+          verified_by?: string | null;
+          notes?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      printing_requests: {
+        Row: {
+          id: string;
+          church_id: string;
+          member_id: string;
+          pdf_url: string | null;
+          status: string;
+          quantity: number;
+          paper_size: string;
+          color_mode: string;
+          notes: string | null;
+          staff_notes: string | null;
+          completed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          member_id: string;
+          pdf_url?: string | null;
+          status?: string;
+          quantity?: number;
+          paper_size?: string;
+          color_mode?: string;
+          notes?: string | null;
+          staff_notes?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          member_id?: string;
+          pdf_url?: string | null;
+          status?: string;
+          quantity?: number;
+          paper_size?: string;
+          color_mode?: string;
+          notes?: string | null;
+          staff_notes?: string | null;
+          completed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
     };
   };
 }
@@ -446,3 +730,21 @@ export type Member = Tables<"members">;
 export type MemberDepartment = Tables<"member_departments">;
 export type MemberStatusHistory = Tables<"member_status_history">;
 export type Household = Tables<"households">;
+
+// Commerce types
+export type Product = Tables<"products">;
+export type Offer = Tables<"offers">;
+export type OfferProduct = Tables<"offer_products">;
+export type Order = Tables<"orders">;
+export type OrderItem = Tables<"order_items">;
+export type Payment = Tables<"payments">;
+export type PrintingRequest = Tables<"printing_requests">;
+
+// Payment method enum (matches live DB)
+export type PaymentMethod = "cash" | "gcash" | "credit";
+
+// Order status enum
+export type OrderStatus = "pending" | "confirmed" | "cancelled" | "completed";
+
+// Payment status enum  
+export type PaymentStatus = "pending" | "verified" | "rejected" | "refunded";

@@ -1,4 +1,5 @@
 import { Bell, CreditCard, Globe, Save, Shield } from "lucide-react";
+import { LanguageSwitcher } from "@/components/marketing/LanguageSwitcher";
 import { getPlatformSettings } from "@/features/platform/queries";
 import { savePlatformSettingsAction } from "@/features/platform/actions";
 
@@ -117,6 +118,14 @@ export default async function PlatformSettingsPage() {
                 <option value="en">English</option>
                 <option value="fr">French</option>
               </select>
+            </div>
+
+            <div className="space-y-2 md:col-span-2">
+              <label className="text-sm font-medium text-gray-700">Preview Language Switcher</label>
+              <div className="flex items-center gap-4 p-3 rounded-md border border-gray-200 bg-gray-50">
+                <span className="text-sm text-gray-600">This is how users will see the language toggle:</span>
+                <LanguageSwitcher variant="buttons" />
+              </div>
             </div>
           </div>
         </SettingsCard>

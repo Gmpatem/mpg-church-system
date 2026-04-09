@@ -14,7 +14,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Bell, LogOut, Menu, Settings, User } from "lucide-react";
+import { Bell, LogOut, Menu, Settings, User, Globe } from "lucide-react";
+import { LanguageSwitcher } from "@/components/marketing/LanguageSwitcher";
 import {
   markAllChurchNotificationsReadAction,
   markChurchNotificationReadAction,
@@ -353,6 +354,14 @@ export function ChurchHeader({
                 <Settings className="mr-2 h-4 w-4" />
                 Settings
               </DropdownMenuItem>
+
+              <DropdownMenuSeparator />
+
+              {/* Language Switcher */}
+              <div className="px-2 py-2">
+                <p className="text-xs text-slate-500 mb-2">Language / Langue</p>
+                <LanguageSwitcher variant="minimal" />
+              </div>
 
               <DropdownMenuSeparator />
 

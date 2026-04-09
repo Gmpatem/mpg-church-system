@@ -1,6 +1,7 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { LogOut, User2, Users, Home, Calendar } from "lucide-react";
+import { LanguageSwitcher } from "@/components/marketing/LanguageSwitcher";
 import { signOutMemberPortalAction } from "@/features/member-portal/actions";
 import type {
   MemberPortalFoundationData,
@@ -119,6 +120,7 @@ export function MemberPortalShell({
               </div>
 
               <div className="flex items-center gap-3">
+                <LanguageSwitcher variant="minimal" />
                 <form action={signOutMemberPortalAction} className="lg:hidden">
                   <button
                     type="submit"
