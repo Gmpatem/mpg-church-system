@@ -5,6 +5,7 @@ import { MoneyInForm } from "../in/new/MoneyInForm";
 import { MoneyOutForm } from "../out/new/MoneyOutForm";
 import { TitheEntryForm } from "./TitheEntryForm";
 import { useTreasuryMembers } from "@/features/treasury/hooks";
+import { useI18n } from "@/features/i18n";
 import {
   WorkspaceControlRail,
   WorkspaceEmptyState,
@@ -40,13 +41,6 @@ interface TreasuryWorkspaceProps {
   };
 }
 
-const MAIN_TABS: WorkspaceTabItem[] = [
-  { key: "record_income", label: "Record Income" },
-  { key: "record_expenses", label: "Record Expenses" },
-  { key: "ledger", label: "Ledger" },
-  { key: "funds", label: "Funds" },
-];
-
 function formatAmount(value: number) {
   return value.toLocaleString("en-US", {
     minimumFractionDigits: 2,
@@ -65,15 +59,17 @@ function LedgerList({
   rows: any[];
   mode: "inflow" | "outflow";
 }) {
+  const { t } = useI18n();
+  
   return (
     <WorkspaceSectionCard title={title} description={description}>
       {rows.length === 0 ? (
         <WorkspaceEmptyState
-          title={mode === "inflow" ? "No money-in records yet" : "No money-out records yet"}
+          title={mode === "inflow" ? t.pages.treasury.workspace.empty.noMoneyIn : t.pages.treasury.workspace.empty.noMoneyOut}
           message={
             mode === "inflow"
-              ? "Treasury inflows will appear here once tithe, offering, or donation entries are recorded."
-              : "Treasury outflows will appear here once expense, project, mission, or department spending is recorded."
+              ? t.pages.treasury.workspace.empty.noMoneyInDesc
+              : t.pages.treasury.workspace.empty.noMoneyOutDesc
           }
           className="min-h-[180px]"
         />
@@ -89,10 +85,10 @@ function LedgerList({
                   {mode === "inflow" ? item.inflow_type : item.outflow_type}
                 </p>
                 <p className="mt-1 text-sm text-slate-600">
-                  Amount: {formatAmount(Number(item.amount || 0))}
+                  {t.pages.treasury.forms.amount}: {formatAmount(Number(item.amount || 0))}
                 </p>
                 <p className="mt-1 text-sm text-slate-600">
-                  Date: {mode === "inflow" ? item.inflow_date : item.outflow_date}
+                  {t.pages.treasury.forms.date}: {mode === "inflow" ? item.inflow_date : item.outflow_date}
                 </p>
                 <p className="mt-1 text-xs text-slate-500">
                   {mode === "inflow"
@@ -119,16 +115,18 @@ function FundsPanel({
   churchSlug: string;
   funds: Array<{ id: string; code: string; name: string; fund_type: string }>;
 }) {
+  const { t } = useI18n();
+  
   return (
     <WorkspaceSectionCard
-      title="Treasury Funds"
-      description="Active funds available for incoming and outgoing treasury activity."
+      title={t.pages.treasury.workspace.sections.treasuryFunds}
+      description={t.pages.treasury.workspace.sections.treasuryFundsDesc}
     >
       {funds.length === 0 ? (
         <WorkspaceEmptyState
-          title="No active funds found"
-          message="Create or seed treasury funds so offerings, tithe, donations, and spending can be classified correctly."
-          actionLabel="Open Reports"
+          title={t.pages.treasury.workspace.empty.noFunds}
+          message={t.pages.treasury.workspace.empty.noFundsDesc}
+          actionLabel={t.pages.treasury.workspace.empty.openReports}
           actionHref={`/c/${churchSlug}/reports`}
         />
       ) : (
@@ -155,9 +153,10 @@ function FundsPanel({
 }
 
 function MemberOptionsLoading() {
+  const { t } = useI18n();
   return (
     <div className="rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-      Loading member options for treasury entry...
+      {t.pages.treasury.workspace.loading}
     </div>
   );
 }
@@ -178,6 +177,7 @@ export function TreasuryWorkspace({
   recentOutflows,
   formOptions,
 }: TreasuryWorkspaceProps) {
+  const { t } = useI18n();
   const [mainTab, setMainTab] = useState<MainTab>("record_income");
 
   const needsMembers = mainTab === "record_income" || mainTab === "record_expenses";
@@ -200,41 +200,48 @@ export function TreasuryWorkspace({
     .slice(0, 3)
     .join(" • ");
 
+  const MAIN_TABS: WorkspaceTabItem[] = [
+    { key: "record_income", label: t.pages.treasury.workspace.tabs.recordIncome },
+    { key: "record_expenses", label: t.pages.treasury.workspace.tabs.recordExpenses },
+    { key: "ledger", label: t.pages.treasury.workspace.tabs.ledger },
+    { key: "funds", label: t.pages.treasury.workspace.tabs.funds },
+  ];
+
   return (
     <div className="space-y-6">
       <WorkspaceHero
-        eyebrow="Treasury Control Center"
-        title="Treasury Workspace"
-        description="One-page financial operations center for tithe, offerings, donations, disbursements, funds, and ledger review."
+        eyebrow={t.pages.treasury.workspace.eyebrow}
+        title={t.pages.treasury.workspace.title}
+        description={t.pages.treasury.workspace.description}
         badges={[
-          `${dashboard.fundCount} funds`,
-          `${dashboard.linkedInflowsCount} linked entries`,
-          `${dashboard.anonymousInflowsCount} anonymous entries`,
+          `${dashboard.fundCount} ${t.pages.treasury.workspace.stats.funds.toLowerCase()}`,
+          `${dashboard.linkedInflowsCount} ${t.pages.treasury.workspace.stats.linkedContributions.toLowerCase()}`,
+          `${dashboard.anonymousInflowsCount} ${t.pages.treasury.workspace.stats.anonymousContributions.toLowerCase()}`,
         ]}
         actions={[
-          { label: "Money In", href: `/c/${churchSlug}/treasury/in`, variant: "primary" },
-          { label: "Money Out", href: `/c/${churchSlug}/treasury/out`, variant: "secondary" },
-          { label: "Audit Trail", href: `/c/${churchSlug}/treasury/audit`, variant: "outline" },
+          { label: t.treasury.addIncome, href: `/c/${churchSlug}/treasury/in`, variant: "primary" },
+          { label: t.treasury.addExpense, href: `/c/${churchSlug}/treasury/out`, variant: "secondary" },
+          { label: t.navigation.reports, href: `/c/${churchSlug}/treasury/audit`, variant: "outline" },
         ]}
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
-        <WorkspaceStatCard label="Funds" value={dashboard.fundCount} hint="Active treasury funds" />
-        <WorkspaceStatCard label="Total In" value={formatAmount(dashboard.totalIn)} hint={inflowTypeSummary || "No inflow activity yet"} />
-        <WorkspaceStatCard label="Total Out" value={formatAmount(dashboard.totalOut)} hint={outflowTypeSummary || "No outflow activity yet"} />
+        <WorkspaceStatCard label={t.pages.treasury.workspace.stats.funds} value={dashboard.fundCount} hint={t.pages.treasury.workspace.stats.fundsHint} />
+        <WorkspaceStatCard label={t.pages.treasury.workspace.stats.totalIn} value={formatAmount(dashboard.totalIn)} hint={inflowTypeSummary || t.pages.treasury.workspace.stats.fundsHint} />
+        <WorkspaceStatCard label={t.pages.treasury.workspace.stats.totalOut} value={formatAmount(dashboard.totalOut)} hint={outflowTypeSummary || t.pages.treasury.workspace.stats.fundsHint} />
         <WorkspaceStatCard
-          label="Net Balance"
+          label={t.pages.treasury.workspace.stats.netBalance}
           value={formatAmount(dashboard.netBalance)}
-          hint="Treasury inflow minus outflow"
+          hint={t.pages.treasury.workspace.stats.netBalanceHint}
           valueClassName={dashboard.netBalance >= 0 ? "text-emerald-600" : "text-red-600"}
         />
-        <WorkspaceStatCard label="Linked Contributions" value={dashboard.linkedInflowsCount} hint="Member-linked entries" />
-        <WorkspaceStatCard label="Anonymous Contributions" value={dashboard.anonymousInflowsCount} hint="Anonymous inflow entries" />
+        <WorkspaceStatCard label={t.pages.treasury.workspace.stats.linkedContributions} value={dashboard.linkedInflowsCount} hint={t.pages.treasury.workspace.stats.linkedContributionsHint} />
+        <WorkspaceStatCard label={t.pages.treasury.workspace.stats.anonymousContributions} value={dashboard.anonymousInflowsCount} hint={t.pages.treasury.workspace.stats.anonymousContributionsHint} />
       </div>
 
       <WorkspaceControlRail
-        title="Treasury Modes"
-        description="Switch between income entry, expense recording, ledger review, and fund management without leaving the workspace."
+        title={t.pages.treasury.workspace.controlRail.title}
+        description={t.pages.treasury.workspace.controlRail.description}
       >
         <WorkspaceTabs
           items={MAIN_TABS}
@@ -255,28 +262,28 @@ export function TreasuryWorkspace({
       {mainTab === "record_income" ? (
         <div className="grid grid-cols-1 gap-6 2xl:grid-cols-[minmax(0,1.6fr)_minmax(320px,0.95fr)]">
           <div className="space-y-6">
-            <WorkspaceSectionCard title="Tithe">
+            <WorkspaceSectionCard title={t.pages.treasury.workspace.sections.tithe}>
               <TitheEntryForm churchSlug={churchSlug} options={mergedFormOptions} alreadyTithedIds={alreadyTithedIds ?? []} />
             </WorkspaceSectionCard>
-            <WorkspaceSectionCard title="Offering / Donation">
+            <WorkspaceSectionCard title={t.pages.treasury.workspace.sections.offering}>
               <MoneyInForm
                 churchSlug={churchSlug}
                 options={mergedFormOptions}
-                modeLabel="Offering / Donation Entry"
+                modeLabel={t.pages.treasury.workspace.sections.offeringLabel}
               />
             </WorkspaceSectionCard>
           </div>
 
           <div className="space-y-6">
             <LedgerList
-              title="Recent Money In"
-              description="Latest treasury inflow records for fast verification."
+              title={t.pages.treasury.workspace.sections.recentMoneyIn}
+              description={t.pages.treasury.workspace.sections.recentMoneyInDesc}
               rows={recentInflows}
               mode="inflow"
             />
             <LedgerList
-              title="Recent Money Out"
-              description="Latest treasury spending records for quick oversight."
+              title={t.pages.treasury.workspace.sections.recentMoneyOut}
+              description={t.pages.treasury.workspace.sections.recentMoneyOutDesc}
               rows={recentOutflows}
               mode="outflow"
             />
@@ -292,14 +299,14 @@ export function TreasuryWorkspace({
 
           <div className="space-y-6">
             <LedgerList
-              title="Recent Money In"
-              description="Latest treasury inflow records for context while recording spending."
+              title={t.pages.treasury.workspace.sections.recentMoneyIn}
+              description={t.pages.treasury.workspace.sections.recentMoneyInDesc}
               rows={recentInflows}
               mode="inflow"
             />
             <LedgerList
-              title="Recent Money Out"
-              description="Latest treasury spending records for quick review."
+              title={t.pages.treasury.workspace.sections.recentMoneyOut}
+              description={t.pages.treasury.workspace.sections.recentMoneyOutDesc}
               rows={recentOutflows}
               mode="outflow"
             />
@@ -310,14 +317,14 @@ export function TreasuryWorkspace({
       {mainTab === "ledger" ? (
         <div className="grid grid-cols-1 gap-6 2xl:grid-cols-2">
           <LedgerList
-            title="Recent Inflows"
-            description="Latest treasury receipts and money-in activity."
+            title={t.pages.treasury.workspace.sections.recentInflows}
+            description={t.pages.treasury.workspace.sections.recentInflowsDesc}
             rows={recentInflows}
             mode="inflow"
           />
           <LedgerList
-            title="Recent Outflows"
-            description="Latest treasury disbursements and money-out activity."
+            title={t.pages.treasury.workspace.sections.recentOutflows}
+            description={t.pages.treasury.workspace.sections.recentOutflowsDesc}
             rows={recentOutflows}
             mode="outflow"
           />

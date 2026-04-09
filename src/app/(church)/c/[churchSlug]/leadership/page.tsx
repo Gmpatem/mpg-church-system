@@ -2,6 +2,9 @@ import { LeadershipWorkspace } from "@/features/leadership/LeadershipWorkspace";
 import { getLeadershipTabData, getLeadershipOverview } from "@/features/leadership/queries";
 import type { LeadershipTabKey } from "@/features/leadership/types";
 import { WorkspaceHero } from "@/components/workspace";
+import { en } from "@/features/i18n/en";
+import { fr } from "@/features/i18n/fr";
+import { cookies } from "next/headers";
 
 type PageProps = {
   params: Promise<{
@@ -11,6 +14,12 @@ type PageProps = {
     tab?: string;
   }>;
 };
+
+async function getTranslations() {
+  const cookieStore = await cookies();
+  const lang = cookieStore.get("preferred_language")?.value;
+  return lang === "fr" ? fr : en;
+}
 
 const VALID_TABS: LeadershipTabKey[] = [
   "overview",
@@ -29,6 +38,7 @@ export default async function LeadershipPage(props: PageProps) {
   const params = await props.params;
   const searchParams = (await props.searchParams) ?? {};
   const activeTab = normalizeTab(searchParams.tab);
+  const t = await getTranslations();
 
   const [overview, tabData] = await Promise.all([
     getLeadershipOverview(params.churchSlug),
@@ -38,8 +48,8 @@ export default async function LeadershipPage(props: PageProps) {
   return (
     <div className="space-y-6">
       <WorkspaceHero
-        title="Leadership"
-        description="Manage church leadership roles and review requests."
+        title={t.pages.leadership.title}
+        description={t.pages.leadership.description}
       />
       <LeadershipWorkspace
         churchSlug={overview.churchSlug}

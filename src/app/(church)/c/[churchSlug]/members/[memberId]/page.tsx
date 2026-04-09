@@ -9,9 +9,18 @@ import {
   getMemberDepartmentAssignments,
   getMemberDepartmentOptions,
 } from "@/features/departments/queries";
+import { en } from "@/features/i18n/en";
+import { fr } from "@/features/i18n/fr";
+import { cookies } from "next/headers";
 
 interface MemberDetailPageProps {
   params: Promise<{ churchSlug: string; memberId: string }>;
+}
+
+async function getTranslations() {
+  const cookieStore = await cookies();
+  const lang = cookieStore.get("preferred_language")?.value;
+  return lang === "fr" ? fr : en;
 }
 
 function formatMoney(value: unknown) {
@@ -30,6 +39,7 @@ function getMemberLabel(member: any) {
 
 export default async function MemberDetailPage({ params }: MemberDetailPageProps) {
   const { churchSlug, memberId } = await params;
+  const t = await getTranslations();
 
   const [member, finance, memberDepartmentAssignments, memberDepartmentOptions] = await Promise.all([
     getMemberById(churchSlug, memberId),
@@ -41,7 +51,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
   if (!member) {
     return (
       <div className="rounded-xl border border-dashed border-red-300 bg-red-50 px-6 py-10 text-sm text-red-700">
-        Member not found.
+        {t.pages.memberDetail.notFound}
       </div>
     );
   }
@@ -52,13 +62,13 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
     <div className="space-y-6">
       <Breadcrumb
         items={[
-          { label: "Members", href: `/c/${churchSlug}/members` },
+          { label: t.navigation.members, href: `/c/${churchSlug}/members` },
           { label: memberLabel },
         ]}
       />
       <WorkspaceHero
         title={memberLabel}
-        description="Member profile and church record."
+        description={t.members.memberDetails}
       />
 
       <div className="flex flex-wrap gap-3">
@@ -66,65 +76,65 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
           href={`/c/${churchSlug}/members`}
           className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
         >
-          Back to Members
+          {t.pages.memberDetail.backToMembers}
         </Link>
         <Link
           href={`/c/${churchSlug}/members/${memberId}/edit`}
           className="inline-flex items-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
         >
-          Edit Member
+          {t.pages.memberDetail.editMember}
         </Link>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="text-xs uppercase tracking-wide text-slate-500">Member Code</div>
+          <div className="text-xs uppercase tracking-wide text-slate-500">{t.pages.memberDetail.memberCode}</div>
           <div className="mt-2 text-lg font-semibold text-slate-900">{member.member_code ?? "—"}</div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="text-xs uppercase tracking-wide text-slate-500">Status</div>
+          <div className="text-xs uppercase tracking-wide text-slate-500">{t.pages.memberDetail.status}</div>
           <div className="mt-2 text-lg font-semibold text-slate-900">{getLabel(memberStatusLabels, member.membership_status)}</div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="text-xs uppercase tracking-wide text-slate-500">Phone</div>
+          <div className="text-xs uppercase tracking-wide text-slate-500">{t.pages.memberDetail.phone}</div>
           <div className="mt-2 text-lg font-semibold text-slate-900">{member.phone ?? "—"}</div>
         </div>
 
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-          <div className="text-xs uppercase tracking-wide text-slate-500">Email</div>
+          <div className="text-xs uppercase tracking-wide text-slate-500">{t.pages.memberDetail.email}</div>
           <div className="mt-2 text-lg font-semibold text-slate-900">{member.email ?? "—"}</div>
         </div>
       </div>
 
       <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-        <h3 className="text-lg font-semibold text-slate-900">Finance Overview</h3>
+        <h3 className="text-lg font-semibold text-slate-900">{t.pages.memberDetail.financeOverview}</h3>
 
         <div className="mt-4 grid gap-4 md:grid-cols-4">
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <div className="text-xs uppercase tracking-wide text-slate-500">Total Tithe</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500">{t.pages.memberDetail.totalTithe}</div>
             <div className="mt-2 text-lg font-semibold text-slate-900">
               {formatMoney(finance?.totalTithe)}
             </div>
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <div className="text-xs uppercase tracking-wide text-slate-500">Total Offering</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500">{t.pages.memberDetail.totalOffering}</div>
             <div className="mt-2 text-lg font-semibold text-slate-900">
               {formatMoney(finance?.totalOffering)}
             </div>
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <div className="text-xs uppercase tracking-wide text-slate-500">Total Giving</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500">{t.pages.memberDetail.totalGiving}</div>
             <div className="mt-2 text-lg font-semibold text-slate-900">
               {formatMoney(finance?.totalGiving)}
             </div>
           </div>
 
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
-            <div className="text-xs uppercase tracking-wide text-slate-500">Recent Contributions</div>
+            <div className="text-xs uppercase tracking-wide text-slate-500">{t.pages.memberDetail.recentContributions}</div>
             <div className="mt-2 text-lg font-semibold text-slate-900">
               {Array.isArray(finance?.recentContributions) ? finance.recentContributions.length : 0}
             </div>
