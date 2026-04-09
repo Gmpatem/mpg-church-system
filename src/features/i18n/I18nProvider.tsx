@@ -110,11 +110,12 @@ export function useI18n() {
 export function useLanguageSwitcher() {
   const { language, setLanguage } = useI18n();
   
-  const switchLanguage = useCallback(async (newLang: Language) => {
+  const switchLanguage = useCallback((newLang: Language) => {
     setLanguage(newLang);
     
     // Note: Profile sync is handled separately via Server Action
     // This keeps the client-side hook lightweight
+    return Promise.resolve();
   }, [setLanguage]);
   
   return {
