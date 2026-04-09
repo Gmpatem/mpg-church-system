@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Bell, LogOut, Menu, Settings, User, Globe } from "lucide-react";
 import { LanguageSwitcher } from "@/components/marketing/LanguageSwitcher";
+import { useI18n } from "@/features/i18n";
 import {
   markAllChurchNotificationsReadAction,
   markChurchNotificationReadAction,
@@ -52,21 +53,25 @@ interface ChurchHeaderProps {
   notifications?: ChurchNotificationItem[];
 }
 
-function getPageLabel(pathname: string, churchSlug: string) {
+function getPageLabel(pathname: string, churchSlug: string, t: any) {
   const base = `/c/${churchSlug}`;
 
-  if (pathname === base) return "Dashboard";
-  if (pathname.startsWith(`${base}/members`)) return "Members";
-  if (pathname.startsWith(`${base}/households`)) return "Households";
-  if (pathname.startsWith(`${base}/departments`)) return "Departments";
-  if (pathname.startsWith(`${base}/treasury`)) return "Treasury";
-  if (pathname.startsWith(`${base}/events`)) return "Events";
-  if (pathname.startsWith(`${base}/calendar`)) return "Calendar";
-  if (pathname.startsWith(`${base}/announcements`)) return "Announcements";
-  if (pathname.startsWith(`${base}/reports`)) return "Reports";
-  if (pathname.startsWith(`${base}/settings`)) return "Settings";
+  if (pathname === base) return t.navigation.dashboard;
+  if (pathname.startsWith(`${base}/members`)) return t.navigation.members;
+  if (pathname.startsWith(`${base}/households`)) return t.navigation.households;
+  if (pathname.startsWith(`${base}/departments`)) return t.navigation.departments;
+  if (pathname.startsWith(`${base}/treasury`)) return t.navigation.treasury;
+  if (pathname.startsWith(`${base}/events`)) return t.navigation.events;
+  if (pathname.startsWith(`${base}/calendar`)) return t.navigation.calendar;
+  if (pathname.startsWith(`${base}/announcements`)) return t.navigation.announcements;
+  if (pathname.startsWith(`${base}/reports`)) return t.navigation.reports;
+  if (pathname.startsWith(`${base}/settings`)) return t.navigation.settings;
+  if (pathname.startsWith(`${base}/leadership`)) return t.navigation.leadership;
+  if (pathname.startsWith(`${base}/office`)) return t.navigation.office;
+  if (pathname.startsWith(`${base}/approvals`)) return t.navigation.approvals;
+  if (pathname.startsWith(`${base}/access-control`)) return t.navigation.accessControl;
 
-  return "Church Workspace";
+  return t.navigation.workspace;
 }
 
 function getNotificationBadgeLabel(
@@ -86,11 +91,11 @@ function getNotificationBadgeLabel(
   return null;
 }
 
-function formatDateStable(value?: string | null) {
-  if (!value) return "Unknown time";
+function formatDateStable(value?: string | null, t?: any) {
+  if (!value) return t?.common.unknownTime || "Unknown time";
 
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Unknown time";
+  if (Number.isNaN(date.getTime())) return t?.common.unknownTime || "Unknown time";
 
   return new Intl.DateTimeFormat("en-US", {
     year: "numeric",
@@ -117,6 +122,7 @@ export function ChurchHeader({
   const supabase = createClient();
   const [isPending, startTransition] = useTransition();
   const [readOfficeIds, setReadOfficeIds] = useState<string[]>([]);
+  const { t } = useI18n();
 
   useEffect(() => {
     try {
@@ -206,7 +212,7 @@ export function ChurchHeader({
     });
   }, [notifications, readOfficeIds]);
 
-  const pageLabel = getPageLabel(pathname, church.slug);
+  const pageLabel = getPageLabel(pathname, church.slug, t);
   const unreadCount = decoratedNotifications.filter((item) => !item.is_read).length;
 
   const initials =
@@ -232,7 +238,7 @@ export function ChurchHeader({
             onClick={onOpenSidebar}
           >
             <Menu className="h-5 w-5" />
-            <span className="sr-only">Open navigation</span>
+            <span className="sr-only">{t.common.openNavigation}</span>
           </Button>
 
           <div className="min-w-0">
@@ -267,13 +273,13 @@ export function ChurchHeader({
                     </span>
                   </>
                 ) : null}
-                <span className="sr-only">Notifications</span>
+                <span className="sr-only">{t.common.notifications}</span>
               </Button>
             </DropdownMenuTrigger>
 
             <DropdownMenuContent className="w-80" align="end">
               <div className="flex items-center justify-between px-2 py-1.5">
-                <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
+                <DropdownMenuLabel className="p-0">{t.common.notifications}</DropdownMenuLabel>
                 {unreadCount > 0 ? (
                   <button
                     type="button"
@@ -281,7 +287,7 @@ export function ChurchHeader({
                     disabled={isPending}
                     className="text-xs font-medium text-blue-600 hover:text-blue-800 disabled:opacity-50"
                   >
-                    Mark all read
+                    {t.common.markAllRead}
                   </button>
                 ) : null}
               </div>
@@ -290,7 +296,7 @@ export function ChurchHeader({
 
               <div className="max-h-[400px] overflow-y-auto">
                 {decoratedNotifications.length === 0 ? (
-                  <div className="p-3 text-sm text-slate-500">No notifications yet.</div>
+                  <div className="p-3 text-sm text-slate-500">{t.common.noNotifications}</div>
                 ) : (
                   decoratedNotifications.map((item) => (
                     <DropdownMenuItem key={item.id} asChild>
@@ -316,7 +322,7 @@ export function ChurchHeader({
                             {getNotificationBadgeLabel(item.event_type, item.entity_type, item.kind)}
                           </span>
                         ) : null}
-                        <p className="text-xs text-slate-400">{formatDateStable(item.created_at)}</p>
+                        <p className="text-xs text-slate-400">{formatDateStable(item.created_at, t)}</p>
                       </Link>
                     </DropdownMenuItem>
                   ))
@@ -338,10 +344,10 @@ export function ChurchHeader({
               <DropdownMenuLabel className="font-normal">
                 <div className="flex flex-col space-y-1">
                   <p className="text-sm font-medium leading-none">
-                    {user?.full_name || "User"}
+                    {user?.full_name || t.common.user}
                   </p>
                   <p className="text-xs leading-none text-muted-foreground">
-                    {user?.email || "No email"}
+                    {user?.email || t.common.noEmail}
                   </p>
                 </div>
               </DropdownMenuLabel>
@@ -350,12 +356,12 @@ export function ChurchHeader({
 
               <DropdownMenuItem onClick={() => router.push(`/c/${church.slug}`)}>
                 <User className="mr-2 h-4 w-4" />
-                Dashboard
+                {t.navigation.dashboard}
               </DropdownMenuItem>
 
               <DropdownMenuItem onClick={() => router.push(`/c/${church.slug}/settings`)}>
                 <Settings className="mr-2 h-4 w-4" />
-                Settings
+                {t.navigation.settings}
               </DropdownMenuItem>
 
               <DropdownMenuSeparator />
@@ -370,7 +376,7 @@ export function ChurchHeader({
 
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                Log out
+                {t.auth.logout}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

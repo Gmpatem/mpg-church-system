@@ -20,6 +20,7 @@ import {
   Briefcase,
   ClipboardCheck,
 } from "lucide-react";
+import { useI18n } from "@/features/i18n";
 
 interface ChurchSidebarProps {
   showAccessControl?: boolean;
@@ -51,17 +52,19 @@ export function ChurchSidebar({
   const router = useRouter();
   const supabase = createClient();
 
+  const { t } = useI18n();
+
   const navigation = [
-    { name: "Dashboard", href: `/c/${church.slug}`, icon: LayoutDashboard, exact: true },
-    { name: "Members", href: `/c/${church.slug}/members`, icon: Users },
-    { name: "Households", href: `/c/${church.slug}/households`, icon: Home },
-    { name: "Departments", href: `/c/${church.slug}/departments`, icon: Building2 },
-    { name: "Treasury", href: `/c/${church.slug}/treasury`, icon: Wallet },
-    { name: "Events", href: `/c/${church.slug}/events`, icon: Calendar },
-    { name: "Church Office", href: `/c/${church.slug}/office`, icon: Briefcase, requiresOffice: true },
-    { name: "Reports", href: `/c/${church.slug}/reports`, icon: BarChart3 },
-    { name: "Approvals", href: `/c/${church.slug}/approvals`, icon: ClipboardCheck, requiresAuthority: true },
-    { name: "Invites & Access", href: `/c/${church.slug}/access-control`, icon: Shield, requiresAuthority: true },
+    { name: t.navigation.dashboard, href: `/c/${church.slug}`, icon: LayoutDashboard, exact: true },
+    { name: t.navigation.members, href: `/c/${church.slug}/members`, icon: Users },
+    { name: t.navigation.households, href: `/c/${church.slug}/households`, icon: Home },
+    { name: t.navigation.departments, href: `/c/${church.slug}/departments`, icon: Building2 },
+    { name: t.navigation.treasury, href: `/c/${church.slug}/treasury`, icon: Wallet },
+    { name: t.navigation.events, href: `/c/${church.slug}/events`, icon: Calendar },
+    { name: t.navigation.office || "Church Office", href: `/c/${church.slug}/office`, icon: Briefcase, requiresOffice: true },
+    { name: t.navigation.reports, href: `/c/${church.slug}/reports`, icon: BarChart3 },
+    { name: t.navigation.approvals || "Approvals", href: `/c/${church.slug}/approvals`, icon: ClipboardCheck, requiresAuthority: true },
+    { name: t.navigation.accessControl || "Invites & Access", href: `/c/${church.slug}/access-control`, icon: Shield, requiresAuthority: true },
   ];
 
   function isActive(href: string, exact?: boolean) {
@@ -97,7 +100,7 @@ export function ChurchSidebar({
 
             <div className="min-w-0">
               <p className="text-[11px] uppercase tracking-[0.2em] text-slate-400">
-                Church Workspace
+                {t.navigation.workspace || "Church Workspace"}
               </p>
               <p className="mt-1 truncate text-sm font-semibold text-white">
                 {church.name}
@@ -171,10 +174,10 @@ export function ChurchSidebar({
             </div>
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-white">
-                {user?.full_name || "User"}
+                {user?.full_name || t.common.user || "User"}
               </p>
               <p className="truncate text-xs text-slate-400">
-                {user?.email || "No email"}
+                {user?.email || t.common.noEmail || "No email"}
               </p>
             </div>
           </div>
@@ -186,7 +189,7 @@ export function ChurchSidebar({
             onClick={handleLogout}
           >
             <LogOut className="mr-2 h-4 w-4" />
-            Logout
+            {t.auth.logout}
           </Button>
         </div>
       </div>

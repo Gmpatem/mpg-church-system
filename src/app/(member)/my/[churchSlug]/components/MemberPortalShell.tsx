@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { LogOut, User2, Users, Home, Calendar } from "lucide-react";
 import { LanguageSwitcher } from "@/components/marketing/LanguageSwitcher";
+import { useI18n } from "@/features/i18n";
 import { signOutMemberPortalAction } from "@/features/member-portal/actions";
 import type {
   MemberPortalFoundationData,
@@ -15,16 +16,14 @@ type MemberPortalShellProps = {
   children: ReactNode;
 };
 
-const NAV_ITEMS: Array<{
-  key: MemberPortalTabKey;
-  label: string;
-  icon: typeof Home;
-}> = [
-  { key: "overview", label: "Overview", icon: Home },
-  { key: "profile", label: "Profile", icon: User2 },
-  { key: "departments", label: "My Involvement", icon: Users },
-  { key: "calendar", label: "Calendar", icon: Calendar },
-];
+function getNavItems(t: any) {
+  return [
+    { key: "overview" as const, label: t.navigation.overview || "Overview", icon: Home },
+    { key: "profile" as const, label: t.navigation.profile, icon: User2 },
+    { key: "departments" as const, label: t.memberPortal?.myInvolvement || "My Involvement", icon: Users },
+    { key: "calendar" as const, label: t.navigation.calendar, icon: Calendar },
+  ];
+}
 
 function buildTabHref(churchSlug: string, tab: MemberPortalTabKey) {
   return `/my/${churchSlug}?tab=${tab}`;
@@ -44,8 +43,9 @@ function getMemberName(foundation: MemberPortalFoundationData) {
   return "Member";
 }
 
-function getActiveLabel(activeTab: MemberPortalTabKey) {
-  return NAV_ITEMS.find((item) => item.key === activeTab)?.label ?? "Member Portal";
+function getActiveLabel(activeTab: MemberPortalTabKey, t: any) {
+  const items = getNavItems(t);
+  return items.find((item) => item.key === activeTab)?.label ?? (t.navigation.memberPortal || "Member Portal");
 }
 
 export function MemberPortalShell({
@@ -54,22 +54,24 @@ export function MemberPortalShell({
   showWelcome = false,
   children,
 }: MemberPortalShellProps) {
-  const churchName = foundation.churchName ?? "Church";
+  const { t } = useI18n();
+  const churchName = foundation.churchName ?? (t.common.church || "Church");
   const churchSlug = foundation.churchSlug;
   const memberName = getMemberName(foundation);
   const memberCode = foundation.identity?.member.member_code ?? null;
+  const NAV_ITEMS = getNavItems(t);
 
   return (
     <div className="min-h-screen bg-background">
       <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
         <aside className="hidden w-72 shrink-0 border-r bg-card/60 lg:flex lg:flex-col">
           <div className="border-b p-6">
-            <p className="text-sm font-medium text-muted-foreground">Member Portal</p>
+            <p className="text-sm font-medium text-muted-foreground">{t.navigation.memberPortal || "Member Portal"}</p>
             <h2 className="mt-1 text-xl font-semibold text-foreground">{churchName}</h2>
             <div className="mt-4 rounded-2xl border bg-background/60 p-4">
               <p className="font-medium text-foreground">{memberName}</p>
               <p className="mt-1 text-sm text-muted-foreground">
-                {memberCode ? `Member code: ${memberCode}` : "Member access active"}
+                {memberCode ? `${t.members.memberCode}: ${memberCode}` : (t.memberPortal?.accessActive || "Member access active")}
               </p>
             </div>
           </div>
@@ -103,7 +105,7 @@ export function MemberPortalShell({
                 className="flex w-full items-center justify-center gap-2 rounded-2xl border px-4 py-3 text-sm font-medium transition hover:bg-accent"
               >
                 <LogOut className="h-4 w-4" />
-                <span>Logout</span>
+                <span>{t.auth.logout}</span>
               </button>
             </form>
           </div>
@@ -115,7 +117,7 @@ export function MemberPortalShell({
               <div>
                 <p className="text-sm text-muted-foreground">{churchName}</p>
                 <h1 className="text-xl font-semibold text-foreground">
-                  {getActiveLabel(activeTab)}
+                  {getActiveLabel(activeTab, t)}
                 </h1>
               </div>
 
@@ -155,9 +157,9 @@ export function MemberPortalShell({
           <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
             {showWelcome ? (
               <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 text-sm text-muted-foreground">
-                <p className="font-medium text-foreground">Welcome to {churchName}.</p>
+                <p className="font-medium text-foreground">{t.memberPortal?.welcome || "Welcome to"} {churchName}.</p>
                 <p className="mt-1">
-                  Your account is ready. Any requested leadership or staff access is still pending church approval.
+                  {t.memberPortal?.accountReady || "Your account is ready. Any requested leadership or staff access is still pending church approval."}
                 </p>
               </div>
             ) : null}
