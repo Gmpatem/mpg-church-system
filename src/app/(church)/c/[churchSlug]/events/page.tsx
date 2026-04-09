@@ -1,5 +1,6 @@
 import { getEventsWorkspaceData } from "@/features/events/queries";
 import { EventsWorkspaceUnified } from "./components/EventsWorkspaceUnified";
+import { WorkspaceHero } from "@/components/workspace";
 
 interface EventsPageProps {
   params: Promise<{ churchSlug: string }>;
@@ -23,5 +24,13 @@ export default async function EventsPage({ params, searchParams }: EventsPagePro
     tab: pickSingle(filters.tab),
   });
 
-  return <EventsWorkspaceUnified churchSlug={churchSlug} data={data} />;
+  return (
+    <div className="space-y-6">
+      <WorkspaceHero
+        title="Events"
+        description="Manage church events, approvals, and the calendar."
+      />
+      <EventsWorkspaceUnified churchSlug={churchSlug} data={data} />
+    </div>
+  );
 }

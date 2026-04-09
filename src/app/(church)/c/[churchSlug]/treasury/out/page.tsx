@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getTreasuryOutflows, getTreasuryFormOptions } from "@/features/treasury/queries";
+import { WorkspaceHero } from "@/components/workspace";
 
 interface TreasuryOutflowsPageProps {
   params: Promise<{ churchSlug: string }>;
@@ -25,34 +26,30 @@ export default async function TreasuryOutflowsPage({ params, searchParams }: Tre
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">Money Out Records</h2>
-          <p className="text-sm text-slate-600 mt-1">
-            Review project expenses, remittances, and other outgoing finance records.
-          </p>
-        </div>
+      <WorkspaceHero
+        title="Money Out"
+        description="Expenses, remittances, and outflow records."
+      />
 
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href={`/c/${churchSlug}/treasury/audit`}
-            className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-900 hover:bg-amber-100"
-          >
-            Audit Trail
-          </Link>
-          <Link
-            href={`/c/${churchSlug}/treasury`}
-            className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-          >
-            Back to Treasury
-          </Link>
-          <Link
-            href={`/c/${churchSlug}/treasury/out/new`}
-            className="inline-flex items-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-          >
-            Record Money Out
-          </Link>
-        </div>
+      <div className="flex flex-wrap gap-3">
+        <Link
+          href={`/c/${churchSlug}/treasury/audit`}
+          className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-900 hover:bg-amber-100"
+        >
+          Audit Trail
+        </Link>
+        <Link
+          href={`/c/${churchSlug}/treasury`}
+          className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+        >
+          Back to Treasury
+        </Link>
+        <Link
+          href={`/c/${churchSlug}/treasury/out/new`}
+          className="inline-flex items-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+        >
+          Record Money Out
+        </Link>
       </div>
 
       <form method="get" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">

@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
-import { WorkspaceStatCard } from "@/components/workspace";
+import { WorkspaceHero, WorkspaceStatCard } from "@/components/workspace";
 import { DepartmentForm } from "@/features/departments/components/DepartmentForm";
 import { DepartmentMembers } from "@/features/departments/components/DepartmentMembers";
 import { AssignMemberToDepartment } from "@/features/departments/components/AssignMemberToDepartment";
@@ -44,36 +44,32 @@ export default async function DepartmentDetailPage({ params, searchParams }: Dep
           { label: department.department_name },
         ]}
       />
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">{department.department_name}</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Department detail, membership, role assignments, events, and announcements.
-          </p>
-        </div>
+      <WorkspaceHero
+        title={department.department_name}
+        description="Department profile, members, and activity."
+      />
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Link
-            href={`/c/${churchSlug}/departments/${departmentId}/events`}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-          >
-            Events
-          </Link>
+      <div className="flex flex-wrap items-center gap-2">
+        <Link
+          href={`/c/${churchSlug}/departments/${departmentId}/events`}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+        >
+          Events
+        </Link>
 
-          <Link
-            href={`/c/${churchSlug}/departments/${departmentId}/announcements`}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-          >
-            Announcements
-          </Link>
+        <Link
+          href={`/c/${churchSlug}/departments/${departmentId}/announcements`}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+        >
+          Announcements
+        </Link>
 
-          <Link
-            href={`/c/${churchSlug}/departments`}
-            className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-          >
-            Back to Departments
-          </Link>
-        </div>
+        <Link
+          href={`/c/${churchSlug}/departments`}
+          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+        >
+          Back to Departments
+        </Link>
       </div>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">

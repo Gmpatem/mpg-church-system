@@ -1,6 +1,7 @@
 import { LeadershipWorkspace } from "@/features/leadership/LeadershipWorkspace";
 import { getLeadershipTabData, getLeadershipOverview } from "@/features/leadership/queries";
 import type { LeadershipTabKey } from "@/features/leadership/types";
+import { WorkspaceHero } from "@/components/workspace";
 
 type PageProps = {
   params: Promise<{
@@ -35,11 +36,17 @@ export default async function LeadershipPage(props: PageProps) {
   ]);
 
   return (
-    <LeadershipWorkspace
-      churchSlug={overview.churchSlug}
-      churchName={overview.churchName}
-      activeTab={activeTab}
-      tabData={tabData}
-    />
+    <div className="space-y-6">
+      <WorkspaceHero
+        title="Leadership"
+        description="Manage church leadership roles and review requests."
+      />
+      <LeadershipWorkspace
+        churchSlug={overview.churchSlug}
+        churchName={overview.churchName}
+        activeTab={activeTab}
+        tabData={tabData}
+      />
+    </div>
   );
 }

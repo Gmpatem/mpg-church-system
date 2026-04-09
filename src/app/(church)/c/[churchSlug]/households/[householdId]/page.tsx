@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
-import { WorkspaceStatCard } from "@/components/workspace";
+import { WorkspaceHero, WorkspaceStatCard } from "@/components/workspace";
 import { getLabel, memberStatusLabels } from "@/lib/display-maps";
 import {
   assignMemberToHouseholdAction,
@@ -58,21 +58,10 @@ export default async function HouseholdDetailPage({ params }: HouseholdDetailPag
           { label: household.household_name },
         ]}
       />
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">{household.household_name}</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Household profile, member grouping, and family contact details.
-          </p>
-        </div>
-
-        <Link
-          href={`/c/${churchSlug}/households`}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-        >
-          Back to Households
-        </Link>
-      </div>
+      <WorkspaceHero
+        title={household.household_name}
+        description="Household members and contact details."
+      />
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <WorkspaceStatCard

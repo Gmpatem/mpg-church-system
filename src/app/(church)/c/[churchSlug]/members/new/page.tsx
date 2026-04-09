@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { requireChurchRole } from "@/features/access/queries";
+import { WorkspaceHero } from "@/components/workspace";
 import { getChurchDepartments } from "@/features/departments/queries";
 import { getChurchHouseholds } from "@/features/households/queries";
 import { NewMemberForm } from "./NewMemberForm";
@@ -22,13 +23,19 @@ export default async function NewMemberPage({ params }: NewMemberPageProps) {
   ]);
 
   return (
-    <NewMemberForm
-      churchSlug={churchSlug}
-      departments={departments}
-      households={households.map((household) => ({
-        id: household.id,
-        household_name: household.household_name,
-      }))}
-    />
+    <div className="space-y-6">
+      <WorkspaceHero
+        title="Add New Member"
+        description="Create a member record for this church."
+      />
+      <NewMemberForm
+        churchSlug={churchSlug}
+        departments={departments}
+        households={households.map((household) => ({
+          id: household.id,
+          household_name: household.household_name,
+        }))}
+      />
+    </div>
   );
 }

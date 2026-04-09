@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getTreasuryAuditLogs } from "@/features/treasury/queries";
+import { WorkspaceHero } from "@/components/workspace";
 
 interface TreasuryAuditPageProps {
   params: Promise<{ churchSlug: string }>;
@@ -51,34 +52,30 @@ export default async function TreasuryAuditPage({
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">Treasury Audit Trail</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Review who changed treasury records, when it happened, and what changed.
-          </p>
-        </div>
+      <WorkspaceHero
+        title="Treasury Audit Trail"
+        description="Full audit history of all treasury changes."
+      />
 
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href={`/c/${churchSlug}/treasury`}
-            className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-          >
-            Back to Treasury
-          </Link>
-          <Link
-            href={`/c/${churchSlug}/treasury/in`}
-            className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-          >
-            Money In
-          </Link>
-          <Link
-            href={`/c/${churchSlug}/treasury/out`}
-            className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-          >
-            Money Out
-          </Link>
-        </div>
+      <div className="flex flex-wrap gap-3">
+        <Link
+          href={`/c/${churchSlug}/treasury`}
+          className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+        >
+          Back to Treasury
+        </Link>
+        <Link
+          href={`/c/${churchSlug}/treasury/in`}
+          className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+        >
+          Money In
+        </Link>
+        <Link
+          href={`/c/${churchSlug}/treasury/out`}
+          className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+        >
+          Money Out
+        </Link>
       </div>
 
       <form method="get" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">

@@ -1,5 +1,6 @@
 import { ApprovalsInbox } from "@/features/approvals/components/ApprovalsInbox";
 import { getApprovalsInboxData } from "@/features/approvals/inbox";
+import { WorkspaceHero } from "@/components/workspace";
 
 type PageProps = {
   params: Promise<{
@@ -23,9 +24,15 @@ export default async function ApprovalsPage(props: PageProps) {
   });
 
   return (
-    <ApprovalsInbox
-      churchSlug={params.churchSlug}
-      data={data}
-    />
+    <div className="space-y-6">
+      <WorkspaceHero
+        title="Approvals"
+        description="Review and action pending approval requests across all modules."
+      />
+      <ApprovalsInbox
+        churchSlug={params.churchSlug}
+        data={data}
+      />
+    </div>
   );
 }

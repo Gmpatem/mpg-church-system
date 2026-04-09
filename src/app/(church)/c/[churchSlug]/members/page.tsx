@@ -1,5 +1,6 @@
 import { getMembersWorkspaceData } from "@/features/members/queries";
 import { MembersWorkspaceUnified } from "./components/MembersWorkspaceUnified";
+import { WorkspaceHero } from "@/components/workspace";
 
 interface MembersPageProps {
   params: Promise<{ churchSlug: string }>;
@@ -21,7 +22,15 @@ export default async function MembersPage({ params, searchParams }: MembersPageP
     departmentAssignmentStatus: pickSingle(filters.departmentAssignmentStatus),
   });
 
-  return <MembersWorkspaceUnified churchSlug={churchSlug} data={data} />;
+  return (
+    <div className="space-y-6">
+      <WorkspaceHero
+        title="Members"
+        description="View and manage church members, statuses, and profiles."
+      />
+      <MembersWorkspaceUnified churchSlug={churchSlug} data={data} />
+    </div>
+  );
 }
 
 

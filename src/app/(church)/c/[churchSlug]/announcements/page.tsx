@@ -9,7 +9,7 @@ import {
   getChurchAnnouncements,
 } from "@/features/announcements/queries";
 import { requireChurchAccess } from "@/features/access/queries";
-import { WorkspaceSectionCard } from "@/components/workspace";
+import { WorkspaceHero, WorkspaceSectionCard } from "@/components/workspace";
 import { getLabel } from "@/lib/display-maps";
 
 interface AnnouncementsPageProps {
@@ -68,21 +68,10 @@ export default async function AnnouncementsPage({ params }: AnnouncementsPagePro
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">Announcements</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Publish official church notices and keep members informed.
-          </p>
-        </div>
-
-        <Link
-          href={`/c/${churchSlug}`}
-          className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-        >
-          Back to Dashboard
-        </Link>
-      </div>
+      <WorkspaceHero
+        title="Announcements"
+        description="Publish church-wide notices and keep members informed."
+      />
 
       {canManage ? (
         <WorkspaceSectionCard

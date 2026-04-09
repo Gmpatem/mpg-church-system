@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
+import { WorkspaceHero } from "@/components/workspace";
 import { getLabel, memberStatusLabels } from "@/lib/display-maps";
 import { getMemberById } from "@/features/members/queries";
 import { getMemberFinancialProfile } from "@/features/treasury/queries";
@@ -55,28 +56,24 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
           { label: memberLabel },
         ]}
       />
-      <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">{memberLabel}</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            Member profile, finance overview, and department assignments.
-          </p>
-        </div>
+      <WorkspaceHero
+        title={memberLabel}
+        description="Member profile and church record."
+      />
 
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href={`/c/${churchSlug}/members`}
-            className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-          >
-            Back to Members
-          </Link>
-          <Link
-            href={`/c/${churchSlug}/members/${memberId}/edit`}
-            className="inline-flex items-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-          >
-            Edit Member
-          </Link>
-        </div>
+      <div className="flex flex-wrap gap-3">
+        <Link
+          href={`/c/${churchSlug}/members`}
+          className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+        >
+          Back to Members
+        </Link>
+        <Link
+          href={`/c/${churchSlug}/members/${memberId}/edit`}
+          className="inline-flex items-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+        >
+          Edit Member
+        </Link>
       </div>
 
       <div className="grid gap-4 md:grid-cols-4">

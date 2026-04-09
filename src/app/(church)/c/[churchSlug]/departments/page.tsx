@@ -1,5 +1,6 @@
 import { getDepartmentsWorkspaceData } from "@/features/departments/queries";
 import { DepartmentsWorkspaceUnified } from "./components/DepartmentsWorkspaceUnified";
+import { WorkspaceHero } from "@/components/workspace";
 
 interface DepartmentsPageProps {
   params: Promise<{ churchSlug: string }>;
@@ -22,7 +23,15 @@ export default async function DepartmentsPage({
     status: pickSingle(filters.status),
   });
 
-  return <DepartmentsWorkspaceUnified churchSlug={churchSlug} data={data} />;
+  return (
+    <div className="space-y-6">
+      <WorkspaceHero
+        title="Departments"
+        description="Manage ministry departments and member assignments."
+      />
+      <DepartmentsWorkspaceUnified churchSlug={churchSlug} data={data} />
+    </div>
+  );
 }
 
 
