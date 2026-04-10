@@ -2,6 +2,7 @@
 
 import { useActionState } from "react";
 import { updateTreasuryOutflowAction } from "@/features/treasury/actions";
+import { useI18n } from "@/features/i18n";
 
 interface OutflowEditFormProps {
   churchSlug: string;
@@ -13,6 +14,7 @@ interface OutflowEditFormProps {
 }
 
 export function OutflowEditForm({ churchSlug, entry, options }: OutflowEditFormProps) {
+  const { t } = useI18n();
   const [state, formAction, isPending] = useActionState(updateTreasuryOutflowAction, null);
 
   return (
@@ -34,23 +36,23 @@ export function OutflowEditForm({ churchSlug, entry, options }: OutflowEditFormP
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label htmlFor="outflowType" className="block text-sm font-medium text-slate-700 mb-1">Outflow Type</label>
+          <label htmlFor="outflowType" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.workspace.tabs.recordExpenses}</label>
           <select id="outflowType" name="outflowType" defaultValue={entry.outflow_type} required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="project">Project</option>
-            <option value="evangelism">Evangelism</option>
-            <option value="mission_remittance">Mission / District Remittance</option>
-            <option value="department_expense">Department Expense</option>
-            <option value="operations">Operations</option>
-            <option value="welfare">Welfare</option>
-            <option value="equipment">Equipment</option>
-            <option value="other">Other</option>
+            <option value="project">{t.pages.treasury.forms.types.project}</option>
+            <option value="evangelism">{t.pages.treasury.forms.types.evangelism}</option>
+            <option value="mission_remittance">{t.pages.treasury.forms.types.missionRemittance}</option>
+            <option value="department_expense">{t.pages.treasury.forms.types.departmentExpense}</option>
+            <option value="operations">{t.pages.treasury.forms.types.operations}</option>
+            <option value="welfare">{t.pages.treasury.forms.types.welfare}</option>
+            <option value="equipment">{t.pages.treasury.forms.types.equipment}</option>
+            <option value="other">{t.pages.treasury.forms.types.other}</option>
           </select>
         </div>
 
         <div>
-          <label htmlFor="fundId" className="block text-sm font-medium text-slate-700 mb-1">Fund Source</label>
+          <label htmlFor="fundId" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.fundSource}</label>
           <select id="fundId" name="fundId" defaultValue={entry.fund_id ?? ""} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">Not specified</option>
+            <option value="">{t.pages.treasury.forms.notSpecified}</option>
             {options.funds.map((fund) => (
               <option key={fund.id} value={fund.id}>{fund.name}</option>
             ))}
@@ -58,9 +60,9 @@ export function OutflowEditForm({ churchSlug, entry, options }: OutflowEditFormP
         </div>
 
         <div>
-          <label htmlFor="departmentId" className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+          <label htmlFor="departmentId" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.department}</label>
           <select id="departmentId" name="departmentId" defaultValue={entry.department_id ?? ""} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">Not specified</option>
+            <option value="">{t.pages.treasury.forms.notSpecified}</option>
             {options.departments.map((dept) => (
               <option key={dept.id} value={dept.id}>{dept.department_name}</option>
             ))}
@@ -68,44 +70,44 @@ export function OutflowEditForm({ churchSlug, entry, options }: OutflowEditFormP
         </div>
 
         <div>
-          <label htmlFor="amount" className="block text-sm font-medium text-slate-700 mb-1">Amount</label>
+          <label htmlFor="amount" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.amount}</label>
           <input id="amount" name="amount" type="number" step="0.01" min="0.01" defaultValue={entry.amount} required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
-          <label htmlFor="outflowDate" className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+          <label htmlFor="outflowDate" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.date}</label>
           <input id="outflowDate" name="outflowDate" type="date" defaultValue={entry.outflow_date} required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
-          <label htmlFor="payee" className="block text-sm font-medium text-slate-700 mb-1">Payee / Recipient</label>
+          <label htmlFor="payee" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.payee}</label>
           <input id="payee" name="payee" defaultValue={entry.payee ?? ""} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div className="md:col-span-2">
-          <label htmlFor="purpose" className="block text-sm font-medium text-slate-700 mb-1">Purpose</label>
+          <label htmlFor="purpose" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.purpose}</label>
           <input id="purpose" name="purpose" defaultValue={entry.purpose ?? ""} required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
-          <label htmlFor="projectName" className="block text-sm font-medium text-slate-700 mb-1">Project Name</label>
+          <label htmlFor="projectName" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.projectName}</label>
           <input id="projectName" name="projectName" defaultValue={entry.project_name ?? ""} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
-          <label htmlFor="referenceNumber" className="block text-sm font-medium text-slate-700 mb-1">Reference</label>
+          <label htmlFor="referenceNumber" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.reference}</label>
           <input id="referenceNumber" name="referenceNumber" defaultValue={entry.reference_number ?? ""} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
       </div>
 
       <div>
-        <label htmlFor="note" className="block text-sm font-medium text-slate-700 mb-1">Note</label>
+        <label htmlFor="note" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.note}</label>
         <textarea id="note" name="note" rows={4} defaultValue={entry.note ?? ""} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
 
       <div>
-        <label htmlFor="correctionNote" className="block text-sm font-medium text-slate-700 mb-1">Correction Note</label>
-        <textarea id="correctionNote" name="correctionNote" rows={3} required placeholder="Explain why this treasury entry is being corrected." className="w-full rounded-md border border-amber-300 bg-amber-50 px-3 py-2 outline-none focus:ring-2 focus:ring-amber-500" />
+        <label htmlFor="correctionNote" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.edit.correctionNote}</label>
+        <textarea id="correctionNote" name="correctionNote" rows={3} required placeholder={t.pages.treasury.forms.edit.correctionPlaceholder} className="w-full rounded-md border border-amber-300 bg-amber-50 px-3 py-2 outline-none focus:ring-2 focus:ring-amber-500" />
       </div>
 
       <div className="flex justify-end">
@@ -114,7 +116,7 @@ export function OutflowEditForm({ churchSlug, entry, options }: OutflowEditFormP
           disabled={isPending}
           className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
         >
-          {isPending ? "Saving..." : "Save Correction"}
+          {isPending ? t.pages.treasury.forms.saving : t.pages.treasury.forms.edit.saveCorrection}
         </button>
       </div>
     </form>

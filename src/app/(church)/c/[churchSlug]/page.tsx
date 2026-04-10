@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { WorkspaceHero } from "@/components/workspace";
 import { DashboardStatsSection } from "./DashboardStatsSection";
 import { DashboardRecentSection } from "./DashboardRecentSection";
-import { DashboardSectionLoading } from "./DashboardSectionLoading";
+import { PageSpinner } from "@/components/feedback/PageSpinner";
 import { OfficeAttentionStrip } from "@/features/office/components/OfficeAttentionStrip";
 
 interface OfficeAttentionStripData {
@@ -127,11 +127,11 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
         <OfficeAttentionStripAsync churchSlug={churchSlug} />
       </Suspense>
 
-      <Suspense fallback={<DashboardSectionLoading cards={true} />}>
+      <Suspense fallback={<PageSpinner />}>
         <DashboardStatsSection churchId={church.id} churchSlug={churchSlug} />
       </Suspense>
 
-      <Suspense fallback={<DashboardSectionLoading />}>
+      <Suspense fallback={<PageSpinner />}>
         <DashboardRecentSection churchId={church.id} churchSlug={churchSlug} />
       </Suspense>
     </div>

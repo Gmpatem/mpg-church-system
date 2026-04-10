@@ -1,4 +1,5 @@
-import { WorkspaceLoadingShell } from "@/components/workspace";
+import { PageSpinner } from "@/components/feedback/PageSpinner";
+
 export default function Loading() {
-  return <WorkspaceLoadingShell />;
+  return <PageSpinner />;
 }

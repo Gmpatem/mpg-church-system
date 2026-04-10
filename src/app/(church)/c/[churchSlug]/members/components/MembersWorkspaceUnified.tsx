@@ -6,7 +6,9 @@ import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CopyableLink } from "@/components/ui/CopyableLink";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
-import { WorkspaceControlRail,
+import { useI18n } from "@/features/i18n";
+import {
+  WorkspaceControlRail,
   WorkspaceEmptyState,
   WorkspaceHero,
   WorkspaceSectionCard,
@@ -75,12 +77,6 @@ interface MembersWorkspaceUnifiedProps {
   };
 }
 
-const MEMBER_TABS: WorkspaceTabItem[] = [
-  { key: "directory", label: "Directory" },
-  { key: "households", label: "Households" },
-  { key: "health", label: "Profile Completeness", shortLabel: "Completeness" },
-];
-
 function getMemberLabel(member: MembersWorkspaceUnifiedProps["data"]["members"][number]) {
   return (
     member.display_name ||
@@ -90,9 +86,9 @@ function getMemberLabel(member: MembersWorkspaceUnifiedProps["data"]["members"][
   );
 }
 
-function formatDate(value?: string | null) {
+function formatDate(value?: string | null, locale = "en-US") {
   if (!value) return "—";
-  return new Date(value).toLocaleDateString("en-US", {
+  return new Date(value).toLocaleDateString(locale, {
     month: "short",
     day: "numeric",
     year: "numeric",
@@ -106,6 +102,7 @@ function MemberInviteButton({
   churchSlug: string;
   member: MembersWorkspaceUnifiedProps["data"]["members"][number];
 }) {
+  const { t } = useI18n();
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -124,7 +121,7 @@ function MemberInviteButton({
         setStatus("error");
       }
     } catch {
-      setErrorMsg("Could not generate invite link.");
+      setErrorMsg(t.pages.membersWorkspace.directory.invite.error);
       setStatus("error");
     }
   }
@@ -138,7 +135,7 @@ function MemberInviteButton({
           onClick={() => { setStatus("idle"); setInviteUrl(null); }}
           className="text-xs text-slate-500 underline hover:text-slate-700"
         >
-          Generate new link
+          {t.pages.membersWorkspace.directory.invite.newLink}
         </button>
       </div>
     );
@@ -155,9 +152,9 @@ function MemberInviteButton({
         {status === "loading" ? (
           <span className="inline-flex items-center gap-2">
             <ButtonSpinner />
-            Generating...
+            {t.pages.membersWorkspace.directory.invite.generating}
           </span>
-        ) : "Invite to Portal"}
+        ) : t.pages.membersWorkspace.directory.invite.button}
       </button>
       {status === "error" && errorMsg && (
         <InlineAlert variant="error" message={errorMsg} />
@@ -165,6 +162,7 @@ function MemberInviteButton({
     </div>
   );
 }
+
 function DepartmentPills({
   items,
   tone,
@@ -172,7 +170,8 @@ function DepartmentPills({
   items: string[];
   tone: "active" | "inactive";
 }) {
-  if (!items.length) return <span className="text-xs text-slate-400">No assignments</span>;
+  const { t } = useI18n();
+  if (!items.length) return <span className="text-xs text-slate-400">{t.pages.membersWorkspace.directory.noAssignments}</span>;
 
   return (
     <div className="flex flex-wrap gap-2">
@@ -199,16 +198,18 @@ function MemberDirectory({
   churchSlug: string;
   rows: MembersWorkspaceUnifiedProps["data"]["members"];
 }) {
+  const { t } = useI18n();
+  
   return (
     <WorkspaceSectionCard
-      title="Member Directory"
-      description="Operational member registry with assignment and household visibility."
+      title={t.pages.membersWorkspace.directory.title}
+      description={t.pages.membersWorkspace.directory.description}
     >
       {rows.length === 0 ? (
         <WorkspaceEmptyState
-          title="No members found"
-          message="No members match the current filters. Add a new member or reset the filters to widen the view."
-          actionLabel="New Member"
+          title={t.pages.membersWorkspace.directory.noMembers}
+          message={t.pages.membersWorkspace.directory.noMembersDesc}
+          actionLabel={t.pages.membersWorkspace.directory.newMember}
           actionHref={`/c/${churchSlug}/members/new`}
         />
       ) : (
@@ -228,18 +229,18 @@ function MemberDirectory({
                   </div>
 
                   <p className="mt-1 text-sm text-slate-600">
-                    {member.member_code || "No code"}
-                    {member.household_name ? ` • ${member.household_name}` : " • No household"}
+                    {member.member_code || t.pages.membersWorkspace.directory.noCode}
+                    {member.household_name ? ` • ${member.household_name}` : ` • ${t.pages.membersWorkspace.directory.noHousehold}`}
                   </p>
 
                   <p className="mt-2 text-xs text-slate-500">
-                    {member.email || member.phone || "No contact info"} • Added {formatDate(member.created_at)}
+                    {member.email || member.phone || t.pages.membersWorkspace.directory.noContact} • {t.pages.membersWorkspace.directory.added} {formatDate(member.created_at)}
                   </p>
 
                   <div className="mt-3 space-y-2">
                     <div>
                       <p className="mb-1 text-[11px] uppercase tracking-[0.16em] text-slate-500">
-                        Active departments
+                        {t.pages.membersWorkspace.directory.activeDepartments}
                       </p>
                       <DepartmentPills items={member.active_departments || []} tone="active" />
                     </div>
@@ -247,7 +248,7 @@ function MemberDirectory({
                     {!!member.inactive_departments?.length ? (
                       <div>
                         <p className="mb-1 text-[11px] uppercase tracking-[0.16em] text-slate-500">
-                          Inactive departments
+                          {t.pages.membersWorkspace.directory.inactiveDepartments}
                         </p>
                         <DepartmentPills items={member.inactive_departments || []} tone="inactive" />
                       </div>
@@ -260,13 +261,13 @@ function MemberDirectory({
                     href={`/c/${churchSlug}/members/${member.id}`}
                     className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                   >
-                    View Member
+                    {t.pages.membersWorkspace.directory.viewMember}
                   </a>
                   <a
                     href={`/c/${churchSlug}/members/${member.id}/edit`}
                     className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                   >
-                    Edit
+                    {t.pages.membersWorkspace.directory.edit}
                   </a>
                   <MemberInviteButton
                     churchSlug={churchSlug}
@@ -291,17 +292,19 @@ function HouseholdsPanel({
   households: MembersWorkspaceUnifiedProps["data"]["households"];
   recentMembers: MembersWorkspaceUnifiedProps["data"]["recentMembers"];
 }) {
+  const { t } = useI18n();
+  
   return (
     <div className="grid gap-6 2xl:grid-cols-2">
       <WorkspaceSectionCard
-        title="Household Summary"
-        description="Quick visibility into households connected to the members workspace."
+        title={t.pages.membersWorkspace.households.title}
+        description={t.pages.membersWorkspace.households.description}
       >
         {households.length === 0 ? (
           <WorkspaceEmptyState
-            title="No households yet"
-            message="Households will appear here after they are created and linked to members."
-            actionLabel="Open Households"
+            title={t.pages.membersWorkspace.households.noHouseholds}
+            message={t.pages.membersWorkspace.households.noHouseholdsDesc}
+            actionLabel={t.pages.membersWorkspace.households.openHouseholds}
             actionHref={`/c/${churchSlug}/households`}
             className="min-h-[220px]"
           />
@@ -317,12 +320,12 @@ function HouseholdsPanel({
                     {household.household_name}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
-                    Linked household record
+                    {t.pages.membersWorkspace.households.linkedRecord}
                   </p>
                 </div>
 
                 <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700">
-                  {household.member_count} members
+                  {t.pages.membersWorkspace.households.membersCount.replace("{{count}}", String(household.member_count))}
                 </span>
               </div>
             ))}
@@ -331,13 +334,13 @@ function HouseholdsPanel({
       </WorkspaceSectionCard>
 
       <WorkspaceSectionCard
-        title="Recent Member Records"
-        description="Newest member records visible in the current church workspace."
+        title={t.pages.membersWorkspace.households.recentTitle}
+        description={t.pages.membersWorkspace.households.recentDesc}
       >
         {recentMembers.length === 0 ? (
           <WorkspaceEmptyState
-            title="No recent additions yet"
-            message="Recent member activity will appear here once new member records are created."
+            title={t.pages.membersWorkspace.households.noRecent}
+            message={t.pages.membersWorkspace.households.noRecentDesc}
             className="min-h-[220px]"
           />
         ) : (
@@ -352,7 +355,7 @@ function HouseholdsPanel({
                     {member.display_name}
                   </p>
                   <p className="mt-1 text-xs text-slate-500">
-                    Added {formatDate(member.created_at)}
+                    {t.pages.membersWorkspace.directory.added} {formatDate(member.created_at)}
                   </p>
                 </div>
 
@@ -371,6 +374,8 @@ function HealthPanel({
 }: {
   stats: MembersWorkspaceUnifiedProps["data"]["stats"];
 }) {
+  const { t } = useI18n();
+  
   const completionRatio =
     stats.totalMembers > 0
       ? Math.round((stats.assignedMembersCount / stats.totalMembers) * 100)
@@ -379,55 +384,57 @@ function HealthPanel({
   return (
     <div className="grid gap-6 2xl:grid-cols-2">
       <WorkspaceSectionCard
-        title="Directory Health"
-        description="How complete and assignment-ready the members directory is right now."
+        title={t.pages.membersWorkspace.health.directoryTitle}
+        description={t.pages.membersWorkspace.health.directoryDesc}
       >
         <div className="space-y-3">
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="text-sm font-semibold text-slate-900">Department coverage</p>
+            <p className="text-sm font-semibold text-slate-900">{t.pages.membersWorkspace.health.departmentCoverage}</p>
             <p className="mt-1 text-sm text-slate-600">
-              {stats.assignedMembersCount} of {stats.totalMembers} members have at least one active department assignment.
+              {t.pages.membersWorkspace.health.departmentCoverageDesc
+                .replace("{{assigned}}", String(stats.assignedMembersCount))
+                .replace("{{total}}", String(stats.totalMembers))}
             </p>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="text-sm font-semibold text-slate-900">Unassigned members</p>
+            <p className="text-sm font-semibold text-slate-900">{t.pages.membersWorkspace.health.unassigned}</p>
             <p className="mt-1 text-sm text-slate-600">
-              {stats.unassignedMembersCount} members still need an active ministry or department connection.
+              {t.pages.membersWorkspace.health.unassignedDesc.replace("{{count}}", String(stats.unassignedMembersCount))}
             </p>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="text-sm font-semibold text-slate-900">Assignment completion</p>
+            <p className="text-sm font-semibold text-slate-900">{t.pages.membersWorkspace.health.completion}</p>
             <p className="mt-1 text-sm text-slate-600">
-              Current active assignment coverage is {completionRatio}% of the member directory.
+              {t.pages.membersWorkspace.health.completionDesc.replace("{{ratio}}", String(completionRatio))}
             </p>
           </div>
         </div>
       </WorkspaceSectionCard>
 
       <WorkspaceSectionCard
-        title="Membership Mix"
-        description="Quick reading of directory posture across member statuses."
+        title={t.pages.membersWorkspace.health.mixTitle}
+        description={t.pages.membersWorkspace.health.mixDesc}
       >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
           <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-            <p className="text-sm font-semibold text-emerald-900">Active</p>
+            <p className="text-sm font-semibold text-emerald-900">{t.members.active}</p>
             <p className="mt-1 text-2xl font-bold text-emerald-950">{stats.activeMembers}</p>
           </div>
 
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="text-sm font-semibold text-slate-900">Inactive</p>
+            <p className="text-sm font-semibold text-slate-900">{t.members.inactive}</p>
             <p className="mt-1 text-2xl font-bold text-slate-950">{stats.inactiveMembers}</p>
           </div>
 
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-            <p className="text-sm font-semibold text-amber-900">Visitors</p>
+            <p className="text-sm font-semibold text-amber-900">{t.members.visitor}</p>
             <p className="mt-1 text-2xl font-bold text-amber-950">{stats.visitorMembers}</p>
           </div>
 
           <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
-            <p className="text-sm font-semibold text-blue-900">Transferred</p>
+            <p className="text-sm font-semibold text-blue-900">{t.members.transferred}</p>
             <p className="mt-1 text-2xl font-bold text-blue-950">{stats.transferredMembers}</p>
           </div>
         </div>
@@ -440,45 +447,52 @@ export function MembersWorkspaceUnified({
   churchSlug,
   data,
 }: MembersWorkspaceUnifiedProps) {
+  const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<MembersTab>("directory");
 
   const activeFilterLabel = useMemo(() => {
     if (data.filters.q || data.filters.status || data.filters.departmentId || data.filters.departmentAssignmentStatus) {
-      return "Filtered view active";
+      return t.pages.membersWorkspace.badges.filtered;
     }
-    return "Live workspace";
-  }, [data.filters]);
+    return t.pages.membersWorkspace.badges.live;
+  }, [data.filters, t]);
+
+  const MEMBER_TABS: WorkspaceTabItem[] = [
+    { key: "directory", label: t.pages.membersWorkspace.tabs.directory },
+    { key: "households", label: t.pages.membersWorkspace.tabs.households },
+    { key: "health", label: t.pages.membersWorkspace.tabs.health, shortLabel: t.pages.membersWorkspace.tabs.healthShort },
+  ];
 
   return (
     <div className="space-y-6">
       <WorkspaceHero
-        eyebrow="Members Workspace"
-        title="Church Members Workspace"
-        description="View, filter, review, and manage the member directory, households, and assignment health from one unified workspace."
+        eyebrow={t.pages.membersWorkspace.eyebrow}
+        title={t.pages.membersWorkspace.title}
+        description={t.pages.membersWorkspace.description}
         badges={[
           activeFilterLabel,
-          `${data.stats.totalMembers} members`,
-          `${data.stats.householdsCount} households`,
+          t.pages.membersWorkspace.badges.membersCount.replace("{{count}}", String(data.stats.totalMembers)),
+          t.pages.membersWorkspace.badges.householdsCount.replace("{{count}}", String(data.stats.householdsCount)),
         ]}
         actions={[
-          { label: "New Member", href: `/c/${churchSlug}/members/new`, variant: "primary" },
-          { label: "Open Households", href: `/c/${churchSlug}/households`, variant: "secondary" },
-          { label: "Reports", href: `/c/${churchSlug}/reports`, variant: "outline" },
+          { label: t.pages.membersWorkspace.actions.newMember, href: `/c/${churchSlug}/members/new`, variant: "primary" },
+          { label: t.pages.membersWorkspace.actions.openHouseholds, href: `/c/${churchSlug}/households`, variant: "secondary" },
+          { label: t.pages.membersWorkspace.actions.reports, href: `/c/${churchSlug}/reports`, variant: "outline" },
         ]}
       />
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
-        <WorkspaceStatCard label="Total Members" value={data.stats.totalMembers} hint="Directory size" />
-        <WorkspaceStatCard label="Active" value={data.stats.activeMembers} hint="Current active members" />
-        <WorkspaceStatCard label="Inactive" value={data.stats.inactiveMembers} hint="Inactive records" />
-        <WorkspaceStatCard label="Visitors" value={data.stats.visitorMembers} hint="Visitor records" />
-        <WorkspaceStatCard label="Households" value={data.stats.householdsCount} hint="Linked household records" />
-        <WorkspaceStatCard label="Unassigned" value={data.stats.unassignedMembersCount} hint="Need active department coverage" />
+        <WorkspaceStatCard label={t.pages.membersWorkspace.stats.totalMembers} value={data.stats.totalMembers} hint={t.pages.membersWorkspace.stats.totalMembersHint} />
+        <WorkspaceStatCard label={t.pages.membersWorkspace.stats.active} value={data.stats.activeMembers} hint={t.pages.membersWorkspace.stats.activeHint} />
+        <WorkspaceStatCard label={t.pages.membersWorkspace.stats.inactive} value={data.stats.inactiveMembers} hint={t.pages.membersWorkspace.stats.inactiveHint} />
+        <WorkspaceStatCard label={t.pages.membersWorkspace.stats.visitors} value={data.stats.visitorMembers} hint={t.pages.membersWorkspace.stats.visitorsHint} />
+        <WorkspaceStatCard label={t.pages.membersWorkspace.stats.households} value={data.stats.householdsCount} hint={t.pages.membersWorkspace.stats.householdsHint} />
+        <WorkspaceStatCard label={t.pages.membersWorkspace.stats.unassigned} value={data.stats.unassignedMembersCount} hint={t.pages.membersWorkspace.stats.unassignedHint} />
       </div>
 
       <WorkspaceControlRail
-        title="Member Filters"
-        description="Search the directory and narrow by status, department, or assignment posture without leaving the workspace."
+        title={t.pages.membersWorkspace.filters.title}
+        description={t.pages.membersWorkspace.filters.description}
       >
         <form
           method="get"
@@ -487,20 +501,20 @@ export function MembersWorkspaceUnified({
         >
           <div>
             <label htmlFor="q" className="mb-1 block text-sm font-medium text-slate-700">
-              Search
+              {t.pages.membersWorkspace.filters.search}
             </label>
             <input
               id="q"
               name="q"
               defaultValue={data.filters.q ?? ""}
-              placeholder="Name, member code, phone, email"
+              placeholder={t.pages.membersWorkspace.filters.searchPlaceholder}
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
             />
           </div>
 
           <div>
             <label htmlFor="status" className="mb-1 block text-sm font-medium text-slate-700">
-              Member Status
+              {t.pages.membersWorkspace.filters.memberStatus}
             </label>
             <select
               id="status"
@@ -508,17 +522,17 @@ export function MembersWorkspaceUnified({
               defaultValue={data.filters.status ?? ""}
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
             >
-              <option value="">All</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-              <option value="visitor">Visitor</option>
-              <option value="transferred">Transferred</option>
+              <option value="">{t.pages.membersWorkspace.filters.statusOptions.all}</option>
+              <option value="active">{t.pages.membersWorkspace.filters.statusOptions.active}</option>
+              <option value="inactive">{t.pages.membersWorkspace.filters.statusOptions.inactive}</option>
+              <option value="visitor">{t.pages.membersWorkspace.filters.statusOptions.visitor}</option>
+              <option value="transferred">{t.pages.membersWorkspace.filters.statusOptions.transferred}</option>
             </select>
           </div>
 
           <div>
             <label htmlFor="departmentId" className="mb-1 block text-sm font-medium text-slate-700">
-              Department
+              {t.pages.membersWorkspace.filters.department}
             </label>
             <select
               id="departmentId"
@@ -526,7 +540,7 @@ export function MembersWorkspaceUnified({
               defaultValue={data.filters.departmentId ?? ""}
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
             >
-              <option value="">All departments</option>
+              <option value="">{t.pages.membersWorkspace.filters.allDepartments}</option>
               {data.departments.map((department) => (
                 <option key={department.id} value={department.id}>
                   {department.name}{department.code ? ` (${department.code})` : ""}
@@ -537,7 +551,7 @@ export function MembersWorkspaceUnified({
 
           <div>
             <label htmlFor="departmentAssignmentStatus" className="mb-1 block text-sm font-medium text-slate-700">
-              Assignment Status
+              {t.pages.membersWorkspace.filters.assignmentStatus}
             </label>
             <select
               id="departmentAssignmentStatus"
@@ -545,9 +559,9 @@ export function MembersWorkspaceUnified({
               defaultValue={data.filters.departmentAssignmentStatus ?? ""}
               className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
             >
-              <option value="">Any assignment</option>
-              <option value="active">Active assignments only</option>
-              <option value="inactive">Inactive assignments only</option>
+              <option value="">{t.pages.membersWorkspace.filters.assignmentOptions.any}</option>
+              <option value="active">{t.pages.membersWorkspace.filters.assignmentOptions.active}</option>
+              <option value="inactive">{t.pages.membersWorkspace.filters.assignmentOptions.inactive}</option>
             </select>
           </div>
 
@@ -556,14 +570,14 @@ export function MembersWorkspaceUnified({
               type="submit"
               className="inline-flex items-center justify-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
             >
-              Apply
+              {t.pages.membersWorkspace.filters.apply}
             </button>
 
             <a
               href={`/c/${churchSlug}/members`}
               className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
-              Reset
+              {t.pages.membersWorkspace.filters.reset}
             </a>
           </div>
         </form>
@@ -593,6 +607,3 @@ export function MembersWorkspaceUnified({
     </div>
   );
 }
-
-
-

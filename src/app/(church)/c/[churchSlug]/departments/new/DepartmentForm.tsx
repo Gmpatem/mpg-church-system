@@ -3,27 +3,29 @@
 import Link from "next/link";
 import { useActionState } from "react";
 import { createDepartmentAction } from "@/features/departments/actions";
+import { useI18n } from "@/features/i18n";
 
 interface DepartmentFormProps {
   churchSlug: string;
 }
 
 export function DepartmentForm({ churchSlug }: DepartmentFormProps) {
+  const { t } = useI18n();
   const [state, formAction, isPending] = useActionState(createDepartmentAction, null);
 
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900">Add Department</h2>
-          <p className="text-sm text-slate-600">Create a ministry or organizational department.</p>
+          <h2 className="text-2xl font-bold text-slate-900">{t.pages.departmentForm.title}</h2>
+          <p className="text-sm text-slate-600">{t.pages.departmentForm.description}</p>
         </div>
 
         <Link
           href={`/c/${churchSlug}/departments`}
           className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
         >
-          Back to Departments
+          {t.pages.departmentForm.backToDepartments}
         </Link>
       </div>
 
@@ -38,13 +40,13 @@ export function DepartmentForm({ churchSlug }: DepartmentFormProps) {
 
         {state && state.ok ? (
           <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-            {state.message ?? "Department created successfully."}
+            {state.message ?? t.pages.departmentForm.success}
           </div>
         ) : null}
 
         <div>
           <label htmlFor="department_name" className="block text-sm font-medium text-slate-700 mb-1">
-            Department Name
+            {t.pages.departmentForm.departmentName}
           </label>
           <input
             id="department_name"
@@ -57,7 +59,7 @@ export function DepartmentForm({ churchSlug }: DepartmentFormProps) {
 
         <div>
           <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-1">
-            Description
+            {t.pages.departmentForm.departmentDescription}
           </label>
           <textarea
             id="description"
@@ -72,7 +74,7 @@ export function DepartmentForm({ churchSlug }: DepartmentFormProps) {
             href={`/c/${churchSlug}/departments`}
             className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
           >
-            Cancel
+            {t.pages.departmentForm.cancel}
           </Link>
 
           <button
@@ -80,7 +82,7 @@ export function DepartmentForm({ churchSlug }: DepartmentFormProps) {
             disabled={isPending}
             className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
           >
-            {isPending ? "Creating..." : "Create Department"}
+            {isPending ? t.pages.departmentForm.creating : t.pages.departmentForm.create}
           </button>
         </div>
       </form>

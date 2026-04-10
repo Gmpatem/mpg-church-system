@@ -16,8 +16,10 @@ const TABS: Array<{ key: TabKey; label: string }> = [
   { key: "unified", label: "Unified" },
 ];
 
+import { PageSpinner } from "@/components/feedback/PageSpinner";
+
 function TabLoading() {
-  return <div className="h-64 animate-pulse rounded-xl bg-slate-200" />;
+  return <PageSpinner />;
 }
 
 function buildTabHref({

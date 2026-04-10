@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useRef } from "react";
 import type { ActionState, ChurchEventRecord } from "../types";
+import { useI18n } from "@/features/i18n";
 
 interface EventFormProps {
   churchSlug: string;
@@ -40,8 +41,9 @@ export function EventForm({
   departments,
   eventTypes,
   initialValues,
-  submitLabel = "Save Event",
+  submitLabel,
 }: EventFormProps) {
+  const { t } = useI18n();
   const [state, formAction, pending] = useActionState(action, initialState);
   const formRef = useRef<HTMLFormElement | null>(null);
 
@@ -115,6 +117,8 @@ export function EventForm({
     createAnother.checked = true;
   }, [state, initialValues]);
 
+  const finalSubmitLabel = submitLabel ?? t.pages.eventForm.save;
+
   return (
     <form ref={formRef} action={formAction} className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
       <input type="hidden" name="churchSlug" value={churchSlug} />
@@ -123,7 +127,7 @@ export function EventForm({
       <div className="grid gap-6 md:grid-cols-2">
         <div className="md:col-span-2">
           <label htmlFor="title" className="mb-1 block text-sm font-medium text-gray-700">
-            Event Title
+            {t.pages.eventForm.eventTitle}
           </label>
           <input
             id="title"
@@ -136,7 +140,7 @@ export function EventForm({
 
         <div>
           <label htmlFor="event_type" className="mb-1 block text-sm font-medium text-gray-700">
-            Event Type
+            {t.pages.eventForm.eventType}
           </label>
           <select
             id="event_type"
@@ -145,7 +149,7 @@ export function EventForm({
             required
             className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">Select type</option>
+            <option value="">{t.pages.eventForm.selectType}</option>
             {(eventTypes ?? []).map((type) => (
               <option key={type} value={type}>
                 {type.replaceAll("_", " ")}
@@ -156,7 +160,7 @@ export function EventForm({
 
         <div>
           <label htmlFor="location" className="mb-1 block text-sm font-medium text-gray-700">
-            Location
+            {t.pages.eventForm.location}
           </label>
           <input
             id="location"
@@ -168,7 +172,7 @@ export function EventForm({
 
         <div className="md:col-span-2">
           <label className="mb-2 block text-sm font-medium text-gray-700">
-            Departments
+            {t.pages.eventForm.departments}
           </label>
           <div className="grid gap-2 rounded-md border border-gray-300 p-3 md:grid-cols-2 xl:grid-cols-3">
             {(departments ?? [])
@@ -192,7 +196,7 @@ export function EventForm({
 
         <div>
           <label htmlFor="status" className="mb-1 block text-sm font-medium text-gray-700">
-            Status
+            {t.pages.eventForm.status}
           </label>
           <select
             id="status"
@@ -200,16 +204,16 @@ export function EventForm({
             defaultValue={initialValues?.status ?? "scheduled"}
             className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="scheduled">Scheduled</option>
-            <option value="completed">Completed</option>
-            <option value="cancelled">Cancelled</option>
+            <option value="scheduled">{t.pages.eventForm.scheduled}</option>
+            <option value="completed">{t.pages.eventForm.completed}</option>
+            <option value="cancelled">{t.pages.eventForm.cancelled}</option>
           </select>
         </div>
 
         <div className="md:col-span-2 grid gap-6 md:grid-cols-2">
           <div>
             <label htmlFor="start_datetime" className="mb-1 block text-sm font-medium text-gray-700">
-              Start
+              {t.pages.eventForm.start}
             </label>
             <input
               id="start_datetime"
@@ -223,7 +227,7 @@ export function EventForm({
 
           <div>
             <label htmlFor="end_datetime" className="mb-1 block text-sm font-medium text-gray-700">
-              End
+              {t.pages.eventForm.end}
             </label>
             <input
               id="end_datetime"
@@ -244,7 +248,7 @@ export function EventForm({
               value="true"
               defaultChecked={initialValues?.is_all_day ?? false}
             />
-            <span className="text-sm text-gray-700">All day event</span>
+            <span className="text-sm text-gray-700">{t.pages.eventForm.allDayEvent}</span>
           </label>
 
           {!initialValues ? (
@@ -255,12 +259,12 @@ export function EventForm({
                 value="true"
                 defaultChecked
               />
-              <span className="text-sm text-blue-800">Create another event after save</span>
+              <span className="text-sm text-blue-800">{t.pages.eventForm.createAnother}</span>
             </label>
           ) : null}
         </div>
 
-                {!initialValues ? (
+        {!initialValues ? (
           <div className="md:col-span-2 grid gap-4 rounded-lg border border-amber-200 bg-amber-50 p-4 md:grid-cols-3">
             <label className="inline-flex items-center gap-2 rounded-md border border-amber-300 bg-white px-3 py-2">
               <input
@@ -268,12 +272,12 @@ export function EventForm({
                 name="is_recurring"
                 value="true"
               />
-              <span className="text-sm text-amber-900">Create recurring template</span>
+              <span className="text-sm text-amber-900">{t.pages.eventForm.recurring.createTemplate}</span>
             </label>
 
             <div>
               <label htmlFor="recurring_frequency" className="mb-1 block text-sm font-medium text-gray-700">
-                Frequency
+                {t.pages.eventForm.recurring.frequency}
               </label>
               <select
                 id="recurring_frequency"
@@ -281,14 +285,14 @@ export function EventForm({
                 defaultValue="weekly"
                 className="w-full rounded-md border border-gray-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
               >
-                <option value="daily">Daily</option>
-                <option value="weekly">Weekly</option>
+                <option value="daily">{t.pages.eventForm.recurring.daily}</option>
+                <option value="weekly">{t.pages.eventForm.recurring.weekly}</option>
               </select>
             </div>
 
             <div>
               <label htmlFor="recurring_count" className="mb-1 block text-sm font-medium text-gray-700">
-                Repeat Count
+                {t.pages.eventForm.recurring.repeatCount}
               </label>
               <input
                 id="recurring_count"
@@ -304,7 +308,7 @@ export function EventForm({
         ) : null}
         <div className="md:col-span-2">
           <label className="mb-1 block text-sm font-medium text-gray-700">
-            Description
+            {t.pages.eventForm.description}
           </label>
           <textarea
             id="description"
@@ -334,15 +338,9 @@ export function EventForm({
           disabled={pending}
           className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-60"
         >
-          {pending ? "Saving..." : submitLabel}
+          {pending ? t.pages.eventForm.saving : finalSubmitLabel}
         </button>
       </div>
     </form>
   );
 }
-
-
-
-
-
-

@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useActionState } from "react";
 import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 import { createTreasuryInflowAction } from "@/features/treasury/actions";
+import { useI18n } from "@/features/i18n";
 
 interface MoneyInFormProps {
   churchSlug: string;
@@ -26,15 +27,16 @@ function getTodayLocalDate() {
   return `${year}-${month}-${day}`;
 }
 
-function getLockedLabel(inflowType?: string) {
-  if (inflowType === "tithe") return "Tithe";
-  if (inflowType === "offering") return "Offering";
-  if (inflowType === "donation") return "Gift / Donation";
-  if (inflowType === "special_contribution") return "Special Contribution";
+function getLockedLabel(inflowType: string | undefined, t: { pages: { treasury: { forms: { types: Record<string, string> } } } }) {
+  if (inflowType === "tithe") return t.pages.treasury.forms.types.tithe;
+  if (inflowType === "offering") return t.pages.treasury.forms.types.offering;
+  if (inflowType === "donation") return t.pages.treasury.forms.types.donation;
+  if (inflowType === "special_contribution") return t.pages.treasury.forms.types.specialContribution;
   return inflowType ?? "";
 }
 
 export function MoneyInForm({ churchSlug, options, defaults, modeLabel }: MoneyInFormProps) {
+  const { t } = useI18n();
   const [state, formAction, isPending] = useActionState(createTreasuryInflowAction, null);
 
   const defaultFundId = useMemo(() => {
@@ -54,9 +56,9 @@ export function MoneyInForm({ churchSlug, options, defaults, modeLabel }: MoneyI
       {isFixedFund ? <input type="hidden" name="fundId" value={defaultFundId} /> : null}
 
       <div>
-        <h3 className="text-lg font-semibold text-slate-900">{modeLabel ?? "Record Money In"}</h3>
+        <h3 className="text-lg font-semibold text-slate-900">{modeLabel ?? t.pages.treasury.forms.recordMoneyIn}</h3>
         <p className="mt-1 text-sm text-slate-600">
-          Enter tithe, offering, donation, or other incoming funds quickly.
+          {t.pages.treasury.forms.descriptions.moneyIn}
         </p>
       </div>
 
@@ -75,29 +77,29 @@ export function MoneyInForm({ churchSlug, options, defaults, modeLabel }: MoneyI
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {!isFixedType ? (
           <div>
-            <label htmlFor="inflowType" className="block text-sm font-medium text-slate-700 mb-1">Entry Type</label>
+            <label htmlFor="inflowType" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.entryType}</label>
             <select id="inflowType" name="inflowType" defaultValue={defaults?.inflowType ?? ""} required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">Select type</option>
-              <option value="tithe">Tithe</option>
-              <option value="offering">Offering</option>
-              <option value="donation">Donation</option>
-              <option value="special_contribution">Special Contribution</option>
+              <option value="">{t.pages.treasury.forms.selectType}</option>
+              <option value="tithe">{t.pages.treasury.forms.types.tithe}</option>
+              <option value="offering">{t.pages.treasury.forms.types.offering}</option>
+              <option value="donation">{t.pages.treasury.forms.types.donation}</option>
+              <option value="special_contribution">{t.pages.treasury.forms.types.specialContribution}</option>
             </select>
           </div>
         ) : (
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Entry Type</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.entryType}</label>
             <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-              {getLockedLabel(defaults?.inflowType)}
+              {getLockedLabel(defaults?.inflowType, t)}
             </div>
           </div>
         )}
 
         {!isFixedFund ? (
           <div>
-            <label htmlFor="fundId" className="block text-sm font-medium text-slate-700 mb-1">Fund</label>
+            <label htmlFor="fundId" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.fund}</label>
             <select id="fundId" name="fundId" defaultValue={defaultFundId} required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">Select fund</option>
+              <option value="">{t.pages.treasury.forms.selectFund}</option>
               {options.funds.map((fund) => (
                 <option key={fund.id} value={fund.id}>
                   {fund.name}
@@ -107,17 +109,17 @@ export function MoneyInForm({ churchSlug, options, defaults, modeLabel }: MoneyI
           </div>
         ) : (
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Fund</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.fund}</label>
             <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-              {options.funds.find((fund) => fund.id === defaultFundId)?.name ?? "Auto selected"}
+              {options.funds.find((fund) => fund.id === defaultFundId)?.name ?? t.pages.treasury.forms.autoSelected}
             </div>
           </div>
         )}
 
         <div>
-          <label htmlFor="memberId" className="block text-sm font-medium text-slate-700 mb-1">Member</label>
+          <label htmlFor="memberId" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.member}</label>
           <select id="memberId" name="memberId" className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">Unlinked / not selected</option>
+            <option value="">{t.pages.treasury.forms.unlinked}</option>
             {options.members.map((member) => (
               <option key={member.id} value={member.id}>
                 {(member.display_name ?? `${member.first_name} ${member.last_name}`) + (member.member_code ? ` (${member.member_code})` : "")}
@@ -127,41 +129,41 @@ export function MoneyInForm({ churchSlug, options, defaults, modeLabel }: MoneyI
         </div>
 
         <div>
-          <label htmlFor="isAnonymous" className="block text-sm font-medium text-slate-700 mb-1">Anonymous</label>
+          <label htmlFor="isAnonymous" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.anonymous}</label>
           <select id="isAnonymous" name="isAnonymous" defaultValue="false" className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="false">No</option>
-            <option value="true">Yes</option>
+            <option value="false">{t.pages.treasury.forms.no}</option>
+            <option value="true">{t.pages.treasury.forms.yes}</option>
           </select>
         </div>
 
         <div>
-          <label htmlFor="amount" className="block text-sm font-medium text-slate-700 mb-1">Amount</label>
+          <label htmlFor="amount" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.amount}</label>
           <input id="amount" name="amount" type="number" step="0.01" min="0.01" required inputMode="decimal" className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
-          <label htmlFor="inflowDate" className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+          <label htmlFor="inflowDate" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.date}</label>
           <input id="inflowDate" name="inflowDate" type="date" defaultValue={today} required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
       </div>
 
       <div>
         <label htmlFor="referenceNumber" className="block text-sm font-medium text-slate-700 mb-1">
-          Reference
+          {t.pages.treasury.forms.reference}
         </label>
         <input
           id="referenceNumber"
           name="referenceNumber"
-          placeholder="Leave blank to auto-generate"
+          placeholder={t.pages.treasury.forms.placeholder.reference}
           className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
         />
         <p className="mt-1 text-xs text-slate-500">
-          Tithe and offering can now flow into automatic remittance and local allocation rules.
+          {t.pages.treasury.forms.descriptions.allocationNote}
         </p>
       </div>
 
       <div>
-        <label htmlFor="note" className="block text-sm font-medium text-slate-700 mb-1">Note</label>
+        <label htmlFor="note" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.note}</label>
         <textarea id="note" name="note" rows={4} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
 
@@ -174,15 +176,15 @@ export function MoneyInForm({ churchSlug, options, defaults, modeLabel }: MoneyI
           {isPending ? (
             <span className="inline-flex items-center gap-2">
               <ButtonSpinner />
-              Saving...
+              {t.pages.treasury.forms.saving}
             </span>
-          ) : "Record Money In"}
+          ) : t.pages.treasury.forms.recordMoneyIn}
         </button>
       </div>
 
       {Boolean(defaults?.fundCode) && !defaultFundId ? (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Required fund was not found. Please make sure a treasury fund with code <strong>{defaults?.fundCode}</strong> exists.
+          {t.pages.treasury.forms.errors.fundNotFound.replace("{{code}}", defaults?.fundCode || "")}
         </div>
       ) : null}
     </form>

@@ -4,6 +4,7 @@ import "./globals.css";
 import { I18nProvider } from "@/features/i18n";
 import { Toaster } from "@/components/feedback/toaster";
 import { resolveLocale } from "@/features/i18n/locale";
+import { NavigationProgress } from "@/components/navigation-progress";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -24,6 +25,7 @@ export default async function RootLayout({
     <html lang={language}>
       <body className={inter.className}>
         <I18nProvider defaultLanguage={language}>
+          <NavigationProgress />
           {children}
           <Toaster />
         </I18nProvider>

@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useActionState } from "react";
 import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 import { createTreasuryInflowAction } from "@/features/treasury/actions";
+import { useI18n } from "@/features/i18n";
 
 interface TitheEntryFormProps {
   churchSlug: string;
@@ -23,6 +24,7 @@ function getTodayLocalDate() {
 }
 
 export function TitheEntryForm({ churchSlug, options, alreadyTithedIds }: TitheEntryFormProps) {
+  const { t } = useI18n();
   const [state, formAction, isPending] = useActionState(createTreasuryInflowAction, null);
 
   const titheFundId = useMemo(() => {
@@ -48,9 +50,9 @@ export function TitheEntryForm({ churchSlug, options, alreadyTithedIds }: TitheE
       <input type="hidden" name="fundId" value={titheFundId} />
 
       <div>
-        <h3 className="text-lg font-semibold text-slate-900">Tithe Entry</h3>
+        <h3 className="text-lg font-semibold text-slate-900">{t.pages.treasury.workspace.sections.tithe}</h3>
         <p className="mt-1 text-sm text-slate-600">
-          Fast Sabbath tithe entry with auto-filled treasury classification.
+          {t.pages.treasury.forms.descriptions.tithe}
         </p>
       </div>
 
@@ -68,25 +70,25 @@ export function TitheEntryForm({ churchSlug, options, alreadyTithedIds }: TitheE
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Entry Type</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.entryType}</label>
           <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-            Tithe
+            {t.pages.treasury.forms.types.tithe}
           </div>
         </div>
 
         <div>
-          <label className="block text-sm font-medium text-slate-700 mb-1">Fund</label>
+          <label className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.fund}</label>
           <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-            Tithe
+            {t.pages.treasury.forms.types.tithe}
           </div>
         </div>
 
         <div>
-          <label htmlFor="memberId" className="block text-sm font-medium text-slate-700 mb-1">Member</label>
+          <label htmlFor="memberId" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.member}</label>
           <select id="memberId" name="memberId" className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">Unlinked / not selected</option>
+            <option value="">{t.pages.treasury.forms.unlinked}</option>
             {availableMembers.length > 0 && (
-              <optgroup label="Available this week">
+              <optgroup label={t.pages.treasury.forms.availableThisWeek}>
                 {availableMembers.map((member) => (
                   <option key={member.id} value={member.id}>
                     {(member.display_name ?? `${member.first_name} ${member.last_name}`) + (member.member_code ? ` (${member.member_code})` : "")}
@@ -95,7 +97,7 @@ export function TitheEntryForm({ churchSlug, options, alreadyTithedIds }: TitheE
               </optgroup>
             )}
             {tithedMembers.length > 0 && (
-              <optgroup label="Already tithed this week">
+              <optgroup label={t.pages.treasury.forms.alreadyTithedThisWeek}>
                 {tithedMembers.map((member) => (
                   <option key={member.id} value={member.id} disabled>
                     {(member.display_name ?? `${member.first_name} ${member.last_name}`) + " ✓"}
@@ -106,47 +108,47 @@ export function TitheEntryForm({ churchSlug, options, alreadyTithedIds }: TitheE
           </select>
           {alreadyTithedIds.length > 0 && (
             <p className="mt-1 text-xs text-slate-500">
-              {alreadyTithedIds.length} member{alreadyTithedIds.length === 1 ? "" : "s"} already recorded tithe this week.
+              {t.pages.treasury.forms.membersAlreadyRecorded.replace("{{count}}", String(alreadyTithedIds.length))}
             </p>
           )}
         </div>
 
         <div>
-          <label htmlFor="isAnonymous" className="block text-sm font-medium text-slate-700 mb-1">Anonymous</label>
+          <label htmlFor="isAnonymous" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.anonymous}</label>
           <select id="isAnonymous" name="isAnonymous" defaultValue="false" className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="false">No</option>
-            <option value="true">Yes</option>
+            <option value="false">{t.pages.treasury.forms.no}</option>
+            <option value="true">{t.pages.treasury.forms.yes}</option>
           </select>
         </div>
 
         <div>
-          <label htmlFor="amount" className="block text-sm font-medium text-slate-700 mb-1">Amount</label>
+          <label htmlFor="amount" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.amount}</label>
           <input id="amount" name="amount" type="number" step="0.01" min="0.01" required inputMode="decimal" className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
-          <label htmlFor="inflowDate" className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+          <label htmlFor="inflowDate" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.date}</label>
           <input id="inflowDate" name="inflowDate" type="date" defaultValue={today} required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
       </div>
 
       <div>
         <label htmlFor="referenceNumber" className="block text-sm font-medium text-slate-700 mb-1">
-          Reference
+          {t.pages.treasury.forms.reference}
         </label>
         <input
           id="referenceNumber"
           name="referenceNumber"
-          placeholder="Leave blank to auto-generate"
+          placeholder={t.pages.treasury.forms.placeholder.reference}
           className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
         />
         <p className="mt-1 text-xs text-slate-500">
-          Mission and remittance allocations will be created automatically once finance rules are configured.
+          {t.pages.treasury.forms.descriptions.remittanceNote}
         </p>
       </div>
 
       <div>
-        <label htmlFor="note" className="block text-sm font-medium text-slate-700 mb-1">Note</label>
+        <label htmlFor="note" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.note}</label>
         <textarea id="note" name="note" rows={4} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
 
@@ -159,15 +161,15 @@ export function TitheEntryForm({ churchSlug, options, alreadyTithedIds }: TitheE
           {isPending ? (
             <span className="inline-flex items-center gap-2">
               <ButtonSpinner />
-              Saving...
+              {t.pages.treasury.forms.saving}
             </span>
-          ) : "Record Tithe"}
+          ) : t.pages.treasury.forms.recordTithe}
         </button>
       </div>
 
       {!titheFundId ? (
         <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Tithe fund was not found. Please make sure a treasury fund with code <strong>tithe</strong> exists.
+          {t.pages.treasury.forms.errors.titheFundNotFound}
         </div>
       ) : null}
     </form>

@@ -2,12 +2,14 @@
 
 import { useActionState } from "react";
 import { createTreasuryFundAction } from "@/features/treasury/actions";
+import { useI18n } from "@/features/i18n";
 
 interface FundCreateFormProps {
   churchSlug: string;
 }
 
 export function FundCreateForm({ churchSlug }: FundCreateFormProps) {
+  const { t } = useI18n();
   const [state, formAction, isPending] = useActionState(createTreasuryFundAction, null);
 
   return (
@@ -28,33 +30,33 @@ export function FundCreateForm({ churchSlug }: FundCreateFormProps) {
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         <div>
-          <label htmlFor="code" className="block text-sm font-medium text-slate-700 mb-1">Code</label>
-          <input id="code" name="code" required placeholder="e.g. building_support" className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
+          <label htmlFor="code" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.fundForm.code}</label>
+          <input id="code" name="code" required placeholder={t.pages.treasury.forms.fundForm.codePlaceholder} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
-          <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">Name</label>
-          <input id="name" name="name" required placeholder="e.g. Building Support" className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
+          <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.fundForm.name}</label>
+          <input id="name" name="name" required placeholder={t.pages.treasury.forms.fundForm.namePlaceholder} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
-          <label htmlFor="fundType" className="block text-sm font-medium text-slate-700 mb-1">Fund Type</label>
+          <label htmlFor="fundType" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.fundForm.fundType}</label>
           <select id="fundType" name="fundType" required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">Select fund type</option>
-            <option value="tithe">Tithe</option>
-            <option value="offering">Offering</option>
-            <option value="donation">Donation</option>
-            <option value="project">Project</option>
-            <option value="department">Department</option>
-            <option value="mission">Mission</option>
-            <option value="welfare">Welfare</option>
-            <option value="general">General</option>
+            <option value="">{t.pages.treasury.forms.fundForm.selectFundType}</option>
+            <option value="tithe">{t.pages.treasury.forms.fundForm.types.tithe}</option>
+            <option value="offering">{t.pages.treasury.forms.fundForm.types.offering}</option>
+            <option value="donation">{t.pages.treasury.forms.fundForm.types.donation}</option>
+            <option value="project">{t.pages.treasury.forms.fundForm.types.project}</option>
+            <option value="department">{t.pages.treasury.forms.fundForm.types.department}</option>
+            <option value="mission">{t.pages.treasury.forms.fundForm.types.mission}</option>
+            <option value="welfare">{t.pages.treasury.forms.fundForm.types.welfare}</option>
+            <option value="general">{t.pages.treasury.forms.fundForm.types.general}</option>
           </select>
         </div>
       </div>
 
       <div>
-        <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-1">Description</label>
+        <label htmlFor="description" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.fundForm.description}</label>
         <textarea id="description" name="description" rows={4} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
 
@@ -64,7 +66,7 @@ export function FundCreateForm({ churchSlug }: FundCreateFormProps) {
           disabled={isPending}
           className="rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
         >
-          {isPending ? "Creating..." : "Create Fund"}
+          {isPending ? t.pages.treasury.forms.fundForm.creating : t.pages.treasury.forms.fundForm.create}
         </button>
       </div>
     </form>

@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 import { createTreasuryOutflowAction } from "@/features/treasury/actions";
+import { useI18n } from "@/features/i18n";
 
 interface MoneyOutFormProps {
   churchSlug: string;
@@ -24,7 +25,20 @@ function getTodayLocalDate() {
   return `${year}-${month}-${day}`;
 }
 
+function getLockedLabel(outflowType: string | undefined, t: { pages: { treasury: { forms: { types: Record<string, string> } } } }) {
+  if (outflowType === "project") return t.pages.treasury.forms.types.project;
+  if (outflowType === "evangelism") return t.pages.treasury.forms.types.evangelism;
+  if (outflowType === "mission_remittance") return t.pages.treasury.forms.types.missionRemittance;
+  if (outflowType === "department_expense") return t.pages.treasury.forms.types.departmentExpense;
+  if (outflowType === "operations") return t.pages.treasury.forms.types.operations;
+  if (outflowType === "welfare") return t.pages.treasury.forms.types.welfare;
+  if (outflowType === "equipment") return t.pages.treasury.forms.types.equipment;
+  if (outflowType === "other") return t.pages.treasury.forms.types.other;
+  return outflowType ?? "";
+}
+
 export function MoneyOutForm({ churchSlug, options, defaults, modeLabel }: MoneyOutFormProps) {
+  const { t } = useI18n();
   const [state, formAction, isPending] = useActionState(createTreasuryOutflowAction, null);
   const isFixedType = Boolean(defaults?.outflowType);
   const today = getTodayLocalDate();
@@ -40,9 +54,9 @@ export function MoneyOutForm({ churchSlug, options, defaults, modeLabel }: Money
       {isFixedType ? <input type="hidden" name="outflowType" value={defaults?.outflowType ?? ""} /> : null}
 
       <div>
-        <h3 className="text-lg font-semibold text-slate-900">{modeLabel ?? "Record Money Out"}</h3>
+        <h3 className="text-lg font-semibold text-slate-900">{modeLabel ?? t.pages.treasury.forms.recordMoneyOut}</h3>
         <p className="mt-1 text-sm text-slate-600">
-          Enter disbursements, project spending, remittances, and other outgoing funds.
+          {t.pages.treasury.forms.descriptions.moneyOut}
         </p>
       </div>
 
@@ -61,47 +75,31 @@ export function MoneyOutForm({ churchSlug, options, defaults, modeLabel }: Money
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
         {!isFixedType ? (
           <div>
-            <label htmlFor="outflowType" className="block text-sm font-medium text-slate-700 mb-1">Outflow Type</label>
+            <label htmlFor="outflowType" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.workspace.tabs.recordExpenses}</label>
             <select id="outflowType" name="outflowType" defaultValue={defaults?.outflowType ?? ""} required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-              <option value="">Select type</option>
-              <option value="project">Project</option>
-              <option value="evangelism">Evangelism</option>
-              <option value="mission_remittance">Mission / District Remittance</option>
-              <option value="department_expense">Department Expense</option>
-              <option value="operations">Operations</option>
-              <option value="welfare">Welfare</option>
-              <option value="equipment">Equipment</option>
-              <option value="other">Other</option>
+              <option value="">{t.pages.treasury.forms.selectType}</option>
+              <option value="project">{t.pages.treasury.forms.types.project}</option>
+              <option value="evangelism">{t.pages.treasury.forms.types.evangelism}</option>
+              <option value="mission_remittance">{t.pages.treasury.forms.types.missionRemittance}</option>
+              <option value="department_expense">{t.pages.treasury.forms.types.departmentExpense}</option>
+              <option value="operations">{t.pages.treasury.forms.types.operations}</option>
+              <option value="welfare">{t.pages.treasury.forms.types.welfare}</option>
+              <option value="equipment">{t.pages.treasury.forms.types.equipment}</option>
+              <option value="other">{t.pages.treasury.forms.types.other}</option>
             </select>
           </div>
         ) : (
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1">Outflow Type</label>
+            <label className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.workspace.tabs.recordExpenses}</label>
             <div className="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-700">
-              {defaults?.outflowType === "project"
-                ? "Project"
-                : defaults?.outflowType === "evangelism"
-                ? "Evangelism"
-                : defaults?.outflowType === "mission_remittance"
-                ? "Mission / District Remittance"
-                : defaults?.outflowType === "department_expense"
-                ? "Department Expense"
-                : defaults?.outflowType === "operations"
-                ? "Operations"
-                : defaults?.outflowType === "welfare"
-                ? "Welfare"
-                : defaults?.outflowType === "equipment"
-                ? "Equipment"
-                : defaults?.outflowType === "other"
-                ? "Other"
-                : defaults?.outflowType}
+              {getLockedLabel(defaults?.outflowType, t)}
             </div>
           </div>
         )}
 
         <div>
           <label htmlFor="fundId" className="block text-sm font-medium text-slate-700 mb-1">
-            Fund Source
+            {t.pages.treasury.forms.fundSource}
           </label>
           <select
             id="fundId"
@@ -109,7 +107,7 @@ export function MoneyOutForm({ churchSlug, options, defaults, modeLabel }: Money
             required
             className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value="">Select fund</option>
+            <option value="">{t.pages.treasury.forms.selectFund}</option>
             {visibleFunds.map((fund) => (
               <option key={fund.id} value={fund.id}>
                 {fund.name}
@@ -117,14 +115,14 @@ export function MoneyOutForm({ churchSlug, options, defaults, modeLabel }: Money
             ))}
           </select>
           <p className="mt-1 text-xs text-slate-500">
-            Tithe fund is reserved for mission remittance only.
+            {t.pages.treasury.forms.titheReserved}
           </p>
         </div>
 
         <div>
-          <label htmlFor="departmentId" className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+          <label htmlFor="departmentId" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.department}</label>
           <select id="departmentId" name="departmentId" className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">Not specified</option>
+            <option value="">{t.pages.treasury.forms.notSpecified}</option>
             {options.departments.map((dept) => (
               <option key={dept.id} value={dept.id}>
                 {dept.department_name}
@@ -134,45 +132,45 @@ export function MoneyOutForm({ churchSlug, options, defaults, modeLabel }: Money
         </div>
 
         <div>
-          <label htmlFor="amount" className="block text-sm font-medium text-slate-700 mb-1">Amount</label>
+          <label htmlFor="amount" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.amount}</label>
           <input id="amount" name="amount" type="number" step="0.01" min="0.01" required inputMode="decimal" className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
-          <label htmlFor="outflowDate" className="block text-sm font-medium text-slate-700 mb-1">Date</label>
+          <label htmlFor="outflowDate" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.date}</label>
           <input id="outflowDate" name="outflowDate" type="date" defaultValue={today} required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
-          <label htmlFor="payee" className="block text-sm font-medium text-slate-700 mb-1">Payee / Recipient</label>
+          <label htmlFor="payee" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.payee}</label>
           <input id="payee" name="payee" className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div className="md:col-span-2">
-          <label htmlFor="purpose" className="block text-sm font-medium text-slate-700 mb-1">Purpose</label>
+          <label htmlFor="purpose" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.purpose}</label>
           <input id="purpose" name="purpose" required className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
-          <label htmlFor="projectName" className="block text-sm font-medium text-slate-700 mb-1">Project Name</label>
+          <label htmlFor="projectName" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.projectName}</label>
           <input id="projectName" name="projectName" className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
         </div>
 
         <div>
           <label htmlFor="referenceNumber" className="block text-sm font-medium text-slate-700 mb-1">
-            Reference
+            {t.pages.treasury.forms.reference}
           </label>
           <input
             id="referenceNumber"
             name="referenceNumber"
-            placeholder="Leave blank to auto-generate"
+            placeholder={t.pages.treasury.forms.placeholder.reference}
             className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>
 
       <div>
-        <label htmlFor="note" className="block text-sm font-medium text-slate-700 mb-1">Note</label>
+        <label htmlFor="note" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.note}</label>
         <textarea id="note" name="note" rows={4} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
       </div>
 
@@ -185,9 +183,9 @@ export function MoneyOutForm({ churchSlug, options, defaults, modeLabel }: Money
           {isPending ? (
             <span className="inline-flex items-center gap-2">
               <ButtonSpinner />
-              Saving...
+              {t.pages.treasury.forms.saving}
             </span>
-          ) : "Record Money Out"}
+          ) : t.pages.treasury.forms.recordMoneyOut}
         </button>
       </div>
     </form>

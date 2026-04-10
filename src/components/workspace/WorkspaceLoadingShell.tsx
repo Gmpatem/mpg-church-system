@@ -1,19 +1,19 @@
+import { PageSpinner } from "@/components/feedback/PageSpinner";
+
+/**
+ * @deprecated WorkspaceLoadingShell is deprecated and will be removed in a future version.
+ * Use `PageSpinner` from `@/components/feedback/PageSpinner` directly instead.
+ * This component now delegates to PageSpinner for unified loading UI.
+ */
 export function WorkspaceLoadingShell({
-  stats = 6,
-  tall = false,
+  stats,
+  tall,
 }: {
   stats?: number;
   tall?: boolean;
 }) {
-  return (
-    <div className="space-y-6">
-      <div className="h-32 animate-pulse rounded-[28px] bg-slate-200" />
-      <div className="grid grid-cols-2 gap-4 xl:grid-cols-6">
-        {Array.from({ length: stats }).map((_, i) => (
-          <div key={i} className="h-24 animate-pulse rounded-2xl bg-slate-200" />
-        ))}
-      </div>
-      <div className={tall ? "h-[560px] animate-pulse rounded-2xl bg-slate-200" : "h-96 animate-pulse rounded-2xl bg-slate-200"} />
-    </div>
-  );
+  // Keep params for API compatibility but ignore them
+  void stats;
+  void tall;
+  return <PageSpinner />;
 }
