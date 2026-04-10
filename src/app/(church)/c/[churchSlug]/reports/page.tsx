@@ -1,7 +1,6 @@
 import { Suspense } from "react";
 import { WorkspaceHero } from "@/components/workspace";
 import { ReportsWorkspace } from "./ReportsWorkspace";
-import { ReportsOverviewSection } from "./ReportsOverviewSection";
 import { PageSpinner } from "@/components/feedback/PageSpinner";
 import { ReportsFilterRail } from "./ReportsFilterRail";
 import { en } from "@/features/i18n/en";
@@ -54,14 +53,6 @@ export default async function ReportsPage({ params, searchParams }: ReportsPageP
         dateFrom={dateFrom}
         dateTo={dateTo}
       />
-
-      <Suspense fallback={<PageSpinner />}>
-        <ReportsOverviewSection
-          churchSlug={churchSlug}
-          dateFrom={dateFrom}
-          dateTo={dateTo}
-        />
-      </Suspense>
 
       <ReportsWorkspace
         churchSlug={churchSlug}
