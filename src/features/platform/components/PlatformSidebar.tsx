@@ -3,13 +3,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BarChart3,
+  CalendarDays,
   ChevronLeft,
   ChevronRight,
   Church,
+  ClipboardCheck,
+  House,
   HelpCircle,
   LayoutDashboard,
   LogOut,
   Settings,
+  ShieldCheck,
+  Users,
+  Wallet,
 } from "lucide-react";
 import { useState } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -17,7 +24,14 @@ import { cn } from "@/lib/utils/cn";
 
 const navItems = [
   { href: "/platform", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/platform/members", label: "Members", icon: Users },
+  { href: "/platform/events", label: "Events", icon: CalendarDays },
+  { href: "/platform/treasury", label: "Treasury", icon: Wallet },
   { href: "/platform/churches", label: "Churches", icon: Church },
+  { href: "/platform/reports", label: "Reports", icon: BarChart3 },
+  { href: "/platform/approvals", label: "Approvals", icon: ClipboardCheck },
+  { href: "/platform/households", label: "Households", icon: House },
+  { href: "/platform/access-control", label: "Access Control", icon: ShieldCheck },
   { href: "/platform/support", label: "Support", icon: HelpCircle },
   { href: "/platform/settings", label: "Settings", icon: Settings },
 ];

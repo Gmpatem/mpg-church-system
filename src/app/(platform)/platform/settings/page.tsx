@@ -1,5 +1,6 @@
 import { Bell, CreditCard, Globe, Save, Shield } from "lucide-react";
 import { LanguageSwitcher } from "@/components/marketing/LanguageSwitcher";
+import { PlatformMobileHero } from "@/features/platform/components/PlatformMobilePrimitives";
 import { getPlatformSettings } from "@/features/platform/queries";
 import { savePlatformSettingsAction } from "@/features/platform/actions";
 
@@ -15,7 +16,7 @@ function SettingsCard({
   children: React.ReactNode;
 }) {
   return (
-    <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+    <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm md:p-6">
       <div className="mb-5 flex items-center gap-3">
         <div className="rounded-xl bg-blue-50 p-3 text-blue-600">
           <Icon className="h-5 w-5" />
@@ -42,10 +43,10 @@ function ToggleRow({
   enabled: boolean;
 }) {
   return (
-    <label className="flex items-center justify-between gap-4 rounded-lg border border-gray-200 p-4 cursor-pointer">
+    <label className="flex cursor-pointer items-center justify-between gap-4 rounded-xl border border-slate-200 p-3">
       <div>
-        <p className="text-sm font-medium text-gray-900">{title}</p>
-        <p className="mt-1 text-sm text-gray-500">{description}</p>
+        <p className="text-sm font-medium text-slate-900">{title}</p>
+        <p className="mt-1 text-sm text-slate-500">{description}</p>
       </div>
       <input type="checkbox" name={name} defaultChecked={enabled} className="h-4 w-4" />
     </label>
@@ -56,8 +57,17 @@ export default async function PlatformSettingsPage() {
   const settings = await getPlatformSettings();
 
   return (
-    <form action={savePlatformSettingsAction} className="space-y-6">
-      <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
+    <form action={savePlatformSettingsAction} className="space-y-5">
+      <div className="md:hidden">
+        <PlatformMobileHero
+          eyebrow="Platform Settings"
+          title="Workspace Preferences"
+          description="Update platform defaults, notifications, and security controls."
+          badge="Admin controls"
+        />
+      </div>
+
+      <div className="hidden flex-col justify-between gap-3 md:flex md:flex-row md:items-center">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
           <p className="mt-1 text-sm text-gray-500">
@@ -74,7 +84,7 @@ export default async function PlatformSettingsPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <SettingsCard
           icon={Globe}
           title="General Settings"
@@ -122,7 +132,7 @@ export default async function PlatformSettingsPage() {
 
             <div className="space-y-2 md:col-span-2">
               <label className="text-sm font-medium text-gray-700">Preview Language Switcher</label>
-              <div className="flex items-center gap-4 p-3 rounded-md border border-gray-200 bg-gray-50">
+              <div className="flex items-center gap-4 rounded-md border border-gray-200 bg-gray-50 p-3">
                 <span className="text-sm text-gray-600">This is how users will see the language toggle:</span>
                 <LanguageSwitcher variant="buttons" />
               </div>
@@ -220,6 +230,16 @@ export default async function PlatformSettingsPage() {
             </div>
           </div>
         </SettingsCard>
+      </div>
+
+      <div className="md:hidden">
+        <button
+          type="submit"
+          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-3 text-sm font-medium text-white"
+        >
+          <Save className="h-4 w-4" />
+          Save Changes
+        </button>
       </div>
     </form>
   );

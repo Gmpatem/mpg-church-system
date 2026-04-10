@@ -261,6 +261,393 @@ export async function getPlatformDashboardMetrics() {
   };
 }
 
+export async function getPlatformMembersSnapshot(limit: number = 30) {
+  await requirePlatformAdmin();
+
+  const supabase = await createClient();
+
+  const [
+    { data: members, error: membersError },
+    { count: totalMembers, error: totalMembersError },
+    { count: activeMembers, error: activeMembersError },
+    { count: householdsLinked, error: householdsLinkedError },
+  ] = await Promise.all([
+    supabase
+      .from("members")
+      .select(`
+        id,
+        first_name,
+        last_name,
+        display_name,
+        email,
+        phone,
+        membership_status,
+        household_id,
+        created_at,
+        church_id,
+        churches:church_id (
+          name,
+          slug
+        )
+      `)
+      .order("created_at", { ascending: false })
+      .limit(limit),
+    supabase.from("members").select("id", { count: "exact", head: true }),
+    supabase.from("members").select("id", { count: "exact", head: true }).eq("membership_status", "active"),
+    supabase.from("members").select("id", { count: "exact", head: true }).not("household_id", "is", null),
+  ]);
+
+  if (membersError) throw new Error(membersError.message);
+  if (totalMembersError) throw new Error(totalMembersError.message);
+  if (activeMembersError) throw new Error(activeMembersError.message);
+  if (householdsLinkedError) throw new Error(householdsLinkedError.message);
+
+  return {
+    rows: members ?? [],
+    totals: {
+      totalMembers: totalMembers ?? 0,
+      activeMembers: activeMembers ?? 0,
+      householdLinked: householdsLinked ?? 0,
+    },
+  };
+}
+
+export async function getPlatformMemberById(memberId: string) {
+  await requirePlatformAdmin();
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("members")
+    .select(`
+      id,
+      member_code,
+      first_name,
+      last_name,
+      display_name,
+      email,
+      phone,
+      membership_status,
+      household_role,
+      household_id,
+      created_at,
+      church_id,
+      churches:church_id (
+        id,
+        name,
+        slug
+      )
+    `)
+    .eq("id", memberId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+
+  return data;
+}
+
+export async function getPlatformEventsSnapshot(limit: number = 24) {
+  await requirePlatformAdmin();
+
+  const supabase = await createClient();
+  const nowIso = new Date().toISOString();
+
+  const [
+    { data: events, error: eventsError },
+    { count: totalEvents, error: totalEventsError },
+    { count: upcomingEvents, error: upcomingEventsError },
+    { count: pendingApprovals, error: pendingApprovalsError },
+  ] = await Promise.all([
+    supabase
+      .from("church_events")
+      .select(`
+        id,
+        title,
+        location,
+        start_datetime,
+        end_datetime,
+        status,
+        workflow_state,
+        church_id,
+        churches:church_id (
+          name,
+          slug
+        )
+      `)
+      .order("start_datetime", { ascending: true })
+      .limit(limit),
+    supabase.from("church_events").select("id", { count: "exact", head: true }),
+    supabase
+      .from("church_events")
+      .select("id", { count: "exact", head: true })
+      .gte("start_datetime", nowIso)
+      .neq("status", "cancelled"),
+    supabase
+      .from("church_events")
+      .select("id", { count: "exact", head: true })
+      .eq("workflow_state", "pending_approval"),
+  ]);
+
+  if (eventsError) throw new Error(eventsError.message);
+  if (totalEventsError) throw new Error(totalEventsError.message);
+  if (upcomingEventsError) throw new Error(upcomingEventsError.message);
+  if (pendingApprovalsError) throw new Error(pendingApprovalsError.message);
+
+  return {
+    rows: events ?? [],
+    totals: {
+      totalEvents: totalEvents ?? 0,
+      upcomingEvents: upcomingEvents ?? 0,
+      pendingApprovals: pendingApprovals ?? 0,
+    },
+  };
+}
+
+export async function getPlatformEventById(eventId: string) {
+  await requirePlatformAdmin();
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("church_events")
+    .select(`
+      id,
+      title,
+      description,
+      event_type,
+      location,
+      start_datetime,
+      end_datetime,
+      is_all_day,
+      status,
+      workflow_state,
+      approval_note,
+      church_id,
+      churches:church_id (
+        id,
+        name,
+        slug
+      )
+    `)
+    .eq("id", eventId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+
+  return data;
+}
+
+export async function getPlatformTreasurySnapshot(limit: number = 12) {
+  await requirePlatformAdmin();
+
+  const supabase = await createClient();
+
+  const [
+    { count: fundCount, error: fundCountError },
+    { data: inflows, error: inflowsError },
+    { data: outflows, error: outflowsError },
+    { data: recentInflows, error: recentInflowsError },
+  ] = await Promise.all([
+    supabase.from("treasury_funds").select("id", { count: "exact", head: true }),
+    supabase.from("treasury_inflows").select("amount"),
+    supabase.from("treasury_outflows").select("amount"),
+    supabase
+      .from("treasury_inflows")
+      .select(`
+        id,
+        amount,
+        inflow_type,
+        inflow_date,
+        is_anonymous,
+        church_id,
+        churches:church_id (
+          name,
+          slug
+        )
+      `)
+      .order("inflow_date", { ascending: false })
+      .limit(limit),
+  ]);
+
+  if (fundCountError) throw new Error(fundCountError.message);
+  if (inflowsError) throw new Error(inflowsError.message);
+  if (outflowsError) throw new Error(outflowsError.message);
+  if (recentInflowsError) throw new Error(recentInflowsError.message);
+
+  const totalIn = (inflows ?? []).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
+  const totalOut = (outflows ?? []).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
+
+  return {
+    recentInflows: recentInflows ?? [],
+    totals: {
+      fundCount: fundCount ?? 0,
+      totalIn,
+      totalOut,
+      netBalance: totalIn - totalOut,
+    },
+  };
+}
+
+export async function getPlatformHouseholdsSnapshot(limit: number = 24) {
+  await requirePlatformAdmin();
+
+  const supabase = await createClient();
+
+  const [
+    { data: households, error: householdsError },
+    { count: totalHouseholds, error: totalHouseholdsError },
+    { count: totalMembers, error: totalMembersError },
+  ] = await Promise.all([
+    supabase
+      .from("households")
+      .select(`
+        id,
+        household_name,
+        city,
+        country,
+        created_at,
+        church_id,
+        churches:church_id (
+          name,
+          slug
+        )
+      `)
+      .order("created_at", { ascending: false })
+      .limit(limit),
+    supabase.from("households").select("id", { count: "exact", head: true }),
+    supabase.from("members").select("id", { count: "exact", head: true }).not("household_id", "is", null),
+  ]);
+
+  if (householdsError) throw new Error(householdsError.message);
+  if (totalHouseholdsError) throw new Error(totalHouseholdsError.message);
+  if (totalMembersError) throw new Error(totalMembersError.message);
+
+  return {
+    rows: households ?? [],
+    totals: {
+      totalHouseholds: totalHouseholds ?? 0,
+      membersLinkedToHouseholds: totalMembers ?? 0,
+    },
+  };
+}
+
+export async function getPlatformApprovalsSnapshot(limit: number = 20) {
+  await requirePlatformAdmin();
+
+  const supabase = await createClient();
+
+  const [
+    { data: pendingEvents, error: pendingEventsError },
+    { data: openTickets, error: openTicketsError },
+  ] = await Promise.all([
+    supabase
+      .from("church_events")
+      .select(`
+        id,
+        title,
+        start_datetime,
+        workflow_state,
+        church_id,
+        churches:church_id (
+          name,
+          slug
+        )
+      `)
+      .eq("workflow_state", "pending_approval")
+      .order("start_datetime", { ascending: true })
+      .limit(limit),
+    supabase
+      .from("platform_support_tickets")
+      .select(`
+        id,
+        subject,
+        status,
+        priority,
+        created_at,
+        church_id,
+        churches:church_id (
+          name,
+          slug
+        )
+      `)
+      .in("status", ["open", "in_progress"])
+      .order("created_at", { ascending: false })
+      .limit(limit),
+  ]);
+
+  if (pendingEventsError) throw new Error(pendingEventsError.message);
+  if (openTicketsError) throw new Error(openTicketsError.message);
+
+  return {
+    pendingEvents: pendingEvents ?? [],
+    openTickets: openTickets ?? [],
+    totals: {
+      pendingEvents: (pendingEvents ?? []).length,
+      openTickets: (openTickets ?? []).length,
+    },
+  };
+}
+
+export async function getPlatformCalendarSnapshot(limit: number = 30) {
+  await requirePlatformAdmin();
+
+  const supabase = await createClient();
+  const nowIso = new Date().toISOString();
+
+  const { data, error } = await supabase
+    .from("church_events")
+    .select(`
+      id,
+      title,
+      start_datetime,
+      end_datetime,
+      status,
+      location,
+      church_id,
+      churches:church_id (
+        name,
+        slug
+      )
+    `)
+    .gte("start_datetime", nowIso)
+    .order("start_datetime", { ascending: true })
+    .limit(limit);
+
+  if (error) throw new Error(error.message);
+
+  return data ?? [];
+}
+
+export async function getPlatformAccessControlSnapshot() {
+  await requirePlatformAdmin();
+
+  const supabase = await createClient();
+
+  const [
+    { count: platformRoleCount, error: platformRoleCountError },
+    { count: churchRoleCount, error: churchRoleCountError },
+    { count: activeChurchUsers, error: activeChurchUsersError },
+    { count: totalChurchUsers, error: totalChurchUsersError },
+  ] = await Promise.all([
+    supabase.from("platform_role_assignments").select("id", { count: "exact", head: true }),
+    supabase.from("church_role_assignments").select("id", { count: "exact", head: true }),
+    supabase.from("church_users").select("id", { count: "exact", head: true }).eq("status", "active"),
+    supabase.from("church_users").select("id", { count: "exact", head: true }),
+  ]);
+
+  if (platformRoleCountError) throw new Error(platformRoleCountError.message);
+  if (churchRoleCountError) throw new Error(churchRoleCountError.message);
+  if (activeChurchUsersError) throw new Error(activeChurchUsersError.message);
+  if (totalChurchUsersError) throw new Error(totalChurchUsersError.message);
+
+  return {
+    platformRoleCount: platformRoleCount ?? 0,
+    churchRoleCount: churchRoleCount ?? 0,
+    activeChurchUsers: activeChurchUsers ?? 0,
+    pendingOrInactiveChurchUsers: (totalChurchUsers ?? 0) - (activeChurchUsers ?? 0),
+  };
+}
+
 export async function getPlatformNotifications() {
   await requirePlatformAdmin();
 
