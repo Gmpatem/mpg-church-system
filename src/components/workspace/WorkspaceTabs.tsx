@@ -22,8 +22,8 @@ export function WorkspaceTabs({
   className,
 }: WorkspaceTabsProps) {
   return (
-    <div className={cn("rounded-2xl border border-slate-200 bg-white p-3 shadow-sm", className)}>
-      <div className="flex flex-wrap gap-2">
+    <div className={cn("mobile-fade-up rounded-2xl border border-slate-200 bg-white p-3 shadow-sm", className)}>
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         {items.map((item) => {
           const isActive = item.key === activeKey;
 
@@ -34,7 +34,7 @@ export function WorkspaceTabs({
               onClick={() => onChange(item.key)}
               aria-pressed={isActive}
               className={cn(
-                "rounded-2xl px-4 py-2.5 text-sm font-medium transition",
+                "mobile-touch-feedback shrink-0 rounded-full px-4 py-2 text-sm font-medium transition",
                 isActive
                   ? "bg-slate-950 text-white shadow-sm"
                   : "bg-slate-100 text-slate-700 hover:bg-slate-200"

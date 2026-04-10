@@ -1,4 +1,3 @@
-import { Users } from "lucide-react";
 import {
   WorkspaceEmptyState,
   WorkspaceSectionCard,
@@ -48,7 +47,7 @@ export function MemberPortalDirectoryModule({
         ]}
       />
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="mobile-stagger grid grid-cols-2 gap-3 md:grid-cols-4">
         <WorkspaceStatCard
           label="Active Roles"
           value={String(data.activeRoleCount)}
@@ -82,7 +81,7 @@ export function MemberPortalDirectoryModule({
       >
         {data.roles.length > 0 ? (
           data.roles.map((role) => (
-            <div key={role.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div key={role.id} className="mobile-touch-feedback rounded-2xl border border-slate-200 bg-white p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <p className="font-medium text-slate-900">{role.roleName}</p>
@@ -124,7 +123,7 @@ export function MemberPortalDirectoryModule({
           data.departments.map((department) => (
             <div
               key={department.id}
-              className="rounded-2xl border border-slate-200 bg-white p-4"
+              className="mobile-touch-feedback rounded-2xl border border-slate-200 bg-white p-4"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
@@ -152,10 +151,6 @@ export function MemberPortalDirectoryModule({
         )}
       </WorkspaceSectionCard>
 
-      <div className="inline-flex items-center gap-2 rounded-full bg-amber-50 px-3 py-1 text-xs text-amber-700">
-        <Users className="h-3.5 w-3.5" />
-        Touch-friendly card stack for quick scanning.
-      </div>
     </div>
   );
 }

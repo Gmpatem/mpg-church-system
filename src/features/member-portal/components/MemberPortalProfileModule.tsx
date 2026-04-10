@@ -77,7 +77,7 @@ export function MemberPortalProfileModule({
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="mobile-stagger grid grid-cols-2 gap-3 md:grid-cols-4">
         <WorkspaceStatCard
           label="Membership"
           value={getLabel(memberStatusLabels, fields.membershipStatus)}
@@ -140,7 +140,7 @@ export function MemberPortalProfileModule({
         <form action={signOutMemberPortalAction}>
           <button
             type="submit"
-            className="inline-flex w-full items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 transition hover:bg-rose-100"
+            className="mobile-touch-feedback inline-flex w-full items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 transition hover:bg-rose-100"
           >
             Sign Out
           </button>
@@ -149,4 +149,3 @@ export function MemberPortalProfileModule({
     </div>
   );
 }
-

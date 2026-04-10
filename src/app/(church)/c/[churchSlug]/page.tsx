@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { WorkspaceHero } from "@/components/workspace";
 import { DashboardStatsSection } from "./DashboardStatsSection";
+import { DashboardQuickActions } from "./DashboardQuickActions";
 import { DashboardRecentSection } from "./DashboardRecentSection";
+import { DashboardActivityFeed } from "./DashboardActivityFeed";
 import { PageSpinner } from "@/components/feedback/PageSpinner";
 import { OfficeAttentionStrip } from "@/features/office/components/OfficeAttentionStrip";
 
@@ -110,8 +112,9 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 md:space-y-6">
       <WorkspaceHero
+        size="compact"
         eyebrow="Church Dashboard"
         title={church.name ?? churchSlug}
         description="Central operations view for members, departments, treasury, events, and reporting."
@@ -131,8 +134,14 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
         <DashboardStatsSection churchId={church.id} churchSlug={churchSlug} />
       </Suspense>
 
+      <DashboardQuickActions churchSlug={churchSlug} />
+
       <Suspense fallback={<PageSpinner />}>
         <DashboardRecentSection churchId={church.id} churchSlug={churchSlug} />
+      </Suspense>
+
+      <Suspense fallback={<PageSpinner />}>
+        <DashboardActivityFeed churchId={church.id} churchSlug={churchSlug} />
       </Suspense>
     </div>
   );

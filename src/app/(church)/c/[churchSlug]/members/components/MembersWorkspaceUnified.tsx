@@ -213,11 +213,11 @@ function MemberDirectory({
           actionHref={`/c/${churchSlug}/members/new`}
         />
       ) : (
-        <div className="space-y-3">
+        <div className="mobile-stagger space-y-3">
           {rows.map((member) => (
             <div
               key={member.id}
-              className="rounded-xl border border-slate-200 px-4 py-4"
+              className="mobile-touch-feedback rounded-xl border border-slate-200 px-4 py-4"
             >
               <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                 <div className="min-w-0">
@@ -259,13 +259,13 @@ function MemberDirectory({
                 <div className="flex shrink-0 flex-wrap gap-2">
                   <a
                     href={`/c/${churchSlug}/members/${member.id}`}
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                    className="mobile-touch-feedback rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                   >
                     {t.pages.membersWorkspace.directory.viewMember}
                   </a>
                   <a
                     href={`/c/${churchSlug}/members/${member.id}/edit`}
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                    className="mobile-touch-feedback rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                   >
                     {t.pages.membersWorkspace.directory.edit}
                   </a>
@@ -309,7 +309,7 @@ function HouseholdsPanel({
             className="min-h-[220px]"
           />
         ) : (
-          <div className="space-y-3">
+          <div className="mobile-stagger space-y-3">
             {households.map((household) => (
               <div
                 key={household.id}
@@ -344,7 +344,7 @@ function HouseholdsPanel({
             className="min-h-[220px]"
           />
         ) : (
-          <div className="space-y-3">
+          <div className="mobile-stagger space-y-3">
             {recentMembers.map((member) => (
               <div
                 key={member.id}
@@ -464,8 +464,9 @@ export function MembersWorkspaceUnified({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 md:space-y-6">
       <WorkspaceHero
+        size="compact"
         eyebrow={t.pages.membersWorkspace.eyebrow}
         title={t.pages.membersWorkspace.title}
         description={t.pages.membersWorkspace.description}
@@ -481,7 +482,7 @@ export function MembersWorkspaceUnified({
         ]}
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
+      <div className="mobile-stagger grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-6">
         <WorkspaceStatCard label={t.pages.membersWorkspace.stats.totalMembers} value={data.stats.totalMembers} hint={t.pages.membersWorkspace.stats.totalMembersHint} />
         <WorkspaceStatCard label={t.pages.membersWorkspace.stats.active} value={data.stats.activeMembers} hint={t.pages.membersWorkspace.stats.activeHint} />
         <WorkspaceStatCard label={t.pages.membersWorkspace.stats.inactive} value={data.stats.inactiveMembers} hint={t.pages.membersWorkspace.stats.inactiveHint} />

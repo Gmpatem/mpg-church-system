@@ -44,8 +44,8 @@ export function WorkspaceHero({
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-950 text-white shadow-sm",
-        compact ? "p-4 sm:p-5" : "p-6",
+        "mobile-fade-up overflow-hidden rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-950 text-white shadow-sm",
+        compact ? "p-4 sm:p-5" : "p-5 sm:p-6",
         className
       )}
     >
@@ -100,7 +100,7 @@ export function WorkspaceHero({
           <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
             {actions.map((action) => {
               const common =
-                "inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition";
+                "mobile-touch-feedback inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition";
 
               if (action.href) {
                 return (

@@ -41,8 +41,9 @@ export default async function ReportsPage({ params, searchParams }: ReportsPageP
   const dateTo = pickSingle(filters.dateTo);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 md:space-y-6">
       <WorkspaceHero
+        size="compact"
         eyebrow={t.pages.reports.eyebrow}
         title={t.pages.reports.title}
         description={t.pages.reports.description}

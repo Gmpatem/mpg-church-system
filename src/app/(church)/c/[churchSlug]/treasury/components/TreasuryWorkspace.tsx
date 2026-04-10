@@ -74,11 +74,11 @@ function LedgerList({
           className="min-h-[180px]"
         />
       ) : (
-        <div className="space-y-3">
+        <div className="mobile-stagger space-y-3">
           {rows.map((item) => (
             <div
               key={item.id}
-              className="flex items-start justify-between rounded-xl border border-slate-200 px-4 py-3"
+              className="mobile-touch-feedback flex items-start justify-between rounded-xl border border-slate-200 px-4 py-3"
             >
               <div>
                 <p className="text-sm font-semibold capitalize text-slate-950">
@@ -130,7 +130,7 @@ function FundsPanel({
           actionHref={`/c/${churchSlug}/reports`}
         />
       ) : (
-        <div className="space-y-3">
+        <div className="mobile-stagger space-y-3">
           {funds.map((fund) => (
             <div
               key={fund.id}
@@ -208,8 +208,9 @@ export function TreasuryWorkspace({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 md:space-y-6">
       <WorkspaceHero
+        size="compact"
         eyebrow={t.pages.treasury.workspace.eyebrow}
         title={t.pages.treasury.workspace.title}
         description={t.pages.treasury.workspace.description}
@@ -225,7 +226,7 @@ export function TreasuryWorkspace({
         ]}
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
+      <div className="mobile-stagger grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-6">
         <WorkspaceStatCard label={t.pages.treasury.workspace.stats.funds} value={dashboard.fundCount} hint={t.pages.treasury.workspace.stats.fundsHint} />
         <WorkspaceStatCard label={t.pages.treasury.workspace.stats.totalIn} value={formatAmount(dashboard.totalIn)} hint={inflowTypeSummary || t.pages.treasury.workspace.stats.fundsHint} />
         <WorkspaceStatCard label={t.pages.treasury.workspace.stats.totalOut} value={formatAmount(dashboard.totalOut)} hint={outflowTypeSummary || t.pages.treasury.workspace.stats.fundsHint} />

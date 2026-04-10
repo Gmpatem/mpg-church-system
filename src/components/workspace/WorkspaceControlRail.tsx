@@ -14,9 +14,9 @@ export function WorkspaceControlRail({
   className,
 }: WorkspaceControlRailProps) {
   return (
-    <section className={cn("rounded-2xl border border-slate-200 bg-white p-4 shadow-sm", className)}>
+    <section className={cn("mobile-fade-up rounded-2xl border border-slate-200 bg-white p-4 shadow-sm", className)}>
       {(title || description) ? (
-        <div className="mb-4">
+        <div className="mb-3.5 sm:mb-4">
           {title ? (
             <p className="text-sm font-semibold text-slate-900">
               {title}

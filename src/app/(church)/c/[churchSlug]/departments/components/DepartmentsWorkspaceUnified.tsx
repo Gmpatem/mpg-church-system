@@ -104,11 +104,11 @@ function DepartmentsRegistry({
           actionHref={`/c/${churchSlug}/departments/new`}
         />
       ) : (
-        <div className="space-y-3">
+        <div className="mobile-stagger space-y-3">
           {rows.map((department) => (
             <div
               key={department.id}
-              className="rounded-xl border border-slate-200 px-4 py-4"
+              className="mobile-touch-feedback rounded-xl border border-slate-200 px-4 py-4"
             >
               <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
                 <div className="min-w-0">
@@ -143,13 +143,13 @@ function DepartmentsRegistry({
                 <div className="flex shrink-0 flex-wrap gap-2">
                   <a
                     href={`/c/${churchSlug}/departments/${department.id}`}
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                    className="mobile-touch-feedback rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                   >
                     View
                   </a>
                   <a
                     href={`/c/${churchSlug}/departments/${department.id}/edit`}
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                    className="mobile-touch-feedback rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                   >
                     Edit
                   </a>
@@ -180,7 +180,7 @@ function AssignmentsPanel({
           className="min-h-[220px]"
         />
       ) : (
-        <div className="space-y-3">
+        <div className="mobile-stagger space-y-3">
           {rows.map((assignment, index) => (
             <div
               key={`${assignment.member_id}-${assignment.department_name}-${index}`}
@@ -252,7 +252,7 @@ function HealthPanel({
         title="Operational Watchlist"
         description="Quick watch areas for staffing and ministry activity."
       >
-        <div className="space-y-4">
+        <div className="mobile-stagger space-y-4">
           <div>
             <p className="mb-2 text-sm font-semibold text-slate-900">
               Unstaffed departments
@@ -310,8 +310,9 @@ export function DepartmentsWorkspaceUnified({
   }, [data.filters]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 md:space-y-6">
       <WorkspaceHero
+        size="compact"
         eyebrow="Departments Workspace"
         title="Church Departments Workspace"
         description="Manage ministry departments, review assignments, and monitor department health from one unified workspace."
@@ -327,7 +328,7 @@ export function DepartmentsWorkspaceUnified({
         ]}
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
+      <div className="mobile-stagger grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-6">
         <WorkspaceStatCard label="Departments" value={data.stats.totalDepartments} hint="Visible department records" />
         <WorkspaceStatCard label="Active" value={data.stats.activeDepartments} hint="Active ministries or units" />
         <WorkspaceStatCard label="Inactive" value={data.stats.inactiveDepartments} hint="Inactive department records" />

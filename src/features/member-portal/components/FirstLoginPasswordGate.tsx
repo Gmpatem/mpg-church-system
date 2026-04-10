@@ -48,10 +48,12 @@ export function FirstLoginPasswordGate({ churchSlug }: { churchSlug: string }) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-6">
+    <div className="relative flex min-h-screen items-center justify-center bg-slate-50 p-4 sm:p-6">
+      <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-900" />
+      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-50/70 to-slate-50" />
       <form
         onSubmit={handleSubmit}
-        className="w-full max-w-md space-y-5 rounded-3xl border bg-card p-6 shadow-sm"
+        className="mobile-fade-up relative z-10 w-full max-w-md space-y-5 rounded-[28px] border border-slate-200 bg-white p-6 shadow-sm"
       >
         <div className="space-y-2">
           <p className="text-sm font-medium text-muted-foreground">First login security</p>
@@ -79,7 +81,7 @@ export function FirstLoginPasswordGate({ churchSlug }: { churchSlug: string }) {
               onClick={() => setShowPassword((v) => !v)}
               tabIndex={-1}
               aria-label={showPassword ? "Hide password" : "Show password"}
-              className="absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground"
+              className="mobile-touch-feedback absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground"
             >
               {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -102,7 +104,7 @@ export function FirstLoginPasswordGate({ churchSlug }: { churchSlug: string }) {
               onClick={() => setShowConfirm((v) => !v)}
               tabIndex={-1}
               aria-label={showConfirm ? "Hide password" : "Show password"}
-              className="absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground"
+              className="mobile-touch-feedback absolute inset-y-0 right-3 flex items-center text-muted-foreground hover:text-foreground"
             >
               {showConfirm ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
             </button>
@@ -118,7 +120,7 @@ export function FirstLoginPasswordGate({ churchSlug }: { churchSlug: string }) {
         <button
           type="submit"
           disabled={loading}
-          className="inline-flex h-11 w-full items-center justify-center rounded-xl bg-foreground px-4 text-sm font-medium text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="mobile-touch-feedback inline-flex h-11 w-full items-center justify-center rounded-xl bg-foreground px-4 text-sm font-medium text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
         >
           {loading ? (
             <span className="inline-flex items-center gap-2">

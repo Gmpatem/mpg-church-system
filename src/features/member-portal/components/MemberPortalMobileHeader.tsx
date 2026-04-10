@@ -1,12 +1,11 @@
 "use client";
 
-import Link from "next/link";
 import type { ReactNode } from "react";
 
 type MemberPortalMobileHeaderProps = {
   churchName: string;
   memberName: string;
-  profileHref: string;
+  onOpenProfileMenu: () => void;
   actions?: ReactNode;
 };
 
@@ -25,7 +24,7 @@ function getInitials(value: string) {
 export function MemberPortalMobileHeader({
   churchName,
   memberName,
-  profileHref,
+  onOpenProfileMenu,
   actions,
 }: MemberPortalMobileHeaderProps) {
   return (
@@ -39,15 +38,15 @@ export function MemberPortalMobileHeader({
 
       <div className="flex items-center gap-2">
         {actions}
-        <Link
-          href={profileHref}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-blue-200 bg-slate-100 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
-          aria-label="Open profile"
+        <button
+          type="button"
+          onClick={onOpenProfileMenu}
+          className="mobile-touch-feedback inline-flex h-8 w-8 items-center justify-center rounded-full border border-blue-200 bg-slate-100 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+          aria-label="Open profile menu"
         >
           {getInitials(memberName)}
-        </Link>
+        </button>
       </div>
     </div>
   );
 }
-

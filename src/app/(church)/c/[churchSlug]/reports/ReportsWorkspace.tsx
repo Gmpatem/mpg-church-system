@@ -54,8 +54,8 @@ export function ReportsWorkspace({
   dateTo?: string;
 }) {
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap gap-2">
+    <div className="space-y-4 sm:space-y-5">
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
         {TABS.map((tab) => {
           const isActive = tab.key === activeTab;
 
@@ -70,8 +70,8 @@ export function ReportsWorkspace({
               })}
               className={
                 isActive
-                  ? "rounded-2xl bg-slate-950 px-4 py-2.5 text-sm font-medium text-white shadow-sm"
-                  : "rounded-2xl bg-slate-100 px-4 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-200"
+                  ? "mobile-touch-feedback shrink-0 rounded-full bg-slate-950 px-4 py-2 text-sm font-medium text-white shadow-sm"
+                  : "mobile-touch-feedback shrink-0 rounded-full bg-slate-100 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-200"
               }
             >
               {tab.label}

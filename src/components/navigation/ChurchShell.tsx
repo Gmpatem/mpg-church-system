@@ -1,9 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
+import { cn } from "@/lib/utils/cn";
 import { ChurchHeader } from "@/components/navigation/ChurchHeader";
 import { ChurchSidebar } from "@/components/navigation/ChurchSidebar";
+import { ChurchMobileBottomNav } from "@/components/navigation/ChurchMobileBottomNav";
 
 interface ChurchNotificationItem {
   id: string;
@@ -46,11 +48,46 @@ export function ChurchShell({
   pendingApprovalCount = 0,
   notifications = [],
 }: ChurchShellProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+  const pathname = usePathname();
+  const previousPathRef = useRef(pathname);
+  const [routeMotionClass, setRouteMotionClass] = useState<"mobile-route-forward" | "mobile-route-back">(
+    "mobile-route-forward"
+  );
+
+  useEffect(() => {
+    const previousPath = previousPathRef.current;
+    if (previousPath === pathname) return;
+
+    const previousSegments = previousPath.split("/").filter(Boolean);
+    const nextSegments = pathname.split("/").filter(Boolean);
+
+    const previousModule = previousSegments[2] ?? "dashboard";
+    const nextModule = nextSegments[2] ?? "dashboard";
+
+    const rank = (moduleName: string) => {
+      if (moduleName === "dashboard") return 0;
+      if (moduleName === "members" || moduleName === "households" || moduleName === "departments") return 1;
+      if (moduleName === "events" || moduleName === "calendar") return 2;
+      if (moduleName === "treasury") return 3;
+      return 4;
+    };
+
+    if (rank(nextModule) > rank(previousModule)) {
+      setRouteMotionClass("mobile-route-forward");
+    } else if (rank(nextModule) < rank(previousModule)) {
+      setRouteMotionClass("mobile-route-back");
+    } else if (nextSegments.length > previousSegments.length) {
+      setRouteMotionClass("mobile-route-forward");
+    } else {
+      setRouteMotionClass("mobile-route-back");
+    }
+
+    previousPathRef.current = pathname;
+  }, [pathname]);
 
   return (
-    <div className="min-h-screen bg-slate-100 lg:grid lg:grid-cols-[272px_minmax(0,1fr)]">
-      <aside className="hidden border-r border-slate-200 bg-slate-950 lg:block lg:h-screen lg:sticky lg:top-0">
+    <div className="min-h-screen bg-white md:grid md:grid-cols-[272px_minmax(0,1fr)]">
+      <aside className="hidden border-r border-slate-200 bg-slate-950 md:sticky md:top-0 md:block md:h-screen">
         <ChurchSidebar
           church={church}
           user={user}
@@ -60,38 +97,30 @@ export function ChurchShell({
         />
       </aside>
 
-      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
-        <SheetContent side="left" className="w-[272px] p-0 sm:max-w-[272px]">
-          <SheetHeader className="sr-only">
-            <SheetTitle>Church navigation menu</SheetTitle>
-          </SheetHeader>
-
-          <ChurchSidebar
-            church={church}
-            user={user}
-            roleLabel={roleLabel}
-            onNavigate={() => setMobileOpen(false)}
-            showAccessControl={showAccessControl}
-            pendingApprovalCount={pendingApprovalCount}
-          />
-        </SheetContent>
-      </Sheet>
-
       <div className="min-w-0">
         <ChurchHeader
           church={church}
           user={user}
           roleLabel={roleLabel}
           notifications={notifications}
-          onOpenSidebar={() => setMobileOpen(true)}
         />
 
-        <main className="px-4 py-5 md:px-6 xl:px-8">
-          <div className="mx-auto w-full max-w-[1500px]">
+        <main className="px-4 py-4 pb-24 sm:px-5 md:px-6 md:py-5 md:pb-6 xl:px-8">
+          <div
+            key={pathname}
+            className={cn("mx-auto w-full max-w-[1500px] mobile-route-frame", routeMotionClass)}
+          >
             {children}
           </div>
         </main>
       </div>
+
+      <ChurchMobileBottomNav
+        churchSlug={church.slug}
+        roleLabel={roleLabel}
+        showAccessControl={showAccessControl}
+        pendingApprovalCount={pendingApprovalCount}
+      />
     </div>
   );
 }

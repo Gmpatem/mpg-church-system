@@ -38,7 +38,7 @@ function StatCard({ label, value, href, icon, trend, color }: StatCardProps) {
   return (
     <Link
       href={href}
-      className="group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+      className="mobile-touch-feedback group relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
     >
       {/* Top gradient line */}
       <div className={`h-1.5 w-full bg-gradient-to-r ${colors.gradient}`} />
@@ -129,7 +129,7 @@ export async function DashboardStatsSection({ churchId, churchSlug }: DashboardS
   ];
 
   return (
-    <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
+    <section className="mobile-stagger grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-4">
       {stats.map((stat) => (
         <StatCard
           key={stat.label}

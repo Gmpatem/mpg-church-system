@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import {
   LogOut,
   User2,
@@ -11,6 +11,7 @@ import {
   HandHeart,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/marketing/LanguageSwitcher";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import {
   MemberPortalBottomNav,
   type MemberPortalNavItem,
@@ -18,6 +19,7 @@ import {
 import { MemberPortalMobileHeader } from "@/features/member-portal/components/MemberPortalMobileHeader";
 import { useI18n } from "@/features/i18n";
 import { signOutMemberPortalAction } from "@/features/member-portal/actions";
+import { cn } from "@/lib/utils/cn";
 import type {
   MemberPortalFoundationData,
   MemberPortalTabKey,
@@ -100,6 +102,33 @@ export function MemberPortalShell({
   const memberCode = foundation.identity?.member.member_code ?? null;
   const navItems = getNavItems(t, churchSlug);
   const profileHref = buildTabHref(churchSlug, "profile");
+  const [profileSheetOpen, setProfileSheetOpen] = useState(false);
+  const previousTabRef = useRef(activeTab);
+  const [routeMotionClass, setRouteMotionClass] = useState<"mobile-route-forward" | "mobile-route-back">(
+    "mobile-route-forward"
+  );
+
+  useEffect(() => {
+    const order: Record<MemberPortalTabKey, number> = {
+      overview: 0,
+      departments: 1,
+      events: 2,
+      giving: 3,
+      profile: 4,
+      calendar: 2,
+    };
+
+    const previousTab = previousTabRef.current;
+    if (previousTab === activeTab) return;
+
+    if ((order[activeTab] ?? 0) >= (order[previousTab] ?? 0)) {
+      setRouteMotionClass("mobile-route-forward");
+    } else {
+      setRouteMotionClass("mobile-route-back");
+    }
+
+    previousTabRef.current = activeTab;
+  }, [activeTab]);
 
   return (
     <div className="min-h-screen bg-white">
@@ -127,8 +156,8 @@ export function MemberPortalShell({
                   href={item.href}
                   className={
                     isActive
-                      ? "flex items-center gap-3 rounded-2xl bg-foreground px-4 py-3 text-sm font-medium text-background transition"
-                      : "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                      ? "mobile-touch-feedback flex items-center gap-3 rounded-2xl bg-foreground px-4 py-3 text-sm font-medium text-background transition"
+                      : "mobile-touch-feedback flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
                   }
                 >
                   <Icon className="h-4 w-4" />
@@ -158,7 +187,7 @@ export function MemberPortalShell({
               <MemberPortalMobileHeader
                 churchName={churchName}
                 memberName={memberName}
-                profileHref={profileHref}
+                onOpenProfileMenu={() => setProfileSheetOpen(true)}
                 actions={<LanguageSwitcher variant="minimal" />}
               />
             </div>
@@ -186,9 +215,12 @@ export function MemberPortalShell({
             </div>
           </div>
 
-          <div className="space-y-4 px-4 pb-24 pt-4 sm:px-6 lg:px-8 lg:pb-8 lg:pt-6">
+          <div
+            key={activeTab}
+            className={cn("space-y-4 px-4 pb-24 pt-4 sm:px-6 lg:px-8 lg:pb-8 lg:pt-6 mobile-route-frame", routeMotionClass)}
+          >
             {showWelcome ? (
-              <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-slate-700">
+              <div className="mobile-fade-up rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-slate-700">
                 <p className="font-medium text-foreground">{t.memberPortal?.welcome || "Welcome to"} {churchName}.</p>
                 <p className="mt-1">
                   {t.memberPortal?.accountReady || "Your account is ready. Any requested leadership or staff access is still pending church approval."}
@@ -200,6 +232,53 @@ export function MemberPortalShell({
           </div>
         </main>
       </div>
+
+      <Sheet open={profileSheetOpen} onOpenChange={setProfileSheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-[28px] border-slate-200 bg-white px-4 pb-6 pt-3 lg:hidden">
+          <SheetHeader className="space-y-2 text-left">
+            <div className="mx-auto h-1.5 w-12 rounded-full bg-slate-200" />
+            <SheetTitle className="text-base font-semibold text-slate-900">{memberName}</SheetTitle>
+            <p className="text-xs text-slate-500">
+              {memberCode ? `${t.members.memberCode}: ${memberCode}` : (t.memberPortal?.accessActive || "Member access active")}
+            </p>
+          </SheetHeader>
+
+          <div className="mt-4 space-y-2">
+            <Link
+              href={profileHref}
+              onClick={() => setProfileSheetOpen(false)}
+              className="mobile-touch-feedback flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-3 text-sm font-medium text-slate-700"
+            >
+              <User2 className="h-4 w-4" />
+              {t.navigation.profile || "Profile"}
+            </Link>
+
+            <Link
+              href={buildTabHref(churchSlug, "giving")}
+              onClick={() => setProfileSheetOpen(false)}
+              className="mobile-touch-feedback flex items-center gap-2 rounded-2xl border border-slate-200 px-3 py-3 text-sm font-medium text-slate-700"
+            >
+              <HandHeart className="h-4 w-4" />
+              {t.memberPortal?.giving || "Giving"}
+            </Link>
+
+            <div className="rounded-2xl border border-slate-200 px-3 py-3">
+              <p className="mb-2 text-xs text-slate-500">Language / Langue</p>
+              <LanguageSwitcher variant="minimal" />
+            </div>
+
+            <form action={signOutMemberPortalAction}>
+              <button
+                type="submit"
+                className="mobile-touch-feedback flex w-full items-center justify-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>{t.auth.logout}</span>
+              </button>
+            </form>
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <MemberPortalBottomNav activeTab={activeTab} items={navItems} />
     </div>

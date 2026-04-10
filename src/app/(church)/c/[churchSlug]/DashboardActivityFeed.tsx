@@ -121,7 +121,7 @@ export async function DashboardActivityFeed({ churchId, churchSlug }: DashboardA
     .slice(0, 6);
 
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div className="mobile-fade-up rounded-2xl border border-slate-200 bg-white shadow-sm">
       <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
         <div>
           <h2 className="text-lg font-semibold tracking-tight text-slate-950">Recent Activity</h2>
@@ -146,7 +146,7 @@ export async function DashboardActivityFeed({ churchId, churchSlug }: DashboardA
                 <Link
                   key={activity.id}
                   href={activity.link}
-                  className="group flex items-start gap-3 rounded-xl p-2 transition hover:bg-slate-50"
+                  className="mobile-touch-feedback group flex items-start gap-3 rounded-xl p-2 transition hover:bg-slate-50"
                 >
                   <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${color}`}>
                     <Icon className="h-4 w-4" />

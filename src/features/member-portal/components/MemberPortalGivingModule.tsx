@@ -1,4 +1,3 @@
-import { HandHeart } from "lucide-react";
 import { WorkspaceEmptyState, WorkspaceSectionCard } from "@/components/workspace";
 import { getLabel, inflowTypeLabels } from "@/lib/display-maps";
 import type { MemberPortalGivingData } from "@/features/member-portal/types";
@@ -77,7 +76,7 @@ export function MemberPortalGivingModule({ data }: MemberPortalGivingModuleProps
             {data.recent.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3"
+                className="mobile-touch-feedback flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3"
               >
                 <div className="min-w-0">
                   <p className="font-medium text-slate-900">
@@ -102,12 +101,6 @@ export function MemberPortalGivingModule({ data }: MemberPortalGivingModuleProps
           />
         )}
       </WorkspaceSectionCard>
-
-      <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs text-slate-600">
-        <HandHeart className="h-3.5 w-3.5" />
-        Entries shown are read-only member-linked records.
-      </div>
     </div>
   );
 }
-

@@ -30,10 +30,10 @@ function LoginPageContent() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-slate-50">
       {/* Header */}
-      <header className="border-b border-slate-200 bg-white">
-        <div className="container flex h-16 items-center justify-between">
+      <header className="sticky top-0 z-20 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div className="container flex h-14 items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-950">
               <Church className="h-5 w-5 text-white" />
@@ -53,12 +53,13 @@ function LoginPageContent() {
       </header>
 
       {/* Main content */}
-      <main className="flex-1 flex items-center justify-center relative">
-        <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-blue-50" />
-        
-        <div className="relative w-full max-w-md px-4 py-12">
+      <main className="relative flex flex-1 overflow-hidden">
+        <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-900" />
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-slate-50/70 to-slate-50" />
+
+        <div className="relative mx-auto flex w-full max-w-md flex-col justify-end px-4 pb-8 pt-6 sm:justify-center sm:py-12">
           {/* Login Card */}
-          <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-lg">
+          <div className="mobile-fade-up rounded-[28px] border border-slate-200 bg-white p-6 shadow-lg sm:p-8">
             {/* Header */}
             <div className="text-center mb-8">
               <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-950 mb-4">
@@ -106,7 +107,7 @@ function LoginPageContent() {
                 {labels.noAccount}{" "}
                 <Link
                   href="/register"
-                  className="font-medium text-cyan-700 hover:text-cyan-800 transition-colors"
+                  className="mobile-touch-feedback font-medium text-cyan-700 transition-colors hover:text-cyan-800"
                 >
                   {labels.createAccount}
                 </Link>
@@ -121,7 +122,9 @@ function LoginPageContent() {
         </div>
       </main>
 
-      <MarketingFooter />
+      <div className="hidden md:block">
+        <MarketingFooter />
+      </div>
     </div>
   );
 }

@@ -63,7 +63,7 @@ export function MemberPortalHomeModule({
         </div>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+      <div className="mobile-stagger grid grid-cols-2 gap-3 md:grid-cols-4">
         <WorkspaceStatCard
           label="Membership"
           value={getLabel(memberStatusLabels, identity.member.membership_status)}
@@ -124,7 +124,7 @@ export function MemberPortalHomeModule({
       >
         {data.notifications.length > 0 ? (
           data.notifications.map((item) => (
-            <div key={item.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div key={item.id} className="mobile-touch-feedback rounded-2xl border border-slate-200 bg-white p-4">
               <p className="font-medium text-slate-900">{item.title}</p>
               <p className="mt-1 text-sm text-slate-600">{item.description}</p>
             </div>
@@ -145,7 +145,7 @@ export function MemberPortalHomeModule({
       >
         {data.upcomingEvents.length > 0 ? (
           data.upcomingEvents.map((event) => (
-            <div key={event.id} className="rounded-2xl border border-slate-200 bg-white p-4">
+            <div key={event.id} className="mobile-touch-feedback rounded-2xl border border-slate-200 bg-white p-4">
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-blue-50 px-2.5 py-1 text-xs font-medium text-blue-700">
                   {getLabel(eventTypeLabels, event.event_type)}
@@ -172,4 +172,3 @@ export function MemberPortalHomeModule({
     </div>
   );
 }
-

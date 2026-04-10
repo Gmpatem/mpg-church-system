@@ -3,6 +3,10 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { WorkspaceHero } from "@/components/workspace";
 import { OfficeAttentionStrip } from "@/features/office/components/OfficeAttentionStrip";
+import { DashboardStatsSection } from "../DashboardStatsSection";
+import { DashboardQuickActions } from "../DashboardQuickActions";
+import { DashboardRecentSection } from "../DashboardRecentSection";
+import { DashboardActivityFeed } from "../DashboardActivityFeed";
 import { en } from "@/features/i18n/en";
 import { fr } from "@/features/i18n/fr";
 import { cookies } from "next/headers";
@@ -114,8 +118,9 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 md:space-y-6">
       <WorkspaceHero
+        size="compact"
         eyebrow={t.pages.dashboard.eyebrow}
         title={church.name ?? churchSlug}
         description={t.pages.dashboard.description}
@@ -131,76 +136,19 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
         <OfficeAttentionStripAsync churchSlug={churchSlug} />
       </Suspense>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h3 className="text-lg font-semibold text-slate-900">{t.pages.dashboard.quickLinks}</h3>
-          <div className="mt-4 grid gap-3">
-            <a 
-              href={`/c/${churchSlug}/members`}
-              className="flex items-center gap-3 rounded-xl border border-slate-200 p-3 hover:bg-slate-50 transition"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600">
-                <span className="text-lg">👥</span>
-              </div>
-              <div>
-                <p className="font-medium text-slate-900">{t.navigation.members}</p>
-                <p className="text-sm text-slate-500">{t.members.subtitle}</p>
-              </div>
-            </a>
-            <a 
-              href={`/c/${churchSlug}/treasury`}
-              className="flex items-center gap-3 rounded-xl border border-slate-200 p-3 hover:bg-slate-50 transition"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600">
-                <span className="text-lg">💰</span>
-              </div>
-              <div>
-                <p className="font-medium text-slate-900">{t.navigation.treasury}</p>
-                <p className="text-sm text-slate-500">{t.treasury.subtitle}</p>
-              </div>
-            </a>
-            <a 
-              href={`/c/${churchSlug}/events`}
-              className="flex items-center gap-3 rounded-xl border border-slate-200 p-3 hover:bg-slate-50 transition"
-            >
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100 text-purple-600">
-                <span className="text-lg">📅</span>
-              </div>
-              <div>
-                <p className="font-medium text-slate-900">{t.navigation.events}</p>
-                <p className="text-sm text-slate-500">{t.events.subtitle}</p>
-              </div>
-            </a>
-          </div>
-        </div>
+      <Suspense fallback={<div className="h-32 animate-pulse rounded-xl bg-slate-200" />}>
+        <DashboardStatsSection churchId={church.id} churchSlug={churchSlug} />
+      </Suspense>
 
-        <div className="rounded-2xl border border-slate-200 bg-white p-6">
-          <h3 className="text-lg font-semibold text-slate-900">{t.pages.dashboard.systemStatus}</h3>
-          <div className="mt-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-slate-600">{t.pages.dashboard.database}</span>
-              <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600">
-                <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                {t.pages.dashboard.connected}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-600">{t.pages.dashboard.storage}</span>
-              <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600">
-                <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                {t.pages.dashboard.active}
-              </span>
-            </div>
-            <div className="flex items-center justify-between">
-              <span className="text-slate-600">{t.pages.dashboard.authentication}</span>
-              <span className="flex items-center gap-1.5 text-sm font-medium text-emerald-600">
-                <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                {t.pages.dashboard.secure}
-              </span>
-            </div>
-          </div>
-        </div>
-      </div>
+      <DashboardQuickActions churchSlug={churchSlug} />
+
+      <Suspense fallback={<div className="h-32 animate-pulse rounded-xl bg-slate-200" />}>
+        <DashboardRecentSection churchId={church.id} churchSlug={churchSlug} />
+      </Suspense>
+
+      <Suspense fallback={<div className="h-32 animate-pulse rounded-xl bg-slate-200" />}>
+        <DashboardActivityFeed churchId={church.id} churchSlug={churchSlug} />
+      </Suspense>
     </div>
   );
 }

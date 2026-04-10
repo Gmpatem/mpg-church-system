@@ -59,14 +59,17 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
   const memberLabel = getMemberLabel(member);
 
   return (
-    <div className="space-y-6">
-      <Breadcrumb
-        items={[
-          { label: t.navigation.members, href: `/c/${churchSlug}/members` },
-          { label: memberLabel },
-        ]}
-      />
+    <div className="space-y-5 md:space-y-6">
+      <div className="hidden sm:block">
+        <Breadcrumb
+          items={[
+            { label: t.navigation.members, href: `/c/${churchSlug}/members` },
+            { label: memberLabel },
+          ]}
+        />
+      </div>
       <WorkspaceHero
+        size="compact"
         title={memberLabel}
         description={t.members.memberDetails}
       />
@@ -86,7 +89,7 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
         </Link>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="mobile-stagger grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
           <div className="text-xs uppercase tracking-wide text-slate-500">{t.pages.memberDetail.memberCode}</div>
           <div className="mt-2 text-lg font-semibold text-slate-900">{member.member_code ?? "—"}</div>
@@ -108,10 +111,10 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <div className="mobile-fade-up rounded-xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
         <h3 className="text-lg font-semibold text-slate-900">{t.pages.memberDetail.financeOverview}</h3>
 
-        <div className="mt-4 grid gap-4 md:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
             <div className="text-xs uppercase tracking-wide text-slate-500">{t.pages.memberDetail.totalTithe}</div>
             <div className="mt-2 text-lg font-semibold text-slate-900">

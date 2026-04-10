@@ -16,8 +16,8 @@ export function WorkspaceSectionCard({
   contentClassName,
 }: WorkspaceSectionCardProps) {
   return (
-    <section className={cn("rounded-2xl border border-slate-200 bg-white shadow-sm", className)}>
-      <div className="border-b border-slate-200 px-5 py-4">
+    <section className={cn("mobile-fade-up rounded-2xl border border-slate-200 bg-white shadow-sm", className)}>
+      <div className="border-b border-slate-200 px-4 py-3.5 sm:px-5 sm:py-4">
         <h2 className="text-lg font-semibold tracking-tight text-slate-950">
           {title}
         </h2>
@@ -28,7 +28,7 @@ export function WorkspaceSectionCard({
         ) : null}
       </div>
 
-      <div className={cn("p-5", contentClassName)}>
+      <div className={cn("p-4 sm:p-5", contentClassName)}>
         {children}
       </div>
     </section>

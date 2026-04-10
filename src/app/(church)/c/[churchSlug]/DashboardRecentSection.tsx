@@ -62,9 +62,9 @@ export async function DashboardRecentSection({ churchId, churchSlug }: Dashboard
     .limit(3);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-2">
+    <div className="grid gap-4 md:gap-5 lg:grid-cols-2">
       {/* Recent Members Card */}
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="mobile-fade-up rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <div>
             <h2 className="text-lg font-semibold tracking-tight text-slate-950">Recent Members</h2>
@@ -100,7 +100,7 @@ export async function DashboardRecentSection({ churchId, churchSlug }: Dashboard
                 <Link
                   key={member.id}
                   href={`/c/${churchSlug}/members/${member.id}`}
-                  className="group flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3 transition hover:border-blue-200 hover:bg-blue-50/50"
+                  className="mobile-touch-feedback group flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3 transition hover:border-blue-200 hover:bg-blue-50/50"
                 >
                   {/* Avatar */}
                   <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white ${getAvatarColor(member.id)}`}>
@@ -140,7 +140,7 @@ export async function DashboardRecentSection({ churchId, churchSlug }: Dashboard
       </div>
 
       {/* Upcoming Events Card */}
-      <div className="rounded-2xl border border-slate-200 bg-white shadow-sm">
+      <div className="mobile-fade-up rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
           <div>
             <h2 className="text-lg font-semibold tracking-tight text-slate-950">Upcoming Events</h2>
@@ -180,7 +180,7 @@ export async function DashboardRecentSection({ churchId, churchSlug }: Dashboard
                   <Link
                     key={event.id}
                     href={`/c/${churchSlug}/events`}
-                    className="group flex items-center gap-4 rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition hover:border-amber-200 hover:bg-amber-50/50"
+                    className="mobile-touch-feedback group flex items-center gap-4 rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition hover:border-amber-200 hover:bg-amber-50/50"
                   >
                     {/* Date Box */}
                     <div className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl ${isToday ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>

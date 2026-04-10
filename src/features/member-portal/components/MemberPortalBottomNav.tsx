@@ -32,7 +32,10 @@ export function MemberPortalBottomNav({
             <Link
               key={item.key}
               href={item.href}
-              className="inline-flex flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-center"
+              className={cn(
+                "mobile-touch-feedback inline-flex flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-1.5 text-center",
+                active ? "bg-blue-50" : ""
+              )}
               aria-current={active ? "page" : undefined}
             >
               <Icon
@@ -56,4 +59,3 @@ export function MemberPortalBottomNav({
     </nav>
   );
 }
-

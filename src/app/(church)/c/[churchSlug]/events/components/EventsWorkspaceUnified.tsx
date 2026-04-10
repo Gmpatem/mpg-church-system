@@ -166,11 +166,11 @@ function EventsList({
           actionHref={`/c/${churchSlug}/events?tab=create_event`}
         />
       ) : (
-        <div className="space-y-3">
+        <div className="mobile-stagger space-y-3">
           {rows.map((event) => (
             <div
               key={event.id}
-              className="rounded-xl border border-slate-200 px-4 py-4"
+              className="mobile-touch-feedback rounded-xl border border-slate-200 px-4 py-4"
             >
               <div className="flex flex-col gap-3 xl:flex-row xl:items-start xl:justify-between">
                 <div className="min-w-0">
@@ -202,13 +202,13 @@ function EventsList({
                 <div className="flex shrink-0 flex-wrap gap-2">
                   <Link
                     href={`/c/${churchSlug}/events?eventId=${event.id}&tab=detail`}
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                    className="mobile-touch-feedback rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                   >
                     View
                   </Link>
                   <Link
                     href={`/c/${churchSlug}/events?eventId=${event.id}&tab=edit`}
-                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                    className="mobile-touch-feedback rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
                   >
                     Edit
                   </Link>
@@ -320,7 +320,7 @@ function CalendarNotesPanel({
         title="Calendar Operations Notes"
         description="A quick leadership view of how the events workspace is behaving."
       >
-        <div className="space-y-3">
+        <div className="mobile-stagger space-y-3">
           <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
             <p className="text-sm font-semibold text-slate-900">Upcoming activity</p>
             <p className="mt-1 text-sm text-slate-600">
@@ -348,7 +348,7 @@ function CalendarNotesPanel({
         title="What this workspace should support next"
         description="This panel keeps the future event operations roadmap visible while the UI becomes unified."
       >
-        <div className="space-y-3 text-sm leading-6 text-slate-600">
+        <div className="mobile-stagger space-y-3 text-sm leading-6 text-slate-600">
           <p className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
             Calendar visualization can be added later as a dedicated panel without leaving this workspace.
           </p>
@@ -416,8 +416,9 @@ export function EventsWorkspaceUnified({
   }, [data.filters]);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5 md:space-y-6">
       <WorkspaceHero
+        size="compact"
         eyebrow="Events Workspace"
         title="Church Events Workspace"
         description="Plan, record, review, and manage church events in one unified operations workspace."
@@ -432,7 +433,7 @@ export function EventsWorkspaceUnified({
         ]}
       />
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
+      <div className="mobile-stagger grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-6">
         <WorkspaceStatCard label="Total Events" value={data.stats.totalEvents} hint="Events in current view" />
         <WorkspaceStatCard label="Scheduled" value={data.stats.scheduledCount} hint="Still active on calendar" />
         <WorkspaceStatCard label="Completed" value={data.stats.completedCount} hint="Marked complete" />
