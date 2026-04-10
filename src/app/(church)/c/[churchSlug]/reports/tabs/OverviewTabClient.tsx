@@ -17,13 +17,6 @@ import {
 
 const CHART_COLORS = ["#1d4ed8", "#0f766e", "#7c3aed", "#ea580c", "#2563eb", "#be123c"];
 
-function formatMetric(value: string | number) {
-  if (typeof value === "number") {
-    return value.toLocaleString("en-US");
-  }
-  return value;
-}
-
 function insightToneClass(tone?: "default" | "success" | "warning") {
   if (tone === "success") return "border-emerald-200 bg-emerald-50 text-emerald-900";
   if (tone === "warning") return "border-amber-200 bg-amber-50 text-amber-900";
@@ -61,27 +54,6 @@ export function OverviewTabClient({ overview }: OverviewTabClientProps) {
   return (
     <div className="space-y-6">
       <ReportsExportActions />
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {overview.stats.map((stat) => (
-          <div key={stat.label} className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-            <div className="h-1 w-full bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-500" />
-            <div className="p-5">
-              <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                {stat.label}
-              </p>
-              <p className="mt-3 text-3xl font-bold tracking-tight text-slate-950">
-                {formatMetric(stat.value)}
-              </p>
-              {stat.hint ? (
-                <p className="mt-2 text-xs text-slate-500">
-                  {stat.hint}
-                </p>
-              ) : null}
-            </div>
-          </div>
-        ))}
-      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
         <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">

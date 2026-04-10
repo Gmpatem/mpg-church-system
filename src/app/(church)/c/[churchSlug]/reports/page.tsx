@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { WorkspaceHero } from "@/components/workspace";
 import { ReportsWorkspace } from "./ReportsWorkspace";
+import { ReportsOverviewStats } from "./ReportsOverviewStats";
 import { PageSpinner } from "@/components/feedback/PageSpinner";
 import { ReportsFilterRail } from "./ReportsFilterRail";
 import { en } from "@/features/i18n/en";
@@ -46,6 +47,14 @@ export default async function ReportsPage({ params, searchParams }: ReportsPageP
         title={t.pages.reports.title}
         description={t.pages.reports.description}
       />
+
+      <Suspense fallback={<PageSpinner />}>
+        <ReportsOverviewStats
+          churchSlug={churchSlug}
+          dateFrom={dateFrom}
+          dateTo={dateTo}
+        />
+      </Suspense>
 
       <ReportsFilterRail
         churchSlug={churchSlug}
