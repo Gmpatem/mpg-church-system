@@ -15,6 +15,7 @@ interface WorkspaceHeroProps {
   badges?: string[];
   actions?: WorkspaceHeroAction[];
   className?: string;
+  size?: "default" | "compact";
 }
 
 function actionClasses(variant: WorkspaceHeroAction["variant"]) {
@@ -36,15 +37,24 @@ export function WorkspaceHero({
   badges,
   actions,
   className,
+  size = "default",
 }: WorkspaceHeroProps) {
+  const compact = size === "compact";
+
   return (
     <section
       className={cn(
-        "overflow-hidden rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-950 p-6 text-white shadow-sm",
+        "overflow-hidden rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-950 text-white shadow-sm",
+        compact ? "p-4 sm:p-5" : "p-6",
         className
       )}
     >
-      <div className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+      <div
+        className={cn(
+          "flex flex-col xl:flex-row xl:items-end xl:justify-between",
+          compact ? "gap-4" : "gap-6"
+        )}
+      >
         <div className="max-w-3xl">
           {(eyebrow || badges?.length) ? (
             <div className="flex flex-wrap items-center gap-2">
@@ -65,12 +75,22 @@ export function WorkspaceHero({
             </div>
           ) : null}
 
-          <h1 className="mt-4 text-3xl font-bold tracking-tight md:text-4xl">
+          <h1
+            className={cn(
+              "font-bold tracking-tight",
+              compact ? "mt-3 text-2xl md:text-3xl" : "mt-4 text-3xl md:text-4xl"
+            )}
+          >
             {title}
           </h1>
 
           {description ? (
-            <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-100">
+            <p
+              className={cn(
+                "max-w-2xl text-sm text-blue-100",
+                compact ? "mt-2 leading-5" : "mt-3 leading-6"
+              )}
+            >
               {description}
             </p>
           ) : null}

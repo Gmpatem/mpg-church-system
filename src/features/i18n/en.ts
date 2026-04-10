@@ -309,6 +309,10 @@ export const en = {
   },
   memberPortal: {
     title: "Member Portal",
+    home: "Home",
+    directory: "Directory",
+    events: "Events",
+    giving: "Giving",
     myInvolvement: "My Involvement",
     accessActive: "Member access active",
     welcome: "Welcome to",

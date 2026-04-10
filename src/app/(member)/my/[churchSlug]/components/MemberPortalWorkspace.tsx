@@ -1,3 +1,6 @@
+export { MemberPortalWorkspace } from "@/features/member-portal/components/MemberPortalWorkspaceContent";
+
+/*
 import {
   WorkspaceEmptyState,
   WorkspaceHero,
@@ -458,3 +461,4 @@ export function MemberPortalWorkspace({
 
 
 
+*/

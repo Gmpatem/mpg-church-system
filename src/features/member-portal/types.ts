@@ -138,6 +138,24 @@ export type MemberPortalDepartmentsData = {
   departments: MemberPortalDepartmentItem[];
 };
 
+export type MemberPortalGivingItem = {
+  id: string;
+  amount: number;
+  inflowType: string | null;
+  inflowDate: string;
+  note: string | null;
+  referenceNumber: string | null;
+};
+
+export type MemberPortalGivingData = {
+  totalGiving: number;
+  yearToDateTotal: number;
+  totalTithe: number;
+  totalOffering: number;
+  totalDonation: number;
+  recent: MemberPortalGivingItem[];
+};
+
 export type MemberPortalTabData =
   | {
       tab: "overview";
@@ -152,8 +170,12 @@ export type MemberPortalTabData =
       data: MemberPortalDepartmentsData;
     }
   | {
-      tab: "giving" | "events";
-      data: null;
+      tab: "giving";
+      data: MemberPortalGivingData;
+    }
+  | {
+      tab: "events";
+      data: CalendarEvent[];
     }
   | {
       tab: "calendar";

@@ -311,6 +311,10 @@ export const fr: Translations = {
   },
   memberPortal: {
     title: "Portail Membre",
+    home: "Accueil",
+    directory: "Annuaire",
+    events: "Événements",
+    giving: "Dons",
     myInvolvement: "Mon Implication",
     accessActive: "Accès membre actif",
     welcome: "Bienvenue à",

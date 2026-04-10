@@ -3,10 +3,12 @@ import "server-only";
 import { createClient } from "@/lib/supabase/server";
 import { requireMemberPortalAccess } from "@/features/access/queries";
 import { getPublishedEvents } from "@/features/calendar/queries";
+import { getLabel, memberStatusLabels } from "@/lib/display-maps";
 import type {
   MemberPortalDepartmentItem,
   MemberPortalDepartmentsData,
   MemberPortalFoundationData,
+  MemberPortalGivingData,
   MemberPortalIdentity,
   MemberPortalHouseholdSummary,
   MemberPortalMemberSummary,
@@ -84,6 +86,15 @@ type MemberDepartmentRow = {
     department_name: string;
     code: string | null;
   } | null;
+};
+
+type TreasuryInflowRow = {
+  id: string;
+  inflow_type: string | null;
+  amount: number | string | null;
+  inflow_date: string;
+  note: string | null;
+  reference_number: string | null;
 };
 
 function mapProfile(profile: {
@@ -306,7 +317,7 @@ export async function getMemberPortalOverview(
     {
       id: "membership-status",
       title: "Membership status",
-      description: `Your current membership status is ${identity.member.membership_status}.`,
+      description: `Your current membership status is ${getLabel(memberStatusLabels, identity.member.membership_status)}.`,
     },
     {
       id: "department-summary",
@@ -465,6 +476,65 @@ export async function getMemberPortalDepartments(
   };
 }
 
+export async function getMemberPortalGiving(
+  churchSlug: string
+): Promise<MemberPortalGivingData | null> {
+  const identity = await getCurrentLinkedMemberInternal(churchSlug);
+  if (!identity) return null;
+
+  const supabase = await createClient();
+
+  const { data, error } = await supabase
+    .from("treasury_inflows")
+    .select("id, inflow_type, amount, inflow_date, note, reference_number")
+    .eq("church_id", identity.churchId)
+    .eq("member_id", identity.member.id)
+    .order("inflow_date", { ascending: false })
+    .limit(20);
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  const inflows = ((data ?? []) as TreasuryInflowRow[]).map((row) => ({
+    id: row.id,
+    inflowType: row.inflow_type,
+    amount: Number(row.amount ?? 0),
+    inflowDate: row.inflow_date,
+    note: row.note,
+    referenceNumber: row.reference_number,
+  }));
+
+  const yearStart = new Date(new Date().getFullYear(), 0, 1);
+  const yearStartTime = yearStart.getTime();
+
+  const totalGiving = inflows.reduce((sum, item) => sum + item.amount, 0);
+  const yearToDateTotal = inflows.reduce((sum, item) => {
+    const parsed = new Date(item.inflowDate).getTime();
+    if (Number.isNaN(parsed) || parsed < yearStartTime) return sum;
+    return sum + item.amount;
+  }, 0);
+
+  const totalTithe = inflows
+    .filter((item) => item.inflowType === "tithe")
+    .reduce((sum, item) => sum + item.amount, 0);
+  const totalOffering = inflows
+    .filter((item) => item.inflowType === "offering")
+    .reduce((sum, item) => sum + item.amount, 0);
+  const totalDonation = inflows
+    .filter((item) => item.inflowType === "donation")
+    .reduce((sum, item) => sum + item.amount, 0);
+
+  return {
+    totalGiving,
+    yearToDateTotal,
+    totalTithe,
+    totalOffering,
+    totalDonation,
+    recent: inflows,
+  };
+}
+
 export async function getMemberPortalTabData(
   churchSlug: string,
   tab: MemberPortalTabKey
@@ -499,10 +569,32 @@ export async function getMemberPortalTabData(
     return { tab: "calendar", data: events };
   }
 
-  return {
-    tab,
-    data: null,
-  };
+  if (tab === "events") {
+    const ctx = await requireMemberPortalAccess(churchSlug);
+    const events = await getPublishedEvents(ctx.churchId);
+    return { tab: "events", data: events };
+  }
+
+  if (tab === "giving") {
+    const data = await getMemberPortalGiving(churchSlug);
+    if (!data) {
+      return {
+        tab: "giving",
+        data: {
+          totalGiving: 0,
+          yearToDateTotal: 0,
+          totalTithe: 0,
+          totalOffering: 0,
+          totalDonation: 0,
+          recent: [],
+        },
+      };
+    }
+    return { tab: "giving", data };
+  }
+
+  const exhaustiveTab: never = tab;
+  throw new Error(`Unsupported member portal tab: ${exhaustiveTab}`);
 }
 
 
