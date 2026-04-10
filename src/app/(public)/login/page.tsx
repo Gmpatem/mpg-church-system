@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import { Church } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -8,11 +9,12 @@ import { MarketingFooter } from "@/components/marketing/MarketingFooter";
 import { LanguageSwitcher } from "@/components/marketing/LanguageSwitcher";
 import { useI18n } from "@/features/i18n";
 
-export default function LoginPage() {
+function LoginPageContent() {
   const { language } = useI18n();
   const searchParams = useSearchParams();
   const registered = searchParams.get("registered") === "1";
   const checkEmail = searchParams.get("check_email") === "1";
+  const redirect = searchParams.get("redirect") ?? "";
 
   const isFr = language === "fr";
 
@@ -86,7 +88,7 @@ export default function LoginPage() {
             )}
 
             {/* Login Form */}
-            <LoginForm />
+            <LoginForm redirect={redirect} />
 
             {/* Divider */}
             <div className="relative my-6">
@@ -121,5 +123,31 @@ export default function LoginPage() {
 
       <MarketingFooter />
     </div>
+  );
+}
+
+function LoginFallback() {
+  return (
+    <div className="flex min-h-screen flex-col bg-white">
+      <main className="flex flex-1 items-center justify-center px-4 py-10">
+        <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-8 shadow-lg">
+          <div className="space-y-3">
+            <div className="h-5 w-40 animate-pulse rounded bg-slate-200" />
+            <div className="h-4 w-60 animate-pulse rounded bg-slate-100" />
+            <div className="h-11 animate-pulse rounded bg-slate-100" />
+            <div className="h-11 animate-pulse rounded bg-slate-100" />
+            <div className="h-11 animate-pulse rounded bg-slate-200" />
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<LoginFallback />}>
+      <LoginPageContent />
+    </Suspense>
   );
 }

@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useActionState } from "react";
-import { useSearchParams } from "next/navigation";
 import { Eye, EyeOff } from "lucide-react";
 import { loginAction } from "@/features/auth/actions";
 import { Input } from "@/components/ui/input";
@@ -10,12 +9,10 @@ import { Label } from "@/components/ui/label";
 import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 import { useI18n } from "@/features/i18n";
 
-export function LoginForm() {
+export function LoginForm({ redirect = "" }: { redirect?: string }) {
   const [state, formAction, isPending] = useActionState(loginAction, null);
-  const searchParams = useSearchParams();
-  const redirect = searchParams.get("redirect") ?? "";
   const [showPassword, setShowPassword] = useState(false);
-  const { t, language } = useI18n();
+  const { language } = useI18n();
 
   const isFr = language === "fr";
 
