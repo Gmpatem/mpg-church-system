@@ -23,6 +23,7 @@ import {
 import { Bell, LogOut, Menu, Settings, User } from "lucide-react";
 import { LanguageSwitcher } from "@/components/marketing/LanguageSwitcher";
 import { useI18n } from "@/features/i18n";
+import { ChurchMobileModuleRail } from "@/components/navigation/ChurchMobileModuleRail";
 import {
   markAllChurchNotificationsReadAction,
   markChurchNotificationReadAction,
@@ -55,6 +56,7 @@ interface ChurchHeaderProps {
     avatar_url?: string | null;
   } | null;
   roleLabel?: string;
+  showAccessControl?: boolean;
   onOpenSidebar?: () => void;
   notifications?: ChurchNotificationItem[];
 }
@@ -120,6 +122,7 @@ export function ChurchHeader({
   church,
   user,
   roleLabel,
+  showAccessControl = false,
   onOpenSidebar,
   notifications = [],
 }: ChurchHeaderProps) {
@@ -129,6 +132,7 @@ export function ChurchHeader({
   const [isPending, startTransition] = useTransition();
   const [readOfficeIds, setReadOfficeIds] = useState<string[]>([]);
   const [mobileProfileOpen, setMobileProfileOpen] = useState(false);
+  const [mobileNotificationsOpen, setMobileNotificationsOpen] = useState(false);
   const { t } = useI18n();
 
   useEffect(() => {
@@ -342,16 +346,32 @@ export function ChurchHeader({
               </DropdownMenu>
             </div>
 
-            <button
-              type="button"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-slate-100 sm:hidden"
-              onClick={() => setMobileProfileOpen(true)}
-              aria-label={t.navigation.profile || "Open profile menu"}
-            >
-              <Avatar className="h-8 w-8">
-                <AvatarFallback>{initials}</AvatarFallback>
-              </Avatar>
-            </button>
+            <div className="flex items-center gap-2 sm:hidden">
+              <button
+                type="button"
+                className="relative inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-slate-100 text-slate-700"
+                onClick={() => setMobileNotificationsOpen(true)}
+                aria-label={t.common.notifications}
+              >
+                <Bell className="h-4.5 w-4.5" />
+                {unreadCount > 0 ? (
+                  <span className="absolute -right-1 -top-1 inline-flex min-h-4 min-w-4 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold text-white">
+                    {unreadCount}
+                  </span>
+                ) : null}
+              </button>
+
+              <button
+                type="button"
+                className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-slate-100"
+                onClick={() => setMobileProfileOpen(true)}
+                aria-label={t.navigation.profile || "Open profile menu"}
+              >
+                <Avatar className="h-8 w-8">
+                  <AvatarFallback>{initials}</AvatarFallback>
+                </Avatar>
+              </button>
+            </div>
 
             <div className="hidden sm:block">
               <DropdownMenu>
@@ -405,7 +425,68 @@ export function ChurchHeader({
             </div>
           </div>
         </div>
+
+        <ChurchMobileModuleRail
+          churchSlug={church.slug}
+          roleLabel={roleLabel}
+          showAccessControl={showAccessControl}
+        />
       </header>
+
+      <Sheet open={mobileNotificationsOpen} onOpenChange={setMobileNotificationsOpen}>
+        <SheetContent side="bottom" className="rounded-t-[28px] border-slate-200 bg-white px-4 pb-6 pt-3 sm:hidden">
+          <SheetHeader className="space-y-2 text-left">
+            <div className="mx-auto h-1.5 w-12 rounded-full bg-slate-200" />
+            <SheetTitle className="text-base font-semibold text-slate-900">
+              {t.common.notifications}
+            </SheetTitle>
+          </SheetHeader>
+
+          <div className="mt-4 space-y-3">
+            {unreadCount > 0 ? (
+              <button
+                type="button"
+                onClick={markAllRead}
+                disabled={isPending}
+                className="mobile-touch-feedback w-full rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 disabled:opacity-50"
+              >
+                {t.common.markAllRead}
+              </button>
+            ) : null}
+
+            {decoratedNotifications.length === 0 ? (
+              <p className="rounded-2xl border border-slate-200 bg-slate-50 px-3 py-4 text-sm text-slate-500">
+                {t.common.noNotifications}
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {decoratedNotifications.map((item) => (
+                  <Link
+                    key={item.id}
+                    href={item.href}
+                    onClick={() => {
+                      if (!item.is_read) {
+                        markOneRead(item);
+                      }
+                      setMobileNotificationsOpen(false);
+                    }}
+                    className="mobile-touch-feedback block rounded-2xl border border-slate-200 px-3 py-3"
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-sm font-medium text-slate-900">{item.title}</p>
+                      {!item.is_read ? (
+                        <span className="mt-1 h-2 w-2 rounded-full bg-blue-600" />
+                      ) : null}
+                    </div>
+                    <p className="mt-1 text-xs text-slate-600">{item.message}</p>
+                    <p className="mt-2 text-xs text-slate-400">{formatDateStable(item.created_at, t)}</p>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       <Sheet open={mobileProfileOpen} onOpenChange={setMobileProfileOpen}>
         <SheetContent side="bottom" className="rounded-t-[28px] border-slate-200 bg-white px-4 pb-6 pt-3 sm:hidden">

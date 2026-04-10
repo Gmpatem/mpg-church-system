@@ -52,50 +52,85 @@ async function HouseholdsTable({ churchSlug }: { churchSlug: string }) {
   }
 
   return (
-    <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
-      <div className="overflow-x-auto">
-        <table className="min-w-full divide-y divide-slate-200">
-          <thead className="bg-slate-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.households.table.household}</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.households.table.head}</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.households.table.members}</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.households.table.location}</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.households.table.phone}</th>
-              <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.households.table.actions}</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-200 bg-white">
-            {households.map((household) => (
-              <tr key={household.id}>
-                <td className="px-6 py-4">
-                  <div>
-                    <p className="text-sm font-medium text-slate-900">{household.household_name}</p>
-                    <p className="text-xs text-slate-500">{household.email ?? t.common.noEmail}</p>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-600">
-                  {household.head_of_household_name ?? "—"}
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-600">
-                  {household.member_count}
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-600">
-                  {[household.city, household.country].filter(Boolean).join(", ") || "—"}
-                </td>
-                <td className="px-6 py-4 text-sm text-slate-600">{household.phone ?? "—"}</td>
-                <td className="px-6 py-4 text-sm">
-                  <Link
-                    href={`/c/${churchSlug}/households/${household.id}`}
-                    className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 hover:bg-slate-50"
-                  >
-                    {t.pages.households.viewHousehold}
-                  </Link>
-                </td>
+    <div className="space-y-3">
+      <div className="space-y-3 md:hidden">
+        {households.map((household) => (
+          <div key={household.id} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-semibold text-slate-900">{household.household_name}</p>
+                <p className="mt-1 text-xs text-slate-500">
+                  {household.head_of_household_name ?? "No household head"}
+                </p>
+              </div>
+              <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700">
+                {household.member_count} members
+              </span>
+            </div>
+
+            <div className="mt-3 space-y-1 text-xs text-slate-600">
+              <p>{[household.city, household.country].filter(Boolean).join(", ") || "Location not set"}</p>
+              <p>{household.phone ?? "No phone"}</p>
+              <p>{household.email ?? t.common.noEmail}</p>
+            </div>
+
+            <div className="mt-3">
+              <Link
+                href={`/c/${churchSlug}/households/${household.id}`}
+                className="mobile-touch-feedback inline-flex w-full items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50"
+              >
+                {t.pages.households.viewHousehold}
+              </Link>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="hidden overflow-hidden rounded-xl border border-slate-200 bg-white md:block">
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.households.table.household}</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.households.table.head}</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.households.table.members}</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.households.table.location}</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.households.table.phone}</th>
+                <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.households.table.actions}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-slate-200 bg-white">
+              {households.map((household) => (
+                <tr key={household.id}>
+                  <td className="px-6 py-4">
+                    <div>
+                      <p className="text-sm font-medium text-slate-900">{household.household_name}</p>
+                      <p className="text-xs text-slate-500">{household.email ?? t.common.noEmail}</p>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-600">
+                    {household.head_of_household_name ?? "—"}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-600">
+                    {household.member_count}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-600">
+                    {[household.city, household.country].filter(Boolean).join(", ") || "—"}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-slate-600">{household.phone ?? "—"}</td>
+                  <td className="px-6 py-4 text-sm">
+                    <Link
+                      href={`/c/${churchSlug}/households/${household.id}`}
+                      className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 hover:bg-slate-50"
+                    >
+                      {t.pages.households.viewHousehold}
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -118,17 +153,12 @@ export default async function HouseholdsPage({ params }: HouseholdsPageProps) {
   return (
     <div className="space-y-6">
       <WorkspaceHero
+        size="compact"
+        eyebrow="Households"
         title={t.pages.households.title}
         description={t.pages.households.description}
       />
-      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">{t.pages.households.title}</h2>
-          <p className="mt-1 text-sm text-slate-600">
-            {t.pages.households.subtitle}
-          </p>
-        </div>
-
+      <div className="flex items-center justify-end">
         {canManage ? (
           <Link
             href={`/c/${churchSlug}/households/new`}

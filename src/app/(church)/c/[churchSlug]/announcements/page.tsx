@@ -69,6 +69,8 @@ export default async function AnnouncementsPage({ params }: AnnouncementsPagePro
   return (
     <div className="space-y-6">
       <WorkspaceHero
+        size="compact"
+        eyebrow="Announcements"
         title="Announcements"
         description="Publish church-wide notices and keep members informed."
       />
@@ -171,13 +173,13 @@ export default async function AnnouncementsPage({ params }: AnnouncementsPagePro
         </WorkspaceSectionCard>
       ) : null}
 
-      <WorkspaceSectionCard title="Announcements">
+      <WorkspaceSectionCard title="Announcements" description="Recent church and department notices.">
         {announcements.length === 0 ? (
           <p className="text-sm text-slate-500">No announcements found yet.</p>
         ) : (
-          <div className="divide-y divide-slate-200">
+          <div className="space-y-3">
             {announcements.map((announcement) => (
-              <div key={announcement.id} className="py-5 first:pt-0 last:pb-0">
+              <div key={announcement.id} className="rounded-2xl border border-slate-200 p-4">
                 <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-2">
@@ -197,7 +199,7 @@ export default async function AnnouncementsPage({ params }: AnnouncementsPagePro
 
                     <p className="mt-2 whitespace-pre-wrap text-sm text-slate-700">{announcement.body}</p>
 
-                    <div className="mt-3 flex flex-wrap items-center gap-4 text-xs text-slate-500">
+                    <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-slate-500">
                       <span>Created by: {announcement.created_by_name ?? "Unknown"}</span>
                       <span>Created: {announcement.created_at ?? "—"}</span>
                       <span>Published: {announcement.published_at ?? "—"}</span>

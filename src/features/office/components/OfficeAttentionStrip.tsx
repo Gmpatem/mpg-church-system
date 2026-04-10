@@ -19,30 +19,6 @@ interface OfficeAttentionStripProps {
   };
 }
 
-function AttentionPill({
-  label,
-  value,
-  href,
-}: {
-  label: string;
-  value: number;
-  href: string;
-}) {
-  if (value === 0) return null;
-  
-  return (
-    <Link
-      href={href}
-      className="flex items-center gap-1.5 rounded-full border border-amber-200 bg-white px-3 py-1.5 text-xs font-medium text-amber-900 shadow-sm transition hover:bg-amber-50"
-    >
-      <span>{label}</span>
-      <span className="flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white">
-        {value}
-      </span>
-    </Link>
-  );
-}
-
 export function OfficeAttentionStrip({
   churchSlug,
   data,
@@ -58,87 +34,42 @@ export function OfficeAttentionStrip({
     return null;
   }
 
-  const attentionItems = [
-    { 
-      label: "Access Requests", 
-      value: data.stats.pendingAccessRequests, 
-      href: `/c/${churchSlug}/approvals` 
-    },
-    { 
-      label: "Leadership", 
-      value: data.stats.pendingLeadershipRequests, 
-      href: `/c/${churchSlug}/approvals` 
-    },
-    { 
-      label: "Announcements", 
-      value: data.stats.announcementsNeedingPublish, 
-      href: `/c/${churchSlug}/announcements` 
-    },
-    { 
-      label: "Event Reviews", 
-      value: data.stats.departmentEventsAwaitingApproval, 
-      href: `/c/${churchSlug}/approvals` 
-    },
-    { 
-      label: "Today", 
-      value: data.stats.todaysEvents, 
-      href: `/c/${churchSlug}/events` 
-    },
-  ].filter(item => item.value > 0);
+  const parts: string[] = [];
+  if (data.stats.pendingAccessRequests > 0) {
+    parts.push(`${data.stats.pendingAccessRequests} pending access request${data.stats.pendingAccessRequests === 1 ? "" : "s"}`);
+  }
+  if (data.stats.pendingLeadershipRequests > 0) {
+    parts.push(`${data.stats.pendingLeadershipRequests} leadership request${data.stats.pendingLeadershipRequests === 1 ? "" : "s"}`);
+  }
+  if (data.stats.announcementsNeedingPublish > 0) {
+    parts.push(`${data.stats.announcementsNeedingPublish} announcement${data.stats.announcementsNeedingPublish === 1 ? "" : "s"} to review`);
+  }
+  if (data.stats.departmentEventsAwaitingApproval > 0) {
+    parts.push(`${data.stats.departmentEventsAwaitingApproval} event approval${data.stats.departmentEventsAwaitingApproval === 1 ? "" : "s"}`);
+  }
+  if (data.stats.todaysEvents > 0) {
+    parts.push(`${data.stats.todaysEvents} event${data.stats.todaysEvents === 1 ? "" : "s"} today`);
+  }
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-5 shadow-sm">
-      {/* Decorative elements */}
-      <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-amber-200/30" />
-      <div className="absolute -bottom-4 -right-4 h-16 w-16 rounded-full bg-orange-200/30" />
-      
-      <div className="relative flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-        <div className="flex items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100">
-            <AlertCircle className="h-5 w-5 text-amber-600" />
-          </div>
-          <div>
-            <h3 className="text-sm font-semibold text-amber-950">Attention Required</h3>
-            <p className="text-xs text-amber-800">
-              {totalAttention} item{totalAttention !== 1 ? 's' : ''} need{totalAttention === 1 ? 's' : ''} your review
-            </p>
-          </div>
+    <div className="mobile-fade-up rounded-2xl border border-amber-200 bg-amber-50 p-3.5">
+      <div className="flex items-start gap-2.5">
+        <span className="mt-0.5 inline-flex h-6 w-6 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+          <AlertCircle className="h-4 w-4" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-medium text-amber-900">
+            {parts.join(" · ")}
+          </p>
         </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          {attentionItems.map((item) => (
-            <AttentionPill
-              key={item.label}
-              label={item.label}
-              value={item.value}
-              href={item.href}
-            />
-          ))}
-          
-          <Link
-            href={`/c/${churchSlug}/office`}
-            className="ml-2 flex items-center gap-1 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
-          >
-            Open Office
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        </div>
+        <Link
+          href={`/c/${churchSlug}/approvals`}
+          className="mobile-touch-feedback inline-flex shrink-0 items-center gap-1 rounded-full bg-white px-2.5 py-1 text-xs font-medium text-amber-800"
+        >
+          Open
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
       </div>
-
-      {data.queue.length > 0 ? (
-        <div className="relative mt-4 space-y-2 border-t border-amber-200/50 pt-4">
-          {data.queue.map((item) => (
-            <Link
-              key={item.id}
-              href={item.href}
-              className="flex items-center justify-between rounded-xl border border-amber-200 bg-white px-4 py-3 text-sm text-slate-700 transition hover:bg-amber-50"
-            >
-              <span>{item.title}</span>
-              <ArrowRight className="h-4 w-4 text-slate-400" />
-            </Link>
-          ))}
-        </div>
-      ) : null}
     </div>
   );
 }

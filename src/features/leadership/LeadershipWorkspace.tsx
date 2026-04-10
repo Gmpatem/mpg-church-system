@@ -30,7 +30,7 @@ function buildTabHref(churchSlug: string, tab: LeadershipTabKey) {
 
 function renderTabNav(churchSlug: string, activeTab: LeadershipTabKey) {
   return (
-    <div className="flex flex-wrap gap-2 rounded-3xl border bg-card p-2">
+    <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
       {TAB_ITEMS.map((tab) => {
         const isActive = activeTab === tab.key;
 
@@ -40,8 +40,8 @@ function renderTabNav(churchSlug: string, activeTab: LeadershipTabKey) {
             href={buildTabHref(churchSlug, tab.key)}
             className={
               isActive
-                ? "inline-flex items-center rounded-2xl bg-foreground px-4 py-2.5 text-sm font-medium text-background transition"
-                : "inline-flex items-center rounded-2xl px-4 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                ? "mobile-touch-feedback shrink-0 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition"
+                : "mobile-touch-feedback shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             }
           >
             {tab.label}
@@ -59,8 +59,9 @@ export function LeadershipWorkspace({
   tabData,
 }: LeadershipWorkspaceProps) {
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+    <div className="space-y-5 md:space-y-6">
       <WorkspaceHero
+        size="compact"
         eyebrow="Leadership"
         title={`Leadership for ${churchName ?? "this church"}`}
         description="Review department leadership requests, approve leaders, and manage the active leadership structure across church departments."

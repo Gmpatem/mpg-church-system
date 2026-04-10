@@ -1,6 +1,5 @@
 import { getOfficeWorkspaceData } from "@/features/office/queries";
 import { OfficeWorkspace } from "@/features/office/components/OfficeWorkspace";
-import { WorkspaceHero } from "@/components/workspace";
 import { en } from "@/features/i18n/en";
 import { fr } from "@/features/i18n/fr";
 import { cookies } from "next/headers";
@@ -22,10 +21,6 @@ export default async function OfficePage({ params }: OfficePageProps) {
 
   return (
     <div className="space-y-6">
-      <WorkspaceHero
-        title={t.pages.office.title}
-        description={t.pages.office.description}
-      />
       <OfficeWorkspace
         churchSlug={churchSlug}
         data={data}

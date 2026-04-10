@@ -65,9 +65,9 @@ export function SettingsTabs({ church }: { church: ChurchData }) {
   ];
 
   return (
-    <div className="flex items-start gap-6">
-      <div className="w-48 shrink-0">
-        <nav className="flex flex-col gap-1">
+    <div className="space-y-4 md:flex md:items-start md:gap-6 md:space-y-0">
+      <div className="md:w-52 md:shrink-0">
+        <nav className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1 md:mx-0 md:flex-col md:overflow-visible md:px-0 md:pb-0">
           {TABS.map((tab) => (
             <button
               key={tab.key}
@@ -75,8 +75,8 @@ export function SettingsTabs({ church }: { church: ChurchData }) {
               onClick={() => setActiveTab(tab.key)}
               className={
                 activeTab === tab.key
-                  ? "flex w-full items-center rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-900"
-                  : "flex w-full items-center rounded-xl px-3 py-2 text-sm font-medium text-slate-500 transition hover:bg-slate-50 hover:text-slate-700"
+                  ? "mobile-touch-feedback shrink-0 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 md:w-full md:rounded-xl md:border-slate-200 md:bg-slate-100 md:px-3 md:text-slate-900"
+                  : "mobile-touch-feedback shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 md:w-full md:rounded-xl md:border-transparent md:bg-transparent md:px-3 md:text-slate-500 md:hover:bg-slate-50 md:hover:text-slate-700"
               }
             >
               {tab.label}
@@ -87,7 +87,7 @@ export function SettingsTabs({ church }: { church: ChurchData }) {
 
       <div className="min-w-0 flex-1">
         {activeTab === "church" ? (
-          <Card>
+          <Card className="rounded-2xl border-slate-200 shadow-sm">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Church className="h-5 w-5 text-primary" />
@@ -172,7 +172,7 @@ export function SettingsTabs({ church }: { church: ChurchData }) {
         ) : null}
 
         {activeTab === "profile" ? (
-          <Card>
+          <Card className="rounded-2xl border-slate-200 shadow-sm">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <User className="h-5 w-5 text-primary" />
@@ -200,7 +200,7 @@ export function SettingsTabs({ church }: { church: ChurchData }) {
         ) : null}
 
         {activeTab === "security" ? (
-          <Card>
+          <Card className="rounded-2xl border-slate-200 shadow-sm">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <Shield className="h-5 w-5 text-primary" />

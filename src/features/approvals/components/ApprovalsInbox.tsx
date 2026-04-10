@@ -99,18 +99,31 @@ function buildFilterHref(
   return query ? `/c/${churchSlug}/approvals?${query}` : `/c/${churchSlug}/approvals`;
 }
 
+function filterChipClass(active: boolean) {
+  return active
+    ? "mobile-touch-feedback rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700"
+    : "mobile-touch-feedback rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50";
+}
+
 export function ApprovalsInbox({ churchSlug, data }: ApprovalsInboxProps) {
+  const allActive = !data.filters.module && !data.filters.status && !data.filters.stage;
+  const pendingActive = data.filters.status === "pending";
+  const eventsActive = data.filters.module === "events";
+  const announcementsActive = data.filters.module === "announcements";
+  const accessActive = data.filters.module === "access";
+  const leadershipActive = data.filters.module === "leadership";
+
   return (
     <div className="space-y-6">
-      <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-950 p-6 text-white shadow-sm">
+      <div className="overflow-hidden rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-950 p-5 text-white shadow-sm">
         <div className="max-w-3xl">
           <span className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-blue-100">
             Approvals Inbox
           </span>
-          <h1 className="mt-4 text-3xl font-bold tracking-tight md:text-4xl">
+          <h1 className="mt-3 text-2xl font-bold tracking-tight md:text-3xl">
             Unified Governance Queue
           </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-blue-100">
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-blue-100">
             Review pending and completed approval requests across events, announcements, access, leadership, and future approval lanes.
           </p>
         </div>
@@ -125,45 +138,43 @@ export function ApprovalsInbox({ churchSlug, data }: ApprovalsInboxProps) {
         <SummaryCard label="Cancelled" value={data.summary.cancelled ?? 0} />
       </div>
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex flex-wrap gap-2">
+      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
           <Link
             href={buildFilterHref(churchSlug, data.filters, { module: "", status: "", stage: "" })}
-            className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className={filterChipClass(allActive)}
           >
             All
           </Link>
           <Link
             href={buildFilterHref(churchSlug, data.filters, { status: "pending" })}
-            className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className={filterChipClass(pendingActive)}
           >
             Pending Only
           </Link>
           <Link
             href={buildFilterHref(churchSlug, data.filters, { module: "events" })}
-            className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className={filterChipClass(eventsActive)}
           >
             Events
           </Link>
           <Link
             href={buildFilterHref(churchSlug, data.filters, { module: "announcements" })}
-            className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className={filterChipClass(announcementsActive)}
           >
             Announcements
           </Link>
           <Link
             href={buildFilterHref(churchSlug, data.filters, { module: "access" })}
-            className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className={filterChipClass(accessActive)}
           >
             Access
           </Link>
           <Link
             href={buildFilterHref(churchSlug, data.filters, { module: "leadership" })}
-            className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            className={filterChipClass(leadershipActive)}
           >
             Leadership
           </Link>
-        </div>
       </div>
 
       {data.items.length === 0 ? (

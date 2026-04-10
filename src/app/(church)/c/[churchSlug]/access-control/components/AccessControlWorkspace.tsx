@@ -34,7 +34,7 @@ function buildTabHref(churchSlug: string, tab: AccessControlTabKey) {
 
 function renderTabNav(churchSlug: string, activeTab: AccessControlTabKey) {
   return (
-    <div className="flex flex-wrap gap-2 rounded-3xl border bg-card p-2">
+    <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
       {TAB_ITEMS.map((tab) => {
         const isActive = activeTab === tab.key;
 
@@ -44,8 +44,8 @@ function renderTabNav(churchSlug: string, activeTab: AccessControlTabKey) {
             href={buildTabHref(churchSlug, tab.key)}
             className={
               isActive
-                ? "inline-flex items-center rounded-2xl bg-foreground px-4 py-2.5 text-sm font-medium text-background transition"
-                : "inline-flex items-center rounded-2xl px-4 py-2.5 text-sm font-medium text-muted-foreground transition hover:bg-accent hover:text-foreground"
+                ? "mobile-touch-feedback shrink-0 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition"
+                : "mobile-touch-feedback shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             }
           >
             {tab.label}
@@ -64,17 +64,17 @@ function renderPlaceholderTab(
     overview: {
       title: "Overview",
       body:
-        "This overview will summarize elevated users, active role holders, and permission coverage across the church system.",
+        "High-level access posture, role holders, and permission coverage for this church workspace.",
     },
     roles: {
-      title: "Roles tab is next",
+      title: "Roles",
       body:
-        "This tab will manage church positions like Pastor, Church Admin, Tech Team, Clerk, and Church Secretary.",
+        "Review active role assignments such as Pastor, Church Admin, Tech Team, Clerk, and Church Secretary.",
     },
     page_access: {
-      title: "Page Access tab is next",
+      title: "Page Access",
       body:
-        "This tab will let authorized leaders tick checkboxes for which pages or modules each person can access.",
+        "Review and manage module-level page permissions for authorized users.",
     },
     invites: {
       title: "Invites",
@@ -87,9 +87,9 @@ function renderPlaceholderTab(
         "This tab reviews church-wide access requests submitted during onboarding or later profile completion.",
     },
     activity_log: {
-      title: "Activity Log tab is next",
+      title: "Activity Log",
       body:
-        "This tab will display recent role changes, permission updates, and access-control history.",
+        "Track recent role updates, invite activity, and permission changes.",
     },
   };
 
@@ -109,7 +109,7 @@ function renderPlaceholderTab(
           <Link
             key={tab.key}
             href={buildTabHref(churchSlug, tab.key)}
-            className="inline-flex items-center rounded-full border px-3 py-1.5 text-sm font-medium transition hover:bg-accent"
+            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
           >
             Open {tab.label}
           </Link>
@@ -257,8 +257,9 @@ export function AccessControlWorkspace({
   tabData,
 }: AccessControlWorkspaceProps) {
   return (
-    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-6 sm:px-6 lg:px-8">
+    <div className="space-y-5 md:space-y-6">
       <WorkspaceHero
+        size="compact"
         eyebrow="Access Control"
         title={`Manage access for ${overview.churchName ?? "this church"}`}
         description="Control elevated roles, checkbox-based page permissions, secure onboarding invites, and pending access approvals inside one workspace."

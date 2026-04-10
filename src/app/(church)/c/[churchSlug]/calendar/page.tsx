@@ -23,6 +23,8 @@ export default async function ChurchCalendarPage({ params }: ChurchCalendarPageP
   return (
     <div className="space-y-6">
       <WorkspaceHero
+        size="compact"
+        eyebrow="Calendar"
         title="Calendar"
         description="Upcoming approved events for the whole church."
       />

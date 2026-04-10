@@ -48,9 +48,9 @@ const quickActions = [
 
 export function DashboardQuickActions({ churchSlug }: DashboardQuickActionsProps) {
   return (
-    <div className="mobile-fade-up rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-      <div className="mb-3 flex items-center justify-between">
-        <h2 className="text-base font-semibold tracking-tight text-slate-950 sm:text-lg">
+    <section className="mobile-fade-up">
+      <div className="mb-2 flex items-center justify-between">
+        <h2 className="text-base font-semibold tracking-tight text-slate-950">
           Quick Links
         </h2>
       </div>
@@ -62,7 +62,7 @@ export function DashboardQuickActions({ churchSlug }: DashboardQuickActionsProps
             <Link
               key={action.label}
               href={action.href(churchSlug)}
-              className={`mobile-touch-feedback flex flex-col items-center gap-1.5 rounded-2xl border border-slate-200 p-3 text-center transition hover:border-slate-300 ${action.color}`}
+              className={`mobile-touch-feedback flex flex-col items-center gap-1.5 rounded-2xl border border-slate-200 bg-white p-3 text-center transition hover:border-slate-300 ${action.color}`}
             >
               <Icon className="h-5 w-5" />
               <span className="text-[11px] font-semibold leading-tight">{action.label}</span>
@@ -70,6 +70,6 @@ export function DashboardQuickActions({ churchSlug }: DashboardQuickActionsProps
           );
         })}
       </div>
-    </div>
+    </section>
   );
 }

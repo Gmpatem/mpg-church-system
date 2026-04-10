@@ -33,6 +33,8 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
   return (
     <div className="space-y-6">
       <WorkspaceHero
+        size="compact"
+        eyebrow="Settings"
         title={t.pages.settings.title}
         description={t.pages.settings.description}
       />

@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils/cn";
 import { ChurchHeader } from "@/components/navigation/ChurchHeader";
 import { ChurchSidebar } from "@/components/navigation/ChurchSidebar";
 import { ChurchMobileBottomNav } from "@/components/navigation/ChurchMobileBottomNav";
+import { ChurchMobileFab } from "@/components/navigation/ChurchMobileFab";
 
 interface ChurchNotificationItem {
   id: string;
@@ -102,6 +103,7 @@ export function ChurchShell({
           church={church}
           user={user}
           roleLabel={roleLabel}
+          showAccessControl={showAccessControl}
           notifications={notifications}
         />
 
@@ -121,6 +123,7 @@ export function ChurchShell({
         showAccessControl={showAccessControl}
         pendingApprovalCount={pendingApprovalCount}
       />
+      <ChurchMobileFab churchSlug={church.slug} />
     </div>
   );
 }
