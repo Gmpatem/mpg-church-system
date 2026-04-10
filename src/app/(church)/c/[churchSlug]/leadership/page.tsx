@@ -1,7 +1,6 @@
 import { LeadershipWorkspace } from "@/features/leadership/LeadershipWorkspace";
 import { getLeadershipTabData, getLeadershipOverview } from "@/features/leadership/queries";
 import type { LeadershipTabKey } from "@/features/leadership/types";
-import { WorkspaceHero } from "@/components/workspace";
 import { en } from "@/features/i18n/en";
 import { fr } from "@/features/i18n/fr";
 import { cookies } from "next/headers";
@@ -47,10 +46,6 @@ export default async function LeadershipPage(props: PageProps) {
 
   return (
     <div className="space-y-6">
-      <WorkspaceHero
-        title={t.pages.leadership.title}
-        description={t.pages.leadership.description}
-      />
       <LeadershipWorkspace
         churchSlug={overview.churchSlug}
         churchName={overview.churchName}

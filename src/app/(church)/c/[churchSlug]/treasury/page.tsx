@@ -1,6 +1,5 @@
 import { getTreasuryWorkspaceBootstrap, getMembersAlreadyTithedThisWeek } from "@/features/treasury/queries";
 import { TreasuryWorkspace } from "./components/TreasuryWorkspace";
-import { WorkspaceHero } from "@/components/workspace";
 import { en } from "@/features/i18n/en";
 import { fr } from "@/features/i18n/fr";
 import { cookies } from "next/headers";
@@ -26,10 +25,6 @@ export default async function TreasuryPage({ params }: TreasuryPageProps) {
 
   return (
     <div className="space-y-6">
-      <WorkspaceHero
-        title={t.pages.treasury.title}
-        description={t.pages.treasury.description}
-      />
       <TreasuryWorkspace
         churchSlug={churchSlug}
         dashboard={data.dashboard}

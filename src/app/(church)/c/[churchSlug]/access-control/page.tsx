@@ -4,7 +4,6 @@ import {
 } from "@/features/access-control/queries";
 import { AccessControlWorkspace } from "./components/AccessControlWorkspace";
 import type { AccessControlTabKey } from "@/features/access-control/types";
-import { WorkspaceHero } from "@/components/workspace";
 
 type PageProps = {
   params: Promise<{
@@ -43,10 +42,6 @@ export default async function AccessControlPage(props: PageProps) {
 
   return (
     <div className="space-y-6">
-      <WorkspaceHero
-        title="Invites & Access"
-        description="Manage member portal invites and review pending access requests."
-      />
       <AccessControlWorkspace
         overview={overview}
         activeTab={activeTab}

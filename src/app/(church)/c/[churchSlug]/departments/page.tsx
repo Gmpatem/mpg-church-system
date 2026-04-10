@@ -1,6 +1,5 @@
 import { getDepartmentsWorkspaceData } from "@/features/departments/queries";
 import { DepartmentsWorkspaceUnified } from "./components/DepartmentsWorkspaceUnified";
-import { WorkspaceHero } from "@/components/workspace";
 import { en } from "@/features/i18n/en";
 import { fr } from "@/features/i18n/fr";
 import { cookies } from "next/headers";
@@ -35,10 +34,6 @@ export default async function DepartmentsPage({
 
   return (
     <div className="space-y-6">
-      <WorkspaceHero
-        title={t.pages.departments.title}
-        description={t.pages.departments.description}
-      />
       <DepartmentsWorkspaceUnified churchSlug={churchSlug} data={data} />
     </div>
   );

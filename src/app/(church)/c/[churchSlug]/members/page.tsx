@@ -1,6 +1,5 @@
 import { getMembersWorkspaceData } from "@/features/members/queries";
 import { MembersWorkspaceUnified } from "./components/MembersWorkspaceUnified";
-import { WorkspaceHero } from "@/components/workspace";
 import { en } from "@/features/i18n/en";
 import { fr } from "@/features/i18n/fr";
 import { cookies } from "next/headers";
@@ -34,10 +33,6 @@ export default async function MembersPage({ params, searchParams }: MembersPageP
 
   return (
     <div className="space-y-6">
-      <WorkspaceHero
-        title={t.pages.members.title}
-        description={t.pages.members.description}
-      />
       <MembersWorkspaceUnified churchSlug={churchSlug} data={data} />
     </div>
   );
