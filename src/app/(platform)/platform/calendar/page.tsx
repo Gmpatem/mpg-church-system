@@ -32,9 +32,9 @@ export default async function PlatformCalendarPage() {
   return (
     <div className="space-y-5">
       <PlatformMobileHero
-        eyebrow="Calendar Workspace"
-        title="Upcoming Schedule"
-        description="See upcoming church events in one timeline and jump straight to the event workspace."
+        eyebrow="Calendar Signals"
+        title="Network Activity Timeline"
+        description="View upcoming events across churches as a planning and intervention timeline."
         badge={rows.length + " upcoming"}
         actions={[
           { href: "/platform/events", label: "Open Events" },
@@ -46,7 +46,7 @@ export default async function PlatformCalendarPage() {
         <PlatformMobileStatCard label="Upcoming Events" value={rows.length} hint="Loaded calendar rows" />
         <PlatformMobileStatCard label="Today" value={todayCount} hint="Events happening today" />
         <PlatformMobileStatCard label="This Week" value={Math.min(rows.length, 7)} hint="Next seven listed events" />
-        <PlatformMobileStatCard label="Workspaces" value={new Set(rows.map((row: any) => row.church_id)).size} hint="Churches represented" />
+        <PlatformMobileStatCard label="Churches" value={new Set(rows.map((row: any) => row.church_id)).size} hint="Churches represented" />
       </div>
 
       <PlatformMobileSectionCard title="Calendar Timeline">
@@ -63,7 +63,7 @@ export default async function PlatformCalendarPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-slate-900">{row.title}</p>
-                      <p className="truncate text-xs text-slate-500">{church?.name ?? "Church workspace"}</p>
+                      <p className="truncate text-xs text-slate-500">{church?.name ?? "Church record"}</p>
                     </div>
                     <span className="rounded-full border border-blue-200 bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700">
                       {row.status === "cancelled" ? "Cancelled" : "Scheduled"}
@@ -91,7 +91,7 @@ export default async function PlatformCalendarPage() {
         </div>
       </PlatformMobileSectionCard>
 
-      <PlatformMobileSectionCard title="Related Workspaces">
+      <PlatformMobileSectionCard title="Related Oversight Surfaces">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Link
             href="/platform/events"

@@ -96,7 +96,7 @@ export default async function PlatformEventDetailPage({ params }: PageProps) {
       <PlatformMobileHero
         eyebrow="Event Detail"
         title={event.title}
-        description="Review schedule, workflow stage, and source workspace for this event."
+        description="Review schedule, workflow stage, and source church context for this event."
         badge={getEventStatusLabel(event.status)}
         actions={
           church?.slug
@@ -109,7 +109,7 @@ export default async function PlatformEventDetailPage({ params }: PageProps) {
         <PlatformMobileStatCard label="Type" value={getEventTypeLabel(event.event_type)} hint="Event classification" />
         <PlatformMobileStatCard label="Workflow" value={getWorkflowLabel(event.workflow_state)} hint="Approval stage" />
         <PlatformMobileStatCard label="All Day" value={event.is_all_day ? "Yes" : "No"} hint="Duration setting" />
-        <PlatformMobileStatCard label="Church" value={church?.name ?? "Unassigned"} hint="Source workspace" />
+        <PlatformMobileStatCard label="Church" value={church?.name ?? "Unassigned"} hint="Source church" />
       </div>
 
       <PlatformMobileSectionCard title="Schedule">

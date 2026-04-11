@@ -1,7 +1,8 @@
 import "server-only";
 
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requireChurchAccess } from "@/features/access/queries";
+import { requireChurchAccess, requireChurchWorkspaceAccess } from "@/features/access/queries";
 import {
   SAFE_ONBOARDING_ROLE_FALLBACKS,
   normalizeRoleOptions,
@@ -130,7 +131,12 @@ export function resolveInviteStatus(input: {
 export async function canCurrentUserManageMemberInvites(
   churchSlug: string
 ): Promise<boolean> {
-  const ctx = await requireChurchAccess(churchSlug);
+  const ctx = await requireChurchWorkspaceAccess(churchSlug);
+
+  if (ctx.isPlatformAdmin) {
+    return true;
+  }
+
   const supabase = await createClient();
 
   const [roleResult, permissionResult] = await Promise.all([
@@ -177,7 +183,7 @@ export async function getMemberInviteContext(
   churchSlug: string,
   memberId: string
 ) {
-  const ctx = await requireChurchAccess(churchSlug);
+  const ctx = await requireChurchWorkspaceAccess(churchSlug);
   const supabase = await createClient();
 
   const { data: member, error: memberError } = await supabase
@@ -311,7 +317,12 @@ export async function getSecureInviteContextByToken(
 export async function getChurchInviteManagementData(
   churchSlug: string
 ): Promise<MemberInviteManagementData> {
-  const ctx = await requireChurchAccess(churchSlug);
+  const canManage = await canCurrentUserManageMemberInvites(churchSlug);
+  if (!canManage) {
+    redirect(`/c/${churchSlug}/dashboard`);
+  }
+
+  const ctx = await requireChurchWorkspaceAccess(churchSlug);
   const supabase = await createClient();
 
   const [membersResult, invitesResult] = await Promise.all([

@@ -60,7 +60,7 @@ export default async function PlatformMemberDetailPage({ params }: PageProps) {
       <PlatformMobileHero
         eyebrow="Member Detail"
         title={getMemberName(member)}
-        description="Review member contact details, household linkage, and workspace source."
+        description="Review member contact details, household linkage, and source church context."
         badge={getMemberStatusLabel(member.membership_status)}
         actions={
           church?.slug
@@ -97,10 +97,10 @@ export default async function PlatformMemberDetailPage({ params }: PageProps) {
         </div>
       </PlatformMobileSectionCard>
 
-      <PlatformMobileSectionCard title="Church Workspace">
+      <PlatformMobileSectionCard title="Source Church">
         <div className="space-y-2">
           <p className="text-sm font-medium text-slate-900">{church?.name ?? "No church assigned"}</p>
-          <p className="text-xs text-slate-500">Member records remain scoped to a specific church workspace.</p>
+          <p className="text-xs text-slate-500">Member records remain scoped to a specific church context.</p>
           {church?.slug ? (
             <Link
               href={"/c/" + church.slug + "/members"}

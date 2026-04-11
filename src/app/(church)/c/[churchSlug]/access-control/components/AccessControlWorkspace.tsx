@@ -20,12 +20,9 @@ type AccessControlWorkspaceProps = {
 };
 
 const TAB_ITEMS: Array<{ key: AccessControlTabKey; label: string }> = [
-  { key: "overview", label: "Overview" },
-  { key: "roles", label: "Roles" },
-  { key: "page_access", label: "Page Access" },
+  { key: "overview", label: "Permissions" },
   { key: "invites", label: "Invites" },
-  { key: "pending_access", label: "Pending Access" },
-  { key: "activity_log", label: "Activity Log" },
+  { key: "pending_access", label: "Requests" },
 ];
 
 function buildTabHref(churchSlug: string, tab: AccessControlTabKey) {
@@ -53,69 +50,6 @@ function renderTabNav(churchSlug: string, activeTab: AccessControlTabKey) {
         );
       })}
     </div>
-  );
-}
-
-function renderPlaceholderTab(
-  activeTab: AccessControlTabKey,
-  churchSlug: string
-) {
-  const copy: Record<AccessControlTabKey, { title: string; body: string }> = {
-    overview: {
-      title: "Overview",
-      body:
-        "High-level access posture, role holders, and permission coverage for this church workspace.",
-    },
-    roles: {
-      title: "Roles",
-      body:
-        "Review active role assignments such as Pastor, Church Admin, Tech Team, Clerk, and Church Secretary.",
-    },
-    page_access: {
-      title: "Page Access",
-      body:
-        "Review and manage module-level page permissions for authorized users.",
-    },
-    invites: {
-      title: "Invites",
-      body:
-        "This tab will help leaders generate and share church onboarding links with members.",
-    },
-    pending_access: {
-      title: "Pending Access",
-      body:
-        "This tab reviews church-wide access requests submitted during onboarding or later profile completion.",
-    },
-    activity_log: {
-      title: "Activity Log",
-      body:
-        "Track recent role updates, invite activity, and permission changes.",
-    },
-  };
-
-  const item = copy[activeTab];
-
-  return (
-    <WorkspaceSectionCard
-      title={item.title}
-      description={item.body}
-      contentClassName="space-y-4"
-    >
-      <p className="text-sm text-muted-foreground">
-        Current tab: <span className="font-medium text-foreground">{activeTab}</span>
-      </p>
-      <div className="flex flex-wrap gap-2">
-        {TAB_ITEMS.map((tab) => (
-          <Link
-            key={tab.key}
-            href={buildTabHref(churchSlug, tab.key)}
-            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-          >
-            Open {tab.label}
-          </Link>
-        ))}
-      </div>
-    </WorkspaceSectionCard>
   );
 }
 
@@ -262,7 +196,7 @@ export function AccessControlWorkspace({
         size="compact"
         eyebrow="Access Control"
         title={`Manage access for ${overview.churchName ?? "this church"}`}
-        description="Control elevated roles, checkbox-based page permissions, secure onboarding invites, and pending access approvals inside one workspace."
+        description="Control permissions, manage secure invites, and review pending access requests from one workspace."
       />
 
       {renderTabNav(overview.churchSlug, activeTab)}
@@ -277,10 +211,6 @@ export function AccessControlWorkspace({
 
       {activeTab === "pending_access"
         ? renderPendingAccessTab(overview.churchSlug, tabData)
-        : null}
-
-      {activeTab !== "overview" && activeTab !== "invites" && activeTab !== "pending_access"
-        ? renderPlaceholderTab(activeTab, overview.churchSlug)
         : null}
     </div>
   );

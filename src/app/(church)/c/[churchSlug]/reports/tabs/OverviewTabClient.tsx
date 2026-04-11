@@ -1,7 +1,5 @@
 "use client";
 
-import { ReportsExportActions } from "./ReportsExportActions";
-
 import {
   Area,
   AreaChart,
@@ -25,15 +23,15 @@ function insightToneClass(tone?: "default" | "success" | "warning") {
 
 function EmptyChart({ message }: { message: string }) {
   return (
-    <div className="flex h-[280px] items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 text-center text-sm text-slate-500">
+    <div className="flex h-[260px] items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 px-6 text-center text-sm text-slate-500">
       {message}
     </div>
   );
 }
 
-function WorkspaceEmptyBlock({ message }: { message: string }) {
+function EmptyBlock({ message }: { message: string }) {
   return (
-    <div className="flex min-h-[220px] items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 text-center text-sm text-slate-500">
+    <div className="flex min-h-[160px] items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 px-6 text-center text-sm text-slate-500">
       {message}
     </div>
   );
@@ -50,32 +48,90 @@ interface OverviewTabClientProps {
   };
 }
 
-export function OverviewTabClient({ overview }: OverviewTabClientProps) {
-  return (
-    <div className="space-y-6">
-      <ReportsExportActions />
+function formatMetric(value: string | number) {
+  if (typeof value === "number") return value.toLocaleString("en-US");
+  return value;
+}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-4">
-            <h3 className="text-lg font-semibold tracking-tight text-slate-950">Membership Status</h3>
-            <p className="mt-1 text-sm text-slate-500">Current status mix across the visible member records.</p>
+export function OverviewTabClient({ overview }: OverviewTabClientProps) {
+  // Find key stats for KPI strip
+  const findStat = (candidates: string[]) =>
+    overview.stats.find((s) => candidates.some((c) => s.label.toLowerCase().includes(c.toLowerCase())));
+
+  const totalMembers = findStat(["total members", "members"])?.value ?? "—";
+  const activeMembers = findStat(["active"])?.value ?? "—";
+  const totalIn = findStat(["total in", "inflow"])?.value ?? "—";
+  const totalEvents = findStat(["events", "total events"])?.value ?? "—";
+
+  return (
+    <div className="space-y-5">
+      {/* KPI Strip */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="rounded-lg border border-slate-200 bg-white p-3">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Total Members</p>
+          <p className="mt-1 text-xl font-bold text-slate-950">{formatMetric(totalMembers)}</p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-3">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Active Members</p>
+          <p className="mt-1 text-xl font-bold text-slate-950">{formatMetric(activeMembers)}</p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-3">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Total Inflow</p>
+          <p className="mt-1 text-xl font-bold text-slate-950">{formatMetric(totalIn)}</p>
+        </div>
+        <div className="rounded-lg border border-slate-200 bg-white p-3">
+          <p className="text-[11px] uppercase tracking-[0.16em] text-slate-500">Events</p>
+          <p className="mt-1 text-xl font-bold text-slate-950">{formatMetric(totalEvents)}</p>
+        </div>
+      </div>
+
+      {/* Main Chart Area: Treasury Trend + Membership */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* Treasury Trend */}
+        <div className="rounded-lg border border-slate-200 bg-white">
+          <div className="border-b border-slate-100 px-4 py-3">
+            <h3 className="font-semibold text-slate-900">Treasury Trend</h3>
           </div>
-          <div className="p-5">
-            {overview.membershipStatus.length === 0 ? (
-              <EmptyChart message="No membership status data available yet." />
+          <div className="p-4">
+            {overview.treasuryTrend.length === 0 ? (
+              <EmptyChart message="No treasury trend data available." />
             ) : (
-              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px]">
-                <div className="h-[280px]">
+              <div className="h-[260px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={overview.treasuryTrend} margin={{ left: 6, right: 12, top: 8, bottom: 8 }}>
+                    <CartesianGrid vertical={false} strokeDasharray="3 3" stroke="#e2e8f0" />
+                    <XAxis dataKey="label" tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
+                    <YAxis tickLine={false} axisLine={false} tick={{ fontSize: 12 }} />
+                    <Tooltip />
+                    <Area type="monotone" dataKey="inflow" name="Inflow" stroke="#1d4ed8" fill="#93c5fd" fillOpacity={0.6} />
+                    <Area type="monotone" dataKey="outflow" name="Outflow" stroke="#ea580c" fill="#fdba74" fillOpacity={0.6} />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Membership Status */}
+        <div className="rounded-lg border border-slate-200 bg-white">
+          <div className="border-b border-slate-100 px-4 py-3">
+            <h3 className="font-semibold text-slate-900">Membership Status</h3>
+          </div>
+          <div className="p-4">
+            {overview.membershipStatus.length === 0 ? (
+              <EmptyChart message="No membership status data available." />
+            ) : (
+              <div className="grid gap-4 sm:grid-cols-[1fr_auto]">
+                <div className="h-[200px]">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
                         data={overview.membershipStatus}
                         dataKey="value"
                         nameKey="name"
-                        innerRadius={68}
-                        outerRadius={100}
-                        paddingAngle={3}
+                        innerRadius={60}
+                        outerRadius={90}
+                        paddingAngle={2}
                       >
                         {overview.membershipStatus.map((entry, index) => (
                           <Cell key={`${entry.name}-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
@@ -85,147 +141,93 @@ export function OverviewTabClient({ overview }: OverviewTabClientProps) {
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
-
-                <div className="space-y-3">
+                <div className="space-y-2">
                   {overview.membershipStatus.map((item, index) => (
-                    <div key={item.name} className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2.5">
-                      <div className="flex items-center gap-2 text-sm text-slate-700">
-                        <span
-                          className="h-2.5 w-2.5 rounded-full"
-                          style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
-                        />
-                        <span className="capitalize">{item.name}</span>
-                      </div>
-                      <span className="text-sm font-semibold text-slate-950">{item.value.toLocaleString("en-US")}</span>
+                    <div key={item.name} className="flex items-center gap-2 text-sm">
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
+                      />
+                      <span className="capitalize text-slate-600">{item.name}</span>
+                      <span className="ml-auto font-medium text-slate-900">{item.value.toLocaleString("en-US")}</span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
           </div>
-        </section>
-
-        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-4">
-            <h3 className="text-lg font-semibold tracking-tight text-slate-950">Treasury Trend</h3>
-            <p className="mt-1 text-sm text-slate-500">High-level treasury movement over time.</p>
-          </div>
-          <div className="p-5">
-            {overview.treasuryTrend.length === 0 ? (
-              <EmptyChart message="No treasury trend data available yet." />
-            ) : (
-              <div className="h-[320px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={overview.treasuryTrend} margin={{ left: 6, right: 12, top: 8, bottom: 8 }}>
-                    <CartesianGrid vertical={false} strokeDasharray="3 3" />
-                    <XAxis dataKey="label" tickLine={false} axisLine={false} />
-                    <YAxis tickLine={false} axisLine={false} />
-                    <Tooltip />
-                    <Area type="monotone" dataKey="inflow" name="Inflow" stroke="#1d4ed8" fill="#93c5fd" />
-                    <Area type="monotone" dataKey="outflow" name="Outflow" stroke="#ea580c" fill="#fdba74" />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </div>
-        </section>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-4">
-            <h3 className="text-lg font-semibold tracking-tight text-slate-950">Event Status</h3>
-            <p className="mt-1 text-sm text-slate-500">Operational event state inside the reporting window.</p>
+      {/* Supporting Tables: Departments + Event Status */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* Top Departments */}
+        <div className="rounded-lg border border-slate-200 bg-white">
+          <div className="border-b border-slate-100 px-4 py-3">
+            <h3 className="font-semibold text-slate-900">Top Departments</h3>
           </div>
-          <div className="p-5">
-            {overview.eventStatus.length === 0 ? (
-              <EmptyChart message="No event status data available yet." />
-            ) : (
-              <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_220px]">
-                <div className="h-[280px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <PieChart>
-                      <Pie
-                        data={overview.eventStatus}
-                        dataKey="value"
-                        nameKey="name"
-                        innerRadius={68}
-                        outerRadius={100}
-                        paddingAngle={3}
-                      >
-                        {overview.eventStatus.map((entry, index) => (
-                          <Cell key={`${entry.name}-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
-                        ))}
-                      </Pie>
-                      <Tooltip formatter={(value: number) => value.toLocaleString("en-US")} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-
-                <div className="space-y-3">
-                  {overview.eventStatus.map((item, index) => (
-                    <div key={item.name} className="flex items-center justify-between rounded-xl border border-slate-200 px-3 py-2.5">
-                      <div className="flex items-center gap-2 text-sm text-slate-700">
-                        <span
-                          className="h-2.5 w-2.5 rounded-full"
-                          style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
-                        />
-                        <span className="capitalize">{item.name}</span>
-                      </div>
-                      <span className="text-sm font-semibold text-slate-950">{item.value.toLocaleString("en-US")}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </section>
-
-        <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="border-b border-slate-200 px-5 py-4">
-            <h3 className="text-lg font-semibold tracking-tight text-slate-950">Top Departments</h3>
-            <p className="mt-1 text-sm text-slate-500">Highest visible ministry footprint right now.</p>
-          </div>
-          <div className="p-5">
+          <div className="p-4">
             {overview.topDepartments.length === 0 ? (
-              <WorkspaceEmptyBlock message="No department footprint data available yet." />
+              <EmptyBlock message="No department data available." />
             ) : (
-              <div className="space-y-3">
-                {overview.topDepartments.map((item, index) => (
-                  <div key={`${item.label}-${index}`} className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3">
-                    <div>
-                      <p className="text-sm font-semibold text-slate-950">{item.label}</p>
-                    </div>
-                    <span className="text-sm font-medium text-slate-700">{String(item.value ?? "—")}</span>
+              <div className="divide-y divide-slate-100">
+                {overview.topDepartments.slice(0, 6).map((item, index) => (
+                  <div key={`${item.label}-${index}`} className="flex items-center justify-between py-2.5">
+                    <span className="text-sm text-slate-700">{item.label}</span>
+                    <span className="text-sm font-medium text-slate-900">{String(item.value ?? "—")}</span>
                   </div>
                 ))}
               </div>
             )}
           </div>
-        </section>
+        </div>
+
+        {/* Event Status */}
+        <div className="rounded-lg border border-slate-200 bg-white">
+          <div className="border-b border-slate-100 px-4 py-3">
+            <h3 className="font-semibold text-slate-900">Event Status</h3>
+          </div>
+          <div className="p-4">
+            {overview.eventStatus.length === 0 ? (
+              <EmptyBlock message="No event status data available." />
+            ) : (
+              <div className="space-y-2">
+                {overview.eventStatus.map((item, index) => (
+                  <div key={item.name} className="flex items-center justify-between rounded-md bg-slate-50 px-3 py-2">
+                    <div className="flex items-center gap-2">
+                      <span
+                        className="h-2 w-2 rounded-full"
+                        style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
+                      />
+                      <span className="text-sm capitalize text-slate-700">{item.name}</span>
+                    </div>
+                    <span className="text-sm font-medium text-slate-900">{item.value.toLocaleString("en-US")}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
-      <section className="rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-5 py-4">
-          <h3 className="text-lg font-semibold tracking-tight text-slate-950">Leadership Highlights</h3>
-          <p className="mt-1 text-sm text-slate-500">Auto-generated summary cards for the current reporting window.</p>
-        </div>
-        <div className="p-5">
-          {overview.highlights.length === 0 ? (
-            <WorkspaceEmptyBlock message="No highlight cards available yet." />
-          ) : (
-            <div className="space-y-3">
+      {/* Insights Section */}
+      {overview.highlights.length > 0 && (
+        <div className="rounded-lg border border-slate-200 bg-white">
+          <div className="border-b border-slate-100 px-4 py-3">
+            <h3 className="font-semibold text-slate-900">Leadership Highlights</h3>
+          </div>
+          <div className="p-4">
+            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {overview.highlights.map((item) => (
-                <div key={item.title} className={`rounded-2xl border p-4 ${insightToneClass(item.tone)}`}>
+                <div key={item.title} className={`rounded-lg border p-3 ${insightToneClass(item.tone)}`}>
                   <p className="text-sm font-semibold">{item.title}</p>
-                  <p className="mt-1.5 text-sm leading-6 opacity-90">{item.description}</p>
+                  <p className="mt-1 text-sm leading-relaxed opacity-90">{item.description}</p>
                 </div>
               ))}
             </div>
-          )}
+          </div>
         </div>
-      </section>
+      )}
     </div>
   );
 }
-

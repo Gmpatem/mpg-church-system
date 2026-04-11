@@ -26,12 +26,16 @@ export function LoginForm({ redirect = "" }: { redirect?: string }) {
   };
 
   return (
-    <form action={formAction} className="space-y-4 sm:space-y-5">
+    <form action={formAction} className="space-y-5 sm:space-y-6">
       <input type="hidden" name="redirect" value={redirect} />
 
       {/* Error message */}
       {state && !state.ok && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div
+          role="alert"
+          aria-live="polite"
+          className="rounded-2xl border border-red-200 bg-red-50 px-4 py-3.5 text-sm text-red-700"
+        >
           <div className="flex items-start gap-2">
             <svg className="mt-0.5 h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -53,7 +57,7 @@ export function LoginForm({ redirect = "" }: { redirect?: string }) {
           required
           autoComplete="email"
           placeholder={labels.emailPlaceholder}
-          className="h-12 rounded-xl border-slate-200 focus:border-cyan-500 focus:ring-cyan-500"
+          className="h-12 rounded-xl border-slate-200 bg-slate-50/50 focus:border-cyan-500 focus:ring-cyan-500"
         />
       </div>
 
@@ -70,12 +74,11 @@ export function LoginForm({ redirect = "" }: { redirect?: string }) {
             required
             autoComplete="current-password"
             placeholder={labels.passwordPlaceholder}
-            className="h-12 rounded-xl border-slate-200 pr-10 focus:border-cyan-500 focus:ring-cyan-500"
+            className="h-12 rounded-xl border-slate-200 bg-slate-50/50 pr-10 focus:border-cyan-500 focus:ring-cyan-500"
           />
           <button
             type="button"
             onClick={() => setShowPassword((v) => !v)}
-            tabIndex={-1}
             aria-label={showPassword ? (isFr ? "Masquer le mot de passe" : "Hide password") : (isFr ? "Afficher le mot de passe" : "Show password")}
             className="mobile-touch-feedback absolute inset-y-0 right-0 flex items-center px-3 text-slate-400 transition-colors hover:text-slate-600"
           >
@@ -88,7 +91,7 @@ export function LoginForm({ redirect = "" }: { redirect?: string }) {
       <button
         type="submit"
         disabled={isPending}
-        className="mobile-touch-feedback flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-slate-900 via-blue-900 to-cyan-900 font-medium text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mobile-touch-feedback flex h-12 w-full items-center justify-center rounded-xl bg-gradient-to-r from-slate-900 via-blue-900 to-cyan-900 font-medium text-white shadow-sm transition hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {isPending ? (
           <span className="inline-flex items-center gap-2">

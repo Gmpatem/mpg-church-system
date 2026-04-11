@@ -13,11 +13,18 @@ export interface TreasuryMemberOption {
 export function useTreasuryMembers(churchSlug: string, enabled: boolean) {
   const [members, setMembers] = useState<TreasuryMemberOption[]>([]);
   const [loading, setLoading] = useState(false);
-  const [loaded, setLoaded] = useState(false);
+  const [settled, setSettled] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!enabled || loaded || loading) return;
+    setMembers([]);
+    setLoading(false);
+    setSettled(false);
+    setError(null);
+  }, [churchSlug]);
+
+  useEffect(() => {
+    if (!enabled || settled || loading) return;
 
     let cancelled = false;
 
@@ -40,13 +47,13 @@ export function useTreasuryMembers(churchSlug: string, enabled: boolean) {
         if (!cancelled) {
           const fetched = json.members ?? [];
           setMembers(fetched);
-          if (fetched.length > 0) {
-            setLoaded(true);
-          }
+          setSettled(true);
         }
       } catch (err: any) {
         if (!cancelled) {
+          setMembers([]);
           setError(err?.message || "Failed to load treasury members");
+          setSettled(true);
         }
       } finally {
         if (!cancelled) {
@@ -60,12 +67,13 @@ export function useTreasuryMembers(churchSlug: string, enabled: boolean) {
     return () => {
       cancelled = true;
     };
-  }, [churchSlug, enabled, loaded, loading]);
+  }, [churchSlug, enabled, settled, loading]);
 
   return {
     members,
     loading,
-    loaded,
+    loaded: settled,
+    hasMembers: members.length > 0,
     error,
   };
 }

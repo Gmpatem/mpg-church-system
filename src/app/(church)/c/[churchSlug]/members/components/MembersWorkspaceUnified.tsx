@@ -1,23 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createMemberInviteAction } from "@/features/member-invite/actions";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CopyableLink } from "@/components/ui/CopyableLink";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 import { useI18n } from "@/features/i18n";
+import { useRouter } from "next/navigation";
 import {
   WorkspaceControlRail,
   WorkspaceEmptyState,
   WorkspaceHero,
   WorkspaceSectionCard,
   WorkspaceStatCard,
-  WorkspaceTabs,
-  type WorkspaceTabItem,
 } from "@/components/workspace";
-
-type MembersTab = "directory" | "households" | "health";
 
 interface MembersWorkspaceUnifiedProps {
   churchSlug: string;
@@ -93,6 +90,10 @@ function formatDate(value?: string | null, locale = "en-US") {
     day: "numeric",
     year: "numeric",
   });
+}
+
+function getMembersSelectedStorageKey(churchSlug: string) {
+  return `workspace-members-selected:${churchSlug}`;
 }
 
 function MemberInviteButton({
@@ -191,255 +192,226 @@ function DepartmentPills({
   );
 }
 
-function MemberDirectory({
+function MembersRegistryTable({
   churchSlug,
   rows,
+  selectedMemberId,
+  onSelectMember,
 }: {
   churchSlug: string;
   rows: MembersWorkspaceUnifiedProps["data"]["members"];
+  selectedMemberId: string | null;
+  onSelectMember: (memberId: string) => void;
 }) {
   const { t } = useI18n();
-  
+
   return (
     <WorkspaceSectionCard
       title={t.pages.membersWorkspace.directory.title}
       description={t.pages.membersWorkspace.directory.description}
+      contentClassName="p-0"
     >
       {rows.length === 0 ? (
-        <WorkspaceEmptyState
-          title={t.pages.membersWorkspace.directory.noMembers}
-          message={t.pages.membersWorkspace.directory.noMembersDesc}
-          actionLabel={t.pages.membersWorkspace.directory.newMember}
-          actionHref={`/c/${churchSlug}/members/new`}
-        />
+        <div className="p-5">
+          <WorkspaceEmptyState
+            title={t.pages.membersWorkspace.directory.noMembers}
+            message={t.pages.membersWorkspace.directory.noMembersDesc}
+            actionLabel={t.pages.membersWorkspace.directory.newMember}
+            actionHref={`/c/${churchSlug}/members/new`}
+          />
+        </div>
       ) : (
-        <div className="mobile-stagger space-y-3">
-          {rows.map((member) => (
-            <div
-              key={member.id}
-              className="mobile-touch-feedback rounded-xl border border-slate-200 px-4 py-4"
-            >
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="text-sm font-semibold text-slate-950">
-                      {getMemberLabel(member)}
-                    </p>
-                    <StatusBadge status={member.membership_status} context="member" />
-                  </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full divide-y divide-slate-200">
+            <thead className="bg-slate-50">
+              <tr>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Member</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Household</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Departments</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Contact</th>
+                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Added</th>
+                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-200 bg-white">
+              {rows.map((member) => {
+                const isSelected = member.id === selectedMemberId;
+                const activeCount = member.active_departments?.length ?? 0;
+                const inactiveCount = member.inactive_departments?.length ?? 0;
 
-                  <p className="mt-1 text-sm text-slate-600">
-                    {member.member_code || t.pages.membersWorkspace.directory.noCode}
-                    {member.household_name ? ` • ${member.household_name}` : ` • ${t.pages.membersWorkspace.directory.noHousehold}`}
-                  </p>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    {member.email || member.phone || t.pages.membersWorkspace.directory.noContact} • {t.pages.membersWorkspace.directory.added} {formatDate(member.created_at)}
-                  </p>
-
-                  <div className="mt-3 space-y-2">
-                    <div>
-                      <p className="mb-1 text-[11px] uppercase tracking-[0.16em] text-slate-500">
-                        {t.pages.membersWorkspace.directory.activeDepartments}
-                      </p>
-                      <DepartmentPills items={member.active_departments || []} tone="active" />
-                    </div>
-
-                    {!!member.inactive_departments?.length ? (
-                      <div>
-                        <p className="mb-1 text-[11px] uppercase tracking-[0.16em] text-slate-500">
-                          {t.pages.membersWorkspace.directory.inactiveDepartments}
-                        </p>
-                        <DepartmentPills items={member.inactive_departments || []} tone="inactive" />
+                return (
+                  <tr key={member.id} className={isSelected ? "bg-blue-50/50" : undefined}>
+                    <td className="px-4 py-3.5">
+                      <button
+                        type="button"
+                        onClick={() => onSelectMember(member.id)}
+                        className="text-left"
+                      >
+                        <p className="text-sm font-semibold text-slate-900">{getMemberLabel(member)}</p>
+                        <p className="mt-0.5 text-xs text-slate-500">{member.member_code || t.pages.membersWorkspace.directory.noCode}</p>
+                      </button>
+                    </td>
+                    <td className="px-4 py-3.5">
+                      <StatusBadge status={member.membership_status} context="member" />
+                    </td>
+                    <td className="px-4 py-3.5 text-sm text-slate-600">{member.household_name || t.pages.membersWorkspace.directory.noHousehold}</td>
+                    <td className="px-4 py-3.5 text-sm text-slate-600">
+                      <span className="font-medium text-slate-800">{activeCount}</span> active
+                      {inactiveCount > 0 ? ` / ${inactiveCount} inactive` : ""}
+                    </td>
+                    <td className="px-4 py-3.5 text-sm text-slate-600">{member.email || member.phone || t.pages.membersWorkspace.directory.noContact}</td>
+                    <td className="px-4 py-3.5 text-sm text-slate-600">{formatDate(member.created_at)}</td>
+                    <td className="px-4 py-3.5">
+                      <div className="flex justify-end gap-2">
+                        <a
+                          href={`/c/${churchSlug}/members/${member.id}`}
+                          className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                        >
+                          {t.pages.membersWorkspace.directory.viewMember}
+                        </a>
+                        <a
+                          href={`/c/${churchSlug}/members/${member.id}/edit`}
+                          className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                        >
+                          {t.pages.membersWorkspace.directory.edit}
+                        </a>
+                        <button
+                          type="button"
+                          onClick={() => onSelectMember(member.id)}
+                          className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
+                        >
+                          Details
+                        </button>
                       </div>
-                    ) : null}
-                  </div>
-                </div>
-
-                <div className="flex shrink-0 flex-wrap gap-2">
-                  <a
-                    href={`/c/${churchSlug}/members/${member.id}`}
-                    className="mobile-touch-feedback rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                  >
-                    {t.pages.membersWorkspace.directory.viewMember}
-                  </a>
-                  <a
-                    href={`/c/${churchSlug}/members/${member.id}/edit`}
-                    className="mobile-touch-feedback rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-                  >
-                    {t.pages.membersWorkspace.directory.edit}
-                  </a>
-                  <MemberInviteButton
-                    churchSlug={churchSlug}
-                    member={member}
-                  />
-                </div>
-              </div>
-            </div>
-          ))}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
       )}
     </WorkspaceSectionCard>
   );
 }
 
-function HouseholdsPanel({
+function MemberWorkspaceSidebar({
   churchSlug,
+  selectedMember,
   households,
   recentMembers,
-}: {
-  churchSlug: string;
-  households: MembersWorkspaceUnifiedProps["data"]["households"];
-  recentMembers: MembersWorkspaceUnifiedProps["data"]["recentMembers"];
-}) {
-  const { t } = useI18n();
-  
-  return (
-    <div className="grid gap-6 2xl:grid-cols-2">
-      <WorkspaceSectionCard
-        title={t.pages.membersWorkspace.households.title}
-        description={t.pages.membersWorkspace.households.description}
-      >
-        {households.length === 0 ? (
-          <WorkspaceEmptyState
-            title={t.pages.membersWorkspace.households.noHouseholds}
-            message={t.pages.membersWorkspace.households.noHouseholdsDesc}
-            actionLabel={t.pages.membersWorkspace.households.openHouseholds}
-            actionHref={`/c/${churchSlug}/households`}
-            className="min-h-[220px]"
-          />
-        ) : (
-          <div className="mobile-stagger space-y-3">
-            {households.map((household) => (
-              <div
-                key={household.id}
-                className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-slate-950">
-                    {household.household_name}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {t.pages.membersWorkspace.households.linkedRecord}
-                  </p>
-                </div>
-
-                <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-700">
-                  {t.pages.membersWorkspace.households.membersCount.replace("{{count}}", String(household.member_count))}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-      </WorkspaceSectionCard>
-
-      <WorkspaceSectionCard
-        title={t.pages.membersWorkspace.households.recentTitle}
-        description={t.pages.membersWorkspace.households.recentDesc}
-      >
-        {recentMembers.length === 0 ? (
-          <WorkspaceEmptyState
-            title={t.pages.membersWorkspace.households.noRecent}
-            message={t.pages.membersWorkspace.households.noRecentDesc}
-            className="min-h-[220px]"
-          />
-        ) : (
-          <div className="mobile-stagger space-y-3">
-            {recentMembers.map((member) => (
-              <div
-                key={member.id}
-                className="flex items-center justify-between rounded-xl border border-slate-200 px-4 py-3"
-              >
-                <div>
-                  <p className="text-sm font-semibold text-slate-950">
-                    {member.display_name}
-                  </p>
-                  <p className="mt-1 text-xs text-slate-500">
-                    {t.pages.membersWorkspace.directory.added} {formatDate(member.created_at)}
-                  </p>
-                </div>
-
-                <StatusBadge status={member.membership_status} context="member" />
-              </div>
-            ))}
-          </div>
-        )}
-      </WorkspaceSectionCard>
-    </div>
-  );
-}
-
-function HealthPanel({
   stats,
 }: {
+  churchSlug: string;
+  selectedMember: MembersWorkspaceUnifiedProps["data"]["members"][number] | null;
+  households: MembersWorkspaceUnifiedProps["data"]["households"];
+  recentMembers: MembersWorkspaceUnifiedProps["data"]["recentMembers"];
   stats: MembersWorkspaceUnifiedProps["data"]["stats"];
 }) {
   const { t } = useI18n();
-  
-  const completionRatio =
-    stats.totalMembers > 0
-      ? Math.round((stats.assignedMembersCount / stats.totalMembers) * 100)
-      : 0;
+  const assignmentCoverage =
+    stats.totalMembers > 0 ? Math.round((stats.assignedMembersCount / stats.totalMembers) * 100) : 0;
 
   return (
-    <div className="grid gap-6 2xl:grid-cols-2">
+    <aside className="space-y-5">
       <WorkspaceSectionCard
-        title={t.pages.membersWorkspace.health.directoryTitle}
-        description={t.pages.membersWorkspace.health.directoryDesc}
+        title="Selected Member"
+        description="Quick profile and assignment context for the highlighted record."
       >
-        <div className="space-y-3">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="text-sm font-semibold text-slate-900">{t.pages.membersWorkspace.health.departmentCoverage}</p>
-            <p className="mt-1 text-sm text-slate-600">
-              {t.pages.membersWorkspace.health.departmentCoverageDesc
-                .replace("{{assigned}}", String(stats.assignedMembersCount))
-                .replace("{{total}}", String(stats.totalMembers))}
-            </p>
-          </div>
+        {selectedMember ? (
+          <div className="space-y-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <p className="text-base font-semibold text-slate-900">{getMemberLabel(selectedMember)}</p>
+                <StatusBadge status={selectedMember.membership_status} context="member" />
+              </div>
+              <p className="mt-1 text-sm text-slate-600">
+                {selectedMember.member_code || t.pages.membersWorkspace.directory.noCode}
+              </p>
+            </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="text-sm font-semibold text-slate-900">{t.pages.membersWorkspace.health.unassigned}</p>
-            <p className="mt-1 text-sm text-slate-600">
-              {t.pages.membersWorkspace.health.unassignedDesc.replace("{{count}}", String(stats.unassignedMembersCount))}
-            </p>
-          </div>
+            <dl className="space-y-2 text-sm text-slate-600">
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-slate-500">{t.members.household}</dt>
+                <dd className="font-medium text-slate-800">{selectedMember.household_name || t.pages.membersWorkspace.directory.noHousehold}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-slate-500">{t.members.email}</dt>
+                <dd className="max-w-[220px] truncate font-medium text-slate-800">{selectedMember.email || "-"}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-slate-500">{t.members.phone}</dt>
+                <dd className="font-medium text-slate-800">{selectedMember.phone || "-"}</dd>
+              </div>
+              <div className="flex items-center justify-between gap-3">
+                <dt className="text-slate-500">{t.pages.membersWorkspace.directory.added}</dt>
+                <dd className="font-medium text-slate-800">{formatDate(selectedMember.created_at)}</dd>
+              </div>
+            </dl>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="text-sm font-semibold text-slate-900">{t.pages.membersWorkspace.health.completion}</p>
-            <p className="mt-1 text-sm text-slate-600">
-              {t.pages.membersWorkspace.health.completionDesc.replace("{{ratio}}", String(completionRatio))}
-            </p>
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {t.pages.membersWorkspace.directory.activeDepartments}
+              </p>
+              <DepartmentPills items={selectedMember.active_departments || []} tone="active" />
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
+                {t.pages.membersWorkspace.directory.inactiveDepartments}
+              </p>
+              <DepartmentPills items={selectedMember.inactive_departments || []} tone="inactive" />
+            </div>
+
+            <MemberInviteButton churchSlug={churchSlug} member={selectedMember} />
+          </div>
+        ) : (
+          <p className="text-sm text-slate-500">Select a member from the table to view details.</p>
+        )}
+      </WorkspaceSectionCard>
+
+      <WorkspaceSectionCard title="Directory Snapshot" description="Operational totals and household activity in the current view.">
+        <div className="space-y-4">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700">
+            Assignment coverage: <span className="font-semibold text-slate-900">{assignmentCoverage}%</span>
+          </div>
+          <div className="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700">
+            Unassigned members: <span className="font-semibold text-slate-900">{stats.unassignedMembersCount}</span>
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Top Households</p>
+            <div className="mt-2 space-y-2">
+              {households.length > 0 ? (
+                households.slice(0, 4).map((household) => (
+                  <div key={household.id} className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                    <span className="font-medium text-slate-800">{household.household_name}</span>
+                    <span className="text-slate-500">{household.member_count}</span>
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-slate-500">No household records in this view.</p>
+              )}
+            </div>
+          </div>
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Recent Members</p>
+            <div className="mt-2 space-y-2">
+              {recentMembers.length > 0 ? (
+                recentMembers.slice(0, 4).map((member) => (
+                  <div key={member.id} className="flex items-center justify-between rounded-lg border border-slate-200 px-3 py-2 text-sm">
+                    <span className="font-medium text-slate-800">{member.display_name}</span>
+                    <StatusBadge status={member.membership_status} context="member" />
+                  </div>
+                ))
+              ) : (
+                <p className="text-sm text-slate-500">No recent member records.</p>
+              )}
+            </div>
           </div>
         </div>
       </WorkspaceSectionCard>
-
-      <WorkspaceSectionCard
-        title={t.pages.membersWorkspace.health.mixTitle}
-        description={t.pages.membersWorkspace.health.mixDesc}
-      >
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-          <div className="rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3">
-            <p className="text-sm font-semibold text-emerald-900">{t.members.active}</p>
-            <p className="mt-1 text-2xl font-bold text-emerald-950">{stats.activeMembers}</p>
-          </div>
-
-          <div className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3">
-            <p className="text-sm font-semibold text-slate-900">{t.members.inactive}</p>
-            <p className="mt-1 text-2xl font-bold text-slate-950">{stats.inactiveMembers}</p>
-          </div>
-
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3">
-            <p className="text-sm font-semibold text-amber-900">{t.members.visitor}</p>
-            <p className="mt-1 text-2xl font-bold text-amber-950">{stats.visitorMembers}</p>
-          </div>
-
-          <div className="rounded-xl border border-blue-200 bg-blue-50 px-4 py-3">
-            <p className="text-sm font-semibold text-blue-900">{t.members.transferred}</p>
-            <p className="mt-1 text-2xl font-bold text-blue-950">{stats.transferredMembers}</p>
-          </div>
-        </div>
-      </WorkspaceSectionCard>
-    </div>
+    </aside>
   );
 }
 
@@ -448,7 +420,46 @@ export function MembersWorkspaceUnified({
   data,
 }: MembersWorkspaceUnifiedProps) {
   const { t } = useI18n();
-  const [activeTab, setActiveTab] = useState<MembersTab>("directory");
+  const router = useRouter();
+  const [selectedMemberId, setSelectedMemberId] = useState<string | null>(data.members[0]?.id ?? null);
+
+  useEffect(() => {
+    router.prefetch(`/c/${churchSlug}/households`);
+    router.prefetch(`/c/${churchSlug}/departments`);
+    router.prefetch(`/c/${churchSlug}/reports`);
+  }, [churchSlug, router]);
+
+  useEffect(() => {
+    try {
+      const storedId = window.localStorage.getItem(getMembersSelectedStorageKey(churchSlug));
+      if (!storedId) return;
+
+      const exists = data.members.some((member) => member.id === storedId);
+      if (exists) {
+        setSelectedMemberId(storedId);
+      }
+    } catch {
+      // ignore storage read errors
+    }
+  }, [churchSlug, data.members]);
+
+  useEffect(() => {
+    try {
+      if (!selectedMemberId) {
+        window.localStorage.removeItem(getMembersSelectedStorageKey(churchSlug));
+        return;
+      }
+
+      window.localStorage.setItem(getMembersSelectedStorageKey(churchSlug), selectedMemberId);
+    } catch {
+      // ignore storage write errors
+    }
+  }, [churchSlug, selectedMemberId]);
+
+  const selectedMember = useMemo(
+    () => data.members.find((member) => member.id === selectedMemberId) ?? data.members[0] ?? null,
+    [data.members, selectedMemberId]
+  );
 
   const activeFilterLabel = useMemo(() => {
     if (data.filters.q || data.filters.status || data.filters.departmentId || data.filters.departmentAssignmentStatus) {
@@ -457,14 +468,8 @@ export function MembersWorkspaceUnified({
     return t.pages.membersWorkspace.badges.live;
   }, [data.filters, t]);
 
-  const MEMBER_TABS: WorkspaceTabItem[] = [
-    { key: "directory", label: t.pages.membersWorkspace.tabs.directory },
-    { key: "households", label: t.pages.membersWorkspace.tabs.households },
-    { key: "health", label: t.pages.membersWorkspace.tabs.health, shortLabel: t.pages.membersWorkspace.tabs.healthShort },
-  ];
-
   return (
-    <div className="space-y-5 md:space-y-6">
+    <div className="space-y-6">
       <WorkspaceHero
         size="compact"
         eyebrow={t.pages.membersWorkspace.eyebrow}
@@ -482,7 +487,7 @@ export function MembersWorkspaceUnified({
         ]}
       />
 
-      <div className="mobile-stagger grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-6">
+      <div className="grid grid-cols-4 gap-3 xl:grid-cols-6">
         <WorkspaceStatCard label={t.pages.membersWorkspace.stats.totalMembers} value={data.stats.totalMembers} hint={t.pages.membersWorkspace.stats.totalMembersHint} />
         <WorkspaceStatCard label={t.pages.membersWorkspace.stats.active} value={data.stats.activeMembers} hint={t.pages.membersWorkspace.stats.activeHint} />
         <WorkspaceStatCard label={t.pages.membersWorkspace.stats.inactive} value={data.stats.inactiveMembers} hint={t.pages.membersWorkspace.stats.inactiveHint} />
@@ -498,7 +503,7 @@ export function MembersWorkspaceUnified({
         <form
           method="get"
           action={`/c/${churchSlug}/members`}
-          className="grid gap-4 2xl:grid-cols-[minmax(0,1.2fr)_190px_220px_220px_auto]"
+          className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_190px_220px_220px_auto]"
         >
           <div>
             <label htmlFor="q" className="mb-1 block text-sm font-medium text-slate-700">
@@ -566,17 +571,17 @@ export function MembersWorkspaceUnified({
             </select>
           </div>
 
-          <div className="flex items-end gap-3">
+          <div className="flex items-end gap-2">
             <button
               type="submit"
-              className="inline-flex items-center justify-center rounded-xl bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+              className="inline-flex items-center justify-center rounded-lg bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
             >
               {t.pages.membersWorkspace.filters.apply}
             </button>
 
             <a
               href={`/c/${churchSlug}/members`}
-              className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+              className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             >
               {t.pages.membersWorkspace.filters.reset}
             </a>
@@ -584,27 +589,21 @@ export function MembersWorkspaceUnified({
         </form>
       </WorkspaceControlRail>
 
-      <WorkspaceTabs
-        items={MEMBER_TABS}
-        activeKey={activeTab}
-        onChange={(key) => setActiveTab(key as MembersTab)}
-      />
-
-      {activeTab === "directory" ? (
-        <MemberDirectory churchSlug={churchSlug} rows={data.members} />
-      ) : null}
-
-      {activeTab === "households" ? (
-        <HouseholdsPanel
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.7fr)_380px]">
+        <MembersRegistryTable
           churchSlug={churchSlug}
+          rows={data.members}
+          selectedMemberId={selectedMember?.id ?? null}
+          onSelectMember={setSelectedMemberId}
+        />
+        <MemberWorkspaceSidebar
+          churchSlug={churchSlug}
+          selectedMember={selectedMember}
           households={data.households}
           recentMembers={data.recentMembers}
+          stats={data.stats}
         />
-      ) : null}
-
-      {activeTab === "health" ? (
-        <HealthPanel stats={data.stats} />
-      ) : null}
+      </div>
     </div>
   );
 }

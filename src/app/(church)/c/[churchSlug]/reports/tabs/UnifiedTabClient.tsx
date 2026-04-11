@@ -1,6 +1,5 @@
 "use client";
 
-import { ReportsExportActions } from "./ReportsExportActions";
 import { PrintReadySummaryStrip } from "./PrintReadySummaryStrip";
 
 function formatMetric(value: string | number) {
@@ -55,8 +54,6 @@ export function UnifiedTabClient({ unified }: UnifiedTabClientProps) {
 
   return (
     <div className="space-y-6">
-      <ReportsExportActions />
-
       <PrintReadySummaryStrip
         title="Unified Print Summary"
         items={unified.stats.slice(0, 4)}

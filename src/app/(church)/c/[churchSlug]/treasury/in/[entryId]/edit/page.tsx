@@ -10,12 +10,13 @@ interface InflowEditPageProps {
 
 export default async function InflowEditPage({ params }: InflowEditPageProps) {
   const { churchSlug, entryId } = await params;
-  const [entry, options] = await Promise.all([
-    getTreasuryInflowById(churchSlug, entryId),
-    getTreasuryFormOptions(churchSlug),
-  ]);
+  const entry = await getTreasuryInflowById(churchSlug, entryId);
 
   if (!entry) notFound();
+
+  const options = await getTreasuryFormOptions(churchSlug, {
+    includeFundIds: entry.fund_id ? [entry.fund_id] : [],
+  });
 
   return (
     <div className="space-y-6">

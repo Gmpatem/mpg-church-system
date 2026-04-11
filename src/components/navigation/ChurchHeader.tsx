@@ -59,6 +59,7 @@ interface ChurchHeaderProps {
   showAccessControl?: boolean;
   onOpenSidebar?: () => void;
   notifications?: ChurchNotificationItem[];
+  hideMobileModuleRail?: boolean;
 }
 
 function getPageLabel(pathname: string, churchSlug: string, t: any) {
@@ -125,6 +126,7 @@ export function ChurchHeader({
   showAccessControl = false,
   onOpenSidebar,
   notifications = [],
+  hideMobileModuleRail = false,
 }: ChurchHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -426,11 +428,13 @@ export function ChurchHeader({
           </div>
         </div>
 
-        <ChurchMobileModuleRail
-          churchSlug={church.slug}
-          roleLabel={roleLabel}
-          showAccessControl={showAccessControl}
-        />
+        {!hideMobileModuleRail ? (
+          <ChurchMobileModuleRail
+            churchSlug={church.slug}
+            roleLabel={roleLabel}
+            showAccessControl={showAccessControl}
+          />
+        ) : null}
       </header>
 
       <Sheet open={mobileNotificationsOpen} onOpenChange={setMobileNotificationsOpen}>

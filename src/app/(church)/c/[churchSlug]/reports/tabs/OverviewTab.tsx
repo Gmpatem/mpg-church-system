@@ -1,5 +1,5 @@
 import { getReportsTabData } from "@/features/reports/queries";
-import { OverviewTabClient } from "./OverviewTabClient";
+import { OverviewAnalyticsTabClient } from "./OverviewAnalyticsTabClient";
 
 export async function OverviewTab({
   churchSlug,
@@ -11,5 +11,5 @@ export async function OverviewTab({
   dateTo?: string;
 }) {
   const data = await getReportsTabData(churchSlug, "overview", { dateFrom, dateTo });
-  return <OverviewTabClient overview={data.overview} />;
+  return <OverviewAnalyticsTabClient overview={data.overview} />;
 }

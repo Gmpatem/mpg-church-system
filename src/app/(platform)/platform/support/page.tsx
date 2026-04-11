@@ -14,7 +14,11 @@ import {
   createPlatformSupportTicketAction,
   updatePlatformSupportTicketStatusAction,
 } from "@/features/platform/actions";
-import { getPlatformChurches, getPlatformSupportTickets } from "@/features/platform/queries";
+import {
+  getPlatformChurches,
+  getPlatformChurchOversightData,
+  getPlatformSupportTickets,
+} from "@/features/platform/queries";
 
 function StatCard({
   title,
@@ -100,8 +104,11 @@ function priorityLabel(priority: string) {
 }
 
 export default async function PlatformSupportPage() {
-  const tickets = await getPlatformSupportTickets();
-  const churches = await getPlatformChurches();
+  const [tickets, churches, oversight] = await Promise.all([
+    getPlatformSupportTickets(),
+    getPlatformChurches(),
+    getPlatformChurchOversightData(),
+  ]);
 
   const openCount = tickets.filter((t: any) => t.status === "open").length;
   const inProgressCount = tickets.filter((t: any) => t.status === "in_progress").length;
@@ -111,9 +118,9 @@ export default async function PlatformSupportPage() {
     <div className="space-y-6">
       <div className="space-y-4 md:hidden">
         <PlatformMobileHero
-          eyebrow="Support Workspace"
-          title="Ticket Inbox"
-          description="Manage and respond to church support requests in one mobile workflow."
+          eyebrow="Support Operations"
+          title="Intervention Support Queue"
+          description="Track adoption blockers, governance incidents, and reporting escalations across the network."
           badge={openCount + " open"}
           actions={[
             { href: "/platform", label: "Back to Dashboard" },
@@ -127,7 +134,9 @@ export default async function PlatformSupportPage() {
               ? openCount + " support tickets are waiting for action."
               : "No open support tickets right now."}
           </p>
-          <p className="mt-1 text-xs text-amber-800">Use status updates to keep response flow clear for each church.</p>
+          <p className="mt-1 text-xs text-amber-800">
+            {oversight.summary.needsInterventionChurches} churches are currently flagged for intervention.
+          </p>
         </PlatformMobileAttentionStrip>
 
         <div className="grid grid-cols-2 gap-3">
@@ -137,7 +146,7 @@ export default async function PlatformSupportPage() {
           <PlatformMobileStatCard label="Resolved" value={resolvedCount} hint="Closed or resolved" />
         </div>
 
-        <PlatformMobileSectionCard title="Create Ticket">
+        <PlatformMobileSectionCard title="Create Intervention Ticket">
           <form id="create-support-ticket" action={createPlatformSupportTicketAction} className="grid grid-cols-1 gap-3">
             <div className="space-y-1.5">
               <label className="text-xs font-medium uppercase tracking-[0.12em] text-slate-600">Subject</label>
@@ -197,7 +206,7 @@ export default async function PlatformSupportPage() {
           </form>
         </PlatformMobileSectionCard>
 
-        <PlatformMobileSectionCard title="Ticket Inbox">
+        <PlatformMobileSectionCard title="Intervention Queue">
           <div className="space-y-2">
             {tickets.length > 0 ? (
               tickets.map((ticket: any) => (
@@ -257,9 +266,9 @@ export default async function PlatformSupportPage() {
       <div className="hidden space-y-6 md:block">
         <div className="flex flex-col justify-between gap-3 md:flex-row md:items-center">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Support Tickets</h1>
+            <h1 className="text-2xl font-bold text-gray-900">Network Support Operations</h1>
             <p className="mt-1 text-sm text-gray-500">
-              Manage and respond to church support requests across the platform.
+              Coordinate support, adoption recovery, and platform-level intervention across churches.
             </p>
           </div>
         </div>
@@ -272,7 +281,7 @@ export default async function PlatformSupportPage() {
         </div>
 
         <div id="create-support-ticket" className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-          <h2 className="mb-4 text-lg font-semibold text-gray-900">Create Ticket</h2>
+          <h2 className="mb-4 text-lg font-semibold text-gray-900">Create Intervention Ticket</h2>
 
           <form action={createPlatformSupportTicketAction} className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2 md:col-span-2">

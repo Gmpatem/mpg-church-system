@@ -1,5 +1,5 @@
 import { getReportsTabData } from "@/features/reports/queries";
-import { EventsTabClient } from "./EventsTabClient";
+import { EventsAnalyticsTabClient } from "./EventsAnalyticsTabClient";
 
 export async function EventsTab({
   churchSlug,
@@ -11,5 +11,5 @@ export async function EventsTab({
   dateTo?: string;
 }) {
   const data = await getReportsTabData(churchSlug, "events", { dateFrom, dateTo });
-  return <EventsTabClient events={data.events} />;
+  return <EventsAnalyticsTabClient events={data.events} />;
 }

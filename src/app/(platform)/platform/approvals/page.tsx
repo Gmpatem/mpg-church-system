@@ -35,9 +35,9 @@ export default async function PlatformApprovalsPage() {
   return (
     <div className="space-y-5">
       <PlatformMobileHero
-        eyebrow="Approvals Workspace"
-        title="Action Queue"
-        description="Review pending event approvals and open support tickets without leaving the mobile workspace."
+        eyebrow="Governance Queue"
+        title="Cross-Church Approval and Review Queue"
+        description="Monitor pending approvals and support escalations that need conference or union response."
         badge={(snapshot.totals.pendingEvents + snapshot.totals.openTickets) + " items"}
         actions={[
           { href: "/platform/events", label: "Review Events" },
@@ -73,7 +73,7 @@ export default async function PlatformApprovalsPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-slate-900">{event.title}</p>
-                      <p className="truncate text-xs text-slate-500">{church?.name ?? "Church workspace"}</p>
+                      <p className="truncate text-xs text-slate-500">{church?.name ?? "Church record"}</p>
                     </div>
                     <span className="rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700">
                       Pending
@@ -140,14 +140,14 @@ export default async function PlatformApprovalsPage() {
           href="/platform/events"
           className="inline-flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700"
         >
-          Event Workspace
+          Event Signals
           <ClipboardCheck className="h-4 w-4 text-slate-400" />
         </Link>
         <Link
           href="/platform/support"
           className="inline-flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700"
         >
-          Support Workspace
+          Support Operations
           <ChevronRight className="h-4 w-4 text-slate-400" />
         </Link>
       </div>

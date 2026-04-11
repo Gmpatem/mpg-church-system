@@ -2,9 +2,9 @@ import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { WorkspaceHero } from "@/components/workspace";
+import { WorkspaceRouteStateBridge } from "@/components/workspace/WorkspaceRouteStateBridge";
 import { OfficeAttentionStrip } from "@/features/office/components/OfficeAttentionStrip";
 import { DashboardStatsSection } from "../DashboardStatsSection";
-import { DashboardQuickActions } from "../DashboardQuickActions";
 import { DashboardRecentSection } from "../DashboardRecentSection";
 import { DashboardActivityFeed } from "../DashboardActivityFeed";
 import { en } from "@/features/i18n/en";
@@ -119,12 +119,23 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
 
   return (
     <div className="space-y-5 md:space-y-6">
+      <WorkspaceRouteStateBridge
+        churchSlug={churchSlug}
+        moduleKey="dashboard"
+        prefetchHrefs={[
+          `/c/${churchSlug}/members`,
+          `/c/${churchSlug}/treasury`,
+          `/c/${churchSlug}/reports`,
+          `/c/${churchSlug}/events`,
+        ]}
+      />
+
       <WorkspaceHero
         size="compact"
         eyebrow={t.pages.dashboard.eyebrow}
         title={church.name ?? churchSlug}
-        description={t.pages.dashboard.description}
-        badges={[t.pages.dashboard.liveWorkspace]}
+        description="Executive operations view for members, ministry activity, events, and church follow-up work."
+        badges={[t.pages.dashboard.liveWorkspace, "Operations overview"]}
         actions={[
           { label: t.pages.dashboard.manageMembers, href: `/c/${churchSlug}/members`, variant: "primary" },
           { label: t.pages.dashboard.openEvents, href: `/c/${churchSlug}/events`, variant: "secondary" },
@@ -140,15 +151,15 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
         <DashboardStatsSection churchId={church.id} churchSlug={churchSlug} />
       </Suspense>
 
-      <DashboardQuickActions churchSlug={churchSlug} />
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+        <Suspense fallback={<div className="h-32 animate-pulse rounded-xl bg-slate-200" />}>
+          <DashboardRecentSection churchId={church.id} churchSlug={churchSlug} />
+        </Suspense>
 
-      <Suspense fallback={<div className="h-32 animate-pulse rounded-xl bg-slate-200" />}>
-        <DashboardRecentSection churchId={church.id} churchSlug={churchSlug} />
-      </Suspense>
-
-      <Suspense fallback={<div className="h-32 animate-pulse rounded-xl bg-slate-200" />}>
-        <DashboardActivityFeed churchId={church.id} churchSlug={churchSlug} />
-      </Suspense>
+        <Suspense fallback={<div className="h-32 animate-pulse rounded-xl bg-slate-200" />}>
+          <DashboardActivityFeed churchId={church.id} churchSlug={churchSlug} />
+        </Suspense>
+      </div>
     </div>
   );
 }

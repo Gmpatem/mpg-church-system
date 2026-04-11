@@ -1,7 +1,10 @@
 import "server-only";
 
+import { cache } from "react";
+import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { requireChurchAccess } from "@/features/access/queries";
+import { requireChurchWorkspaceAccess } from "@/features/access/queries";
+import type { ChurchAccessContext } from "@/features/access/types";
 import { getChurchInviteManagementData } from "@/features/member-invite/queries";
 import { getPendingApprovalQueue } from "@/features/approvals/queries";
 import type {
@@ -59,29 +62,26 @@ type PendingAccessRow = {
   } | null;
 };
 
-function countRole(rows: RoleRow[], code: string) {
-  return rows.filter((row) => {
-    const role = Array.isArray(row.role_definitions) ? row.role_definitions[0] : row.role_definitions;
-    return role?.code === code;
-  }).length;
-}
+const ACCESS_CONTROL_ROLE_CODES = new Set([
+  "pastor",
+  "church_admin",
+  "tech_team",
+  "clerk",
+  "church_secretary",
+]);
 
-function formatPersonName(
-  firstName: string | null | undefined,
-  lastName: string | null | undefined,
-  displayName?: string | null
-) {
-  const resolvedDisplayName = displayName?.trim();
-  if (resolvedDisplayName) return resolvedDisplayName;
+type AccessControlViewState = {
+  ctx: ChurchAccessContext;
+  canView: boolean;
+};
 
-  const joined = [firstName?.trim(), lastName?.trim()].filter(Boolean).join(" ").trim();
-  return joined || null;
-}
+const resolveAccessControlViewState = cache(async (churchSlug: string): Promise<AccessControlViewState> => {
+  const ctx = await requireChurchWorkspaceAccess(churchSlug);
 
-export async function canCurrentUserViewAccessControl(
-  churchSlug: string
-): Promise<boolean> {
-  const ctx = await requireChurchAccess(churchSlug);
+  if (ctx.isPlatformAdmin) {
+    return { ctx, canView: true };
+  }
+
   const supabase = await createClient();
 
   const [roleResult, permissionResult] = await Promise.all([
@@ -115,19 +115,53 @@ export async function canCurrentUserViewAccessControl(
     .map((row: any) => row.permission_definitions?.code)
     .filter(Boolean);
 
-  if (permissionCodes.includes("access_control")) {
-    return true;
+  const canView =
+    permissionCodes.includes("access_control") ||
+    roleCodes.some((code: string) => ACCESS_CONTROL_ROLE_CODES.has(code));
+
+  return { ctx, canView };
+});
+
+async function requireAccessControlViewContext(churchSlug: string): Promise<ChurchAccessContext> {
+  const viewState = await resolveAccessControlViewState(churchSlug);
+
+  if (!viewState.canView) {
+    redirect(`/c/${viewState.ctx.churchSlug}/dashboard`);
   }
 
-  return roleCodes.some((code: string) =>
-    ["pastor", "church_admin", "tech_team", "clerk", "church_secretary"].includes(code)
-  );
+  return viewState.ctx;
+}
+
+function countRole(rows: RoleRow[], code: string) {
+  return rows.filter((row) => {
+    const role = Array.isArray(row.role_definitions) ? row.role_definitions[0] : row.role_definitions;
+    return role?.code === code;
+  }).length;
+}
+
+function formatPersonName(
+  firstName: string | null | undefined,
+  lastName: string | null | undefined,
+  displayName?: string | null
+) {
+  const resolvedDisplayName = displayName?.trim();
+  if (resolvedDisplayName) return resolvedDisplayName;
+
+  const joined = [firstName?.trim(), lastName?.trim()].filter(Boolean).join(" ").trim();
+  return joined || null;
+}
+
+export async function canCurrentUserViewAccessControl(
+  churchSlug: string
+): Promise<boolean> {
+  const viewState = await resolveAccessControlViewState(churchSlug);
+  return viewState.canView;
 }
 
 export async function getAccessControlOverview(
   churchSlug: string
 ): Promise<AccessControlOverviewData> {
-  const ctx = await requireChurchAccess(churchSlug);
+  const ctx = await requireAccessControlViewContext(churchSlug);
   const supabase = await createClient();
 
   const [
@@ -202,7 +236,7 @@ export async function getAccessControlOverview(
 export async function getPendingAccessRequests(
   churchSlug: string
 ): Promise<AccessControlPendingAccessData> {
-  const ctx = await requireChurchAccess(churchSlug);
+  const ctx = await requireAccessControlViewContext(churchSlug);
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -325,7 +359,6 @@ export async function getAccessControlTabData(
     data: null,
   };
 }
-
 
 
 

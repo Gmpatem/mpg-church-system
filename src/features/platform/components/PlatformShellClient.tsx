@@ -4,18 +4,21 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import {
+  AlertTriangle,
   BarChart3,
   Bell,
   Building2,
   CalendarDays,
   CircleHelp,
   ClipboardCheck,
+  CreditCard,
   Home,
   House,
+  Landmark,
   LogOut,
   MoreHorizontal,
-  Settings,
   ShieldCheck,
+  Settings,
   Users,
   Wallet,
 } from "lucide-react";
@@ -52,7 +55,7 @@ type PlatformShellClientProps = {
 };
 
 type PrimaryNavItem = {
-  key: "dashboard" | "members" | "events" | "treasury" | "more";
+  key: "dashboard" | "churches" | "oversight" | "reports" | "more";
   label: string;
   href?: string;
   icon: React.ComponentType<{ className?: string }>;
@@ -60,9 +63,9 @@ type PrimaryNavItem = {
 
 const PRIMARY_NAV: PrimaryNavItem[] = [
   { key: "dashboard", label: "Dashboard", href: "/platform", icon: Home },
-  { key: "members", label: "Members", href: "/platform/members", icon: Users },
-  { key: "events", label: "Events", href: "/platform/events", icon: CalendarDays },
-  { key: "treasury", label: "Treasury", href: "/platform/treasury", icon: Wallet },
+  { key: "churches", label: "Churches", href: "/platform/churches", icon: Building2 },
+  { key: "oversight", label: "Oversight", href: "/platform/oversight", icon: AlertTriangle },
+  { key: "reports", label: "Reports", href: "/platform/reports", icon: BarChart3 },
   { key: "more", label: "More", icon: MoreHorizontal },
 ];
 
@@ -71,28 +74,34 @@ const MORE_LINKS: Array<{
   label: string;
   icon: React.ComponentType<{ className?: string }>;
 }> = [
-  { href: "/platform/churches", label: "Churches", icon: Building2 },
-  { href: "/platform/reports", label: "Reports", icon: BarChart3 },
-  { href: "/platform/approvals", label: "Approvals", icon: ClipboardCheck },
-  { href: "/platform/households", label: "Households", icon: House },
-  { href: "/platform/calendar", label: "Calendar", icon: CalendarDays },
-  { href: "/platform/access-control", label: "Access Control", icon: ShieldCheck },
+  { href: "/platform/regions", label: "Regions", icon: Landmark },
+  { href: "/platform/access-control", label: "Governance", icon: ShieldCheck },
+  { href: "/platform/billing", label: "Billing", icon: CreditCard },
   { href: "/platform/support", label: "Support", icon: CircleHelp },
   { href: "/platform/settings", label: "Settings", icon: Settings },
+  { href: "/platform/approvals", label: "Approvals", icon: ClipboardCheck },
+  { href: "/platform/members", label: "Member Signals", icon: Users },
+  { href: "/platform/events", label: "Event Signals", icon: CalendarDays },
+  { href: "/platform/treasury", label: "Treasury Signals", icon: Wallet },
+  { href: "/platform/households", label: "Household Signals", icon: House },
+  { href: "/platform/calendar", label: "Calendar Signals", icon: CalendarDays },
 ];
 
 function getHeaderTitle(pathname: string) {
   if (pathname === "/platform") return "Dashboard";
-  if (pathname.startsWith("/platform/members")) return "Members Workspace";
-  if (pathname.startsWith("/platform/events")) return "Events Workspace";
-  if (pathname.startsWith("/platform/treasury")) return "Treasury Workspace";
   if (pathname.startsWith("/platform/churches")) return "Churches";
-  if (pathname.startsWith("/platform/reports")) return "Reports";
+  if (pathname.startsWith("/platform/oversight")) return "Oversight";
+  if (pathname.startsWith("/platform/reports")) return "Analytics";
+  if (pathname.startsWith("/platform/regions")) return "Regions";
+  if (pathname.startsWith("/platform/billing")) return "Billing";
+  if (pathname.startsWith("/platform/members")) return "Member Signals";
+  if (pathname.startsWith("/platform/events")) return "Event Signals";
+  if (pathname.startsWith("/platform/treasury")) return "Treasury Signals";
   if (pathname.startsWith("/platform/approvals")) return "Approvals";
-  if (pathname.startsWith("/platform/households")) return "Households";
-  if (pathname.startsWith("/platform/access-control")) return "Access Control";
+  if (pathname.startsWith("/platform/households")) return "Household Signals";
+  if (pathname.startsWith("/platform/access-control")) return "Governance";
   if (pathname.startsWith("/platform/support")) return "Support";
-  if (pathname.startsWith("/platform/calendar")) return "Calendar";
+  if (pathname.startsWith("/platform/calendar")) return "Calendar Signals";
   if (pathname.startsWith("/platform/settings")) return "Settings";
   return "Platform";
 }
@@ -147,9 +156,9 @@ export function PlatformShellClient({
 
   const activePrimaryKey = useMemo(() => {
     if (pathname === "/platform") return "dashboard";
-    if (pathname.startsWith("/platform/members")) return "members";
-    if (pathname.startsWith("/platform/events")) return "events";
-    if (pathname.startsWith("/platform/treasury")) return "treasury";
+    if (pathname.startsWith("/platform/churches")) return "churches";
+    if (pathname.startsWith("/platform/oversight")) return "oversight";
+    if (pathname.startsWith("/platform/reports")) return "reports";
     return "more";
   }, [pathname]);
 
@@ -196,7 +205,7 @@ export function PlatformShellClient({
               <div className="h-7 w-7 shrink-0 rounded-lg bg-gradient-to-br from-blue-700 to-teal-500" />
               <div className="min-w-0">
                 <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">
-                  Platform Workspace
+                  Network Console
                 </p>
                 <p className="truncate text-sm font-semibold text-slate-900">
                   {headerTitle}
@@ -400,7 +409,7 @@ export function PlatformShellClient({
         >
           <SheetHeader className="mb-4 text-left">
             <SheetTitle className="text-slate-900">More Modules</SheetTitle>
-            <SheetDescription>Open additional platform workspaces.</SheetDescription>
+            <SheetDescription>Open additional oversight surfaces.</SheetDescription>
           </SheetHeader>
 
           <div className="grid grid-cols-2 gap-2">

@@ -11,6 +11,21 @@ function sumAmount(rows: any[]) {
   return (rows ?? []).reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
 }
 
+const TREASURY_ALLOWED_ROLES = ["church_admin", "treasurer", "pastor"] as const;
+
+export interface TreasuryMemberOption {
+  id: string;
+  display_name?: string | null;
+  first_name: string;
+  last_name: string;
+  member_code?: string | null;
+}
+
+interface TreasuryFormOptionOverrides {
+  includeFundIds?: string[];
+  includeDepartmentIds?: string[];
+}
+
 export async function getTreasuryDashboard(churchSlug: string) {
   const ctx = await requireChurchAccess(churchSlug);
   const supabase = await createClient();
@@ -132,35 +147,42 @@ export async function getTreasuryRecentOutflows(churchSlug: string) {
  * Cache scope: Single request (React cache).
  * Cache key: churchSlug
  */
-export const getTreasuryFormOptions = cache(async (churchSlug: string) => {
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
+export const getTreasuryMemberOptions = cache(async (churchSlug: string): Promise<TreasuryMemberOption[]> => {
+  const ctx = await requireChurchRole(churchSlug, [...TREASURY_ALLOWED_ROLES]);
   const supabase = await createClient();
 
-  const [{ data: funds, error: fundsError }, { data: members, error: membersError }, { data: departments, error: departmentsError }] =
-    await Promise.all([
-      supabase
-        .from("treasury_funds")
-        .select("id, code, name, fund_type")
-        .eq("church_id", ctx.churchId)
-        .eq("is_active", true)
-        .order("name", { ascending: true }),
+  const { data, error } = await supabase
+    .from("members")
+    .select("id, display_name, first_name, last_name, member_code")
+    .eq("church_id", ctx.churchId)
+    .order("last_name", { ascending: true })
+    .order("first_name", { ascending: true });
 
-      supabase
-        .from("members")
-        .select("id, display_name, first_name, last_name, member_code")
-        .eq("church_id", ctx.churchId)
-        .order("last_name", { ascending: true }),
+  if (error) throw new Error(error.message);
+  return (data ?? []) as TreasuryMemberOption[];
+});
 
-      supabase
-        .from("church_departments")
-        .select("id, department_name")
-        .eq("church_id", ctx.churchId)
-        .eq("is_active", true)
-        .order("department_name", { ascending: true }),
-    ]);
+const getTreasuryFormOptionsBase = cache(async (churchSlug: string) => {
+  const ctx = await requireChurchRole(churchSlug, [...TREASURY_ALLOWED_ROLES]);
+  const supabase = await createClient();
+
+  const [{ data: funds, error: fundsError }, { data: departments, error: departmentsError }, members] = await Promise.all([
+    supabase
+      .from("treasury_funds")
+      .select("id, code, name, fund_type")
+      .eq("church_id", ctx.churchId)
+      .eq("is_active", true)
+      .order("name", { ascending: true }),
+    supabase
+      .from("church_departments")
+      .select("id, department_name")
+      .eq("church_id", ctx.churchId)
+      .eq("is_active", true)
+      .order("department_name", { ascending: true }),
+    getTreasuryMemberOptions(churchSlug),
+  ]);
 
   if (fundsError) throw new Error(fundsError.message);
-  if (membersError) throw new Error(membersError.message);
   if (departmentsError) throw new Error(departmentsError.message);
 
   return {
@@ -170,6 +192,61 @@ export const getTreasuryFormOptions = cache(async (churchSlug: string) => {
     departments: departments ?? [],
   };
 });
+
+export async function getTreasuryFormOptions(
+  churchSlug: string,
+  overrides?: TreasuryFormOptionOverrides
+) {
+  const base = await getTreasuryFormOptionsBase(churchSlug);
+  const includeFundIds = Array.from(new Set((overrides?.includeFundIds ?? []).filter(Boolean)));
+  const includeDepartmentIds = Array.from(new Set((overrides?.includeDepartmentIds ?? []).filter(Boolean)));
+
+  if (includeFundIds.length === 0 && includeDepartmentIds.length === 0) {
+    return base;
+  }
+
+  const ctx = await requireChurchRole(churchSlug, [...TREASURY_ALLOWED_ROLES]);
+  const supabase = await createClient();
+
+  const currentFundIds = new Set(base.funds.map((item: any) => item.id));
+  const currentDepartmentIds = new Set(base.departments.map((item: any) => item.id));
+
+  const missingFundIds = includeFundIds.filter((id) => !currentFundIds.has(id));
+  const missingDepartmentIds = includeDepartmentIds.filter((id) => !currentDepartmentIds.has(id));
+
+  const [missingFunds, missingDepartments] = await Promise.all([
+    missingFundIds.length > 0
+      ? supabase
+          .from("treasury_funds")
+          .select("id, code, name, fund_type")
+          .eq("church_id", ctx.churchId)
+          .in("id", missingFundIds)
+      : Promise.resolve({ data: [], error: null as any }),
+    missingDepartmentIds.length > 0
+      ? supabase
+          .from("church_departments")
+          .select("id, department_name")
+          .eq("church_id", ctx.churchId)
+          .in("id", missingDepartmentIds)
+      : Promise.resolve({ data: [], error: null as any }),
+  ]);
+
+  if (missingFunds.error) throw new Error(missingFunds.error.message);
+  if (missingDepartments.error) throw new Error(missingDepartments.error.message);
+
+  const mergedFunds = [...base.funds, ...(missingFunds.data ?? [])].sort((a, b) =>
+    String(a.name).localeCompare(String(b.name))
+  );
+  const mergedDepartments = [...base.departments, ...(missingDepartments.data ?? [])].sort((a, b) =>
+    String(a.department_name).localeCompare(String(b.department_name))
+  );
+
+  return {
+    ...base,
+    funds: mergedFunds,
+    departments: mergedDepartments,
+  };
+}
 
 export async function getTreasuryInflows(
   churchSlug: string,
@@ -539,7 +616,7 @@ export async function getTreasuryAuditLogs(
 }
 
 export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
+  const ctx = await requireChurchRole(churchSlug, [...TREASURY_ALLOWED_ROLES]);
   const supabase = await createClient();
 
   const [
@@ -556,6 +633,7 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
 
     { data: funds, error: fundsError },
     { data: departments, error: departmentsError },
+    members,
   ] = await Promise.all([
     supabase
       .from("treasury_funds")
@@ -612,6 +690,7 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
       .eq("church_id", ctx.churchId)
       .eq("is_active", true)
       .order("department_name", { ascending: true }),
+    getTreasuryMemberOptions(churchSlug),
   ]);
 
   if (fundCountError) throw new Error(fundCountError.message);
@@ -659,7 +738,7 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
     formOptions: {
       churchId: ctx.churchId,
       funds: funds ?? [],
-      members: [],
+      members: members ?? [],
       departments: departments ?? [],
     },
   };
@@ -669,30 +748,36 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
 export async function getMembersAlreadyTithedThisWeek(
   churchSlug: string
 ): Promise<string[]> {
+  const ctx = await requireChurchRole(churchSlug, [...TREASURY_ALLOWED_ROLES]);
   const supabase = await createClient();
-  const church = await supabase
-    .from("churches")
-    .select("id")
-    .eq("slug", churchSlug)
-    .single();
-  if (!church.data) return [];
 
   const now = new Date();
   const day = now.getDay();
   const startOfWeek = new Date(now);
   startOfWeek.setDate(now.getDate() - (day === 0 ? 6 : day - 1));
   startOfWeek.setHours(0, 0, 0, 0);
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(startOfWeek.getDate() + 6);
+  endOfWeek.setHours(23, 59, 59, 999);
   const weekStart = startOfWeek.toISOString().split("T")[0];
+  const weekEnd = endOfWeek.toISOString().split("T")[0];
 
   const { data } = await supabase
     .from("treasury_inflows")
     .select("member_id")
-    .eq("church_id", church.data.id)
+    .eq("church_id", ctx.churchId)
     .eq("inflow_type", "tithe")
     .gte("inflow_date", weekStart)
+    .lte("inflow_date", weekEnd)
     .not("member_id", "is", null);
 
-  return (data ?? []).map((r: any) => r.member_id as string);
+  return Array.from(
+    new Set(
+      (data ?? [])
+        .map((r: any) => r.member_id as string | null)
+        .filter((memberId): memberId is string => Boolean(memberId))
+    )
+  );
 }
 
 export async function getMemberFinancialProfile(churchSlug: string, memberId: string) {

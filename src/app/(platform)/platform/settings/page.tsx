@@ -60,18 +60,18 @@ export default async function PlatformSettingsPage() {
     <form action={savePlatformSettingsAction} className="space-y-5">
       <div className="md:hidden">
         <PlatformMobileHero
-          eyebrow="Platform Settings"
-          title="Workspace Preferences"
-          description="Update platform defaults, notifications, and security controls."
-          badge="Admin controls"
+          eyebrow="Governance Settings"
+          title="Network Policy and Defaults"
+          description="Configure platform-wide governance, security posture, reporting defaults, and billing policy."
+          badge="Executive controls"
         />
       </div>
 
       <div className="hidden flex-col justify-between gap-3 md:flex md:flex-row md:items-center">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Settings</h1>
+          <h1 className="text-2xl font-bold text-gray-900">Platform Governance Settings</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Manage your platform settings and administrative preferences.
+            Manage policy controls that apply across conferences, unions, and all churches.
           </p>
         </div>
 
@@ -87,8 +87,8 @@ export default async function PlatformSettingsPage() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <SettingsCard
           icon={Globe}
-          title="General Settings"
-          description="Core platform branding and regional defaults"
+          title="Platform Identity and Defaults"
+          description="Network-level naming, support, language, and timezone defaults"
         >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="space-y-2">
@@ -142,8 +142,8 @@ export default async function PlatformSettingsPage() {
 
         <SettingsCard
           icon={Shield}
-          title="Security"
-          description="Access protection and admin control defaults"
+          title="Security and Authority"
+          description="Global security posture and cross-church governance safeguards"
         >
           <div className="space-y-4">
             <ToggleRow
@@ -154,8 +154,8 @@ export default async function PlatformSettingsPage() {
             />
             <ToggleRow
               name="allow_platform_admin_override"
-              title="Allow platform-wide admin overrides"
-              description="Permit platform owner access across church workspaces."
+              title="Allow platform-level oversight access"
+              description="Permit authorized platform leaders to access churches for governance intervention."
               enabled={settings?.allow_platform_admin_override ?? true}
             />
             <ToggleRow
@@ -169,8 +169,8 @@ export default async function PlatformSettingsPage() {
 
         <SettingsCard
           icon={Bell}
-          title="Notifications"
-          description="Choose which admin events should trigger platform notifications"
+          title="Executive Notifications"
+          description="Control which network-level events trigger alerts for platform leadership"
         >
           <div className="space-y-4">
             <ToggleRow
@@ -196,8 +196,8 @@ export default async function PlatformSettingsPage() {
 
         <SettingsCard
           icon={CreditCard}
-          title="Billing Preferences"
-          description="Plan and billing defaults for subscription controls"
+          title="Billing and Plan Governance"
+          description="Network commercial defaults for trial and renewal governance"
         >
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             <div className="space-y-2">

@@ -54,9 +54,9 @@ export default async function PlatformMembersPage() {
   return (
     <div className="space-y-5">
       <PlatformMobileHero
-        eyebrow="Members Workspace"
-        title="Cross-Church Directory"
-        description="Review member records across church workspaces with clear mobile cards and quick details."
+        eyebrow="Member Signals"
+        title="Cross-Church Membership Intelligence"
+        description="Review membership distribution and contact coverage across churches for network oversight."
         badge={snapshot.totals.totalMembers + " members"}
         actions={[
           { href: "/platform", label: "Back to Dashboard" },
@@ -66,10 +66,10 @@ export default async function PlatformMembersPage() {
 
       <PlatformMobileAttentionStrip>
         <p className="font-medium">
-          {snapshot.totals.activeMembers} active members across {churchCount} church workspaces.
+          {snapshot.totals.activeMembers} active members across {churchCount} churches.
         </p>
         <p className="mt-1 text-xs text-amber-800">
-          Use member detail cards to inspect contact information and household links.
+          Use this as a network signal surface; member record changes remain church-scoped.
         </p>
       </PlatformMobileAttentionStrip>
 
@@ -77,7 +77,7 @@ export default async function PlatformMembersPage() {
         <PlatformMobileStatCard label="Total Members" value={snapshot.totals.totalMembers} hint="All member records" />
         <PlatformMobileStatCard label="Active" value={snapshot.totals.activeMembers} hint="Currently active" />
         <PlatformMobileStatCard label="Household Linked" value={snapshot.totals.householdLinked} hint="Members with household" />
-        <PlatformMobileStatCard label="Churches" value={churchCount} hint="Workspaces represented" />
+        <PlatformMobileStatCard label="Churches" value={churchCount} hint="Churches represented" />
       </div>
 
       <div className="flex gap-2 overflow-x-auto pb-1">
@@ -151,13 +151,13 @@ export default async function PlatformMembersPage() {
             })
           ) : (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
-              No members found in this workspace view.
+              No members found in this oversight view.
             </div>
           )}
         </div>
       </PlatformMobileSectionCard>
 
-      <PlatformMobileSectionCard title="Related Workspaces">
+      <PlatformMobileSectionCard title="Related Oversight Surfaces">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <Link
             href="/platform/households"

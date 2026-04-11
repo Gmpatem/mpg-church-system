@@ -86,6 +86,12 @@ export function ChurchShell({
     previousPathRef.current = pathname;
   }, [pathname]);
 
+  const isFocusedTreasuryEntry =
+    pathname.includes("/treasury/in/new") ||
+    pathname.includes("/treasury/out/new") ||
+    /\/treasury\/in\/[^/]+\/edit$/.test(pathname) ||
+    /\/treasury\/out\/[^/]+\/edit$/.test(pathname);
+
   return (
     <div className="min-h-screen bg-white md:grid md:grid-cols-[272px_minmax(0,1fr)]">
       <aside className="hidden border-r border-slate-200 bg-slate-950 md:sticky md:top-0 md:block md:h-screen">
@@ -105,6 +111,7 @@ export function ChurchShell({
           roleLabel={roleLabel}
           showAccessControl={showAccessControl}
           notifications={notifications}
+          hideMobileModuleRail={isFocusedTreasuryEntry}
         />
 
         <main className="px-4 py-4 pb-24 sm:px-5 md:px-6 md:py-5 md:pb-6 xl:px-8">
@@ -117,13 +124,17 @@ export function ChurchShell({
         </main>
       </div>
 
-      <ChurchMobileBottomNav
-        churchSlug={church.slug}
-        roleLabel={roleLabel}
-        showAccessControl={showAccessControl}
-        pendingApprovalCount={pendingApprovalCount}
-      />
-      <ChurchMobileFab churchSlug={church.slug} />
+      {!isFocusedTreasuryEntry ? (
+        <>
+          <ChurchMobileBottomNav
+            churchSlug={church.slug}
+            roleLabel={roleLabel}
+            showAccessControl={showAccessControl}
+            pendingApprovalCount={pendingApprovalCount}
+          />
+          <ChurchMobileFab churchSlug={church.slug} />
+        </>
+      ) : null}
     </div>
   );
 }

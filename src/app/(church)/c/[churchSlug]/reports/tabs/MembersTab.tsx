@@ -1,5 +1,5 @@
 import { getReportsTabData } from "@/features/reports/queries";
-import { MembersTabClient } from "./MembersTabClient";
+import { MembersAnalyticsTabClient } from "./MembersAnalyticsTabClient";
 
 export async function MembersTab({
   churchSlug,
@@ -11,5 +11,5 @@ export async function MembersTab({
   dateTo?: string;
 }) {
   const data = await getReportsTabData(churchSlug, "members", { dateFrom, dateTo });
-  return <MembersTabClient members={data.members} />;
+  return <MembersAnalyticsTabClient members={data.members} />;
 }

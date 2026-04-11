@@ -10,12 +10,14 @@ interface OutflowEditPageProps {
 
 export default async function OutflowEditPage({ params }: OutflowEditPageProps) {
   const { churchSlug, entryId } = await params;
-  const [entry, options] = await Promise.all([
-    getTreasuryOutflowById(churchSlug, entryId),
-    getTreasuryFormOptions(churchSlug),
-  ]);
+  const entry = await getTreasuryOutflowById(churchSlug, entryId);
 
   if (!entry) notFound();
+
+  const options = await getTreasuryFormOptions(churchSlug, {
+    includeFundIds: entry.fund_id ? [entry.fund_id] : [],
+    includeDepartmentIds: entry.department_id ? [entry.department_id] : [],
+  });
 
   return (
     <div className="space-y-6">

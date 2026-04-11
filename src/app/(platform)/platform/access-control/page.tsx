@@ -1,83 +1,133 @@
 import Link from "next/link";
-import { ChevronRight, LockKeyhole, ShieldCheck, UserCheck, Users } from "lucide-react";
 import {
-  PlatformMobileAttentionStrip,
-  PlatformMobileHero,
-  PlatformMobileSectionCard,
-  PlatformMobileStatCard,
-} from "@/features/platform/components/PlatformMobilePrimitives";
-import { getPlatformAccessControlSnapshot } from "@/features/platform/queries";
+  PlatformExecutiveHero,
+  PlatformKpiCard,
+  PlatformKpiGrid,
+  PlatformSectionCard,
+} from "@/features/platform/components/PlatformOversightPrimitives";
+import {
+  getPlatformAccessControlSnapshot,
+  getPlatformChurchOversightData,
+} from "@/features/platform/queries";
 
 export default async function PlatformAccessControlPage() {
-  const snapshot = await getPlatformAccessControlSnapshot();
+  const [snapshot, oversight] = await Promise.all([
+    getPlatformAccessControlSnapshot(),
+    getPlatformChurchOversightData(),
+  ]);
 
   return (
-    <div className="space-y-5">
-      <PlatformMobileHero
-        eyebrow="Access Control"
-        title="Role & Access Overview"
-        description="Monitor platform-level and church-level role assignments from one mobile admin workspace."
-        badge={snapshot.platformRoleCount + " platform roles"}
+    <div className="space-y-5 md:space-y-6">
+      <PlatformExecutiveHero
+        eyebrow="Access and Governance"
+        title="Platform Governance Authority Console"
+        description="Monitor platform-level authority assignments, access posture, and security risks across the church network."
+        badges={[
+          `${snapshot.platformRoleCount} platform roles`,
+          `${snapshot.churchRoleCount} church role assignments`,
+          `${snapshot.pendingOrInactiveChurchUsers} non-active users`,
+        ]}
         actions={[
-          { href: "/platform/settings", label: "Security Settings" },
-          { href: "/platform/members", label: "Member Access View" },
+          { href: "/platform/settings", label: "Open Policy Settings" },
+          { href: "/platform/oversight", label: "Open Oversight", variant: "secondary" },
         ]}
       />
 
-      <PlatformMobileAttentionStrip>
-        <p className="font-medium">
-          {snapshot.pendingOrInactiveChurchUsers} church user accounts are not in active status.
-        </p>
-        <p className="mt-1 text-xs text-amber-800">
-          Review role assignment quality regularly to keep permissions aligned across churches.
-        </p>
-      </PlatformMobileAttentionStrip>
+      <PlatformKpiGrid>
+        <PlatformKpiCard
+          label="Platform Roles"
+          value={snapshot.platformRoleCount}
+          hint="Global governance assignments"
+        />
+        <PlatformKpiCard
+          label="Church Roles"
+          value={snapshot.churchRoleCount}
+          hint="Local governance assignments"
+        />
+        <PlatformKpiCard
+          label="Active Church Users"
+          value={snapshot.activeChurchUsers}
+          hint="Current active accounts"
+          tone="positive"
+        />
+        <PlatformKpiCard
+          label="Pending or Inactive"
+          value={snapshot.pendingOrInactiveChurchUsers}
+          hint="Access hygiene backlog"
+          tone={snapshot.pendingOrInactiveChurchUsers > 0 ? "warning" : "positive"}
+        />
+        <PlatformKpiCard
+          label="Intervention Churches"
+          value={oversight.summary.needsInterventionChurches}
+          hint="Need governance follow-up"
+          tone="warning"
+        />
+        <PlatformKpiCard
+          label="Critical Churches"
+          value={oversight.summary.criticalChurches}
+          hint="High-risk operating status"
+          tone="critical"
+        />
+      </PlatformKpiGrid>
 
-      <div className="grid grid-cols-2 gap-3">
-        <PlatformMobileStatCard label="Platform Roles" value={snapshot.platformRoleCount} hint="Global assignments" />
-        <PlatformMobileStatCard label="Church Roles" value={snapshot.churchRoleCount} hint="Scoped assignments" />
-        <PlatformMobileStatCard label="Active Church Users" value={snapshot.activeChurchUsers} hint="Status active" />
-        <PlatformMobileStatCard label="Pending/Inactive" value={snapshot.pendingOrInactiveChurchUsers} hint="Needs review" />
-      </div>
-
-      <PlatformMobileSectionCard title="Access Management Surfaces">
-        <div className="space-y-2">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-            Platform role assignments are managed in the platform owner/admin workspace.
+      <div className="grid gap-5 xl:grid-cols-2">
+        <PlatformSectionCard
+          title="Governance Focus"
+          description="Platform-level governance responsibilities and intervention posture."
+        >
+          <div className="space-y-2.5 text-sm text-slate-700">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="font-medium text-slate-900">Authority Integrity</p>
+              <p className="mt-1">
+                Validate that platform-level roles are limited to approved system owner and conference/union leadership users.
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="font-medium text-slate-900">Access Hygiene</p>
+              <p className="mt-1">
+                {snapshot.pendingOrInactiveChurchUsers} church users need status review to keep permissions clean.
+              </p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="font-medium text-slate-900">Governance Response</p>
+              <p className="mt-1">
+                {oversight.summary.needsInterventionChurches} churches are in intervention scope and should be tracked with support and oversight teams.
+              </p>
+            </div>
           </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-            Church role assignments remain scoped to each church workspace and access-control module.
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
-            User status trends help identify pending onboarding or inactive accounts that need follow-up.
-          </div>
-        </div>
-      </PlatformMobileSectionCard>
+        </PlatformSectionCard>
 
-      <PlatformMobileSectionCard title="Related Workspaces">
-        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-          <Link
-            href="/platform/settings"
-            className="inline-flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700"
-          >
-            Settings
-            <LockKeyhole className="h-4 w-4 text-slate-400" />
-          </Link>
-          <Link
-            href="/platform/churches"
-            className="inline-flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700"
-          >
-            Churches
-            <ChevronRight className="h-4 w-4 text-slate-400" />
-          </Link>
-        </div>
-      </PlatformMobileSectionCard>
-
-      <div className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-600">
-        <ShieldCheck className="h-4 w-4 text-slate-500" />
-        <UserCheck className="h-4 w-4 text-slate-500" />
-        <Users className="h-4 w-4 text-slate-500" />
-        Access snapshots are live and ready for deeper policy tooling.
+        <PlatformSectionCard
+          title="Policy Surfaces"
+          description="Primary governance pages for policy, support, and risk monitoring."
+        >
+          <div className="grid gap-2">
+            <Link
+              href="/platform/settings"
+              className="inline-flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700"
+            >
+              Platform Governance Settings
+            </Link>
+            <Link
+              href="/platform/oversight"
+              className="inline-flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700"
+            >
+              Intervention Oversight Queue
+            </Link>
+            <Link
+              href="/platform/support"
+              className="inline-flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700"
+            >
+              Support Operations
+            </Link>
+            <Link
+              href="/platform/reports"
+              className="inline-flex items-center justify-between rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700"
+            >
+              Network Analytics
+            </Link>
+          </div>
+        </PlatformSectionCard>
       </div>
     </div>
   );

@@ -1,7 +1,8 @@
 "use client";
 
-import { Bell, Plus, Search } from "lucide-react";
+import { AlertTriangle, Bell, Search } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -18,6 +19,7 @@ import {
   markAllPlatformNotificationsReadAction,
   markPlatformNotificationReadAction,
 } from "@/features/platform/actions";
+import { createClient } from "@/lib/supabase/client";
 
 type PlatformNotification = {
   id: string;
@@ -53,6 +55,8 @@ export default function PlatformHeader({
   email,
   notifications = [],
 }: PlatformHeaderProps) {
+  const router = useRouter();
+  const supabase = createClient();
   const unreadCount = notifications.filter((item) => item.is_unread).length;
   const [isPending, startTransition] = useTransition();
 
@@ -70,6 +74,12 @@ export default function PlatformHeader({
     });
   }
 
+  async function handleSignOut() {
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
+
   return (
     <header className="sticky top-0 z-40 flex h-16 items-center justify-between border-b border-gray-200 bg-white px-6">
       <div className="flex-1 max-w-xl">
@@ -77,17 +87,17 @@ export default function PlatformHeader({
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             type="text"
-            placeholder="Search churches, members, or activities..."
+            placeholder="Search churches, regions, or risk signals..."
             className="h-10 w-full rounded-md border border-gray-200 bg-gray-50 pl-10 pr-4 text-sm outline-none transition-colors focus:bg-white focus:ring-2 focus:ring-blue-500"
           />
         </div>
       </div>
 
       <div className="ml-6 flex items-center gap-4">
-        <Link href="/platform/churches">
+        <Link href="/platform/oversight">
           <Button className="gap-2 bg-blue-600 hover:bg-blue-700">
-            <Plus className="h-4 w-4" />
-            <span>Add Church</span>
+            <AlertTriangle className="h-4 w-4" />
+            <span>Intervention Queue</span>
           </Button>
         </Link>
 
@@ -180,7 +190,9 @@ export default function PlatformHeader({
               <Link href="/platform/settings">Settings</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">Logout</DropdownMenuItem>
+            <DropdownMenuItem className="text-red-600" onSelect={handleSignOut}>
+              Logout
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

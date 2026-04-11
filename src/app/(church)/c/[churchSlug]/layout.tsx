@@ -1,4 +1,4 @@
-import { requireChurchAccess } from "@/features/access/queries";
+import { requireChurchWorkspaceAccess } from "@/features/access/queries";
 import { getChurchNotifications } from "@/features/church-notifications/queries";
 import { getMyPendingApprovalCount } from "@/features/approvals/queries";
 import { ChurchShell } from "@/components/navigation/ChurchShell";
@@ -33,7 +33,7 @@ function canViewAccessControl(roles: string[]): boolean {
 export default async function ChurchLayout({ children, params }: ChurchLayoutProps) {
   const { churchSlug } = await params;
 
-  const ctx = await requireChurchAccess(churchSlug);
+  const ctx = await requireChurchWorkspaceAccess(churchSlug);
   const [notifications, pendingApprovalCount] = await Promise.all([
     getChurchNotifications(ctx.churchId),
     getMyPendingApprovalCount(ctx.churchId, ctx.userId, ctx.roles),
@@ -65,6 +65,5 @@ export default async function ChurchLayout({ children, params }: ChurchLayoutPro
     </ChurchShell>
   );
 }
-
 
 

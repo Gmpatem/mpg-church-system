@@ -8,6 +8,7 @@ import {
   ArrowRight
 } from "lucide-react";
 import Link from "next/link";
+import { WorkspaceSectionCard } from "@/components/workspace";
 
 interface DashboardActivityFeedProps {
   churchId: string;
@@ -121,15 +122,20 @@ export async function DashboardActivityFeed({ churchId, churchSlug }: DashboardA
     .slice(0, 6);
 
   return (
-    <div className="mobile-fade-up rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-        <div>
-          <h2 className="text-lg font-semibold tracking-tight text-slate-950">Recent Activity</h2>
-          <p className="mt-0.5 text-sm text-slate-500">Latest actions across your church</p>
-        </div>
+    <WorkspaceSectionCard
+      title="Recent Activity"
+      description="Latest updates across member, events, treasury, and departments."
+    >
+      <div className="mb-4 flex justify-end">
+        <Link
+          href={`/c/${churchSlug}/office`}
+          className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+        >
+          Open Office Queue
+        </Link>
       </div>
 
-      <div className="p-5">
+      <div>
         {activities.length === 0 ? (
           <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
             <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
@@ -139,14 +145,14 @@ export async function DashboardActivityFeed({ churchId, churchSlug }: DashboardA
             <p className="mt-1 text-xs text-slate-400">Actions will appear here as you use the system</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="space-y-2.5">
             {activities.map((activity) => {
               const { icon: Icon, color } = activityIcons[activity.type];
               return (
                 <Link
                   key={activity.id}
                   href={activity.link}
-                  className="mobile-touch-feedback group flex items-start gap-3 rounded-xl p-2 transition hover:bg-slate-50"
+                  className="mobile-touch-feedback group flex items-start gap-3 rounded-xl border border-slate-200 px-3 py-3 transition hover:border-slate-300 hover:bg-slate-50"
                 >
                   <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${color}`}>
                     <Icon className="h-4 w-4" />
@@ -164,6 +170,6 @@ export async function DashboardActivityFeed({ churchId, churchSlug }: DashboardA
           </div>
         )}
       </div>
-    </div>
+    </WorkspaceSectionCard>
   );
 }

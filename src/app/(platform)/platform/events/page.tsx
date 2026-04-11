@@ -48,9 +48,9 @@ export default async function PlatformEventsPage() {
   return (
     <div className="space-y-5">
       <PlatformMobileHero
-        eyebrow="Events Workspace"
-        title="Cross-Church Events"
-        description="Track upcoming programs, monitor approval flow, and open event details from one mobile workspace."
+        eyebrow="Event Signals"
+        title="Cross-Church Activity Monitor"
+        description="Track upcoming activity and approval pressure across churches for governance oversight."
         badge={snapshot.totals.upcomingEvents + " upcoming"}
         actions={[
           { href: "/platform", label: "Back to Dashboard" },
@@ -65,7 +65,7 @@ export default async function PlatformEventsPage() {
             : "No events are waiting for approval."}
         </p>
         <p className="mt-1 text-xs text-amber-800">
-          Keep event status and workflow state current for accurate planning.
+          Use this stream to identify approval bottlenecks; operational event changes remain church-level.
         </p>
       </PlatformMobileAttentionStrip>
 
@@ -142,13 +142,13 @@ export default async function PlatformEventsPage() {
             })
           ) : (
             <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-6 text-center text-sm text-slate-500">
-              No events found in this workspace view.
+              No events found in this oversight view.
             </div>
           )}
         </div>
       </PlatformMobileSectionCard>
 
-      <PlatformMobileSectionCard title="Related Workspaces">
+      <PlatformMobileSectionCard title="Related Oversight Surfaces">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Link
             href="/platform/calendar"

@@ -34,6 +34,28 @@ function getDeltaSummary(beforeSnapshot: any, afterSnapshot: any) {
     }));
 }
 
+const AUDIT_ENTITY_LABELS: Record<string, string> = {
+  treasury_fund: "Fund",
+  treasury_inflow: "Money In",
+  treasury_outflow: "Money Out",
+};
+
+const AUDIT_ACTION_LABELS: Record<string, string> = {
+  create: "Created",
+  update: "Updated",
+  delete: "Deleted",
+};
+
+function getAuditEntityLabel(value: unknown) {
+  const key = typeof value === "string" ? value : "";
+  return AUDIT_ENTITY_LABELS[key] ?? key.replaceAll("_", " ");
+}
+
+function getAuditActionLabel(value: unknown) {
+  const key = typeof value === "string" ? value : "";
+  return AUDIT_ACTION_LABELS[key] ?? key.replaceAll("_", " ");
+}
+
 export default async function TreasuryAuditPage({
   params,
   searchParams,
@@ -210,10 +232,10 @@ export default async function TreasuryAuditPage({
                   <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="rounded-full bg-slate-800 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-white">
-                        {String(row.entity_type).replaceAll("_", " ")}
+                        {getAuditEntityLabel(row.entity_type)}
                       </span>
                       <span className="rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-blue-700">
-                        {row.action_type}
+                        {getAuditActionLabel(row.action_type)}
                       </span>
                       {row.correction_note ? (
                         <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-800">

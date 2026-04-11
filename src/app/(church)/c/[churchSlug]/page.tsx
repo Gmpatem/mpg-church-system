@@ -3,7 +3,6 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { WorkspaceHero } from "@/components/workspace";
 import { DashboardStatsSection } from "./DashboardStatsSection";
-import { DashboardQuickActions } from "./DashboardQuickActions";
 import { DashboardRecentSection } from "./DashboardRecentSection";
 import { DashboardActivityFeed } from "./DashboardActivityFeed";
 import { PageSpinner } from "@/components/feedback/PageSpinner";
@@ -117,8 +116,8 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
         size="compact"
         eyebrow="Church Dashboard"
         title={church.name ?? churchSlug}
-        description="Central operations view for members, departments, treasury, events, and reporting."
-        badges={["Live workspace"]}
+        description="Executive operations view for members, ministry activity, events, and church follow-up work."
+        badges={["Live workspace", "Operations overview"]}
         actions={[
           { label: "Manage Members", href: `/c/${churchSlug}/members`, variant: "primary" },
           { label: "Open Events", href: `/c/${churchSlug}/events`, variant: "secondary" },
@@ -134,15 +133,15 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
         <DashboardStatsSection churchId={church.id} churchSlug={churchSlug} />
       </Suspense>
 
-      <DashboardQuickActions churchSlug={churchSlug} />
+      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
+        <Suspense fallback={<PageSpinner />}>
+          <DashboardRecentSection churchId={church.id} churchSlug={churchSlug} />
+        </Suspense>
 
-      <Suspense fallback={<PageSpinner />}>
-        <DashboardRecentSection churchId={church.id} churchSlug={churchSlug} />
-      </Suspense>
-
-      <Suspense fallback={<PageSpinner />}>
-        <DashboardActivityFeed churchId={church.id} churchSlug={churchSlug} />
-      </Suspense>
+        <Suspense fallback={<PageSpinner />}>
+          <DashboardActivityFeed churchId={church.id} churchSlug={churchSlug} />
+        </Suspense>
+      </div>
     </div>
   );
 }

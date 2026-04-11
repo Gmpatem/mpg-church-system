@@ -1,13 +1,13 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
-import { 
-  UserPlus, 
-  Mail, 
-  Phone, 
-  ArrowRight,
+import {
+  UserPlus,
+  Mail,
+  Phone,
   Calendar,
-  Clock
+  Clock,
 } from "lucide-react";
+import { WorkspaceSectionCard } from "@/components/workspace";
 
 interface DashboardRecentSectionProps {
   churchId: string;
@@ -62,171 +62,153 @@ export async function DashboardRecentSection({ churchId, churchSlug }: Dashboard
     .limit(3);
 
   return (
-    <div className="grid gap-4 md:gap-5 lg:grid-cols-2">
-      {/* Recent Members Card */}
-      <div className="mobile-fade-up rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight text-slate-950">Recent Members</h2>
-            <p className="mt-0.5 text-sm text-slate-500">Newest additions to your church</p>
-          </div>
-          <Link 
+    <div className="grid gap-5 xl:grid-cols-2">
+      <WorkspaceSectionCard
+        title="Recent Members"
+        description="Newest people added to the church workspace."
+      >
+        <div className="mb-4 flex justify-end">
+          <Link
             href={`/c/${churchSlug}/members`}
-            className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium text-blue-600 transition hover:bg-blue-50"
+            className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
           >
-            View all
-            <ArrowRight className="h-4 w-4" />
+            Open Members
           </Link>
         </div>
 
-        <div className="p-5">
-          {!recentMembers || recentMembers.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
-                <UserPlus className="h-6 w-6 text-slate-400" />
-              </div>
-              <p className="mt-3 text-sm font-medium text-slate-600">No members yet</p>
-              <p className="mt-1 text-xs text-slate-400">Add members to see them here</p>
-              <Link
-                href={`/c/${churchSlug}/members/new`}
-                className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-              >
-                Add First Member
-              </Link>
+        {!recentMembers || recentMembers.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+              <UserPlus className="h-6 w-6 text-slate-400" />
             </div>
-          ) : (
-            <div className="space-y-3">
-              {recentMembers.map((member) => (
-                <Link
-                  key={member.id}
-                  href={`/c/${churchSlug}/members/${member.id}`}
-                  className="mobile-touch-feedback group flex items-center gap-3 rounded-xl border border-slate-100 bg-slate-50/50 p-3 transition hover:border-blue-200 hover:bg-blue-50/50"
-                >
-                  {/* Avatar */}
-                  <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white ${getAvatarColor(member.id)}`}>
-                    {getInitials(member.first_name, member.last_name)}
-                  </div>
-                  
-                  {/* Info */}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-slate-950">
-                      {[member.first_name, member.last_name].filter(Boolean).join(" ") || "Unnamed member"}
-                    </p>
-                    <div className="mt-0.5 flex items-center gap-3 text-xs text-slate-500">
-                      {member.email && (
-                        <span className="flex items-center gap-1">
-                          <Mail className="h-3 w-3" />
-                          <span className="truncate max-w-[120px]">{member.email}</span>
-                        </span>
-                      )}
-                      {!member.email && member.phone && (
-                        <span className="flex items-center gap-1">
-                          <Phone className="h-3 w-3" />
-                          {member.phone}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                  
-                  {/* Time */}
-                  <span className="shrink-0 text-xs text-slate-400">
-                    {formatRelativeTime(member.created_at)}
-                  </span>
-                </Link>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Upcoming Events Card */}
-      <div className="mobile-fade-up rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="flex items-center justify-between border-b border-slate-200 px-5 py-4">
-          <div>
-            <h2 className="text-lg font-semibold tracking-tight text-slate-950">Upcoming Events</h2>
-            <p className="mt-0.5 text-sm text-slate-500">Next scheduled activities</p>
+            <p className="mt-3 text-sm font-medium text-slate-600">No members yet</p>
+            <p className="mt-1 text-xs text-slate-400">Add members to see them here</p>
+            <Link
+              href={`/c/${churchSlug}/members/new`}
+              className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+            >
+              Add First Member
+            </Link>
           </div>
-          <Link 
+        ) : (
+          <div className="space-y-2.5">
+            {recentMembers.map((member) => (
+              <Link
+                key={member.id}
+                href={`/c/${churchSlug}/members/${member.id}`}
+                className="mobile-touch-feedback group flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-3 transition hover:border-blue-200 hover:bg-blue-50/30"
+              >
+                <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold text-white ${getAvatarColor(member.id)}`}>
+                  {getInitials(member.first_name, member.last_name)}
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold text-slate-950">
+                    {[member.first_name, member.last_name].filter(Boolean).join(" ") || "Unnamed member"}
+                  </p>
+                  <div className="mt-0.5 flex items-center gap-3 text-xs text-slate-500">
+                    {member.email ? (
+                      <span className="flex items-center gap-1">
+                        <Mail className="h-3 w-3" />
+                        <span className="truncate max-w-[160px]">{member.email}</span>
+                      </span>
+                    ) : member.phone ? (
+                      <span className="flex items-center gap-1">
+                        <Phone className="h-3 w-3" />
+                        {member.phone}
+                      </span>
+                    ) : (
+                      <span>No contact</span>
+                    )}
+                  </div>
+                </div>
+
+                <span className="shrink-0 text-xs text-slate-400">
+                  {formatRelativeTime(member.created_at)}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </WorkspaceSectionCard>
+
+      <WorkspaceSectionCard
+        title="Upcoming Events"
+        description="Next scheduled activities and ministry calendar moments."
+      >
+        <div className="mb-4 flex justify-end">
+          <Link
             href={`/c/${churchSlug}/events`}
-            className="flex items-center gap-1 rounded-lg px-3 py-1.5 text-sm font-medium text-blue-600 transition hover:bg-blue-50"
+            className="inline-flex items-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
           >
-            Calendar
-            <ArrowRight className="h-4 w-4" />
+            Open Events
           </Link>
         </div>
 
-        <div className="p-5">
-          {!upcomingEvents || upcomingEvents.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
-                <Calendar className="h-6 w-6 text-slate-400" />
-              </div>
-              <p className="mt-3 text-sm font-medium text-slate-600">No upcoming events</p>
-              <p className="mt-1 text-xs text-slate-400">Schedule events to see them here</p>
-              <Link
-                href={`/c/${churchSlug}/events`}
-                className="mt-4 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white transition hover:bg-blue-700"
-              >
-                Create Event
-              </Link>
+        {!upcomingEvents || upcomingEvents.length === 0 ? (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-slate-200 bg-slate-50 px-6 py-12 text-center">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100">
+              <Calendar className="h-6 w-6 text-slate-400" />
             </div>
-          ) : (
-            <div className="space-y-3">
-              {upcomingEvents.map((event, index) => {
-                const eventDate = new Date(event.start_datetime);
-                const isToday = eventDate.toDateString() === new Date().toDateString();
-                
-                return (
-                  <Link
-                    key={event.id}
-                    href={`/c/${churchSlug}/events`}
-                    className="mobile-touch-feedback group flex items-center gap-4 rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition hover:border-amber-200 hover:bg-amber-50/50"
-                  >
-                    {/* Date Box */}
-                    <div className={`flex h-14 w-14 shrink-0 flex-col items-center justify-center rounded-xl ${isToday ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
-                      <span className="text-xs font-medium uppercase">
-                        {eventDate.toLocaleDateString("en-US", { month: "short" })}
+            <p className="mt-3 text-sm font-medium text-slate-600">No upcoming events</p>
+            <p className="mt-1 text-xs text-slate-400">Schedule events to see them here</p>
+            <Link
+              href={`/c/${churchSlug}/events`}
+              className="mt-4 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+            >
+              Create Event
+            </Link>
+          </div>
+        ) : (
+          <div className="space-y-2.5">
+            {upcomingEvents.map((event) => {
+              const eventDate = new Date(event.start_datetime);
+              const isToday = eventDate.toDateString() === new Date().toDateString();
+
+              return (
+                <Link
+                  key={event.id}
+                  href={`/c/${churchSlug}/events`}
+                  className="mobile-touch-feedback group flex items-center gap-3 rounded-xl border border-slate-200 px-3 py-3 transition hover:border-cyan-200 hover:bg-cyan-50/30"
+                >
+                  <div className={`flex h-12 w-12 shrink-0 flex-col items-center justify-center rounded-lg ${isToday ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-600"}`}>
+                    <span className="text-[10px] font-semibold uppercase tracking-wide">
+                      {eventDate.toLocaleDateString("en-US", { month: "short" })}
+                    </span>
+                    <span className="text-base font-bold">{eventDate.getDate()}</span>
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-semibold text-slate-950">{event.title}</p>
+                    <div className="mt-0.5 flex items-center gap-2 text-xs text-slate-500">
+                      <Clock className="h-3 w-3" />
+                      <span>
+                        {eventDate.toLocaleTimeString("en-US", {
+                          hour: "numeric",
+                          minute: "2-digit",
+                          hour12: true,
+                        })}
                       </span>
-                      <span className="text-xl font-bold">
-                        {eventDate.getDate()}
-                      </span>
+                      {event.location ? (
+                        <>
+                          <span>•</span>
+                          <span className="truncate max-w-[120px]">{event.location}</span>
+                        </>
+                      ) : null}
                     </div>
-                    
-                    {/* Event Info */}
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-semibold text-slate-950">
-                        {event.title}
-                      </p>
-                      <div className="mt-1 flex items-center gap-2 text-xs text-slate-500">
-                        <Clock className="h-3 w-3" />
-                        <span>
-                          {eventDate.toLocaleTimeString("en-US", { 
-                            hour: "numeric", 
-                            minute: "2-digit",
-                            hour12: true 
-                          })}
-                        </span>
-                        {event.location && (
-                          <>
-                            <span>•</span>
-                            <span className="truncate max-w-[100px]">{event.location}</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {isToday && (
-                      <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-700">
-                        Today
-                      </span>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
-          )}
-        </div>
-      </div>
+                  </div>
+
+                  {isToday ? (
+                    <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-medium text-amber-700">
+                      Today
+                    </span>
+                  ) : null}
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </WorkspaceSectionCard>
     </div>
   );
 }

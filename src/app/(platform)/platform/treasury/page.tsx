@@ -51,9 +51,9 @@ export default async function PlatformTreasuryPage() {
   return (
     <div className="space-y-5">
       <PlatformMobileHero
-        eyebrow="Treasury Workspace"
-        title="Platform Treasury"
-        description="Track inflows and outflows across church workspaces from a mobile-first operations view."
+        eyebrow="Treasury Signals"
+        title="Network Financial Signal Monitor"
+        description="Track aggregate inflow and outflow posture across churches for executive oversight."
         badge={snapshot.totals.fundCount + " funds"}
         actions={[
           { href: "/platform", label: "Back to Dashboard" },
@@ -65,7 +65,7 @@ export default async function PlatformTreasuryPage() {
         <p className="font-medium">
           Net balance is {formatCurrency(snapshot.totals.netBalance)} across all tracked funds.
         </p>
-        <p className="mt-1 text-xs text-amber-800">Review recent inflows regularly to keep treasury records aligned across churches.</p>
+        <p className="mt-1 text-xs text-amber-800">Use this as an oversight summary; transaction entry remains church-scoped.</p>
       </PlatformMobileAttentionStrip>
 
       <div className="grid grid-cols-2 gap-3">
@@ -104,7 +104,7 @@ export default async function PlatformTreasuryPage() {
         </div>
       </PlatformMobileSectionCard>
 
-      <PlatformMobileSectionCard title="Related Workspaces">
+      <PlatformMobileSectionCard title="Related Oversight Surfaces">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
           <Link
             href="/platform/reports"

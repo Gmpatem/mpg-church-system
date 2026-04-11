@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { getTreasuryOutflows, getTreasuryFormOptions } from "@/features/treasury/queries";
 import { WorkspaceHero } from "@/components/workspace";
+import { getLabel, outflowTypeLabels } from "@/lib/display-maps";
 
 interface TreasuryOutflowsPageProps {
   params: Promise<{ churchSlug: string }>;
@@ -125,44 +126,73 @@ export default async function TreasuryOutflowsPage({ params, searchParams }: Tre
         {outflows.length === 0 ? (
           <div className="px-6 py-10 text-sm text-slate-600">No outflow records matched your filters.</div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Date</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Type</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Amount</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Payee</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Purpose</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Reference</th>
-                  <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Action</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 bg-white">
-                {outflows.map((item: any) => (
-                  <tr key={item.id}>
-                    <td className="px-6 py-4 text-sm text-slate-600">{item.outflow_date}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{item.outflow_type}</td>
-                    <td className="px-6 py-4 text-sm font-medium text-slate-900">{Number(item.amount).toFixed(2)}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{item.payee ?? "—"}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{item.purpose}</td>
-                    <td className="px-6 py-4 text-sm text-slate-600">{item.reference_number ?? "—"}</td>
-                    <td className="px-6 py-4 text-sm flex gap-3">
-                      <Link href={`/c/${churchSlug}/treasury/out/${item.id}/edit`} className="text-slate-700 hover:underline">
-                        Edit
-                      </Link>
-                      <Link
-                        href={`/c/${churchSlug}/treasury/audit?entityId=${item.id}`}
-                        className="text-amber-700 hover:underline"
-                      >
-                        View Audit
-                      </Link>
-                    </td>
+          <>
+            <div className="space-y-3 p-3 md:hidden">
+              {outflows.map((item: any) => (
+                <div key={item.id} className="rounded-xl border border-slate-200 bg-white p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="text-sm font-semibold text-slate-900">{getLabel(outflowTypeLabels, item.outflow_type)}</p>
+                      <p className="mt-1 text-xs text-slate-500">{item.outflow_date}</p>
+                    </div>
+                    <span className="text-sm font-semibold text-slate-900">{Number(item.amount).toFixed(2)}</span>
+                  </div>
+                  <p className="mt-2 text-xs text-slate-600">{item.payee ?? "No payee"} • {item.reference_number ?? "No reference"}</p>
+                  <p className="mt-1 line-clamp-2 text-xs text-slate-500">{item.purpose ?? "No purpose"}</p>
+                  <div className="mt-3 flex items-center gap-3 text-xs font-medium">
+                    <Link href={`/c/${churchSlug}/treasury/out/${item.id}/edit`} className="text-slate-700 hover:underline">
+                      Edit
+                    </Link>
+                    <Link
+                      href={`/c/${churchSlug}/treasury/audit?entityId=${item.id}`}
+                      className="text-amber-700 hover:underline"
+                    >
+                      View Audit
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="hidden overflow-x-auto md:block">
+              <table className="min-w-full divide-y divide-slate-200">
+                <thead className="bg-slate-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Date</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Type</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Amount</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Payee</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Purpose</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Reference</th>
+                    <th className="px-6 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Action</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-200 bg-white">
+                  {outflows.map((item: any) => (
+                    <tr key={item.id}>
+                      <td className="px-6 py-4 text-sm text-slate-600">{item.outflow_date}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{getLabel(outflowTypeLabels, item.outflow_type)}</td>
+                      <td className="px-6 py-4 text-sm font-medium text-slate-900">{Number(item.amount).toFixed(2)}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{item.payee ?? "—"}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{item.purpose}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{item.reference_number ?? "—"}</td>
+                      <td className="px-6 py-4 text-sm flex gap-3">
+                        <Link href={`/c/${churchSlug}/treasury/out/${item.id}/edit`} className="text-slate-700 hover:underline">
+                          Edit
+                        </Link>
+                        <Link
+                          href={`/c/${churchSlug}/treasury/audit?entityId=${item.id}`}
+                          className="text-amber-700 hover:underline"
+                        >
+                          View Audit
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
     </div>

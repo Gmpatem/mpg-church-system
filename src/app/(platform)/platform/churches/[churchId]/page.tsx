@@ -1,309 +1,205 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Building2, Church, FolderTree, Home, ShieldCheck, Users } from "lucide-react";
 import {
-  PlatformMobileHero,
-  PlatformMobileSectionCard,
-  PlatformMobileStatCard,
-} from "@/features/platform/components/PlatformMobilePrimitives";
-import { getPlatformChurchById, getPlatformChurchStats } from "@/features/platform/queries";
-
-function StatCard({
-  title,
-  value,
-  icon: Icon,
-  description,
-}: {
-  title: string;
-  value: number | string;
-  icon: React.ComponentType<{ className?: string }>;
-  description: string;
-}) {
-  return (
-    <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm transition hover:shadow-md">
-      <div className="flex items-start justify-between">
-        <div className="rounded-xl bg-blue-50 p-3 text-blue-600">
-          <Icon className="h-5 w-5" />
-        </div>
-      </div>
-
-      <div className="mt-4">
-        <p className="text-3xl font-bold text-gray-900">{value}</p>
-        <p className="mt-1 text-sm font-medium text-gray-700">{title}</p>
-        <p className="mt-1 text-xs text-gray-500">{description}</p>
-      </div>
-    </div>
-  );
-}
-
-function DetailRow({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex flex-col gap-1 border-b border-gray-100 py-3 last:border-b-0 sm:flex-row sm:items-center sm:justify-between">
-      <p className="text-sm font-medium text-gray-600">{label}</p>
-      <p className="text-sm text-gray-900">{value || "—"}</p>
-    </div>
-  );
-}
-
-const LANGUAGE_LABELS: Record<string, string> = {
-  EN: "English",
-  FR: "French",
-};
-
-function getLanguageLabel(value?: string | null) {
-  const code = value?.trim().toUpperCase();
-  if (!code) return "English";
-  return LANGUAGE_LABELS[code] ?? "Other";
-}
+  ComplianceAlertRail,
+  PlatformExecutiveHero,
+  PlatformKpiCard,
+  PlatformKpiGrid,
+  PlatformSectionCard,
+} from "@/features/platform/components/PlatformOversightPrimitives";
+import { getPlatformBillingOverview, getPlatformChurchById, getPlatformChurchOversightData } from "@/features/platform/queries";
 
 interface PageProps {
   params: Promise<{ churchId: string }>;
 }
 
+function riskLabel(level: "healthy" | "warning" | "critical" | "inactive") {
+  if (level === "healthy") return "Healthy";
+  if (level === "warning") return "Watchlist";
+  if (level === "critical") return "Critical";
+  return "Inactive";
+}
+
+function reportingLabel(state: "complete" | "partial" | "missing") {
+  if (state === "complete") return "Complete";
+  if (state === "partial") return "Partial";
+  return "Missing";
+}
+
+function billingLabel(state: "trial" | "active" | "attention" | "overdue") {
+  if (state === "trial") return "Trial";
+  if (state === "active") return "Active";
+  if (state === "attention") return "Attention";
+  return "Overdue";
+}
+
 export default async function PlatformChurchDetailPage({ params }: PageProps) {
   const { churchId } = await params;
-  const [church, stats] = await Promise.all([
+
+  const [churchProfile, oversight, billing] = await Promise.all([
     getPlatformChurchById(churchId),
-    getPlatformChurchStats(churchId),
+    getPlatformChurchOversightData(),
+    getPlatformBillingOverview(),
   ]);
+
+  if (!churchProfile) {
+    notFound();
+  }
+
+  const church = oversight.churches.find((item) => item.churchId === churchId);
+  const billingRow = billing.rows.find((item) => item.churchId === churchId);
 
   if (!church) {
     notFound();
   }
 
-  const memberCount = stats.members;
-  const householdCount = stats.households;
-  const departmentCount = stats.departments;
-  const userCount = stats.churchUsers;
-
   return (
-    <div className="space-y-6">
-      <div className="space-y-4 md:hidden">
-        <PlatformMobileHero
-          eyebrow="Church Workspace"
-          title={church.name}
-          description="Platform-level visibility and control for this church workspace."
-          badge={church.is_active ? "Active" : "Inactive"}
-          actions={[
-            { href: "/platform/churches", label: "Back to Churches" },
-            { href: "/c/" + church.slug + "/dashboard", label: "Open Workspace" },
-          ]}
+    <div className="space-y-5 md:space-y-6">
+      <PlatformExecutiveHero
+        eyebrow="Church Oversight Detail"
+        title={church.name}
+        description="Executive drill-down for health, compliance, governance risk, adoption, and intervention readiness."
+        badges={[
+          church.isActive ? "Active" : "Inactive",
+          `${church.healthScore} health score`,
+          `${church.complianceRate}% compliance`,
+        ]}
+        actions={[
+          { href: "/platform/churches", label: "Back to Directory" },
+          { href: `/c/${church.slug}`, label: "Open Church Workspace" },
+          { href: "/platform/oversight", label: "Intervention Queue", variant: "secondary" },
+        ]}
+      />
+
+      {church.interventionReasons.length > 0 ? (
+        <ComplianceAlertRail
+          title={`${church.name} requires intervention`}
+          summary={church.interventionReasons.join(" · ")}
+          href="/platform/support"
+          actionLabel="Open Support"
         />
+      ) : null}
 
-        <div className="grid grid-cols-2 gap-3">
-          <PlatformMobileStatCard label="Members" value={memberCount} hint="Registered members" />
-          <PlatformMobileStatCard label="Households" value={householdCount} hint="Household records" />
-          <PlatformMobileStatCard label="Departments" value={departmentCount} hint="Configured ministry groups" />
-          <PlatformMobileStatCard label="Users" value={userCount} hint="Authenticated church users" />
-        </div>
+      <PlatformKpiGrid className="lg:grid-cols-6">
+        <PlatformKpiCard label="Health" value={church.healthScore} hint={riskLabel(church.riskLevel)} tone={church.riskLevel === "healthy" ? "positive" : church.riskLevel === "warning" ? "warning" : "critical"} />
+        <PlatformKpiCard label="Compliance" value={`${church.complianceRate}%`} hint={reportingLabel(church.reportingState)} tone={church.reportingState === "complete" ? "positive" : church.reportingState === "partial" ? "warning" : "critical"} />
+        <PlatformKpiCard label="Adoption" value={church.adoptionScore} hint="Utilization score" />
+        <PlatformKpiCard label="Members" value={church.memberCount} hint="Network footprint" />
+        <PlatformKpiCard label="Pending Approvals" value={church.pendingApprovalCount} hint="Governance queue" tone={church.pendingApprovalCount > 0 ? "warning" : "positive"} />
+        <PlatformKpiCard label="Open Support" value={church.openSupportTicketCount} hint="Intervention signals" tone={church.openSupportTicketCount > 0 ? "warning" : "positive"} />
+      </PlatformKpiGrid>
 
-        <PlatformMobileSectionCard title="Church Profile">
-          <div className="space-y-3 text-sm">
-            <div>
-              <p className="text-xs uppercase tracking-[0.15em] text-slate-500">Church name</p>
-              <p className="mt-1 font-medium text-slate-900">{church.name}</p>
+      <div className="grid gap-5 xl:grid-cols-2">
+        <PlatformSectionCard
+          title="Governance and Reporting"
+          description="Operational oversight posture based on recent activity and governance flow."
+        >
+          <div className="space-y-3 text-sm text-slate-700">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Reporting State</p>
+              <p className="mt-1 font-medium text-slate-900">{reportingLabel(church.reportingState)}</p>
+              <p className="mt-1 text-xs text-slate-600">Proxy based on recent event, finance, and active-user signals.</p>
             </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.15em] text-slate-500">Language</p>
-              <p className="mt-1 font-medium text-slate-900">{getLanguageLabel(church.default_language)}</p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Pending Approval Load</p>
+              <p className="mt-1 font-medium text-slate-900">{church.pendingApprovalCount} item(s)</p>
             </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.15em] text-slate-500">Timezone</p>
-              <p className="mt-1 font-medium text-slate-900">{church.timezone ?? "Not set"}</p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Support Blockers</p>
+              <p className="mt-1 font-medium text-slate-900">{church.openSupportTicketCount} open · {church.urgentSupportTicketCount} urgent</p>
             </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.15em] text-slate-500">Location</p>
-              <p className="mt-1 font-medium text-slate-900">
-                {[church.city, church.country].filter(Boolean).join(", ") || "Not set"}
-              </p>
-            </div>
-            <div>
-              <p className="text-xs uppercase tracking-[0.15em] text-slate-500">Contact</p>
-              <p className="mt-1 font-medium text-slate-900">{church.email ?? "No email on file"}</p>
-              <p className="text-slate-600">{church.phone ?? "No phone on file"}</p>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Active Users</p>
+              <p className="mt-1 font-medium text-slate-900">{church.activeUserCount} of {church.totalUserCount}</p>
             </div>
           </div>
-        </PlatformMobileSectionCard>
+        </PlatformSectionCard>
 
-        <PlatformMobileSectionCard title="Workspace Status">
-          <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm">
-            <p className="font-medium text-slate-900">
-              {church.is_active ? "Active and available" : "Inactive or disabled"}
-            </p>
-            <p className="text-slate-600">
-              Created {church.created_at ? new Date(church.created_at).toLocaleString() : "—"}
-            </p>
-            <p className="text-slate-600">Slug: {church.slug}</p>
+        <PlatformSectionCard
+          title="Commercial and Lifecycle"
+          description="Billing posture and church lifecycle derived from platform-level settings and oversight signals."
+        >
+          <div className="space-y-3 text-sm text-slate-700">
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Plan Tier</p>
+              <p className="mt-1 font-medium text-slate-900">{billingRow?.planLabel ?? "Starter"}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Billing State</p>
+              <p className="mt-1 font-medium text-slate-900">{billingRow ? billingLabel(billingRow.billingState) : "Unspecified"}</p>
+              <p className="mt-1 text-xs text-slate-600">Trial window: {billing.trialDays} days</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Estimated Renewal</p>
+              <p className="mt-1 font-medium text-slate-900">{billingRow?.estimatedRenewalDate ?? "Not available"}</p>
+            </div>
+            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+              <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Recent Inflow Signal</p>
+              <p className="mt-1 font-medium text-slate-900">{church.recentInflowCount} entries · ${church.recentInflowAmount.toLocaleString("en-US")}</p>
+            </div>
           </div>
-        </PlatformMobileSectionCard>
+        </PlatformSectionCard>
       </div>
 
-      <div className="hidden space-y-6 md:block">
-        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-          <div>
-            <div className="mb-3 flex items-center gap-3">
-              <span
-                className={
-                  church.is_active
-                    ? "rounded-full bg-green-50 px-3 py-1 text-xs font-medium text-green-700"
-                    : "rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-600"
-                }
-              >
-                {church.is_active ? "Active" : "Inactive"}
-              </span>
-              <span className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700">
-                {getLanguageLabel(church.default_language)}
-              </span>
-            </div>
-
-            <h1 className="text-2xl font-bold text-gray-900">{church.name}</h1>
-            <p className="mt-1 text-sm text-gray-500">
-              Platform-level visibility and control for this church workspace.
-            </p>
-            <p className="mt-2 text-sm text-gray-600">
-              Slug: <span className="font-medium text-gray-900">{church.slug}</span>
-            </p>
+      <PlatformSectionCard
+        title="Church Profile and Regional Placement"
+        description="Identity and hierarchy reference for conference/union governance operations."
+      >
+        <div className="grid gap-3 md:grid-cols-2">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Church Name</p>
+            <p className="mt-1 font-medium text-slate-900">{churchProfile.name}</p>
           </div>
-
-          <div className="flex flex-wrap gap-2">
-            <Link
-              href="/platform/churches"
-              className="inline-flex items-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-            >
-              Back to churches
-            </Link>
-            <Link
-              href={"/c/" + church.slug + "/dashboard"}
-              className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-            >
-              Open workspace
-            </Link>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Region</p>
+            <p className="mt-1 font-medium text-slate-900">{church.regionKey}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Language</p>
+            <p className="mt-1 font-medium text-slate-900">{church.defaultLanguage ?? "Not set"}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Timezone</p>
+            <p className="mt-1 font-medium text-slate-900">{church.timezone ?? "Not set"}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Location</p>
+            <p className="mt-1 font-medium text-slate-900">{[church.city, church.country].filter(Boolean).join(", ") || "Not set"}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-3">
+            <p className="text-xs uppercase tracking-[0.14em] text-slate-500">Contact</p>
+            <p className="mt-1 font-medium text-slate-900">{church.email ?? "No email"}</p>
+            <p className="text-xs text-slate-600">{church.phone ?? "No phone"}</p>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatCard
-            title="Members"
-            value={memberCount}
-            icon={Users}
-            description="Registered members linked to this church"
-          />
-          <StatCard
-            title="Households"
-            value={householdCount}
-            icon={Home}
-            description="Household records currently assigned"
-          />
-          <StatCard
-            title="Departments"
-            value={departmentCount}
-            icon={FolderTree}
-            description="Church departments configured in the system"
-          />
-          <StatCard
-            title="Users"
-            value={userCount}
-            icon={ShieldCheck}
-            description="Authenticated users associated with this church"
-          />
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link
+            href="/platform/churches"
+            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700"
+          >
+            Back to Directory
+          </Link>
+          <Link
+            href={`/c/${church.slug}`}
+            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700"
+          >
+            Open Church Workspace
+          </Link>
+          <Link
+            href="/platform/support"
+            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700"
+          >
+            Open Support Queue
+          </Link>
+          <Link
+            href="/platform/reports"
+            className="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700"
+          >
+            Network Reports
+          </Link>
         </div>
-
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
-          <div className="xl:col-span-2">
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="mb-5">
-                <h2 className="text-lg font-semibold text-gray-900">Church Profile</h2>
-                <p className="mt-1 text-sm text-gray-500">
-                  Identity, language, timezone, and contact details for this tenant.
-                </p>
-              </div>
-
-              <div>
-                <DetailRow label="Church name" value={church.name ?? ""} />
-                <DetailRow label="Slug" value={church.slug ?? ""} />
-                <DetailRow label="Default language" value={getLanguageLabel(church.default_language)} />
-                <DetailRow label="Timezone" value={church.timezone ?? ""} />
-                <DetailRow label="Email" value={church.email ?? ""} />
-                <DetailRow label="Phone" value={church.phone ?? ""} />
-                <DetailRow
-                  label="Location"
-                  value={[church.city, church.country].filter(Boolean).join(", ")}
-                />
-                <DetailRow label="Address" value={church.address ?? ""} />
-              </div>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="mb-5 flex items-center gap-3">
-                <div className="rounded-xl bg-blue-50 p-3 text-blue-600">
-                  <Church className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Workspace Status</h2>
-                  <p className="text-sm text-gray-500">Current platform-level church state</p>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Status</p>
-                  <p className="mt-2 text-sm font-medium text-gray-900">
-                    {church.is_active ? "Active and available" : "Inactive or disabled"}
-                  </p>
-                </div>
-
-                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">Created</p>
-                  <p className="mt-2 text-sm font-medium text-gray-900">
-                    {church.created_at
-                      ? new Date(church.created_at).toLocaleString()
-                      : "—"}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-              <div className="mb-5 flex items-center gap-3">
-                <div className="rounded-xl bg-blue-50 p-3 text-blue-600">
-                  <Building2 className="h-5 w-5" />
-                </div>
-                <div>
-                  <h2 className="text-lg font-semibold text-gray-900">Operational Summary</h2>
-                  <p className="text-sm text-gray-500">Quick health snapshot for this tenant</p>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="rounded-lg border border-gray-200 p-4">
-                  <p className="text-sm font-medium text-gray-900">Workspace readiness</p>
-                  <p className="mt-1 text-sm text-gray-500">
-                    {departmentCount > 0 && memberCount > 0
-                      ? "This church has core setup data and appears operational."
-                      : "This church may still need setup work before full operational use."}
-                  </p>
-                </div>
-
-                <div className="rounded-lg border border-gray-200 p-4">
-                  <p className="text-sm font-medium text-gray-900">Admin visibility</p>
-                  <p className="mt-1 text-sm text-gray-500">
-                    Platform owner can inspect church profile, open the workspace, and monitor tenant status from here.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      </PlatformSectionCard>
     </div>
   );
 }
-

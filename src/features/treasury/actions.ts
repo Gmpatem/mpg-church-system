@@ -35,6 +35,23 @@ function buildTreasuryReference(prefix: string, txDate: string) {
   return `${prefix}-${safeDate}-${suffix}`;
 }
 
+function getPaymentMethodLabel(value: string | null) {
+  if (!value) return null;
+  if (value === "cash") return "Cash";
+  if (value === "bank_transfer") return "Bank Transfer";
+  if (value === "mobile_money") return "Mobile Money";
+  if (value === "check") return "Check";
+  if (value === "other") return "Other";
+  return value.replace(/_/g, " ").replace(/\b\w/g, (char) => char.toUpperCase());
+}
+
+function mergePaymentMethodIntoNote(note: string | null, paymentMethod: string | null) {
+  const paymentLabel = getPaymentMethodLabel(paymentMethod);
+  if (!paymentLabel) return note;
+  const paymentLine = `Payment Method: ${paymentLabel}`;
+  return [paymentLine, note].filter(Boolean).join("\n");
+}
+
 async function ensureFundBelongsToChurch(supabase: any, churchId: string, fundId: string | null) {
   if (!fundId) return true;
 
@@ -106,6 +123,7 @@ export async function createTreasuryInflowAction(
   const inflowDate = getString(formData, "inflowDate");
   const isAnonymous = getString(formData, "isAnonymous") === "true";
   const note = getString(formData, "note") || null;
+  const paymentMethod = getString(formData, "paymentMethod") || null;
   const referenceNumberInput = getString(formData, "referenceNumber");
 
   if (!inflowType || !fundId || !inflowDate || !Number.isFinite(amount) || amount <= 0) {
@@ -144,6 +162,7 @@ export async function createTreasuryInflowAction(
     }
 
     const referenceNumber = referenceNumberInput || buildTreasuryReference("TIN", inflowDate);
+    const finalNote = mergePaymentMethodIntoNote(note, paymentMethod);
 
     const { error } = await supabase.from("treasury_inflows").insert({
       church_id: ctx.churchId,
@@ -153,7 +172,7 @@ export async function createTreasuryInflowAction(
       amount,
       inflow_date: inflowDate,
       is_anonymous: isAnonymous,
-      note,
+      note: finalNote,
       reference_number: referenceNumber,
       recorded_by_user_id: ctx.userId,
     });
@@ -190,6 +209,7 @@ export async function createTreasuryOutflowAction(
   const projectName = getString(formData, "projectName") || null;
   const referenceNumberInput = getString(formData, "referenceNumber");
   const note = getString(formData, "note") || null;
+  const paymentMethod = getString(formData, "paymentMethod") || null;
 
   if (!outflowType || !outflowDate || !purpose || !Number.isFinite(amount) || amount <= 0) {
     return { ok: false, error: "Please complete all required money-out fields." };
@@ -214,6 +234,7 @@ export async function createTreasuryOutflowAction(
     }
 
     const referenceNumber = referenceNumberInput || buildTreasuryReference("TOUT", outflowDate);
+    const finalNote = mergePaymentMethodIntoNote(note, paymentMethod);
 
     const { error } = await supabase.from("treasury_outflows").insert({
       church_id: ctx.churchId,
@@ -226,7 +247,7 @@ export async function createTreasuryOutflowAction(
       purpose,
       project_name: projectName,
       reference_number: referenceNumber,
-      note,
+      note: finalNote,
       recorded_by_user_id: ctx.userId,
     });
 

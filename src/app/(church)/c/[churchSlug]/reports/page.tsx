@@ -1,9 +1,8 @@
-import { Suspense } from "react";
-import { WorkspaceHero } from "@/components/workspace";
 import { ReportsWorkspace } from "./ReportsWorkspace";
-import { ReportsOverviewStats } from "./ReportsOverviewStats";
-import { PageSpinner } from "@/components/feedback/PageSpinner";
 import { ReportsFilterRail } from "./ReportsFilterRail";
+import { ReportsOverviewStats } from "./ReportsOverviewStats";
+import { ReportsExportActions } from "./tabs/ReportsExportActions";
+import { WorkspaceRouteStateBridge } from "@/components/workspace/WorkspaceRouteStateBridge";
 import { en } from "@/features/i18n/en";
 import { fr } from "@/features/i18n/fr";
 import { cookies } from "next/headers";
@@ -17,11 +16,10 @@ function pickSingle(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value ?? "";
 }
 
-function normalizeTab(value: string): "overview" | "treasury" | "members" | "events" | "unified" {
-  if (value === "treasury") return "treasury";
+function normalizeTab(value: string): "overview" | "finance" | "members" | "events" {
+  if (value === "treasury" || value === "finance") return "finance";
   if (value === "members") return "members";
   if (value === "events") return "events";
-  if (value === "unified") return "unified";
   return "overview";
 }
 
@@ -42,20 +40,41 @@ export default async function ReportsPage({ params, searchParams }: ReportsPageP
 
   return (
     <div className="space-y-5 md:space-y-6">
-      <WorkspaceHero
-        size="compact"
-        eyebrow={t.pages.reports.eyebrow}
-        title={t.pages.reports.title}
-        description={t.pages.reports.description}
+      <WorkspaceRouteStateBridge
+        churchSlug={churchSlug}
+        moduleKey="reports"
+        restoreQueryState={true}
+        persistQueryKeys={["tab", "dateFrom", "dateTo"]}
+        prefetchHrefs={[
+          `/c/${churchSlug}/members`,
+          `/c/${churchSlug}/treasury`,
+          `/c/${churchSlug}/events`,
+        ]}
       />
 
-      <Suspense fallback={<PageSpinner />}>
-        <ReportsOverviewStats
-          churchSlug={churchSlug}
-          dateFrom={dateFrom}
-          dateTo={dateTo}
-        />
-      </Suspense>
+      <section className="overflow-hidden rounded-[28px] border border-slate-200 bg-gradient-to-br from-slate-950 via-blue-950 to-cyan-950 p-4 text-white shadow-sm sm:p-5">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+          <div>
+            <p className="inline-flex rounded-full border border-white/15 bg-white/10 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-blue-100">
+              Church Reports
+            </p>
+            <h1 className="mt-3 text-2xl font-bold tracking-tight text-white md:text-3xl">
+              {t.pages.reports.title}
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-5 text-blue-100">
+              {t.pages.reports.description}
+            </p>
+          </div>
+          <ReportsExportActions churchSlug={churchSlug} activeTab={activeTab} dateFrom={dateFrom} dateTo={dateTo} />
+        </div>
+      </section>
+
+      <ReportsOverviewStats
+        churchSlug={churchSlug}
+        activeTab={activeTab}
+        dateFrom={dateFrom}
+        dateTo={dateTo}
+      />
 
       <ReportsFilterRail
         churchSlug={churchSlug}

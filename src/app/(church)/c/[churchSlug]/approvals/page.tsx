@@ -1,5 +1,6 @@
-import { ApprovalsInbox } from "@/features/approvals/components/ApprovalsInbox";
+import { ApprovalsQueueWorkspace } from "@/features/approvals/components/ApprovalsQueueWorkspace";
 import { getApprovalsInboxData } from "@/features/approvals/inbox";
+import { WorkspaceRouteStateBridge } from "@/components/workspace/WorkspaceRouteStateBridge";
 
 type PageProps = {
   params: Promise<{
@@ -24,7 +25,18 @@ export default async function ApprovalsPage(props: PageProps) {
 
   return (
     <div className="space-y-6">
-      <ApprovalsInbox
+      <WorkspaceRouteStateBridge
+        churchSlug={params.churchSlug}
+        moduleKey="approvals"
+        restoreQueryState={true}
+        persistQueryKeys={["module", "status", "stage"]}
+        prefetchHrefs={[
+          `/c/${params.churchSlug}/office`,
+          `/c/${params.churchSlug}/reports`,
+          `/c/${params.churchSlug}/access-control`,
+        ]}
+      />
+      <ApprovalsQueueWorkspace
         churchSlug={params.churchSlug}
         data={data}
       />

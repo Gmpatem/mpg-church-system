@@ -1,5 +1,5 @@
 import { getReportsTabData } from "@/features/reports/queries";
-import { TreasuryTabClient } from "./TreasuryTabClient";
+import { FinanceAnalyticsTabClient } from "./FinanceAnalyticsTabClient";
 
 export async function TreasuryTab({
   churchSlug,
@@ -11,5 +11,5 @@ export async function TreasuryTab({
   dateTo?: string;
 }) {
   const data = await getReportsTabData(churchSlug, "treasury", { dateFrom, dateTo });
-  return <TreasuryTabClient treasury={data.treasury} />;
+  return <FinanceAnalyticsTabClient treasury={data.treasury} />;
 }

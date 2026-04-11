@@ -14,12 +14,12 @@ export function ChurchStatusToggle({ churchId, isActive }: ChurchStatusTogglePro
   return (
     <form action={formAction} className="inline-flex items-center gap-2">
       <input type="hidden" name="church_id" value={churchId} />
-      <input type="hidden" name="is_active" value={isActive ? "false" : "true"} />
+      <input type="hidden" name="next_active" value={isActive ? "false" : "true"} />
 
       <button
         type="submit"
         disabled={isPending}
-        className="rounded-md bg-gray-900 px-3 py-2 text-xs font-medium text-white hover:bg-black disabled:opacity-50"
+        className="rounded-md bg-slate-900 px-3 py-2 text-xs font-medium text-white hover:bg-slate-800 disabled:opacity-50"
       >
         {isPending ? "Saving..." : isActive ? "Deactivate" : "Activate"}
       </button>

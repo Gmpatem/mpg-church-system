@@ -29,9 +29,9 @@ export default async function PlatformHouseholdsPage() {
   return (
     <div className="space-y-5">
       <PlatformMobileHero
-        eyebrow="Households Workspace"
-        title="Household Registry"
-        description="Review household records across churches and keep member-to-household linking healthy."
+        eyebrow="Household Signals"
+        title="Cross-Church Household Registry"
+        description="Review household coverage and linkage quality across churches for network-level visibility."
         badge={snapshot.totals.totalHouseholds + " households"}
         actions={[
           { href: "/platform/members", label: "Open Members" },
@@ -43,7 +43,7 @@ export default async function PlatformHouseholdsPage() {
         <PlatformMobileStatCard label="Total Households" value={snapshot.totals.totalHouseholds} hint="All household records" />
         <PlatformMobileStatCard label="Members Linked" value={snapshot.totals.membersLinkedToHouseholds} hint="With household assignment" />
         <PlatformMobileStatCard label="Loaded Rows" value={snapshot.rows.length} hint="Current mobile list" />
-        <PlatformMobileStatCard label="Churches" value={new Set(snapshot.rows.map((row: any) => row.church_id)).size} hint="Workspaces represented" />
+        <PlatformMobileStatCard label="Churches" value={new Set(snapshot.rows.map((row: any) => row.church_id)).size} hint="Churches represented" />
       </div>
 
       <PlatformMobileSectionCard title="Household List">
@@ -56,7 +56,7 @@ export default async function PlatformHouseholdsPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-slate-900">{row.household_name ?? "Unnamed household"}</p>
-                      <p className="truncate text-xs text-slate-500">{church?.name ?? "Church workspace"}</p>
+                      <p className="truncate text-xs text-slate-500">{church?.name ?? "Church record"}</p>
                     </div>
                     <span className="rounded-full border border-slate-300 bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">
                       {formatDate(row.created_at)}
@@ -79,7 +79,7 @@ export default async function PlatformHouseholdsPage() {
         </div>
       </PlatformMobileSectionCard>
 
-      <PlatformMobileSectionCard title="Related Workspaces">
+      <PlatformMobileSectionCard title="Related Oversight Surfaces">
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           <Link
             href="/platform/members"

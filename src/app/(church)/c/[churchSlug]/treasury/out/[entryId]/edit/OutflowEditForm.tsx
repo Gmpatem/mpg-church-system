@@ -51,8 +51,7 @@ export function OutflowEditForm({ churchSlug, entry, options }: OutflowEditFormP
 
         <div>
           <label htmlFor="fundId" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.fundSource}</label>
-          <select id="fundId" name="fundId" defaultValue={entry.fund_id ?? ""} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
-            <option value="">{t.pages.treasury.forms.notSpecified}</option>
+          <select id="fundId" name="fundId" required defaultValue={entry.fund_id ?? ""} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
             {options.funds.map((fund) => (
               <option key={fund.id} value={fund.id}>{fund.name}</option>
             ))}
