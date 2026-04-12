@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -18,11 +18,169 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Church, User, Shield } from "lucide-react";
+import { Church, User, Shield, Wallet } from "lucide-react";
 import { LanguageSwitcher } from "@/components/marketing/LanguageSwitcher";
 import { useI18n } from "@/features/i18n";
+import { useActionState } from "react";
+import { updateTreasuryFinanceSettingsAction, getTreasuryFinanceSettingsAction } from "@/features/treasury/actions";
+import type { TreasuryFinanceSettings } from "@/features/treasury/types";
 
-type SettingsTab = "church" | "profile" | "security";
+function FinanceSettingsPanel({ churchSlug }: { churchSlug: string }) {
+  const { t } = useI18n();
+  const [settings, setSettings] = useState<TreasuryFinanceSettings | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [state, formAction, isPending] = useActionState(updateTreasuryFinanceSettingsAction, null);
+
+  useEffect(() => {
+    async function loadSettings() {
+      try {
+        const data = await getTreasuryFinanceSettingsAction(churchSlug);
+        setSettings(data);
+      } catch (error) {
+        console.error("Failed to load finance settings:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    loadSettings();
+  }, [churchSlug]);
+
+  if (isLoading) {
+    return (
+      <Card className="rounded-2xl border-slate-200 shadow-sm">
+        <CardContent className="p-8 text-center text-slate-500">
+          {t.common.loading}
+        </CardContent>
+      </Card>
+    );
+  }
+
+  return (
+    <Card className="rounded-2xl border-slate-200 shadow-sm">
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <Wallet className="h-5 w-5 text-primary" />
+          <CardTitle>{t.pages.settings.tabs.finance}</CardTitle>
+        </div>
+        <CardDescription>{t.pages.settings.financeSettingsDesc}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <form action={formAction} className="space-y-6">
+          <input type="hidden" name="churchSlug" value={churchSlug} />
+          
+          {state && !state.ok ? (
+            <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {state.error}
+            </div>
+          ) : null}
+          
+          {state && state.ok ? (
+            <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+              {state.message}
+            </div>
+          ) : null}
+
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-slate-900">{t.pages.settings.autoAllocation}</h4>
+            <p className="text-sm text-slate-600">{t.pages.settings.autoAllocationDesc}</p>
+            
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="flex items-center justify-between rounded-lg border border-slate-200 p-4">
+                <div>
+                  <Label className="text-sm font-medium text-slate-900">{t.pages.settings.titheAutoAllocate}</Label>
+                  <p className="text-xs text-slate-500">{t.pages.settings.titheAutoAllocateDesc}</p>
+                </div>
+                <select
+                  name="tithe_auto_allocate"
+                  defaultValue={settings?.tithe_auto_allocate ? "true" : "false"}
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <option value="true">{t.common.yes}</option>
+                  <option value="false">{t.common.no}</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-between rounded-lg border border-slate-200 p-4">
+                <div>
+                  <Label className="text-sm font-medium text-slate-900">{t.pages.settings.offeringAutoAllocate}</Label>
+                  <p className="text-xs text-slate-500">{t.pages.settings.offeringAutoAllocateDesc}</p>
+                </div>
+                <select
+                  name="offering_auto_allocate"
+                  defaultValue={settings?.offering_auto_allocate ? "true" : "false"}
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <option value="true">{t.common.yes}</option>
+                  <option value="false">{t.common.no}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="text-sm font-semibold text-slate-900">{t.pages.settings.validationRules}</h4>
+            <p className="text-sm text-slate-600">{t.pages.settings.validationRulesDesc}</p>
+            
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="flex items-center justify-between rounded-lg border border-slate-200 p-4">
+                <div>
+                  <Label className="text-sm font-medium text-slate-900">{t.pages.settings.requireReferenceNumbers}</Label>
+                  <p className="text-xs text-slate-500">{t.pages.settings.requireReferenceNumbersDesc}</p>
+                </div>
+                <select
+                  name="require_reference_numbers"
+                  defaultValue={settings?.require_reference_numbers ? "true" : "false"}
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <option value="true">{t.common.yes}</option>
+                  <option value="false">{t.common.no}</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-between rounded-lg border border-slate-200 p-4">
+                <div>
+                  <Label className="text-sm font-medium text-slate-900">{t.pages.settings.requireMemberForNamedInflows}</Label>
+                  <p className="text-xs text-slate-500">{t.pages.settings.requireMemberForNamedInflowsDesc}</p>
+                </div>
+                <select
+                  name="require_member_for_named_inflows"
+                  defaultValue={settings?.require_member_for_named_inflows ? "true" : "false"}
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <option value="true">{t.common.yes}</option>
+                  <option value="false">{t.common.no}</option>
+                </select>
+              </div>
+
+              <div className="flex items-center justify-between rounded-lg border border-slate-200 p-4 md:col-span-2">
+                <div>
+                  <Label className="text-sm font-medium text-slate-900">{t.pages.settings.allowTitheOutflowOnlyForRemittance}</Label>
+                  <p className="text-xs text-slate-500">{t.pages.settings.allowTitheOutflowOnlyForRemittanceDesc}</p>
+                </div>
+                <select
+                  name="allow_tithe_outflow_only_for_remittance"
+                  defaultValue={settings?.allow_tithe_outflow_only_for_remittance ? "true" : "false"}
+                  className="rounded-md border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <option value="true">{t.common.yes}</option>
+                  <option value="false">{t.common.no}</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <Button type="submit" disabled={isPending}>
+              {isPending ? t.common.loading : t.common.save}
+            </Button>
+          </div>
+        </form>
+      </CardContent>
+    </Card>
+  );
+}
+
+type SettingsTab = "church" | "profile" | "security" | "finance";
 
 type ChurchData = {
   name: string;
@@ -62,6 +220,7 @@ export function SettingsTabs({ church }: { church: ChurchData }) {
     { key: "church", label: t.pages.settings.tabs.church },
     { key: "profile", label: t.pages.settings.tabs.profile },
     { key: "security", label: t.pages.settings.tabs.security },
+    { key: "finance", label: t.pages.settings.tabs.finance },
   ];
 
   return (
@@ -228,6 +387,10 @@ export function SettingsTabs({ church }: { church: ChurchData }) {
               </div>
             </CardContent>
           </Card>
+        ) : null}
+
+        {activeTab === "finance" ? (
+          <FinanceSettingsPanel churchSlug={church.slug} />
         ) : null}
       </div>
     </div>

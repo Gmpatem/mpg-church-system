@@ -91,6 +91,25 @@ export const fundTypeLabels: Record<string, string> = {
   tithe: "Tithe Fund",
   offering: "Offering Fund",
   special: "Special Fund",
+  donation: "Donation Fund",
+  project: "Project Fund",
+  department: "Department Fund",
+  mission: "Mission Fund",
+  welfare: "Welfare Fund",
+  general: "General Fund",
+};
+
+export const allocationKindLabels: Record<string, string> = {
+  mission_remittance: "Mission Remittance",
+  local_retained: "Local Retained",
+};
+
+export const allocationStatusLabels: Record<string, string> = {
+  pending: "Pending",
+  applied: "Applied",
+  posted: "Posted",
+  skipped: "Skipped",
+  failed: "Failed",
 };
 
 export const genderLabels: Record<string, string> = {

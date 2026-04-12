@@ -2,6 +2,10 @@ import "server-only";
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { requireChurchAccess, requireChurchRole } from "@/features/access/queries";
+import type {
+  TreasuryAllocationPreviewEntry,
+  TreasuryFinanceSettings,
+} from "@/features/treasury/types";
 
 function pickSingle(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value ?? "";
@@ -12,6 +16,216 @@ function sumAmount(rows: any[]) {
 }
 
 const TREASURY_ALLOWED_ROLES = ["church_admin", "treasurer", "pastor"] as const;
+
+const DEFAULT_TREASURY_FINANCE_SETTINGS: TreasuryFinanceSettings = {
+  tithe_auto_allocate: false,
+  offering_auto_allocate: false,
+  require_reference_numbers: false,
+  require_member_for_named_inflows: true,
+  allow_tithe_outflow_only_for_remittance: true,
+  updated_at: null,
+};
+
+function toBoolean(value: unknown, fallback: boolean) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "yes", "on", "enabled"].includes(normalized)) return true;
+    if (["false", "0", "no", "off", "disabled"].includes(normalized)) return false;
+  }
+  return fallback;
+}
+
+function pickStringFromRecord(row: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = row[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function pickNumberFromRecord(row: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = Number(row[key]);
+    if (Number.isFinite(value)) return value;
+  }
+  return null;
+}
+
+function normalizeFinanceSettings(row: Record<string, unknown> | null): TreasuryFinanceSettings {
+  if (!row) return { ...DEFAULT_TREASURY_FINANCE_SETTINGS };
+
+  return {
+    tithe_auto_allocate: toBoolean(
+      row.tithe_auto_allocate,
+      DEFAULT_TREASURY_FINANCE_SETTINGS.tithe_auto_allocate
+    ),
+    offering_auto_allocate: toBoolean(
+      row.offering_auto_allocate,
+      DEFAULT_TREASURY_FINANCE_SETTINGS.offering_auto_allocate
+    ),
+    require_reference_numbers: toBoolean(
+      row.require_reference_numbers,
+      DEFAULT_TREASURY_FINANCE_SETTINGS.require_reference_numbers
+    ),
+    require_member_for_named_inflows: toBoolean(
+      row.require_member_for_named_inflows,
+      DEFAULT_TREASURY_FINANCE_SETTINGS.require_member_for_named_inflows
+    ),
+    allow_tithe_outflow_only_for_remittance: toBoolean(
+      row.allow_tithe_outflow_only_for_remittance,
+      DEFAULT_TREASURY_FINANCE_SETTINGS.allow_tithe_outflow_only_for_remittance
+    ),
+    updated_at: typeof row.updated_at === "string" ? row.updated_at : null,
+  };
+}
+
+async function fetchTreasuryFinanceSettingsRaw(supabase: any, churchId: string) {
+  try {
+    const { data, error } = await supabase
+      .from("treasury_finance_settings")
+      .select("*")
+      .eq("church_id", churchId)
+      .maybeSingle();
+
+    if (error) return { ...DEFAULT_TREASURY_FINANCE_SETTINGS };
+    return normalizeFinanceSettings((data ?? null) as Record<string, unknown> | null);
+  } catch {
+    return { ...DEFAULT_TREASURY_FINANCE_SETTINGS };
+  }
+}
+
+function normalizeAllocationStatus(value: string | null) {
+  if (!value) return "pending";
+  return value;
+}
+
+async function getAllocationPreviewRaw(
+  supabase: any,
+  churchId: string,
+  funds: Array<{ id: string; code: string; name: string; fund_type: string }>,
+  limit: number = 40
+): Promise<TreasuryAllocationPreviewEntry[]> {
+  try {
+    const { data: rows, error } = await supabase
+      .from("treasury_inflow_allocations")
+      .select("*")
+      .eq("church_id", churchId)
+      .limit(Math.max(limit * 2, 40));
+
+    if (error || !Array.isArray(rows) || rows.length === 0) return [];
+
+    const normalizedRows = rows.map((raw: any, index: number) => {
+      const row = (raw ?? {}) as Record<string, unknown>;
+      const inflowId = pickStringFromRecord(row, ["inflow_id", "treasury_inflow_id", "inflow_entry_id"]);
+      return {
+        id: pickStringFromRecord(row, ["id"]) ?? `alloc-${index}`,
+        inflow_id: inflowId,
+        allocation_kind: pickStringFromRecord(row, ["allocation_kind", "kind"]) ?? "local_retained",
+        target_fund_id: pickStringFromRecord(row, ["target_fund_id", "fund_id", "destination_fund_id"]),
+        allocated_amount:
+          pickNumberFromRecord(row, ["allocated_amount", "allocation_amount", "amount"]) ?? 0,
+        status: normalizeAllocationStatus(
+          pickStringFromRecord(row, ["allocation_status", "status"])
+        ),
+        rule_name: pickStringFromRecord(row, ["rule_name", "rule_code", "rule_label", "name"]),
+        source_inflow_type: pickStringFromRecord(row, ["source_inflow_type", "inflow_type"]) ?? "unknown",
+        created_at: pickStringFromRecord(row, ["created_at", "updated_at"]),
+      };
+    });
+
+    const inflowIds = Array.from(
+      new Set(
+        normalizedRows
+          .map((row) => row.inflow_id)
+          .filter((value): value is string => Boolean(value))
+      )
+    );
+
+    let inflowMap = new Map<string, Record<string, unknown>>();
+    if (inflowIds.length > 0) {
+      const { data: inflowRows, error: inflowError } = await supabase
+        .from("treasury_inflows")
+        .select("id, inflow_type, inflow_date, amount, reference_number")
+        .eq("church_id", churchId)
+        .in("id", inflowIds);
+
+      if (!inflowError && Array.isArray(inflowRows)) {
+        inflowMap = new Map<string, Record<string, unknown>>(
+          inflowRows.map((item: any) => [String(item.id), item as Record<string, unknown>])
+        );
+      }
+    }
+
+    const fundMap = new Map(funds.map((fund) => [fund.id, fund.name]));
+
+    const enriched = normalizedRows
+      .map((row) => {
+        const inflow = row.inflow_id ? inflowMap.get(row.inflow_id) : null;
+        const targetFundName = row.target_fund_id ? fundMap.get(row.target_fund_id) ?? null : null;
+
+        return {
+          id: row.id,
+          inflow_id: row.inflow_id,
+          inflow_reference: inflow
+            ? (pickStringFromRecord(inflow, ["reference_number"]) ?? row.inflow_id)
+            : row.inflow_id,
+          inflow_type: (inflow && pickStringFromRecord(inflow, ["inflow_type"])) ?? row.source_inflow_type,
+          inflow_date: inflow ? pickStringFromRecord(inflow, ["inflow_date"]) : null,
+          inflow_amount: inflow ? pickNumberFromRecord(inflow, ["amount"]) : null,
+          allocation_kind: row.allocation_kind,
+          target_fund_id: row.target_fund_id,
+          target_fund_name: targetFundName,
+          allocated_amount: Number(row.allocated_amount || 0),
+          status: row.status,
+          rule_name: row.rule_name,
+          created_at: row.created_at,
+        } satisfies TreasuryAllocationPreviewEntry;
+      })
+      .sort((a, b) => {
+        const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+        return bTime - aTime;
+      });
+
+    return enriched.slice(0, limit);
+  } catch {
+    return [];
+  }
+}
+
+function summarizeAllocationPreview(rows: TreasuryAllocationPreviewEntry[]) {
+  let missionRemittanceAllocated = 0;
+  let localRetainedAllocated = 0;
+  let pendingMissionRemittance = 0;
+  let pendingLocalRetained = 0;
+
+  for (const row of rows) {
+    const amount = Number(row.allocated_amount || 0);
+    const status = String(row.status || "pending").toLowerCase();
+    const isPending = status === "pending";
+
+    if (row.allocation_kind === "mission_remittance") {
+      missionRemittanceAllocated += amount;
+      if (isPending) pendingMissionRemittance += amount;
+      continue;
+    }
+
+    if (row.allocation_kind === "local_retained") {
+      localRetainedAllocated += amount;
+      if (isPending) pendingLocalRetained += amount;
+    }
+  }
+
+  return {
+    allocationCount: rows.length,
+    missionRemittanceAllocated,
+    localRetainedAllocated,
+    pendingMissionRemittance,
+    pendingLocalRetained,
+  };
+}
 
 export interface TreasuryMemberOption {
   id: string;
@@ -246,6 +460,24 @@ export async function getTreasuryFormOptions(
     funds: mergedFunds,
     departments: mergedDepartments,
   };
+}
+
+export async function getTreasuryFinanceSettings(
+  churchSlug: string
+): Promise<TreasuryFinanceSettings> {
+  const ctx = await requireChurchRole(churchSlug, [...TREASURY_ALLOWED_ROLES]);
+  const supabase = await createClient();
+  return fetchTreasuryFinanceSettingsRaw(supabase, ctx.churchId);
+}
+
+export async function getTreasuryAllocationPreview(
+  churchSlug: string,
+  limit: number = 30
+): Promise<TreasuryAllocationPreviewEntry[]> {
+  const ctx = await requireChurchRole(churchSlug, [...TREASURY_ALLOWED_ROLES]);
+  const supabase = await createClient();
+  const funds = await getTreasuryFunds(churchSlug);
+  return getAllocationPreviewRaw(supabase, ctx.churchId, funds as any[], limit);
 }
 
 export async function getTreasuryInflows(
@@ -507,6 +739,20 @@ export async function getTreasurySummary(
     .filter((row: any) => row.outflow_type === "mission_remittance")
     .reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
 
+  let allocationPreview: TreasuryAllocationPreviewEntry[] = [];
+  try {
+    allocationPreview = await getAllocationPreviewRaw(
+      supabase,
+      ctx.churchId,
+      (funds ?? []) as any[],
+      500
+    );
+  } catch {
+    allocationPreview = [];
+  }
+
+  const allocationSummary = summarizeAllocationPreview(allocationPreview);
+
   return {
     dateFrom: dateFrom || null,
     dateTo: dateTo || null,
@@ -522,6 +768,11 @@ export async function getTreasurySummary(
     outflowByDepartment,
     outflowByProject,
     missionRemittanceTotal,
+    allocationCount: allocationSummary.allocationCount,
+    missionRemittanceAllocated: allocationSummary.missionRemittanceAllocated,
+    localRetainedAllocated: allocationSummary.localRetainedAllocated,
+    pendingMissionRemittance: allocationSummary.pendingMissionRemittance,
+    pendingLocalRetained: allocationSummary.pendingLocalRetained,
     inflowCount: inflows?.length ?? 0,
     outflowCount: outflows?.length ?? 0,
   };
@@ -722,6 +973,15 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
     }, {})
   ).map(([type, amount]) => ({ type, amount }));
 
+  const financeSettings = await fetchTreasuryFinanceSettingsRaw(supabase, ctx.churchId);
+  const allocationPreview = await getAllocationPreviewRaw(
+    supabase,
+    ctx.churchId,
+    (funds ?? []) as any[],
+    40
+  );
+  const allocationSummary = summarizeAllocationPreview(allocationPreview);
+
   return {
     dashboard: {
       fundCount: fundCount ?? 0,
@@ -732,9 +992,14 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
       anonymousInflowsCount: anonymousInflowsCount ?? 0,
       inflowByType,
       outflowByType,
+      allocationCount: allocationSummary.allocationCount,
+      pendingMissionRemittance: allocationSummary.pendingMissionRemittance,
+      pendingLocalRetained: allocationSummary.pendingLocalRetained,
     },
     recentInflows: recentInflows ?? [],
     recentOutflows: recentOutflows ?? [],
+    allocationPreview,
+    financeSettings,
     formOptions: {
       churchId: ctx.churchId,
       funds: funds ?? [],

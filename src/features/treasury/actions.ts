@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireChurchRole } from "@/features/access/queries";
 import type { ActionState } from "@/features/access/types";
+import type { TreasuryFinanceSettings } from "@/features/treasury/types";
 
 /**
  * Helper to revalidate treasury-related caches for a church.
@@ -50,6 +51,383 @@ function mergePaymentMethodIntoNote(note: string | null, paymentMethod: string |
   if (!paymentLabel) return note;
   const paymentLine = `Payment Method: ${paymentLabel}`;
   return [paymentLine, note].filter(Boolean).join("\n");
+}
+
+const DEFAULT_TREASURY_FINANCE_SETTINGS: TreasuryFinanceSettings = {
+  tithe_auto_allocate: false,
+  offering_auto_allocate: false,
+  require_reference_numbers: false,
+  require_member_for_named_inflows: true,
+  allow_tithe_outflow_only_for_remittance: true,
+  updated_at: null,
+};
+
+function boolFromUnknown(value: unknown, fallback: boolean) {
+  if (typeof value === "boolean") return value;
+  if (typeof value === "number") return value !== 0;
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+    if (["true", "1", "yes", "on", "enabled"].includes(normalized)) return true;
+    if (["false", "0", "no", "off", "disabled"].includes(normalized)) return false;
+  }
+  return fallback;
+}
+
+function parseRuleString(row: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = row[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return null;
+}
+
+function parseRuleNumber(row: Record<string, unknown>, keys: string[]) {
+  for (const key of keys) {
+    const value = row[key];
+    const n = Number(value);
+    if (Number.isFinite(n)) return n;
+  }
+  return null;
+}
+
+function normalizePercentage(value: number | null) {
+  if (value === null || !Number.isFinite(value) || value <= 0) return null;
+  if (value > 0 && value <= 1) return value;
+  if (value > 1 && value <= 100) return value / 100;
+  return null;
+}
+
+function roundMoney(value: number) {
+  return Math.round(value * 100) / 100;
+}
+
+async function getTreasuryFinanceSettings(
+  supabase: any,
+  churchId: string
+): Promise<TreasuryFinanceSettings> {
+  try {
+    const { data, error } = await supabase
+      .from("treasury_finance_settings")
+      .select("*")
+      .eq("church_id", churchId)
+      .maybeSingle();
+
+    if (error || !data) {
+      return { ...DEFAULT_TREASURY_FINANCE_SETTINGS };
+    }
+
+    const row = data as Record<string, unknown>;
+    return {
+      tithe_auto_allocate: boolFromUnknown(
+        row.tithe_auto_allocate,
+        DEFAULT_TREASURY_FINANCE_SETTINGS.tithe_auto_allocate
+      ),
+      offering_auto_allocate: boolFromUnknown(
+        row.offering_auto_allocate,
+        DEFAULT_TREASURY_FINANCE_SETTINGS.offering_auto_allocate
+      ),
+      require_reference_numbers: boolFromUnknown(
+        row.require_reference_numbers,
+        DEFAULT_TREASURY_FINANCE_SETTINGS.require_reference_numbers
+      ),
+      require_member_for_named_inflows: boolFromUnknown(
+        row.require_member_for_named_inflows,
+        DEFAULT_TREASURY_FINANCE_SETTINGS.require_member_for_named_inflows
+      ),
+      allow_tithe_outflow_only_for_remittance: boolFromUnknown(
+        row.allow_tithe_outflow_only_for_remittance,
+        DEFAULT_TREASURY_FINANCE_SETTINGS.allow_tithe_outflow_only_for_remittance
+      ),
+      updated_at: typeof row.updated_at === "string" ? row.updated_at : null,
+    };
+  } catch {
+    return { ...DEFAULT_TREASURY_FINANCE_SETTINGS };
+  }
+}
+
+type AllocationRule = {
+  id: string | null;
+  source_inflow_type: "tithe" | "offering";
+  allocation_kind: string;
+  target_fund_id: string | null;
+  allocation_ratio: number;
+  priority: number;
+  is_active: boolean;
+  rule_name: string | null;
+};
+
+async function getAllocationRulesForInflow(
+  supabase: any,
+  churchId: string,
+  inflowType: string
+): Promise<AllocationRule[]> {
+  if (inflowType !== "tithe" && inflowType !== "offering") return [];
+
+  try {
+    const { data, error } = await supabase
+      .from("treasury_allocation_rules")
+      .select("*")
+      .eq("church_id", churchId)
+      .eq("source_inflow_type", inflowType);
+
+    if (error || !Array.isArray(data)) return [];
+
+    const normalized = data
+      .map((raw: any) => {
+        const row = (raw ?? {}) as Record<string, unknown>;
+
+        const source = parseRuleString(row, ["source_inflow_type", "inflow_type"]);
+        if (source !== "tithe" && source !== "offering") return null;
+
+        const allocation_kind =
+          parseRuleString(row, ["allocation_kind", "kind"]) ?? "local_retained";
+        const percentage = normalizePercentage(
+          parseRuleNumber(row, [
+            "allocation_percentage",
+            "allocation_percent",
+            "percentage",
+            "ratio",
+            "allocation_ratio",
+            "percent",
+          ])
+        );
+
+        if (!percentage) return null;
+
+        return {
+          id: parseRuleString(row, ["id", "rule_id"]),
+          source_inflow_type: source,
+          allocation_kind,
+          target_fund_id: parseRuleString(row, [
+            "target_fund_id",
+            "fund_id",
+            "destination_fund_id",
+          ]),
+          allocation_ratio: percentage,
+          priority: parseRuleNumber(row, ["priority", "order_index", "sort_order"]) ?? 0,
+          is_active: boolFromUnknown(row.is_active, true),
+          rule_name: parseRuleString(row, ["rule_name", "name", "title", "code"]),
+        } satisfies AllocationRule;
+      })
+      .filter((item): item is AllocationRule => Boolean(item))
+      .filter((item) => item.is_active);
+
+    normalized.sort((a, b) => a.priority - b.priority);
+    return normalized;
+  } catch {
+    return [];
+  }
+}
+
+function buildAllocationCandidates(args: {
+  churchId: string;
+  inflowId: string;
+  userId: string;
+  inflowType: string;
+  rule: AllocationRule;
+  allocatedAmount: number;
+  allocationPercent: number;
+}) {
+  const { churchId, inflowId, userId, inflowType, rule, allocatedAmount, allocationPercent } = args;
+
+  return {
+    church_id: churchId,
+    inflow_id: inflowId,
+    treasury_inflow_id: inflowId,
+    inflow_entry_id: inflowId,
+    allocation_rule_id: rule.id,
+    rule_id: rule.id,
+    treasury_allocation_rule_id: rule.id,
+    source_inflow_type: inflowType,
+    allocation_kind: rule.allocation_kind,
+    target_fund_id: rule.target_fund_id,
+    fund_id: rule.target_fund_id,
+    destination_fund_id: rule.target_fund_id,
+    allocated_amount: allocatedAmount,
+    allocation_amount: allocatedAmount,
+    amount: allocatedAmount,
+    allocation_percent: allocationPercent,
+    percentage: allocationPercent,
+    status: "pending",
+    allocation_status: "pending",
+    created_by_user_id: userId,
+    recorded_by_user_id: userId,
+    rule_name: rule.rule_name,
+  } as Record<string, unknown>;
+}
+
+function omitEmptyFields(value: Record<string, unknown>) {
+  const next: Record<string, unknown> = {};
+  for (const [key, entry] of Object.entries(value)) {
+    if (entry === undefined || entry === null || entry === "") continue;
+    next[key] = entry;
+  }
+  return next;
+}
+
+async function insertAllocationEntryWithFallback(
+  supabase: any,
+  candidateRow: Record<string, unknown>
+) {
+  const payload = { ...omitEmptyFields(candidateRow) };
+  const maxAttempts = 20;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const { error } = await supabase.from("treasury_inflow_allocations").insert(payload);
+    if (!error) return true;
+
+    const message = String(error.message || "");
+    const missingColumnMatch =
+      message.match(/column ["']([^"']+)["']/i) ||
+      message.match(/Could not find the ['"]([^'"]+)['"] column/i);
+
+    if (missingColumnMatch) {
+      const column = missingColumnMatch[1];
+      if (column && Object.prototype.hasOwnProperty.call(payload, column)) {
+        delete payload[column];
+        continue;
+      }
+    }
+
+    const notNullMatch = message.match(/null value in column ["']([^"']+)["']/i);
+    if (notNullMatch) {
+      const column = notNullMatch[1];
+      if (column === "amount" && payload.allocated_amount !== undefined) {
+        payload.amount = payload.allocated_amount;
+        continue;
+      }
+      if (column === "allocation_amount" && payload.allocated_amount !== undefined) {
+        payload.allocation_amount = payload.allocated_amount;
+        continue;
+      }
+      if (column === "status" && payload.allocation_status !== undefined) {
+        payload.status = payload.allocation_status;
+        continue;
+      }
+      if (column === "allocation_status" && payload.status !== undefined) {
+        payload.allocation_status = payload.status;
+        continue;
+      }
+    }
+
+    console.warn("Treasury allocation insert skipped:", message);
+    return false;
+  }
+
+  return false;
+}
+
+async function insertTreasuryFundWithFallback(
+  supabase: any,
+  candidateRow: Record<string, unknown>
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const payload = { ...omitEmptyFields(candidateRow) };
+  const maxAttempts = 10;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const { error } = await supabase.from("treasury_funds").insert(payload);
+    if (!error) return { ok: true };
+
+    const message = String(error.message || "");
+    const missingColumnMatch =
+      message.match(/column ["']([^"']+)["']/i) ||
+      message.match(/Could not find the ['"]([^'"]+)['"] column/i);
+
+    if (missingColumnMatch) {
+      const column = missingColumnMatch[1];
+      if (column && Object.prototype.hasOwnProperty.call(payload, column)) {
+        delete payload[column];
+        continue;
+      }
+    }
+
+    return { ok: false, error: message || "Failed to create treasury fund." };
+  }
+
+  return { ok: false, error: "Failed to create treasury fund." };
+}
+
+async function insertTreasuryInflowWithFallback(
+  supabase: any,
+  candidateRow: Record<string, unknown>
+): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
+  const payload = { ...omitEmptyFields(candidateRow) };
+  const maxAttempts = 10;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const { data, error } = await supabase
+      .from("treasury_inflows")
+      .insert(payload)
+      .select("id")
+      .maybeSingle();
+
+    if (!error && data?.id) return { ok: true, id: data.id };
+
+    const message = String(error?.message || "");
+    const missingColumnMatch =
+      message.match(/column ["']([^"']+)["']/i) ||
+      message.match(/Could not find the ['"]([^'"]+)['"] column/i);
+
+    if (missingColumnMatch) {
+      const column = missingColumnMatch[1];
+      if (column && Object.prototype.hasOwnProperty.call(payload, column)) {
+        delete payload[column];
+        continue;
+      }
+    }
+
+    return { ok: false, error: message || "Failed to create treasury inflow record." };
+  }
+
+  return { ok: false, error: "Failed to create treasury inflow record." };
+}
+
+async function createInflowAllocationsIfEnabled(args: {
+  supabase: any;
+  churchId: string;
+  userId: string;
+  inflowId: string;
+  inflowType: string;
+  amount: number;
+  financeSettings: TreasuryFinanceSettings;
+}) {
+  const { supabase, churchId, userId, inflowId, inflowType, amount, financeSettings } = args;
+
+  const shouldAllocate =
+    (inflowType === "tithe" && financeSettings.tithe_auto_allocate) ||
+    (inflowType === "offering" && financeSettings.offering_auto_allocate);
+
+  if (!shouldAllocate) return;
+
+  const rules = await getAllocationRulesForInflow(supabase, churchId, inflowType);
+  if (rules.length === 0) return;
+
+  let remaining = roundMoney(amount);
+
+  for (const [index, rule] of rules.entries()) {
+    if (remaining <= 0) break;
+
+    let computed = roundMoney(amount * rule.allocation_ratio);
+    if (index === rules.length - 1 && computed > remaining) {
+      computed = remaining;
+    }
+    computed = Math.min(computed, remaining);
+
+    if (computed <= 0) continue;
+
+    const payload = buildAllocationCandidates({
+      churchId,
+      inflowId,
+      userId,
+      inflowType,
+      rule,
+      allocatedAmount: computed,
+      allocationPercent: roundMoney(rule.allocation_ratio * 100),
+    });
+
+    await insertAllocationEntryWithFallback(supabase, payload);
+    remaining = roundMoney(remaining - computed);
+  }
 }
 
 async function ensureFundBelongsToChurch(supabase: any, churchId: string, fundId: string | null) {
@@ -115,6 +493,7 @@ export async function createTreasuryInflowAction(
   const churchSlug = getString(formData, "churchSlug");
   const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
   const supabase = await createClient();
+  const financeSettings = await getTreasuryFinanceSettings(supabase, ctx.churchId);
 
   const inflowType = getString(formData, "inflowType");
   const fundId = getString(formData, "fundId");
@@ -130,6 +509,10 @@ export async function createTreasuryInflowAction(
     return { ok: false, error: "Please complete all required money-in fields." };
   }
 
+  if (financeSettings.require_reference_numbers && !referenceNumberInput) {
+    return { ok: false, error: "Reference number is required by treasury settings." };
+  }
+
   try {
     const validFund = await ensureFundBelongsToChurch(supabase, ctx.churchId, fundId);
     if (!validFund) return { ok: false, error: "Selected fund does not belong to this church." };
@@ -137,7 +520,7 @@ export async function createTreasuryInflowAction(
     const fund = await getFundMeta(supabase, ctx.churchId, fundId);
     if (!fund) return { ok: false, error: "Selected fund does not belong to this church." };
 
-    if (!isAnonymous && !memberId) {
+    if (!isAnonymous && !memberId && financeSettings.require_member_for_named_inflows) {
       return { ok: false, error: "Named inflows must be linked to a member." };
     }
 
@@ -164,7 +547,7 @@ export async function createTreasuryInflowAction(
     const referenceNumber = referenceNumberInput || buildTreasuryReference("TIN", inflowDate);
     const finalNote = mergePaymentMethodIntoNote(note, paymentMethod);
 
-    const { error } = await supabase.from("treasury_inflows").insert({
+    const insertResult = await insertTreasuryInflowWithFallback(supabase, {
       church_id: ctx.churchId,
       member_id: effectiveMemberId,
       fund_id: fundId,
@@ -175,11 +558,34 @@ export async function createTreasuryInflowAction(
       note: finalNote,
       reference_number: referenceNumber,
       recorded_by_user_id: ctx.userId,
+      created_by_user_id: ctx.userId,
+      entered_by_user_id: ctx.userId,
     });
 
-    if (error) {
-      return { ok: false, error: error.message };
+    if (!insertResult.ok) {
+      const normalized = insertResult.error.toLowerCase();
+      if (
+        normalized.includes("row-level security") &&
+        normalized.includes("treasury_inflows")
+      ) {
+        return {
+          ok: false,
+          error:
+            "Contribution entry is blocked by treasury_inflows RLS policy. Ensure insert policy allows active church treasury managers (church_admin, pastor, treasurer) for this church and accepts recorded_by_user_id/auth.uid().",
+        };
+      }
+      return { ok: false, error: insertResult.error };
     }
+
+    await createInflowAllocationsIfEnabled({
+      supabase,
+      churchId: ctx.churchId,
+      userId: ctx.userId,
+      inflowId: insertResult.id,
+      inflowType,
+      amount,
+      financeSettings,
+    });
 
     revalidateTreasuryData(churchSlug);
     return { ok: true, message: "Money-in entry recorded successfully." };
@@ -198,6 +604,7 @@ export async function createTreasuryOutflowAction(
   const churchSlug = getString(formData, "churchSlug");
   const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
   const supabase = await createClient();
+  const financeSettings = await getTreasuryFinanceSettings(supabase, ctx.churchId);
 
   const outflowType = getString(formData, "outflowType");
   const fundId = getString(formData, "fundId") || null;
@@ -229,7 +636,11 @@ export async function createTreasuryOutflowAction(
     const validDepartment = await ensureDepartmentBelongsToChurch(supabase, ctx.churchId, departmentId);
     if (!validDepartment) return { ok: false, error: "Selected department does not belong to this church." };
 
-    if (fund.fund_type === "tithe" && outflowType !== "mission_remittance") {
+    if (
+      financeSettings.allow_tithe_outflow_only_for_remittance &&
+      fund.fund_type === "tithe" &&
+      outflowType !== "mission_remittance"
+    ) {
       return { ok: false, error: "Tithe fund can only be used for mission remittance." };
     }
 
@@ -273,6 +684,7 @@ export async function updateTreasuryInflowAction(
   const entryId = getString(formData, "entryId");
   const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
   const supabase = await createClient();
+  const financeSettings = await getTreasuryFinanceSettings(supabase, ctx.churchId);
 
   const inflowType = getString(formData, "inflowType");
   const fundId = getString(formData, "fundId");
@@ -288,6 +700,10 @@ export async function updateTreasuryInflowAction(
     return { ok: false, error: "Please complete all required fields." };
   }
 
+  if (financeSettings.require_reference_numbers && !referenceNumberInput) {
+    return { ok: false, error: "Reference number is required by treasury settings." };
+  }
+
   if (!correctionNote) {
     return { ok: false, error: "Correction note is required when editing a treasury entry." };
   }
@@ -299,7 +715,7 @@ export async function updateTreasuryInflowAction(
     const fund = await getFundMeta(supabase, ctx.churchId, fundId);
     if (!fund) return { ok: false, error: "Selected fund does not belong to this church." };
 
-    if (!isAnonymous && !memberId) {
+    if (!isAnonymous && !memberId && financeSettings.require_member_for_named_inflows) {
       return { ok: false, error: "Named inflows must be linked to a member." };
     }
 
@@ -366,6 +782,7 @@ export async function updateTreasuryOutflowAction(
   const entryId = getString(formData, "entryId");
   const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
   const supabase = await createClient();
+  const financeSettings = await getTreasuryFinanceSettings(supabase, ctx.churchId);
 
   const outflowType = getString(formData, "outflowType");
   const fundId = getString(formData, "fundId") || null;
@@ -401,7 +818,11 @@ export async function updateTreasuryOutflowAction(
     const validDepartment = await ensureDepartmentBelongsToChurch(supabase, ctx.churchId, departmentId);
     if (!validDepartment) return { ok: false, error: "Selected department does not belong to this church." };
 
-    if (fund.fund_type === "tithe" && outflowType !== "mission_remittance") {
+    if (
+      financeSettings.allow_tithe_outflow_only_for_remittance &&
+      fund.fund_type === "tithe" &&
+      outflowType !== "mission_remittance"
+    ) {
       return { ok: false, error: "Tithe fund can only be used for mission remittance." };
     }
 
@@ -459,17 +880,27 @@ export async function createTreasuryFundAction(
     return { ok: false, error: "Code, name, and fund type are required." };
   }
 
-  const { error } = await supabase.from("treasury_funds").insert({
+  const insertResult = await insertTreasuryFundWithFallback(supabase, {
     church_id: ctx.churchId,
     code,
     name,
     fund_type: fundType,
     description,
     is_active: true,
+    created_by_user_id: ctx.userId,
+    recorded_by_user_id: ctx.userId,
   });
 
-  if (error) {
-    return { ok: false, error: error.message };
+  if (!insertResult.ok) {
+    const normalized = insertResult.error.toLowerCase();
+    if (normalized.includes("row-level security")) {
+      return {
+        ok: false,
+        error:
+          "Fund creation is blocked by treasury_funds RLS policy. Apply the treasury_funds manager insert policy so church_admin, pastor, and treasurer can create funds for their church.",
+      };
+    }
+    return { ok: false, error: insertResult.error };
   }
 
   revalidateTreasuryData(churchSlug);
@@ -518,4 +949,69 @@ export async function toggleTreasuryFundAction(
 
   revalidateTreasuryData(churchSlug);
   return { ok: true, message: nextState ? "Fund activated." : "Fund deactivated." };
+}
+
+export async function getTreasuryFinanceSettingsAction(
+  churchSlug: string
+): Promise<TreasuryFinanceSettings> {
+  const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
+  const supabase = await createClient();
+  return getTreasuryFinanceSettings(supabase, ctx.churchId);
+}
+
+export async function updateTreasuryFinanceSettingsAction(
+  _prevState: ActionState | null,
+  formData: FormData
+): Promise<ActionState> {
+  const churchSlug = getString(formData, "churchSlug");
+  const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
+  const supabase = await createClient();
+
+  const titheAutoAllocate = getString(formData, "tithe_auto_allocate") === "true";
+  const offeringAutoAllocate = getString(formData, "offering_auto_allocate") === "true";
+  const requireReferenceNumbers = getString(formData, "require_reference_numbers") === "true";
+  const requireMemberForNamedInflows = getString(formData, "require_member_for_named_inflows") === "true";
+  const allowTitheOutflowOnlyForRemittance = getString(formData, "allow_tithe_outflow_only_for_remittance") === "true";
+
+  try {
+    // Try to update existing record first
+    const { error: updateError } = await supabase
+      .from("treasury_finance_settings")
+      .update({
+        tithe_auto_allocate: titheAutoAllocate,
+        offering_auto_allocate: offeringAutoAllocate,
+        require_reference_numbers: requireReferenceNumbers,
+        require_member_for_named_inflows: requireMemberForNamedInflows,
+        allow_tithe_outflow_only_for_remittance: allowTitheOutflowOnlyForRemittance,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("church_id", ctx.churchId);
+
+    if (updateError) {
+      // If update fails (no record exists), try to insert
+      const { error: insertError } = await supabase
+        .from("treasury_finance_settings")
+        .insert({
+          church_id: ctx.churchId,
+          tithe_auto_allocate: titheAutoAllocate,
+          offering_auto_allocate: offeringAutoAllocate,
+          require_reference_numbers: requireReferenceNumbers,
+          require_member_for_named_inflows: requireMemberForNamedInflows,
+          allow_tithe_outflow_only_for_remittance: allowTitheOutflowOnlyForRemittance,
+        });
+
+      if (insertError) {
+        return { ok: false, error: insertError.message };
+      }
+    }
+
+    revalidatePath(`/c/${churchSlug}/settings`);
+    revalidatePath(`/c/${churchSlug}/treasury`);
+    return { ok: true, message: "Finance settings updated successfully." };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Failed to update finance settings.",
+    };
+  }
 }

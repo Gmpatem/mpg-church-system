@@ -21,6 +21,7 @@ interface ContributionEntryFormProps {
   };
   modeLabel?: string;
   alreadyTithedIds?: string[];
+  onCreateFundRequest?: () => void;
 }
 
 function getTodayLocalDate() {
@@ -45,15 +46,40 @@ function getSourceModeLabel(sourceMode: SourceMode, t: any) {
   return t.pages.treasury.forms.sourceModes.visitor;
 }
 
+const inflowFundCompatibility: Record<string, string[]> = {
+  tithe: ["tithe"],
+  offering: ["offering", "general", "mission"],
+  donation: ["donation", "offering", "general", "mission", "welfare", "project"],
+  special_contribution: ["project", "donation", "department", "mission", "welfare", "general", "offering"],
+};
+
+function getSupportedFundTypesForInflow(inflowType: string) {
+  return inflowFundCompatibility[inflowType] ?? ["general", "offering", "donation", "mission", "project", "department", "welfare"];
+}
+
 function getVisibleFunds(
   funds: Array<{ id: string; name: string; code: string; fund_type: string }>,
   inflowType: string
 ) {
+  const allowedTypes = new Set(getSupportedFundTypesForInflow(inflowType));
+
   if (inflowType === "tithe") {
-    return funds.filter((fund) => fund.fund_type === "tithe" || fund.code === "tithe");
+    return funds.filter((fund) => allowedTypes.has(fund.fund_type) || fund.code.toLowerCase() === "tithe");
   }
 
-  return funds.filter((fund) => fund.fund_type !== "tithe");
+  return funds.filter((fund) => allowedTypes.has(fund.fund_type));
+}
+
+function getFundTypeLabel(fundType: string, t: any) {
+  if (fundType === "tithe") return t.pages.treasury.forms.fundForm.types.tithe;
+  if (fundType === "offering") return t.pages.treasury.forms.fundForm.types.offering;
+  if (fundType === "donation") return t.pages.treasury.forms.fundForm.types.donation;
+  if (fundType === "project") return t.pages.treasury.forms.fundForm.types.project;
+  if (fundType === "department") return t.pages.treasury.forms.fundForm.types.department;
+  if (fundType === "mission") return t.pages.treasury.forms.fundForm.types.mission;
+  if (fundType === "welfare") return t.pages.treasury.forms.fundForm.types.welfare;
+  if (fundType === "general") return t.pages.treasury.forms.fundForm.types.general;
+  return fundType.replace(/_/g, " ");
 }
 
 export function ContributionEntryForm({
@@ -62,6 +88,7 @@ export function ContributionEntryForm({
   defaults,
   modeLabel,
   alreadyTithedIds = [],
+  onCreateFundRequest,
 }: ContributionEntryFormProps) {
   const { t } = useI18n();
   const [state, formAction, isPending] = useActionState(createTreasuryInflowAction, null);
@@ -91,6 +118,10 @@ export function ContributionEntryForm({
     }
     return getVisibleFunds(options.funds, isFixedType ? (defaults?.inflowType ?? entryType) : entryType);
   }, [defaultFundId, defaults?.inflowType, entryType, isFixedFund, isFixedType, options.funds]);
+  const compatibleFundTypes = useMemo(
+    () => getSupportedFundTypesForInflow(isFixedType ? (defaults?.inflowType ?? entryType) : entryType),
+    [defaults?.inflowType, entryType, isFixedType]
+  );
 
   const availableMembers = useMemo(() => {
     const baseMembers = options.members ?? [];
@@ -143,6 +174,8 @@ export function ContributionEntryForm({
   const memberRequired = sourceMode === "member";
   const currentEntryType = isFixedType ? (defaults?.inflowType ?? entryType) : entryType;
   const currentFundId = isFixedFund ? defaultFundId : fundId;
+  const selectedFund = visibleFunds.find((fund) => fund.id === currentFundId);
+  const isAutoSelectedSingleFund = visibleFunds.length === 1 && selectedFund?.id === visibleFunds[0]?.id;
   const canSubmit =
     !isPending &&
     Boolean(currentEntryType) &&
@@ -253,6 +286,13 @@ export function ContributionEntryForm({
               </option>
             ))}
           </select>
+          <p className="mt-1 text-xs text-slate-500">
+            {t.pages.treasury.forms.matchingFundTypes}:{" "}
+            {compatibleFundTypes.map((fundType) => getFundTypeLabel(fundType, t)).join(", ")}
+          </p>
+          {isAutoSelectedSingleFund ? (
+            <p className="mt-1 text-xs text-emerald-700">{t.pages.treasury.forms.autoSelected}</p>
+          ) : null}
         </div>
 
         <div>
@@ -311,6 +351,22 @@ export function ContributionEntryForm({
       {currentEntryType === "tithe" && availableMembers.length === 0 ? (
         <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2 text-sm text-blue-800">
           {t.pages.treasury.forms.allMembersAlreadyTithed}
+        </div>
+      ) : null}
+
+      {visibleFunds.length === 0 ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <p>{t.pages.treasury.forms.noFundAvailable}</p>
+          <p className="mt-1 text-amber-800">{t.pages.treasury.forms.noFundAvailableHint}</p>
+          {onCreateFundRequest ? (
+            <button
+              type="button"
+              onClick={onCreateFundRequest}
+              className="mt-2 inline-flex items-center rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100"
+            >
+              {t.pages.treasury.forms.openFundSetup}
+            </button>
+          ) : null}
         </div>
       ) : null}
 

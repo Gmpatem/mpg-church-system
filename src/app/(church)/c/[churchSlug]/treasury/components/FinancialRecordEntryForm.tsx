@@ -16,6 +16,10 @@ interface FinancialRecordEntryFormProps {
     outflowType?: string;
   };
   modeLabel?: string;
+  financeSettings?: {
+    allow_tithe_outflow_only_for_remittance?: boolean;
+  };
+  onCreateFundRequest?: () => void;
 }
 
 function getTodayLocalDate() {
@@ -38,15 +42,46 @@ function getLockedLabel(outflowType: string | undefined, t: { pages: { treasury:
   return outflowType ?? "";
 }
 
+const outflowFundCompatibility: Record<string, string[]> = {
+  mission_remittance: ["mission", "tithe", "general", "offering"],
+  operations: ["general", "offering", "donation"],
+  department_expense: ["department", "general", "offering"],
+  welfare: ["welfare", "general", "offering", "donation"],
+  project: ["project", "general", "offering", "donation"],
+  evangelism: ["mission", "general", "offering", "donation"],
+  equipment: ["general", "project", "offering", "donation"],
+  other: ["general", "offering", "donation", "project", "department", "mission", "welfare"],
+};
+
+function getSupportedFundTypesForOutflow(outflowType: string) {
+  return outflowFundCompatibility[outflowType] ?? outflowFundCompatibility.other;
+}
+
 function getVisibleFunds(
   funds: Array<{ id: string; name: string; code: string; fund_type: string }>,
-  outflowType: string
+  outflowType: string,
+  allowTitheOutflowOnlyForRemittance: boolean
 ) {
-  if (outflowType === "mission_remittance") {
-    return funds;
+  const allowed = new Set(getSupportedFundTypesForOutflow(outflowType));
+  const scopedFunds = funds.filter((fund) => allowed.has(fund.fund_type));
+
+  if (allowTitheOutflowOnlyForRemittance && outflowType !== "mission_remittance") {
+    return scopedFunds.filter((fund) => fund.fund_type !== "tithe");
   }
 
-  return funds.filter((fund) => fund.fund_type !== "tithe");
+  return scopedFunds;
+}
+
+function getFundTypeLabel(fundType: string, t: any) {
+  if (fundType === "tithe") return t.pages.treasury.forms.fundForm.types.tithe;
+  if (fundType === "offering") return t.pages.treasury.forms.fundForm.types.offering;
+  if (fundType === "donation") return t.pages.treasury.forms.fundForm.types.donation;
+  if (fundType === "project") return t.pages.treasury.forms.fundForm.types.project;
+  if (fundType === "department") return t.pages.treasury.forms.fundForm.types.department;
+  if (fundType === "mission") return t.pages.treasury.forms.fundForm.types.mission;
+  if (fundType === "welfare") return t.pages.treasury.forms.fundForm.types.welfare;
+  if (fundType === "general") return t.pages.treasury.forms.fundForm.types.general;
+  return fundType.replace(/_/g, " ");
 }
 
 export function FinancialRecordEntryForm({
@@ -54,6 +89,8 @@ export function FinancialRecordEntryForm({
   options,
   defaults,
   modeLabel,
+  financeSettings,
+  onCreateFundRequest,
 }: FinancialRecordEntryFormProps) {
   const { t } = useI18n();
   const [state, formAction, isPending] = useActionState(createTreasuryOutflowAction, null);
@@ -72,7 +109,15 @@ export function FinancialRecordEntryForm({
 
   const isFixedType = Boolean(defaults?.outflowType);
   const activeOutflowType = isFixedType ? (defaults?.outflowType ?? outflowType) : outflowType;
-  const visibleFunds = useMemo(() => getVisibleFunds(options.funds, activeOutflowType), [activeOutflowType, options.funds]);
+  const allowTitheOutflowOnlyForRemittance = financeSettings?.allow_tithe_outflow_only_for_remittance ?? true;
+  const visibleFunds = useMemo(
+    () => getVisibleFunds(options.funds, activeOutflowType, allowTitheOutflowOnlyForRemittance),
+    [activeOutflowType, allowTitheOutflowOnlyForRemittance, options.funds]
+  );
+  const compatibleFundTypes = useMemo(
+    () => getSupportedFundTypesForOutflow(activeOutflowType),
+    [activeOutflowType]
+  );
 
   useEffect(() => {
     if (visibleFunds.length === 0) {
@@ -169,7 +214,13 @@ export function FinancialRecordEntryForm({
               </option>
             ))}
           </select>
-          <p className="mt-1 text-xs text-slate-500">{t.pages.treasury.forms.titheReserved}</p>
+          <p className="mt-1 text-xs text-slate-500">
+            {t.pages.treasury.forms.matchingFundTypes}:{" "}
+            {compatibleFundTypes.map((fundType) => getFundTypeLabel(fundType, t)).join(", ")}
+          </p>
+          {allowTitheOutflowOnlyForRemittance ? (
+            <p className="mt-1 text-xs text-slate-500">{t.pages.treasury.forms.titheReserved}</p>
+          ) : null}
         </div>
 
         <div>
@@ -299,6 +350,22 @@ export function FinancialRecordEntryForm({
           </div>
         </div>
       </details>
+
+      {visibleFunds.length === 0 ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
+          <p>{t.pages.treasury.forms.noFundAvailable}</p>
+          <p className="mt-1 text-amber-800">{t.pages.treasury.forms.noFundAvailableHint}</p>
+          {onCreateFundRequest ? (
+            <button
+              type="button"
+              onClick={onCreateFundRequest}
+              className="mt-2 inline-flex items-center rounded-md border border-amber-300 bg-white px-2.5 py-1 text-xs font-medium text-amber-900 hover:bg-amber-100"
+            >
+              {t.pages.treasury.forms.openFundSetup}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <button

@@ -30,6 +30,8 @@ export default async function TreasuryPage({ params }: TreasuryPageProps) {
         dashboard={data.dashboard}
         recentInflows={data.recentInflows}
         recentOutflows={data.recentOutflows}
+        allocationPreview={data.allocationPreview}
+        financeSettings={data.financeSettings}
         formOptions={data.formOptions}
         alreadyTithedIds={alreadyTithedIds}
       />

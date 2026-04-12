@@ -3,8 +3,10 @@
 import { useMemo, useState } from "react";
 import { ContributionEntryForm } from "@/app/(church)/c/[churchSlug]/treasury/components/ContributionEntryForm";
 import { FinancialRecordEntryForm } from "@/app/(church)/c/[churchSlug]/treasury/components/FinancialRecordEntryForm";
+import { FundCreateForm } from "@/app/(church)/c/[churchSlug]/treasury/funds/new/FundCreateForm";
 import { useI18n } from "@/features/i18n";
-import { fundTypeLabels, getLabel, inflowTypeLabels, outflowTypeLabels } from "@/lib/display-maps";
+import { allocationKindLabels, allocationStatusLabels, fundTypeLabels, getLabel, inflowTypeLabels, outflowTypeLabels } from "@/lib/display-maps";
+import type { TreasuryAllocationPreviewEntry, TreasuryFinanceSettings } from "@/features/treasury/types";
 import {
   WorkspaceControlRail,
   WorkspaceEmptyState,
@@ -15,7 +17,7 @@ import {
   type WorkspaceTabItem,
 } from "@/components/workspace";
 
-type MainTab = "contributions" | "expenses" | "ledger" | "funds";
+type MainTab = "contributions" | "expenses" | "ledger" | "funds" | "fundSetup" | "allocations";
 
 type LedgerRow = {
   id: string;
@@ -40,9 +42,14 @@ interface TreasuryWorkspaceProps {
     anonymousInflowsCount: number;
     inflowByType: Array<{ type: string; amount: number }>;
     outflowByType: Array<{ type: string; amount: number }>;
+    allocationCount?: number;
+    pendingMissionRemittance?: number;
+    pendingLocalRetained?: number;
   };
   recentInflows: any[];
   recentOutflows: any[];
+  allocationPreview: TreasuryAllocationPreviewEntry[];
+  financeSettings: TreasuryFinanceSettings;
   formOptions: {
     churchId?: string;
     funds: Array<{ id: string; code: string; name: string; fund_type: string }>;
@@ -147,8 +154,8 @@ function FundsPanel({
         <WorkspaceEmptyState
           title={t.pages.treasury.workspace.empty.noFunds}
           message={t.pages.treasury.workspace.empty.noFundsDesc}
-          actionLabel={t.pages.treasury.workspace.empty.openReports}
-          actionHref={`/c/${churchSlug}/reports`}
+          actionLabel={t.pages.treasury.forms.openFundSetup}
+          actionHref={`/c/${churchSlug}/treasury/funds/new`}
         />
       ) : (
         <div className="overflow-x-auto">
@@ -180,12 +187,157 @@ function FundsPanel({
   );
 }
 
+function FundSetupPanel({
+  churchSlug,
+  funds,
+}: {
+  churchSlug: string;
+  funds: Array<{ id: string; code: string; name: string; fund_type: string }>;
+}) {
+  const { t } = useI18n();
+
+  return (
+    <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.1fr)_minmax(420px,1fr)]">
+      <div>
+        <WorkspaceSectionCard
+          title={t.pages.treasury.workspace.sections.fundSetup}
+          description={t.pages.treasury.workspace.sections.fundSetupDesc}
+        >
+          <FundCreateForm churchSlug={churchSlug} embedded />
+        </WorkspaceSectionCard>
+      </div>
+      <FundsPanel churchSlug={churchSlug} funds={funds} />
+    </div>
+  );
+}
+
+function AllocationsPanel({
+  allocations,
+  funds,
+}: {
+  allocations: TreasuryAllocationPreviewEntry[];
+  funds: Array<{ id: string; code: string; name: string; fund_type: string }>;
+}) {
+  const { t } = useI18n();
+  const fundMap = useMemo(() => new Map(funds.map((f) => [f.id, f])), [funds]);
+
+  const summary = useMemo(() => {
+    let missionRemittance = 0;
+    let localRetained = 0;
+    let pendingCount = 0;
+
+    for (const alloc of allocations) {
+      if (alloc.allocation_kind === "mission_remittance") {
+        missionRemittance += Number(alloc.allocated_amount || 0);
+      } else {
+        localRetained += Number(alloc.allocated_amount || 0);
+      }
+      if (alloc.status === "pending") {
+        pendingCount++;
+      }
+    }
+
+    return { missionRemittance, localRetained, pendingCount };
+  }, [allocations]);
+
+  return (
+    <div className="space-y-5">
+      <WorkspaceSectionCard
+        title={t.pages.treasury.workspace.sections.allocationSummary}
+        description={t.pages.treasury.workspace.sections.allocationSummaryDesc}
+      >
+        <div className="grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-[0.16em] text-slate-500">{t.pages.treasury.workspace.stats.missionRemittance}</p>
+            <p className="mt-2 text-lg font-semibold text-slate-900">{formatAmount(summary.missionRemittance)}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-[0.16em] text-slate-500">{t.pages.treasury.workspace.stats.localRetained}</p>
+            <p className="mt-2 text-lg font-semibold text-slate-900">{formatAmount(summary.localRetained)}</p>
+          </div>
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+            <p className="text-xs uppercase tracking-[0.16em] text-slate-500">{t.pages.treasury.workspace.stats.pendingAllocations}</p>
+            <p className="mt-2 text-lg font-semibold text-slate-900">{summary.pendingCount}</p>
+          </div>
+        </div>
+      </WorkspaceSectionCard>
+
+      <WorkspaceSectionCard
+        title={t.pages.treasury.workspace.sections.allocationEntries}
+        description={t.pages.treasury.workspace.sections.allocationEntriesDesc}
+        contentClassName="p-0"
+      >
+        {allocations.length === 0 ? (
+          <div className="p-5">
+            <WorkspaceEmptyState
+              title={t.pages.treasury.workspace.empty.noAllocations}
+              message={t.pages.treasury.workspace.empty.noAllocationsDesc}
+            />
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.treasury.forms.date}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.treasury.forms.entryType}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.treasury.workspace.ledger.inflowAmount}</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.treasury.workspace.stats.allocatedTo}</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.treasury.workspace.stats.allocatedAmount}</th>
+                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.treasury.workspace.stats.allocationStatus}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 bg-white">
+                {allocations.map((alloc) => {
+                  const targetFund = alloc.target_fund_id ? fundMap.get(alloc.target_fund_id) : null;
+                  return (
+                    <tr key={alloc.id}>
+                      <td className="px-4 py-3.5 text-sm text-slate-600">{alloc.inflow_date || "-"}</td>
+                      <td className="px-4 py-3.5 text-sm font-medium capitalize text-slate-900">
+                        {getLabel(inflowTypeLabels, alloc.inflow_type)}
+                      </td>
+                      <td className="px-4 py-3.5 text-sm text-slate-600">
+                        {alloc.inflow_amount ? formatAmount(alloc.inflow_amount) : "-"}
+                      </td>
+                      <td className="px-4 py-3.5 text-sm text-slate-600">
+                        {targetFund ? targetFund.name : alloc.target_fund_id ? `Fund ${alloc.target_fund_id.slice(0, 8)}...` : "-"}
+                      </td>
+                      <td className="px-4 py-3.5 text-right text-sm font-semibold text-slate-900">
+                        {formatAmount(Number(alloc.allocated_amount || 0))}
+                      </td>
+                      <td className="px-4 py-3.5 text-center">
+                        <span
+                          className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${
+                            alloc.status === "pending"
+                              ? "border-amber-200 bg-amber-50 text-amber-800"
+                              : alloc.status === "applied" || alloc.status === "posted"
+                              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
+                              : "border-slate-200 bg-slate-50 text-slate-700"
+                          }`}
+                        >
+                          {getLabel(allocationStatusLabels, alloc.status)}
+                        </span>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </WorkspaceSectionCard>
+    </div>
+  );
+}
+
 export function TreasuryWorkspace({
   churchSlug,
   alreadyTithedIds,
   dashboard,
   recentInflows,
   recentOutflows,
+  allocationPreview,
+  financeSettings,
   formOptions,
 }: TreasuryWorkspaceProps) {
   const { t } = useI18n();
@@ -251,6 +403,8 @@ export function TreasuryWorkspace({
     { key: "expenses", label: t.pages.treasury.workspace.tabs.recordExpenses },
     { key: "ledger", label: t.pages.treasury.workspace.tabs.ledger },
     { key: "funds", label: t.pages.treasury.workspace.tabs.funds },
+    { key: "fundSetup", label: t.pages.treasury.workspace.tabs.fundSetup },
+    { key: "allocations", label: t.pages.treasury.workspace.tabs.allocations },
   ];
 
   return (
@@ -264,6 +418,7 @@ export function TreasuryWorkspace({
           `${dashboard.fundCount} ${t.pages.treasury.workspace.stats.funds.toLowerCase()}`,
           `${dashboard.linkedInflowsCount} ${t.pages.treasury.workspace.stats.linkedContributions.toLowerCase()}`,
           `${dashboard.anonymousInflowsCount} ${t.pages.treasury.workspace.stats.anonymousContributions.toLowerCase()}`,
+          `${dashboard.allocationCount ?? 0} ${t.pages.treasury.workspace.stats.allocationsBadge.toLowerCase()}`,
         ]}
         actions={[
           { label: t.treasury.addIncome, href: `/c/${churchSlug}/treasury/in`, variant: "primary" },
@@ -282,7 +437,11 @@ export function TreasuryWorkspace({
           hint={t.pages.treasury.workspace.stats.netBalanceHint}
           valueClassName={dashboard.netBalance >= 0 ? "text-emerald-600" : "text-red-600"}
         />
-        <WorkspaceStatCard label={t.pages.treasury.workspace.stats.linkedContributions} value={dashboard.linkedInflowsCount} hint={t.pages.treasury.workspace.stats.linkedContributionsHint} />
+        <WorkspaceStatCard 
+          label={t.pages.treasury.workspace.stats.pendingRemittance} 
+          value={formatAmount(dashboard.pendingMissionRemittance ?? 0)} 
+          hint={t.pages.treasury.workspace.stats.pendingRemittanceHint} 
+        />
       </div>
 
       <WorkspaceControlRail
@@ -326,6 +485,7 @@ export function TreasuryWorkspace({
             options={formOptions}
             modeLabel={t.pages.treasury.forms.recordContribution}
             alreadyTithedIds={alreadyTithedIds ?? []}
+            onCreateFundRequest={() => setMainTab("fundSetup")}
           />
           <LedgerTable
             title={t.pages.treasury.workspace.sections.recentMoneyIn}
@@ -343,6 +503,8 @@ export function TreasuryWorkspace({
             churchSlug={churchSlug}
             options={formOptions}
             modeLabel={t.pages.treasury.forms.recordExpenseDisbursement}
+            financeSettings={financeSettings}
+            onCreateFundRequest={() => setMainTab("fundSetup")}
           />
           <LedgerTable
             title={t.pages.treasury.workspace.sections.recentMoneyOut}
@@ -366,6 +528,14 @@ export function TreasuryWorkspace({
 
       {mainTab === "funds" ? (
         <FundsPanel churchSlug={churchSlug} funds={formOptions.funds} />
+      ) : null}
+
+      {mainTab === "fundSetup" ? (
+        <FundSetupPanel churchSlug={churchSlug} funds={formOptions.funds} />
+      ) : null}
+
+      {mainTab === "allocations" ? (
+        <AllocationsPanel allocations={allocationPreview} funds={formOptions.funds} />
       ) : null}
     </div>
   );
