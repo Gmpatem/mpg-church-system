@@ -70,11 +70,14 @@ export default async function DepartmentEventsPage({ params }: DepartmentEventsP
     ctx.roles.includes("church_admin") ||
     ctx.roles.includes("pastor") ||
     ctx.roles.includes("elder") ||
-    ctx.roles.includes("clerk");
+    ctx.roles.includes("clerk") ||
+    ctx.roles.includes("church_secretary");
 
   const canApprove =
     ctx.roles.includes("church_admin") ||
-    ctx.roles.includes("pastor");
+    ctx.roles.includes("pastor") ||
+    ctx.roles.includes("clerk") ||
+    ctx.roles.includes("church_secretary");
 
   return (
     <div className="space-y-6">

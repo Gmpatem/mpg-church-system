@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState } from "react";
 import {
   WorkspaceControlRail,
   WorkspaceEmptyState,
@@ -14,6 +14,8 @@ import {
   getApprovalStageLabel,
   getApprovalStatusLabel,
 } from "@/features/approvals/presentation";
+import { reviewApprovalRequestStateAction } from "@/features/approvals/actions";
+import type { ActionState } from "@/features/access/types";
 
 interface ApprovalsQueueWorkspaceProps {
   churchSlug: string;
@@ -76,6 +78,14 @@ function badgeClass(status: string) {
   return "border-blue-200 bg-blue-50 text-blue-800";
 }
 
+function isReviewableEntityType(entityType: string) {
+  return (
+    entityType === "church_event" ||
+    entityType === "church_announcement" ||
+    entityType === "department_announcement"
+  );
+}
+
 function buildFilterHref(
   churchSlug: string,
   filters: { module: string; status: string; stage: string },
@@ -104,10 +114,18 @@ function filterChipClass(active: boolean) {
 
 export function ApprovalsQueueWorkspace({ churchSlug, data }: ApprovalsQueueWorkspaceProps) {
   const [selectedId, setSelectedId] = useState(data.items[0]?.id ?? "");
+  const [reviewNote, setReviewNote] = useState("");
+  const [reviewState, reviewFormAction, reviewPending] = useActionState<
+    ActionState | null,
+    FormData
+  >(reviewApprovalRequestStateAction, null);
   const selectedItem = useMemo(
     () => data.items.find((item) => item.id === selectedId) ?? null,
     [data.items, selectedId]
   );
+  const canReviewSelected =
+    selectedItem?.status === "pending" &&
+    isReviewableEntityType(selectedItem.entityType);
 
   useEffect(() => {
     if (data.items.length === 0) {
@@ -118,6 +136,10 @@ export function ApprovalsQueueWorkspace({ churchSlug, data }: ApprovalsQueueWork
       setSelectedId(data.items[0].id);
     }
   }, [data.items, selectedId]);
+
+  useEffect(() => {
+    setReviewNote("");
+  }, [selectedId]);
 
   const allActive = !data.filters.module && !data.filters.status && !data.filters.stage;
   const pendingActive = data.filters.status === "pending";
@@ -279,6 +301,80 @@ export function ApprovalsQueueWorkspace({ churchSlug, data }: ApprovalsQueueWork
                 </div>
               ) : null}
 
+              {canReviewSelected ? (
+                <form
+                  action={reviewFormAction}
+                  className="space-y-3 rounded-xl border border-slate-200 bg-white p-3"
+                >
+                  <input type="hidden" name="churchSlug" value={churchSlug} />
+                  <input type="hidden" name="approvalRequestId" value={selectedItem.id} />
+
+                  <div>
+                    <label
+                      htmlFor={`approval-note-${selectedItem.id}`}
+                      className="mb-1 block text-xs font-semibold uppercase tracking-wide text-slate-500"
+                    >
+                      Review Note
+                    </label>
+                    <textarea
+                      id={`approval-note-${selectedItem.id}`}
+                      name="note"
+                      rows={3}
+                      value={reviewNote}
+                      onChange={(event) => setReviewNote(event.target.value)}
+                      placeholder="Add context for this approval decision."
+                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                    />
+                  </div>
+
+                  {reviewState?.ok && reviewState.message ? (
+                    <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-800">
+                      {reviewState.message}
+                    </div>
+                  ) : null}
+
+                  {reviewState?.ok === false ? (
+                    <div className="rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-800">
+                      {reviewState.error}
+                    </div>
+                  ) : null}
+
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="submit"
+                      name="decision"
+                      value="approved"
+                      disabled={reviewPending}
+                      className="rounded-md border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-800 transition hover:bg-emerald-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      type="submit"
+                      name="decision"
+                      value="changes_requested"
+                      disabled={reviewPending}
+                      className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-800 transition hover:bg-amber-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Request Changes
+                    </button>
+                    <button
+                      type="submit"
+                      name="decision"
+                      value="rejected"
+                      disabled={reviewPending}
+                      className="rounded-md border border-rose-300 bg-rose-50 px-3 py-2 text-xs font-medium text-rose-800 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      Reject
+                    </button>
+                  </div>
+                </form>
+              ) : selectedItem.status === "pending" ? (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-600">
+                  This request should be reviewed from its source module for now.
+                </div>
+              ) : null}
+
               <div className="flex flex-wrap gap-2">
                 <Link href={selectedItem.href} className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800">
                   {getApprovalReviewLabel(selectedItem.moduleKey)}
@@ -297,4 +393,3 @@ export function ApprovalsQueueWorkspace({ churchSlug, data }: ApprovalsQueueWork
     </div>
   );
 }
-

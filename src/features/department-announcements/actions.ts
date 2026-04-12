@@ -5,7 +5,7 @@ import { requireChurchRole } from "@/features/access/queries";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/features/access/types";
 import { parseCreateDepartmentAnnouncementInput } from "./validators";
-import { createApprovalRequest, decideApprovalRequest } from "@/features/approvals/actions";
+import { createApprovalRequest } from "@/features/approvals/actions";
 import { getApprovalRequestByEntity } from "@/features/approvals/queries";
 
 function getString(formData: FormData, key: string) {
@@ -29,50 +29,6 @@ async function ensureDepartmentBelongsToChurch(supabase: any, churchId: string, 
   return data;
 }
 
-async function insertDepartmentAnnouncementNotifications(
-  supabase: any,
-  churchId: string,
-  departmentId: string,
-  title: string,
-  href: string
-) {
-  const { data: members, error: membersError } = await supabase
-    .from("member_departments")
-    .select("member_id")
-    .eq("church_id", churchId)
-    .eq("department_id", departmentId)
-    .eq("is_active", true);
-
-  if (membersError) throw new Error(membersError.message);
-
-  const memberIds = Array.from(new Set((members ?? []).map((m: any) => m.member_id).filter(Boolean)));
-  if (memberIds.length === 0) return;
-
-  const { data: memberProfiles, error: profileLookupError } = await supabase
-    .from("members")
-    .select("id, profile_id")
-    .in("id", memberIds)
-    .not("profile_id", "is", null);
-
-  if (profileLookupError) throw new Error(profileLookupError.message);
-
-  const rows = (memberProfiles ?? []).map((row: any) => ({
-    church_id: churchId,
-    target_user_id: row.profile_id,
-    event_type: "department_announcement",
-    entity_type: "department_announcement",
-    title: "New department announcement",
-    message: title,
-    href,
-    is_read: false,
-  }));
-
-  if (rows.length === 0) return;
-
-  const { error: insertError } = await supabase.from("church_notifications").insert(rows);
-  if (insertError) throw new Error(insertError.message);
-}
-
 export async function createDepartmentAnnouncementAction(formData: FormData): Promise<void> {
   const result = await createDepartmentAnnouncementActionImpl(null, formData);
   if (!result.ok) {
@@ -85,7 +41,13 @@ async function createDepartmentAnnouncementActionImpl(
   formData: FormData
 ): Promise<ActionState> {
   const churchSlug = getString(formData, "churchSlug");
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
+  const ctx = await requireChurchRole(churchSlug, [
+    "church_admin",
+    "pastor",
+    "elder",
+    "clerk",
+    "church_secretary",
+  ]);
   const supabase = await createClient();
 
   try {
@@ -148,7 +110,13 @@ async function publishDepartmentAnnouncementActionImpl(
   const departmentId = getString(formData, "departmentId");
   const announcementId = getString(formData, "announcementId");
 
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
+  const ctx = await requireChurchRole(churchSlug, [
+    "church_admin",
+    "pastor",
+    "elder",
+    "clerk",
+    "church_secretary",
+  ]);
   const supabase = await createClient();
 
   if (!departmentId || !announcementId) {
@@ -162,7 +130,7 @@ async function publishDepartmentAnnouncementActionImpl(
 
   const { data: announcement, error: fetchError } = await supabase
     .from("department_announcements")
-    .select("id, title")
+    .select("id, title, status, audience_scope")
     .eq("church_id", ctx.churchId)
     .eq("department_id", departmentId)
     .eq("id", announcementId)
@@ -176,13 +144,24 @@ async function publishDepartmentAnnouncementActionImpl(
     return { ok: false, error: "Announcement not found." };
   }
 
+  if (announcement.status === "archived") {
+    return { ok: false, error: "Archived announcements cannot be submitted for approval." };
+  }
+
+  if (announcement.status === "published") {
+    return { ok: true, message: "Announcement is already published." };
+  }
+
   const existingApproval = await getApprovalRequestByEntity(
     churchSlug,
     "department_announcement",
     announcementId
   );
 
-  if (!existingApproval || ["rejected", "changes_requested", "cancelled"].includes(existingApproval.status)) {
+  if (
+    !existingApproval ||
+    ["rejected", "changes_requested", "cancelled"].includes(existingApproval.status)
+  ) {
     await createApprovalRequest({
       churchSlug,
       moduleKey: "announcements",
@@ -192,17 +171,19 @@ async function publishDepartmentAnnouncementActionImpl(
       payload: {
         departmentId,
         title: announcement.title,
+        audienceScope: announcement.audience_scope,
       },
       priority: "normal",
     });
+  } else if (existingApproval.status === "pending" && announcement.status === "pending_approval") {
+    return { ok: true, message: "Announcement is already in the approval queue." };
   }
 
   const { error } = await supabase
     .from("department_announcements")
     .update({
-      status: "published",
-      published_at: new Date().toISOString(),
-      approved_by_user_id: ctx.userId,
+      status: "pending_approval",
+      approval_note: null,
       updated_at: new Date().toISOString(),
     })
     .eq("church_id", ctx.churchId)
@@ -213,36 +194,14 @@ async function publishDepartmentAnnouncementActionImpl(
     return { ok: false, error: error.message };
   }
 
-  const approval = await getApprovalRequestByEntity(
-    churchSlug,
-    "department_announcement",
-    announcementId
-  );
-
-  if (approval && approval.status === "pending") {
-    await decideApprovalRequest({
-      churchSlug,
-      approvalRequestId: approval.id,
-      decision: "approved",
-      note: `Department announcement "${announcement.title}" published.`,
-    });
-  }
-
-  await insertDepartmentAnnouncementNotifications(
-    supabase,
-    ctx.churchId,
-    departmentId,
-    announcement.title,
-    `/c/${churchSlug}/departments/${departmentId}/announcements`
-  );
-
   revalidatePath(`/c/${churchSlug}/departments/${departmentId}/announcements`);
   revalidatePath(`/c/${churchSlug}/departments/${departmentId}`);
   revalidatePath(`/c/${churchSlug}/departments`);
-  revalidatePath(`/my/${churchSlug}`);
   revalidatePath(`/c/${churchSlug}/office`);
+  revalidatePath(`/c/${churchSlug}/approvals`);
+  revalidatePath(`/my/${churchSlug}`);
 
-  return { ok: true, message: "Department announcement published." };
+  return { ok: true, message: "Department announcement submitted for approval." };
 }
 
 export async function archiveDepartmentAnnouncementAction(formData: FormData): Promise<void> {
@@ -260,7 +219,13 @@ async function archiveDepartmentAnnouncementActionImpl(
   const departmentId = getString(formData, "departmentId");
   const announcementId = getString(formData, "announcementId");
 
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
+  const ctx = await requireChurchRole(churchSlug, [
+    "church_admin",
+    "pastor",
+    "elder",
+    "clerk",
+    "church_secretary",
+  ]);
   const supabase = await createClient();
 
   if (!departmentId || !announcementId) {

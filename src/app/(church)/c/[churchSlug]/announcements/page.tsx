@@ -64,7 +64,8 @@ export default async function AnnouncementsPage({ params }: AnnouncementsPagePro
     ctx.roles.includes("church_admin") ||
     ctx.roles.includes("pastor") ||
     ctx.roles.includes("elder") ||
-    ctx.roles.includes("clerk");
+    ctx.roles.includes("clerk") ||
+    ctx.roles.includes("church_secretary");
 
   return (
     <div className="space-y-6">
@@ -78,7 +79,7 @@ export default async function AnnouncementsPage({ params }: AnnouncementsPagePro
       {canManage ? (
         <WorkspaceSectionCard
           title="Create Announcement"
-          description="Save as draft first, then publish when ready."
+          description="Save as draft first, then submit for approval when ready."
         >
           <form action={createChurchAnnouncementAction} className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <input type="hidden" name="churchSlug" value={churchSlug} />
@@ -209,7 +210,13 @@ export default async function AnnouncementsPage({ params }: AnnouncementsPagePro
 
                   {canManage ? (
                     <div className="flex items-center gap-2">
-                      {announcement.status !== "published" ? (
+                      {announcement.status === "pending_approval" ? (
+                        <span className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-medium text-amber-700">
+                          Awaiting Approval
+                        </span>
+                      ) : null}
+
+                      {announcement.status !== "published" && announcement.status !== "pending_approval" ? (
                         <form action={publishChurchAnnouncementAction}>
                           <input type="hidden" name="churchSlug" value={churchSlug} />
                           <input type="hidden" name="announcementId" value={announcement.id} />
@@ -217,7 +224,7 @@ export default async function AnnouncementsPage({ params }: AnnouncementsPagePro
                             type="submit"
                             className="rounded-xl border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs font-medium text-emerald-700 transition hover:bg-emerald-100"
                           >
-                            Publish
+                            Submit for Approval
                           </button>
                         </form>
                       ) : null}

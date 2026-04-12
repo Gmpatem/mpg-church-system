@@ -19,6 +19,13 @@ import type {
 import { MemberPortalModuleHero } from "./MemberPortalModuleHero";
 import { formatDateTime } from "./memberPortalUiUtils";
 
+function formatNotificationTime(value?: string | null) {
+  if (!value) return null;
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return null;
+  return parsed.toLocaleString();
+}
+
 type MemberPortalHomeModuleProps = {
   churchName: string;
   churchSlug: string;
@@ -124,10 +131,24 @@ export function MemberPortalHomeModule({
       >
         {data.notifications.length > 0 ? (
           data.notifications.map((item) => (
-            <div key={item.id} className="mobile-touch-feedback rounded-2xl border border-slate-200 bg-white p-4">
-              <p className="font-medium text-slate-900">{item.title}</p>
-              <p className="mt-1 text-sm text-slate-600">{item.description}</p>
-            </div>
+            item.href ? (
+              <Link
+                key={item.id}
+                href={item.href}
+                className="mobile-touch-feedback block rounded-2xl border border-slate-200 bg-white p-4 transition hover:bg-slate-50"
+              >
+                <p className="font-medium text-slate-900">{item.title}</p>
+                <p className="mt-1 text-sm text-slate-600">{item.description}</p>
+                {formatNotificationTime(item.createdAt) ? (
+                  <p className="mt-2 text-xs text-slate-500">{formatNotificationTime(item.createdAt)}</p>
+                ) : null}
+              </Link>
+            ) : (
+              <div key={item.id} className="mobile-touch-feedback rounded-2xl border border-slate-200 bg-white p-4">
+                <p className="font-medium text-slate-900">{item.title}</p>
+                <p className="mt-1 text-sm text-slate-600">{item.description}</p>
+              </div>
+            )
           ))
         ) : (
           <WorkspaceEmptyState

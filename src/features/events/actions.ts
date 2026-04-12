@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { requireEventManager } from "./queries";
+import { createApprovalRequest } from "@/features/approvals/actions";
 import type { ActionState } from "./types";
 
 const eventSchema = z.object({
@@ -47,6 +48,9 @@ function getStringArray(formData: FormData, key: string) {
 
 function revalidateEventPaths(churchSlug: string) {
   revalidatePath(`/c/${churchSlug}/events`);
+  revalidatePath(`/c/${churchSlug}/approvals`);
+  revalidatePath(`/c/${churchSlug}/office`);
+  revalidatePath(`/c/${churchSlug}/calendar`);
 }
 
 async function ensureDepartmentsBelongToChurch(
@@ -164,6 +168,7 @@ export async function createEventAction(
 
   const compatibilityDepartmentId = data.department_ids[0] ?? null;
   const totalToCreate = data.is_recurring ? data.recurring_count : 1;
+  const submittedAt = new Date().toISOString();
 
   for (let i = 0; i < totalToCreate; i += 1) {
     const eventStart = addInterval(baseStart, data.recurring_frequency, i);
@@ -182,6 +187,9 @@ export async function createEventAction(
         end_datetime: eventEnd.toISOString(),
         is_all_day: data.is_all_day,
         status: data.status,
+        workflow_state: "pending_approval",
+        submitted_by_user_id: ctx.userId,
+        submitted_at: submittedAt,
         created_by_user_id: ctx.userId,
       })
       .select("id")
@@ -194,15 +202,47 @@ export async function createEventAction(
     } catch (syncError: any) {
       return { ok: false, error: syncError.message ?? "Event created but department sync failed." };
     }
+
+    try {
+      await createApprovalRequest({
+        churchSlug,
+        moduleKey: "events",
+        entityType: "church_event",
+        entityId: insertedEvent.id,
+        requestType: "church_event_submission",
+        payload: {
+          title: data.title,
+          eventType: data.event_type,
+          location: data.location || null,
+          startDateTime: eventStart.toISOString(),
+          endDateTime: eventEnd.toISOString(),
+          departmentId: compatibilityDepartmentId,
+          departmentIds: data.department_ids,
+          workflowState: "pending_approval",
+          source: "church_events_workspace",
+        },
+        priority: "normal",
+      });
+    } catch (approvalError: any) {
+      return {
+        ok: false,
+        error:
+          approvalError?.message ??
+          "Event was saved, but approval workflow initialization failed.",
+      };
+    }
   }
 
   revalidateEventPaths(churchSlug);
 
   if (data.is_recurring && totalToCreate > 1) {
-    return { ok: true, message: `${totalToCreate} recurring events created successfully.` };
+    return {
+      ok: true,
+      message: `${totalToCreate} recurring events created and submitted for approval.`,
+    };
   }
 
-  return { ok: true, message: "Event created successfully." };
+  return { ok: true, message: "Event created and submitted for approval." };
 }
 
 export async function updateEventAction(

@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { requireChurchRole } from "@/features/access/queries";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/features/access/types";
-import { createApprovalRequest, decideApprovalRequest } from "@/features/approvals/actions";
+import { createApprovalRequest, reviewApprovalRequestAction } from "@/features/approvals/actions";
 import { getApprovalRequestByEntity } from "@/features/approvals/queries";
 
 function getString(formData: FormData, key: string) {
@@ -41,7 +41,13 @@ async function createDepartmentEventDraftActionImpl(
 ): Promise<ActionState> {
   const churchSlug = getString(formData, "churchSlug");
   const departmentId = getString(formData, "departmentId");
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
+  const ctx = await requireChurchRole(churchSlug, [
+    "church_admin",
+    "pastor",
+    "elder",
+    "clerk",
+    "church_secretary",
+  ]);
   const supabase = await createClient();
 
   try {
@@ -115,7 +121,13 @@ async function submitDepartmentEventForApprovalActionImpl(
   const departmentId = getString(formData, "departmentId");
   const eventId = getString(formData, "eventId");
 
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
+  const ctx = await requireChurchRole(churchSlug, [
+    "church_admin",
+    "pastor",
+    "elder",
+    "clerk",
+    "church_secretary",
+  ]);
   const supabase = await createClient();
 
   if (!departmentId || !eventId) {
@@ -183,6 +195,7 @@ async function submitDepartmentEventForApprovalActionImpl(
   revalidatePath(`/c/${churchSlug}/departments/${departmentId}/events`);
   revalidatePath(`/c/${churchSlug}/calendar`);
   revalidatePath(`/c/${churchSlug}/office`);
+  revalidatePath(`/c/${churchSlug}/approvals`);
 
   return { ok: true, message: "Event submitted for approval." };
 }
@@ -202,7 +215,13 @@ async function approveDepartmentEventActionImpl(
   const departmentId = getString(formData, "departmentId");
   const eventId = getString(formData, "eventId");
 
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor"]);
+  const ctx = await requireChurchRole(churchSlug, [
+    "church_admin",
+    "pastor",
+    "elder",
+    "clerk",
+    "church_secretary",
+  ]);
   const supabase = await createClient();
 
   if (!departmentId || !eventId) {
@@ -211,7 +230,7 @@ async function approveDepartmentEventActionImpl(
 
   const { data: eventRow, error: fetchError } = await supabase
     .from("church_events")
-    .select("id, title")
+    .select("id, title, event_type, start_datetime, end_datetime, location")
     .eq("church_id", ctx.churchId)
     .eq("department_id", departmentId)
     .eq("id", eventId)
@@ -225,39 +244,60 @@ async function approveDepartmentEventActionImpl(
     return { ok: false, error: "Event not found." };
   }
 
-  const { error } = await supabase
-    .from("church_events")
-    .update({
-      workflow_state: "approved",
-      approved_by_user_id: ctx.userId,
-      approved_at: new Date().toISOString(),
-      approval_note: null,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("church_id", ctx.churchId)
-    .eq("department_id", departmentId)
-    .eq("id", eventId);
+  let approval = await getApprovalRequestByEntity(churchSlug, "church_event", eventId);
 
-  if (error) {
-    return { ok: false, error: error.message };
+  if (!approval || ["rejected", "changes_requested", "cancelled"].includes(approval.status)) {
+    await createApprovalRequest({
+      churchSlug,
+      moduleKey: "events",
+      entityType: "church_event",
+      entityId: eventId,
+      requestType: "department_event_submission",
+      payload: {
+        departmentId,
+        title: eventRow.title,
+        eventType: eventRow.event_type,
+        location: eventRow.location,
+        startDateTime: eventRow.start_datetime,
+        endDateTime: eventRow.end_datetime,
+        workflowState: "pending_approval",
+      },
+      priority: "normal",
+    });
+
+    approval = await getApprovalRequestByEntity(churchSlug, "church_event", eventId);
   }
 
-  const approval = await getApprovalRequestByEntity(churchSlug, "church_event", eventId);
-  if (approval && approval.status === "pending") {
-    await decideApprovalRequest({
-      churchSlug,
-      approvalRequestId: approval.id,
-      decision: "approved",
-      note: `Department event "${eventRow.title}" approved.`,
-    });
+  if (!approval) {
+    return { ok: false, error: "Approval request for this event was not found." };
+  }
+
+  if (approval.status !== "pending") {
+    return { ok: false, error: "Only pending approval requests can be reviewed." };
+  }
+
+  const reviewFormData = new FormData();
+  reviewFormData.set("churchSlug", churchSlug);
+  reviewFormData.set("approvalRequestId", approval.id);
+  reviewFormData.set("decision", "approved");
+  reviewFormData.set("note", `Department event "${eventRow.title}" approved.`);
+
+  const reviewResult = await reviewApprovalRequestAction(reviewFormData);
+  if (!reviewResult.ok) {
+    return reviewResult;
   }
 
   revalidatePath(`/c/${churchSlug}/departments/${departmentId}/events`);
   revalidatePath(`/c/${churchSlug}/calendar`);
   revalidatePath(`/c/${churchSlug}/events`);
   revalidatePath(`/c/${churchSlug}/office`);
+  revalidatePath(`/c/${churchSlug}/approvals`);
+  revalidatePath(`/my/${churchSlug}`);
 
-  return { ok: true, message: "Department event approved and added to church calendar." };
+  return {
+    ok: true,
+    message: reviewResult.message ?? "Department event review completed.",
+  };
 }
 
 export async function rejectDepartmentEventAction(formData: FormData): Promise<void> {
@@ -276,7 +316,13 @@ async function rejectDepartmentEventActionImpl(
   const eventId = getString(formData, "eventId");
   const approvalNote = getString(formData, "approvalNote");
 
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor"]);
+  const ctx = await requireChurchRole(churchSlug, [
+    "church_admin",
+    "pastor",
+    "elder",
+    "clerk",
+    "church_secretary",
+  ]);
   const supabase = await createClient();
 
   if (!departmentId || !eventId) {
@@ -287,38 +333,75 @@ async function rejectDepartmentEventActionImpl(
     return { ok: false, error: "Approval note is required when rejecting an event." };
   }
 
-  const { error } = await supabase
+  const { data: eventRow, error: fetchError } = await supabase
     .from("church_events")
-    .update({
-      workflow_state: "rejected",
-      approved_by_user_id: ctx.userId,
-      approved_at: new Date().toISOString(),
-      approval_note: approvalNote,
-      updated_at: new Date().toISOString(),
-    })
+    .select("id, title, event_type, start_datetime, end_datetime, location")
     .eq("church_id", ctx.churchId)
     .eq("department_id", departmentId)
-    .eq("id", eventId);
+    .eq("id", eventId)
+    .maybeSingle();
 
-  if (error) {
-    return { ok: false, error: error.message };
+  if (fetchError) {
+    return { ok: false, error: fetchError.message };
   }
 
-  const approval = await getApprovalRequestByEntity(churchSlug, "church_event", eventId);
-  if (approval && approval.status === "pending") {
-    await decideApprovalRequest({
+  if (!eventRow) {
+    return { ok: false, error: "Event not found." };
+  }
+
+  let approval = await getApprovalRequestByEntity(churchSlug, "church_event", eventId);
+
+  if (!approval || ["rejected", "changes_requested", "cancelled"].includes(approval.status)) {
+    await createApprovalRequest({
       churchSlug,
-      approvalRequestId: approval.id,
-      decision: "rejected",
-      note: approvalNote,
+      moduleKey: "events",
+      entityType: "church_event",
+      entityId: eventId,
+      requestType: "department_event_submission",
+      payload: {
+        departmentId,
+        title: eventRow.title,
+        eventType: eventRow.event_type,
+        location: eventRow.location,
+        startDateTime: eventRow.start_datetime,
+        endDateTime: eventRow.end_datetime,
+        workflowState: "pending_approval",
+      },
+      priority: "normal",
     });
+
+    approval = await getApprovalRequestByEntity(churchSlug, "church_event", eventId);
+  }
+
+  if (!approval) {
+    return { ok: false, error: "Approval request for this event was not found." };
+  }
+
+  if (approval.status !== "pending") {
+    return { ok: false, error: "Only pending approval requests can be reviewed." };
+  }
+
+  const reviewFormData = new FormData();
+  reviewFormData.set("churchSlug", churchSlug);
+  reviewFormData.set("approvalRequestId", approval.id);
+  reviewFormData.set("decision", "rejected");
+  reviewFormData.set("note", approvalNote);
+
+  const reviewResult = await reviewApprovalRequestAction(reviewFormData);
+  if (!reviewResult.ok) {
+    return reviewResult;
   }
 
   revalidatePath(`/c/${churchSlug}/departments/${departmentId}/events`);
   revalidatePath(`/c/${churchSlug}/calendar`);
   revalidatePath(`/c/${churchSlug}/office`);
+  revalidatePath(`/c/${churchSlug}/approvals`);
+  revalidatePath(`/my/${churchSlug}`);
 
-  return { ok: true, message: "Department event rejected." };
+  return {
+    ok: true,
+    message: reviewResult.message ?? "Department event rejected.",
+  };
 }
 
 

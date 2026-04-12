@@ -273,6 +273,7 @@ export async function getMemberPortalOverview(
     departmentCountResult,
     roleCountResult,
     eventsResult,
+    churchNotificationsResult,
   ] = await Promise.all([
     supabase
       .from("member_departments")
@@ -293,9 +294,33 @@ export async function getMemberPortalOverview(
       .select("id, title, event_type, location, start_datetime, end_datetime, status")
       .eq("church_id", identity.churchId)
       .eq("status", "scheduled")
+      .in("workflow_state", ["approved", "published"])
       .gte("start_datetime", new Date().toISOString())
       .order("start_datetime", { ascending: true })
       .limit(5),
+    identity.profile?.id
+      ? supabase
+          .from("church_notifications")
+          .select("id, title, message, href, event_type, is_read, created_at")
+          .eq("church_id", identity.churchId)
+          .eq("target_user_id", identity.profile.id)
+          .order("created_at", { ascending: false })
+          .limit(6)
+      : Promise.resolve({
+          data: [],
+          error: null,
+        } as {
+          data: Array<{
+            id: string;
+            title: string;
+            message: string;
+            href: string;
+            event_type: string | null;
+            is_read: boolean;
+            created_at: string;
+          }>;
+          error: null;
+        }),
   ]);
 
   if (departmentCountResult.error) {
@@ -313,7 +338,7 @@ export async function getMemberPortalOverview(
   const activeDepartmentCount = departmentCountResult.count ?? 0;
   const activeRoleCount = identity.profile?.id ? roleCountResult.count ?? 0 : 0;
 
-  const notifications = [
+  const summaryNotifications = [
     {
       id: "membership-status",
       title: "Membership status",
@@ -336,6 +361,18 @@ export async function getMemberPortalOverview(
           : "You do not have any active formal church roles assigned yet.",
     },
   ];
+
+  const liveNotifications = ((churchNotificationsResult.error ? [] : churchNotificationsResult.data) ?? []).map((row) => ({
+    id: `church-notification-${row.id}`,
+    title: row.title ?? "Church update",
+    description: row.message ?? "You have a new church notification.",
+    href: row.href ?? null,
+    createdAt: row.created_at ?? null,
+    isRead: row.is_read ?? false,
+    eventType: row.event_type ?? null,
+  }));
+
+  const notifications = [...liveNotifications, ...summaryNotifications];
 
   const { memberRow: _memberRow, ...cleanIdentity } = identity;
 

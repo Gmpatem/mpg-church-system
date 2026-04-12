@@ -61,6 +61,10 @@ export type MemberPortalOverviewNotificationItem = {
   id: string;
   title: string;
   description: string;
+  href?: string | null;
+  createdAt?: string | null;
+  isRead?: boolean;
+  eventType?: string | null;
 };
 
 export type MemberPortalUpcomingEventItem = {
