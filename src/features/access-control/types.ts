@@ -1,12 +1,9 @@
 import type { MemberInviteManagementData } from "@/features/member-invite/types";
 
 export type AccessControlTabKey =
-  | "overview"
-  | "roles"
-  | "page_access"
+  | "permissions"
   | "invites"
-  | "pending_access"
-  | "activity_log";
+  | "pending_access";
 
 export type AccessControlPermissionDefinition = {
   id: string;
@@ -15,21 +12,65 @@ export type AccessControlPermissionDefinition = {
   description: string | null;
 };
 
-export type AccessControlOverviewData = {
+export type AccessControlRoleDefinition = {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+};
+
+export type AccessControlUserRoleAssignment = {
+  id: string;
+  roleId: string;
+  roleCode: string;
+  roleName: string;
+  assignedByUserId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  isActive: boolean;
+};
+
+export type AccessControlUserPermissionAssignment = {
+  id: string;
+  permissionId: string;
+  permissionCode: string;
+  permissionName: string;
+  grantedByUserId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  isActive: boolean;
+};
+
+export type AccessControlWorkspaceUser = {
+  userId: string;
+  displayName: string;
+  email: string | null;
+  status: string;
+  activeRoleCodes: string[];
+  activeRoleNames: string[];
+  roleSummary: string;
+  activePermissionCodes: string[];
+  roles: AccessControlUserRoleAssignment[];
+  permissions: AccessControlUserPermissionAssignment[];
+  lastUpdatedAt: string | null;
+};
+
+export type AccessControlPermissionsData = {
   churchId: string;
   churchSlug: string;
   churchName: string | null;
-  totalPermissionAssignments: number;
-  activePermissionAssignments: number;
-  totalPermissionDefinitions: number;
-  roleCounts: {
-    pastors: number;
-    churchAdmins: number;
-    techTeam: number;
-    clerks: number;
-    churchSecretaries: number;
+  currentUserId: string;
+  canManage: boolean;
+  summary: {
+    totalUsers: number;
+    totalRoleAssignments: number;
+    activeRoleAssignments: number;
+    totalPermissionAssignments: number;
+    activePermissionAssignments: number;
   };
+  roleDefinitions: AccessControlRoleDefinition[];
   permissions: AccessControlPermissionDefinition[];
+  users: AccessControlWorkspaceUser[];
 };
 
 export type AccessControlInvitesData = MemberInviteManagementData;
@@ -74,8 +115,8 @@ export type AccessControlPendingAccessData = {
 
 export type AccessControlTabData =
   | {
-      tab: "overview";
-      data: AccessControlOverviewData;
+      tab: "permissions";
+      data: AccessControlPermissionsData;
     }
   | {
       tab: "invites";
@@ -84,10 +125,6 @@ export type AccessControlTabData =
   | {
       tab: "pending_access";
       data: AccessControlPendingAccessData;
-    }
-  | {
-      tab: "roles" | "page_access" | "activity_log";
-      data: null;
     };
 
 

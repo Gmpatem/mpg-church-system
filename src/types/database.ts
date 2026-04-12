@@ -709,6 +709,782 @@ export interface Database {
           updated_at?: string;
         };
       };
+      // Permission and Access Control
+      permission_definitions: {
+        Row: {
+          id: string;
+          code: string;
+          name: string;
+          description: string | null;
+          is_system: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          name: string;
+          description?: string | null;
+          is_system?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          code?: string;
+          name?: string;
+          description?: string | null;
+          is_system?: boolean;
+          created_at?: string;
+        };
+      };
+      church_permission_assignments: {
+        Row: {
+          id: string;
+          church_id: string;
+          user_id: string;
+          permission_id: string;
+          is_active: boolean;
+          granted_by_user_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          user_id: string;
+          permission_id: string;
+          is_active?: boolean;
+          granted_by_user_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          user_id?: string;
+          permission_id?: string;
+          is_active?: boolean;
+          granted_by_user_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      access_control_audit_logs: {
+        Row: {
+          id: string;
+          church_id: string;
+          target_user_id: string;
+          actor_user_id: string | null;
+          action_type: string;
+          role_id: string | null;
+          permission_id: string | null;
+          payload: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          target_user_id: string;
+          actor_user_id?: string | null;
+          action_type: string;
+          role_id?: string | null;
+          permission_id?: string | null;
+          payload?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          target_user_id?: string;
+          actor_user_id?: string | null;
+          action_type?: string;
+          role_id?: string | null;
+          permission_id?: string | null;
+          payload?: Json;
+          created_at?: string;
+        };
+      };
+      church_access_requests: {
+        Row: {
+          id: string;
+          church_id: string;
+          invite_id: string | null;
+          user_id: string | null;
+          member_id: string | null;
+          requested_role_id: string | null;
+          requested_role_code: string | null;
+          requested_role_name: string;
+          status: string;
+          requested_at: string;
+          reviewed_at: string | null;
+          reviewed_by_user_id: string | null;
+          reviewer_note: string | null;
+          source: string;
+          metadata: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          invite_id?: string | null;
+          user_id?: string | null;
+          member_id?: string | null;
+          requested_role_id?: string | null;
+          requested_role_code?: string | null;
+          requested_role_name: string;
+          status?: string;
+          requested_at?: string;
+          reviewed_at?: string | null;
+          reviewed_by_user_id?: string | null;
+          reviewer_note?: string | null;
+          source?: string;
+          metadata?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          invite_id?: string | null;
+          user_id?: string | null;
+          member_id?: string | null;
+          requested_role_id?: string | null;
+          requested_role_code?: string | null;
+          requested_role_name?: string;
+          status?: string;
+          requested_at?: string;
+          reviewed_at?: string | null;
+          reviewed_by_user_id?: string | null;
+          reviewer_note?: string | null;
+          source?: string;
+          metadata?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      // Events
+      church_events: {
+        Row: {
+          id: string;
+          church_id: string;
+          title: string;
+          description: string | null;
+          event_type: string;
+          department_id: string | null;
+          location: string | null;
+          start_datetime: string;
+          end_datetime: string;
+          is_all_day: boolean;
+          status: string;
+          created_by_user_id: string;
+          created_at: string;
+          updated_at: string;
+          workflow_state: string;
+          submitted_by_user_id: string | null;
+          submitted_at: string | null;
+          approved_by_user_id: string | null;
+          approved_at: string | null;
+          approval_note: string | null;
+          metadata: Json;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          title: string;
+          description?: string | null;
+          event_type: string;
+          department_id?: string | null;
+          location?: string | null;
+          start_datetime: string;
+          end_datetime: string;
+          is_all_day?: boolean;
+          status?: string;
+          created_by_user_id: string;
+          created_at?: string;
+          updated_at?: string;
+          workflow_state?: string;
+          submitted_by_user_id?: string | null;
+          submitted_at?: string | null;
+          approved_by_user_id?: string | null;
+          approved_at?: string | null;
+          approval_note?: string | null;
+          metadata?: Json;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          title?: string;
+          description?: string | null;
+          event_type?: string;
+          department_id?: string | null;
+          location?: string | null;
+          start_datetime?: string;
+          end_datetime?: string;
+          is_all_day?: boolean;
+          status?: string;
+          created_by_user_id?: string;
+          created_at?: string;
+          updated_at?: string;
+          workflow_state?: string;
+          submitted_by_user_id?: string | null;
+          submitted_at?: string | null;
+          approved_by_user_id?: string | null;
+          approved_at?: string | null;
+          approval_note?: string | null;
+          metadata?: Json;
+        };
+      };
+      church_event_departments: {
+        Row: {
+          id: string;
+          church_id: string;
+          event_id: string;
+          department_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          event_id: string;
+          department_id: string;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          event_id?: string;
+          department_id?: string;
+          created_at?: string;
+        };
+      };
+      // Announcements
+      church_announcements: {
+        Row: {
+          id: string;
+          church_id: string;
+          department_id: string | null;
+          title: string;
+          body: string;
+          audience_scope: string;
+          status: string;
+          requires_acknowledgement: boolean;
+          published_at: string | null;
+          expires_at: string | null;
+          created_by_user_id: string | null;
+          approved_by_user_id: string | null;
+          approval_note: string | null;
+          metadata: Json;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          department_id?: string | null;
+          title: string;
+          body: string;
+          audience_scope?: string;
+          status?: string;
+          requires_acknowledgement?: boolean;
+          published_at?: string | null;
+          expires_at?: string | null;
+          created_by_user_id?: string | null;
+          approved_by_user_id?: string | null;
+          approval_note?: string | null;
+          metadata?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          department_id?: string | null;
+          title?: string;
+          body?: string;
+          audience_scope?: string;
+          status?: string;
+          requires_acknowledgement?: boolean;
+          published_at?: string | null;
+          expires_at?: string | null;
+          created_by_user_id?: string | null;
+          approved_by_user_id?: string | null;
+          approval_note?: string | null;
+          metadata?: Json;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      // Treasury
+      treasury_funds: {
+        Row: {
+          id: string;
+          church_id: string;
+          code: string;
+          name: string;
+          fund_type: string;
+          description: string | null;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          code: string;
+          name: string;
+          fund_type: string;
+          description?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          code?: string;
+          name?: string;
+          fund_type?: string;
+          description?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      treasury_inflows: {
+        Row: {
+          id: string;
+          church_id: string;
+          member_id: string | null;
+          fund_id: string;
+          inflow_type: string;
+          amount: number;
+          inflow_date: string;
+          is_anonymous: boolean;
+          note: string | null;
+          reference_number: string | null;
+          recorded_by_user_id: string;
+          created_at: string;
+          updated_at: string;
+          entry_subtype_code: string | null;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          member_id?: string | null;
+          fund_id: string;
+          inflow_type: string;
+          amount: number;
+          inflow_date: string;
+          is_anonymous?: boolean;
+          note?: string | null;
+          reference_number?: string | null;
+          recorded_by_user_id: string;
+          created_at?: string;
+          updated_at?: string;
+          entry_subtype_code?: string | null;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          member_id?: string | null;
+          fund_id?: string;
+          inflow_type?: string;
+          amount?: number;
+          inflow_date?: string;
+          is_anonymous?: boolean;
+          note?: string | null;
+          reference_number?: string | null;
+          recorded_by_user_id?: string;
+          created_at?: string;
+          updated_at?: string;
+          entry_subtype_code?: string | null;
+        };
+      };
+      treasury_outflows: {
+        Row: {
+          id: string;
+          church_id: string;
+          fund_id: string | null;
+          department_id: string | null;
+          outflow_type: string;
+          amount: number;
+          outflow_date: string;
+          payee: string | null;
+          purpose: string;
+          project_name: string | null;
+          reference_number: string | null;
+          note: string | null;
+          recorded_by_user_id: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          fund_id?: string | null;
+          department_id?: string | null;
+          outflow_type: string;
+          amount: number;
+          outflow_date: string;
+          payee?: string | null;
+          purpose: string;
+          project_name?: string | null;
+          reference_number?: string | null;
+          note?: string | null;
+          recorded_by_user_id: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          fund_id?: string | null;
+          department_id?: string | null;
+          outflow_type?: string;
+          amount?: number;
+          outflow_date?: string;
+          payee?: string | null;
+          purpose?: string;
+          project_name?: string | null;
+          reference_number?: string | null;
+          note?: string | null;
+          recorded_by_user_id?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      treasury_allocation_rules: {
+        Row: {
+          id: string;
+          church_id: string;
+          source_inflow_type: string;
+          allocation_kind: string;
+          target_fund_id: string;
+          percentage: number;
+          is_active: boolean;
+          sort_order: number;
+          effective_from: string | null;
+          effective_to: string | null;
+          created_by_user_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          source_inflow_type: string;
+          allocation_kind: string;
+          target_fund_id: string;
+          percentage: number;
+          is_active?: boolean;
+          sort_order?: number;
+          effective_from?: string | null;
+          effective_to?: string | null;
+          created_by_user_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          source_inflow_type?: string;
+          allocation_kind?: string;
+          target_fund_id?: string;
+          percentage?: number;
+          is_active?: boolean;
+          sort_order?: number;
+          effective_from?: string | null;
+          effective_to?: string | null;
+          created_by_user_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      treasury_inflow_allocations: {
+        Row: {
+          id: string;
+          church_id: string;
+          source_inflow_id: string;
+          rule_id: string | null;
+          target_fund_id: string;
+          allocation_kind: string;
+          amount: number;
+          status: string;
+          note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          source_inflow_id: string;
+          rule_id?: string | null;
+          target_fund_id: string;
+          allocation_kind: string;
+          amount: number;
+          status?: string;
+          note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          source_inflow_id?: string;
+          rule_id?: string | null;
+          target_fund_id?: string;
+          allocation_kind?: string;
+          amount?: number;
+          status?: string;
+          note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      treasury_finance_settings: {
+        Row: {
+          church_id: string;
+          tithe_auto_allocate: boolean;
+          offering_auto_allocate: boolean;
+          require_reference_numbers: boolean;
+          require_member_for_named_inflows: boolean;
+          allow_tithe_outflow_only_for_remittance: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          church_id: string;
+          tithe_auto_allocate?: boolean;
+          offering_auto_allocate?: boolean;
+          require_reference_numbers?: boolean;
+          require_member_for_named_inflows?: boolean;
+          allow_tithe_outflow_only_for_remittance?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          church_id?: string;
+          tithe_auto_allocate?: boolean;
+          offering_auto_allocate?: boolean;
+          require_reference_numbers?: boolean;
+          require_member_for_named_inflows?: boolean;
+          allow_tithe_outflow_only_for_remittance?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      treasury_audit_logs: {
+        Row: {
+          id: string;
+          church_id: string;
+          entity_type: string;
+          entity_id: string;
+          action_type: string;
+          changed_by_user_id: string | null;
+          correction_note: string | null;
+          before_snapshot: Json | null;
+          after_snapshot: Json | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          entity_type: string;
+          entity_id: string;
+          action_type: string;
+          changed_by_user_id?: string | null;
+          correction_note?: string | null;
+          before_snapshot?: Json | null;
+          after_snapshot?: Json | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          entity_type?: string;
+          entity_id?: string;
+          action_type?: string;
+          changed_by_user_id?: string | null;
+          correction_note?: string | null;
+          before_snapshot?: Json | null;
+          after_snapshot?: Json | null;
+          created_at?: string;
+        };
+      };
+      // Approvals
+      approval_policies: {
+        Row: {
+          id: string;
+          church_id: string;
+          module_key: string;
+          request_type: string;
+          requires_office_review: boolean;
+          requires_leadership_review: boolean;
+          requires_treasury_review: boolean;
+          final_approver_role_code: string | null;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          module_key: string;
+          request_type: string;
+          requires_office_review?: boolean;
+          requires_leadership_review?: boolean;
+          requires_treasury_review?: boolean;
+          final_approver_role_code?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          module_key?: string;
+          request_type?: string;
+          requires_office_review?: boolean;
+          requires_leadership_review?: boolean;
+          requires_treasury_review?: boolean;
+          final_approver_role_code?: string | null;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      approval_requests: {
+        Row: {
+          id: string;
+          church_id: string;
+          module_key: string;
+          entity_type: string;
+          entity_id: string;
+          request_type: string;
+          submitted_by_user_id: string | null;
+          current_stage: string;
+          status: string;
+          priority: string;
+          current_assignee_role_code: string | null;
+          payload: Json;
+          submitted_at: string;
+          decided_at: string | null;
+          decided_by_user_id: string | null;
+          decision_note: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          module_key: string;
+          entity_type: string;
+          entity_id: string;
+          request_type: string;
+          submitted_by_user_id?: string | null;
+          current_stage?: string;
+          status?: string;
+          priority?: string;
+          current_assignee_role_code?: string | null;
+          payload?: Json;
+          submitted_at?: string;
+          decided_at?: string | null;
+          decided_by_user_id?: string | null;
+          decision_note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          module_key?: string;
+          entity_type?: string;
+          entity_id?: string;
+          request_type?: string;
+          submitted_by_user_id?: string | null;
+          current_stage?: string;
+          status?: string;
+          priority?: string;
+          current_assignee_role_code?: string | null;
+          payload?: Json;
+          submitted_at?: string;
+          decided_at?: string | null;
+          decided_by_user_id?: string | null;
+          decision_note?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      approval_steps: {
+        Row: {
+          id: string;
+          approval_request_id: string;
+          church_id: string;
+          stage_key: string;
+          approver_role_code: string | null;
+          approver_user_id: string | null;
+          decision: string | null;
+          decision_note: string | null;
+          acted_at: string | null;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          approval_request_id: string;
+          church_id: string;
+          stage_key: string;
+          approver_role_code?: string | null;
+          approver_user_id?: string | null;
+          decision?: string | null;
+          decision_note?: string | null;
+          acted_at?: string | null;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          approval_request_id?: string;
+          church_id?: string;
+          stage_key?: string;
+          approver_role_code?: string | null;
+          approver_user_id?: string | null;
+          decision?: string | null;
+          decision_note?: string | null;
+          acted_at?: string | null;
+          sort_order?: number;
+          created_at?: string;
+        };
+      };
+      approval_audit_logs: {
+        Row: {
+          id: string;
+          church_id: string;
+          approval_request_id: string;
+          action_type: string;
+          actor_user_id: string | null;
+          payload: Json;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          approval_request_id: string;
+          action_type: string;
+          actor_user_id?: string | null;
+          payload?: Json;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          approval_request_id?: string;
+          action_type?: string;
+          actor_user_id?: string | null;
+          payload?: Json;
+          created_at?: string;
+        };
+      };
     };
   };
 }
@@ -739,6 +1515,34 @@ export type Order = Tables<"orders">;
 export type OrderItem = Tables<"order_items">;
 export type Payment = Tables<"payments">;
 export type PrintingRequest = Tables<"printing_requests">;
+
+// Permission and Access Control types
+export type PermissionDefinition = Tables<"permission_definitions">;
+export type ChurchPermissionAssignment = Tables<"church_permission_assignments">;
+export type AccessControlAuditLog = Tables<"access_control_audit_logs">;
+export type ChurchAccessRequest = Tables<"church_access_requests">;
+
+// Event types
+export type ChurchEvent = Tables<"church_events">;
+export type ChurchEventDepartment = Tables<"church_event_departments">;
+
+// Announcement types
+export type ChurchAnnouncement = Tables<"church_announcements">;
+
+// Treasury types
+export type TreasuryFund = Tables<"treasury_funds">;
+export type TreasuryInflow = Tables<"treasury_inflows">;
+export type TreasuryOutflow = Tables<"treasury_outflows">;
+export type TreasuryAllocationRule = Tables<"treasury_allocation_rules">;
+export type TreasuryInflowAllocation = Tables<"treasury_inflow_allocations">;
+export type TreasuryFinanceSettings = Tables<"treasury_finance_settings">;
+export type TreasuryAuditLog = Tables<"treasury_audit_logs">;
+
+// Approval types
+export type ApprovalPolicy = Tables<"approval_policies">;
+export type ApprovalRequest = Tables<"approval_requests">;
+export type ApprovalStep = Tables<"approval_steps">;
+export type ApprovalAuditLog = Tables<"approval_audit_logs">;
 
 // Payment method enum (matches live DB)
 export type PaymentMethod = "cash" | "gcash" | "credit";

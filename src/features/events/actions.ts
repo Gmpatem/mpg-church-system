@@ -195,7 +195,16 @@ export async function createEventAction(
       .select("id")
       .single();
 
-    if (error) return { ok: false, error: error.message };
+    if (error) {
+      const message = error.message?.toLowerCase?.() || "";
+      if (message.includes("row-level security") || message.includes("policy")) {
+        return { 
+          ok: false, 
+          error: "Event creation blocked by security policy. Ensure you have event manager role." 
+        };
+      }
+      return { ok: false, error: error.message };
+    }
 
     try {
       await syncEventDepartments(supabase, ctx.churchId, insertedEvent.id, data.department_ids);
@@ -311,7 +320,16 @@ export async function updateEventAction(
     .eq("church_id", ctx.churchId)
     .eq("id", eventId);
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+      const message = error.message?.toLowerCase?.() || "";
+      if (message.includes("row-level security") || message.includes("policy")) {
+        return { 
+          ok: false, 
+          error: "Event creation blocked by security policy. Ensure you have event manager role." 
+        };
+      }
+      return { ok: false, error: error.message };
+    }
 
   try {
     await syncEventDepartments(supabase, ctx.churchId, eventId, data.department_ids);
@@ -340,7 +358,16 @@ export async function deleteEventAction(
     .eq("church_id", ctx.churchId)
     .eq("id", eventId);
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+      const message = error.message?.toLowerCase?.() || "";
+      if (message.includes("row-level security") || message.includes("policy")) {
+        return { 
+          ok: false, 
+          error: "Event creation blocked by security policy. Ensure you have event manager role." 
+        };
+      }
+      return { ok: false, error: error.message };
+    }
 
   revalidateEventPaths(churchSlug);
   return { ok: true, message: "Event deleted successfully." };
@@ -367,7 +394,16 @@ export async function updateEventStatusAction(
     .eq("church_id", ctx.churchId)
     .eq("id", eventId);
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+      const message = error.message?.toLowerCase?.() || "";
+      if (message.includes("row-level security") || message.includes("policy")) {
+        return { 
+          ok: false, 
+          error: "Event creation blocked by security policy. Ensure you have event manager role." 
+        };
+      }
+      return { ok: false, error: error.message };
+    }
 
   revalidateEventPaths(churchSlug);
   return { ok: true, message: "Event status updated successfully." };

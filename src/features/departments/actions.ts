@@ -89,7 +89,16 @@ export async function createDepartmentAction(
     is_active,
   });
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    const message = error.message?.toLowerCase?.() || "";
+    if (message.includes("row-level security") || message.includes("policy")) {
+      return { 
+        ok: false, 
+        error: "Department creation blocked by security policy. Ensure you have admin or clerk role." 
+      };
+    }
+    return { ok: false, error: error.message };
+  }
 
   revalidateDepartmentPaths(churchSlug);
   return { ok: true, message: "Department created successfully." };
@@ -133,7 +142,16 @@ export async function updateDepartmentAction(
     .eq("church_id", ctx.churchId)
     .eq("id", departmentId);
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    const message = error.message?.toLowerCase?.() || "";
+    if (message.includes("row-level security") || message.includes("policy")) {
+      return { 
+        ok: false, 
+        error: "Department update blocked by security policy. Ensure you have admin or clerk role." 
+      };
+    }
+    return { ok: false, error: error.message };
+  }
 
   revalidateDepartmentPaths(churchSlug);
   return { ok: true, message: "Department updated successfully." };

@@ -91,6 +91,13 @@ async function createDepartmentEventDraftActionImpl(
     });
 
     if (error) {
+      const message = error.message?.toLowerCase?.() || "";
+      if (message.includes("row-level security") || message.includes("policy")) {
+        return { 
+          ok: false, 
+          error: "Event creation blocked by security policy. Ensure you have appropriate role." 
+        };
+      }
       return { ok: false, error: error.message };
     }
 

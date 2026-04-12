@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import {
   canCurrentUserViewAccessControl,
-  getAccessControlOverview,
+  getAccessControlPermissionsData,
   getAccessControlTabData,
 } from "@/features/access-control/queries";
 import { AccessControlWorkspace } from "./components/AccessControlWorkspace";
@@ -18,7 +18,7 @@ type PageProps = {
 };
 
 function normalizeTab(value: string | undefined): AccessControlTabKey {
-  if (!value) return "overview";
+  if (!value) return "permissions";
   if (value === "invites") return "invites";
   if (value === "pending_access" || value === "requests") return "pending_access";
   if (
@@ -28,9 +28,9 @@ function normalizeTab(value: string | undefined): AccessControlTabKey {
     value === "page_access" ||
     value === "activity_log"
   ) {
-    return "overview";
+    return "permissions";
   }
-  return "overview";
+  return "permissions";
 }
 
 export default async function AccessControlPage(props: PageProps) {
@@ -43,10 +43,10 @@ export default async function AccessControlPage(props: PageProps) {
     redirect(`/c/${params.churchSlug}/dashboard`);
   }
 
-  const overview = await getAccessControlOverview(params.churchSlug);
+  const permissionsData = await getAccessControlPermissionsData(params.churchSlug);
   const tabData: AccessControlTabData =
-    activeTab === "overview"
-      ? { tab: "overview", data: overview }
+    activeTab === "permissions"
+      ? { tab: "permissions", data: permissionsData }
       : await getAccessControlTabData(params.churchSlug, activeTab);
 
   return (
@@ -63,7 +63,7 @@ export default async function AccessControlPage(props: PageProps) {
         ]}
       />
       <AccessControlWorkspace
-        overview={overview}
+        permissionsData={permissionsData}
         activeTab={activeTab}
         tabData={tabData}
       />

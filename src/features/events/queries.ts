@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
-import { requireChurchAccess } from "@/features/access/queries";
+import { requireChurchAccess, requireChurchRole } from "@/features/access/queries";
 
 interface EventsWorkspaceFilters {
   q?: string;
@@ -161,7 +161,9 @@ export async function getEventsWorkspaceData(
   };
 }
 
+const MANAGE_ROLES = ["church_admin", "pastor", "clerk", "church_secretary"] as const;
+
 export async function requireEventManager(churchSlug: string) {
-  return requireChurchAccess(churchSlug);
+  return requireChurchRole(churchSlug, [...MANAGE_ROLES]);
 }
 

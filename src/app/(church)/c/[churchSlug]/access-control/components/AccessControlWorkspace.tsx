@@ -1,26 +1,28 @@
 import Link from "next/link";
 
 import {
+  WorkspaceEmptyState,
   WorkspaceHero,
   WorkspaceSectionCard,
   WorkspaceStatCard,
 } from "@/components/workspace";
 import type {
-  AccessControlOverviewData,
+  AccessControlPermissionsData,
   AccessControlTabData,
   AccessControlTabKey,
 } from "@/features/access-control/types";
 import { InviteLinkPanel } from "./InviteLinkPanel";
 import { PendingAccessRequestsPanel } from "./PendingAccessRequestsPanel";
+import { AccessControlPermissionsPanel } from "./AccessControlPermissionsPanel";
 
 type AccessControlWorkspaceProps = {
-  overview: AccessControlOverviewData;
+  permissionsData: AccessControlPermissionsData;
   activeTab: AccessControlTabKey;
   tabData: AccessControlTabData;
 };
 
 const TAB_ITEMS: Array<{ key: AccessControlTabKey; label: string }> = [
-  { key: "overview", label: "Permissions" },
+  { key: "permissions", label: "Permissions" },
   { key: "invites", label: "Invites" },
   { key: "pending_access", label: "Requests" },
 ];
@@ -53,102 +55,58 @@ function renderTabNav(churchSlug: string, activeTab: AccessControlTabKey) {
   );
 }
 
-function renderOverviewTab(data: AccessControlOverviewData) {
+function renderPermissionsTab(
+  churchSlug: string,
+  data: AccessControlPermissionsData
+) {
+  if (data.users.length === 0) {
+    return (
+      <WorkspaceSectionCard
+        title="Permissions Workspace"
+        description="Select a church user to review and manage their access."
+      >
+        <WorkspaceEmptyState
+          title="No church users found"
+          message="Invite or activate users first, then assign roles and permissions from this workspace."
+        />
+      </WorkspaceSectionCard>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <WorkspaceStatCard
-          label="Permission Types"
-          value={String(data.totalPermissionDefinitions)}
-          hint="Available page permissions"
+          label="Church Users"
+          value={String(data.summary.totalUsers)}
+          hint="Users in this church access workspace"
         />
         <WorkspaceStatCard
-          label="Assignments"
-          value={String(data.totalPermissionAssignments)}
-          hint="All permission assignment rows"
+          label="Active Roles"
+          value={String(data.summary.activeRoleAssignments)}
+          hint="Currently active role assignments"
         />
         <WorkspaceStatCard
-          label="Active Assignments"
-          value={String(data.activePermissionAssignments)}
+          label="Active Permissions"
+          value={String(data.summary.activePermissionAssignments)}
           hint="Currently active permission grants"
         />
         <WorkspaceStatCard
-          label="Pastors"
-          value={String(data.roleCounts.pastors)}
-          hint="Active pastor role holders"
+          label="Permission Types"
+          value={String(data.permissions.length)}
+          hint="Available permission definitions"
         />
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <WorkspaceStatCard
-          label="Church Admins"
-          value={String(data.roleCounts.churchAdmins)}
-          hint="Active church admins"
+      <WorkspaceSectionCard
+        title="Permissions Workspace"
+        description="Search church users, update active roles, and grant or revoke module permissions using real RBAC assignments."
+      >
+        <AccessControlPermissionsPanel
+          churchSlug={churchSlug}
+          data={data}
         />
-        <WorkspaceStatCard
-          label="Tech Team"
-          value={String(data.roleCounts.techTeam)}
-          hint="Active tech team members"
-        />
-        <WorkspaceStatCard
-          label="Clerks"
-          value={String(data.roleCounts.clerks)}
-          hint="Active clerks"
-        />
-        <WorkspaceStatCard
-          label="Secretaries"
-          value={String(data.roleCounts.churchSecretaries)}
-          hint="Active church secretaries"
-        />
-      </div>
-
-      <div className="grid gap-6 xl:grid-cols-2">
-        <WorkspaceSectionCard
-          title="Permission Catalog"
-          description="These are the page or module permissions currently available for assignment."
-          contentClassName="space-y-3"
-        >
-          {data.permissions.length > 0 ? (
-            <div className="space-y-3">
-              {data.permissions.map((permission) => (
-                <div key={permission.id} className="rounded-2xl border p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-medium">{permission.name}</p>
-                    <span className="rounded-full border px-2.5 py-1 text-xs font-medium">
-                      {permission.code}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    {permission.description?.trim()
-                      ? permission.description
-                      : "No description set."}
-                  </p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="text-sm text-muted-foreground">
-              No permission definitions were found.
-            </p>
-          )}
-        </WorkspaceSectionCard>
-
-        <WorkspaceSectionCard
-          title="What this module controls"
-          description="Access Control brings roles and page permissions together in one workspace."
-          contentClassName="space-y-3"
-        >
-          <div className="rounded-2xl border p-4 text-sm text-muted-foreground">
-            Roles define who a person is in the system, such as Pastor, Church Admin, Tech Team, Clerk, or Church Secretary.
-          </div>
-          <div className="rounded-2xl border p-4 text-sm text-muted-foreground">
-            Page Access will define which modules they can open, such as Members, Events, Treasury, Reports, or Settings.
-          </div>
-          <div className="rounded-2xl border p-4 text-sm text-muted-foreground">
-            Invites now use secure token-based links and Pending Access reviews requested elevated roles before they become active.
-          </div>
-        </WorkspaceSectionCard>
-      </div>
+      </WorkspaceSectionCard>
     </div>
   );
 }
@@ -186,7 +144,7 @@ function renderPendingAccessTab(churchSlug: string, tabData: AccessControlTabDat
 }
 
 export function AccessControlWorkspace({
-  overview,
+  permissionsData,
   activeTab,
   tabData,
 }: AccessControlWorkspaceProps) {
@@ -195,22 +153,22 @@ export function AccessControlWorkspace({
       <WorkspaceHero
         size="compact"
         eyebrow="Access Control"
-        title={`Manage access for ${overview.churchName ?? "this church"}`}
-        description="Control permissions, manage secure invites, and review pending access requests from one workspace."
+        title={`Manage access for ${permissionsData.churchName ?? "this church"}`}
+        description="Control church roles and page permissions, manage secure invites, and review pending access requests from one workspace."
       />
 
-      {renderTabNav(overview.churchSlug, activeTab)}
+      {renderTabNav(permissionsData.churchSlug, activeTab)}
 
-      {activeTab === "overview" && tabData.tab === "overview"
-        ? renderOverviewTab(tabData.data)
+      {activeTab === "permissions" && tabData.tab === "permissions"
+        ? renderPermissionsTab(permissionsData.churchSlug, tabData.data)
         : null}
 
       {activeTab === "invites"
-        ? renderInvitesTab(overview.churchSlug, tabData)
+        ? renderInvitesTab(permissionsData.churchSlug, tabData)
         : null}
 
       {activeTab === "pending_access"
-        ? renderPendingAccessTab(overview.churchSlug, tabData)
+        ? renderPendingAccessTab(permissionsData.churchSlug, tabData)
         : null}
     </div>
   );

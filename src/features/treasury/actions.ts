@@ -887,8 +887,6 @@ export async function createTreasuryFundAction(
     fund_type: fundType,
     description,
     is_active: true,
-    created_by_user_id: ctx.userId,
-    recorded_by_user_id: ctx.userId,
   });
 
   if (!insertResult.ok) {
