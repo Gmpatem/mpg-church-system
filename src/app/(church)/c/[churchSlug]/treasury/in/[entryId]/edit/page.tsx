@@ -14,8 +14,16 @@ export default async function InflowEditPage({ params }: InflowEditPageProps) {
 
   if (!entry) notFound();
 
+  const includeFundIds =
+    typeof entry.fund_id === "string" && entry.fund_id.length > 0 ? [entry.fund_id] : [];
+  const includeDepartmentIds =
+    typeof entry.department_id === "string" && entry.department_id.length > 0
+      ? [entry.department_id]
+      : [];
+
   const options = await getTreasuryFormOptions(churchSlug, {
-    includeFundIds: entry.fund_id ? [entry.fund_id] : [],
+    includeFundIds,
+    includeDepartmentIds,
   });
 
   return (

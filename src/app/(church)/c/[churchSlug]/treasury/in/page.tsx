@@ -22,6 +22,7 @@ export default async function TreasuryInflowsPage({ params, searchParams }: Trea
   const inflowType = pickSingle(filters.inflowType);
   const fundId = pickSingle(filters.fundId);
   const memberId = pickSingle(filters.memberId);
+  const departmentId = pickSingle(filters.departmentId);
   const dateFrom = pickSingle(filters.dateFrom);
   const dateTo = pickSingle(filters.dateTo);
 
@@ -54,7 +55,7 @@ export default async function TreasuryInflowsPage({ params, searchParams }: Trea
       </div>
 
       <form method="get" className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-3 xl:grid-cols-7">
           <div className="xl:col-span-2">
             <label htmlFor="q" className="block text-sm font-medium text-slate-700 mb-1">Search</label>
             <input
@@ -100,6 +101,18 @@ export default async function TreasuryInflowsPage({ params, searchParams }: Trea
           </div>
 
           <div>
+            <label htmlFor="departmentId" className="block text-sm font-medium text-slate-700 mb-1">Department</label>
+            <select id="departmentId" name="departmentId" defaultValue={departmentId} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
+              <option value="">All</option>
+              {options.departments.map((dept) => (
+                <option key={dept.id} value={dept.id}>
+                  {dept.department_name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
             <label htmlFor="dateFrom" className="block text-sm font-medium text-slate-700 mb-1">From</label>
             <input id="dateFrom" name="dateFrom" type="date" defaultValue={dateFrom} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
@@ -136,7 +149,12 @@ export default async function TreasuryInflowsPage({ params, searchParams }: Trea
                     <span className="text-sm font-semibold text-slate-900">{Number(item.amount).toFixed(2)}</span>
                   </div>
                   <p className="mt-2 text-xs text-slate-600">
-                    {item.is_anonymous ? "Anonymous" : "Member linked"} • {item.reference_number ?? "No reference"}
+                    {item.department_id
+                      ? "Department linked"
+                      : item.is_anonymous
+                      ? "Anonymous"
+                      : "Member linked"}{" "}
+                    • {item.reference_number ?? "No reference"}
                   </p>
                   <p className="mt-1 line-clamp-2 text-xs text-slate-500">{item.note ?? "No note"}</p>
                   <div className="mt-3 flex items-center gap-3 text-xs font-medium">

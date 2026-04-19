@@ -15,16 +15,18 @@ import {
   getDepartmentOptions,
 } from "@/features/departments/queries";
 import { updateDepartmentAction } from "@/features/departments/actions";
+import { getDepartmentFinanceWorkspaceData } from "@/features/department-finance/queries";
 import { getPublishedEvents } from "@/features/calendar/queries";
 import { requireChurchAccess } from "@/features/access/queries";
 import { CalendarView } from "@/components/shared/CalendarView";
+import { DepartmentFinanceTab } from "./DepartmentFinanceTab";
 
 interface DepartmentDetailPageProps {
   params: Promise<{ churchSlug: string; departmentId: string }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
-const TABS = ["overview", "members", "leadership", "events", "assignments"] as const;
+const TABS = ["overview", "members", "leadership", "events", "assignments", "finance"] as const;
 type DepartmentDetailTab = (typeof TABS)[number];
 
 function pickSingle(value: string | string[] | undefined) {
@@ -58,15 +60,19 @@ export default async function DepartmentDetailPage({ params, searchParams }: Dep
   const q = pickSingle(query.q);
   const status = pickSingle(query.status);
   const rawTab = pickSingle(query.tab);
+  const focusRequestId = pickSingle(query.requestId);
   const tab: DepartmentDetailTab = isDepartmentDetailTab(rawTab) ? rawTab : "overview";
 
   const ctx = await requireChurchAccess(churchSlug);
 
-  const [department, assignments, options, deptEvents] = await Promise.all([
+  const [department, assignments, options, deptEvents, financeData] = await Promise.all([
     getDepartmentById(churchSlug, departmentId),
     getDepartmentMembers(churchSlug, departmentId, { q, status }),
     getDepartmentOptions(churchSlug),
     getPublishedEvents(ctx.churchId, departmentId),
+    tab === "finance"
+      ? getDepartmentFinanceWorkspaceData(churchSlug, departmentId)
+      : Promise.resolve(null),
   ]);
 
   if (!department) {
@@ -87,6 +93,7 @@ export default async function DepartmentDetailPage({ params, searchParams }: Dep
     { key: "leadership", label: "Leadership" },
     { key: "events", label: "Events" },
     { key: "assignments", label: "Assignments" },
+    { key: "finance", label: "Finance" },
   ];
 
   function buildTabHref(nextTab: DepartmentDetailTab) {
@@ -341,7 +348,26 @@ export default async function DepartmentDetailPage({ params, searchParams }: Dep
           </WorkspaceSectionCard>
         </div>
       ) : null}
+
+      {tab === "finance" ? (
+        financeData ? (
+          <DepartmentFinanceTab
+            churchSlug={churchSlug}
+            departmentId={departmentId}
+            data={financeData}
+            focusRequestId={focusRequestId || null}
+          />
+        ) : (
+          <WorkspaceSectionCard
+            title="Department Finance"
+            description="Treasury-linked department finance data is unavailable for this department."
+          >
+            <p className="text-sm text-slate-600">
+              Confirm department finance migrations are applied, then refresh this workspace.
+            </p>
+          </WorkspaceSectionCard>
+        )
+      ) : null}
     </div>
   );
 }
-

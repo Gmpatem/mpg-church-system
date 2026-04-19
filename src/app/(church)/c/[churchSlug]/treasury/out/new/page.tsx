@@ -1,14 +1,49 @@
 import Link from "next/link";
 import { getTreasuryFormOptions } from "@/features/treasury/queries";
+import { getDepartmentFundRequestForOutflowPrefill } from "@/features/department-finance/queries";
 import { MoneyOutForm } from "./MoneyOutForm";
 
 interface MoneyOutPageProps {
   params: Promise<{ churchSlug: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
-export default async function MoneyOutPage({ params }: MoneyOutPageProps) {
+function pickSingle(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value ?? "";
+}
+
+export default async function MoneyOutPage({ params, searchParams }: MoneyOutPageProps) {
   const { churchSlug } = await params;
-  const options = await getTreasuryFormOptions(churchSlug);
+  const filters = (await searchParams) ?? {};
+  const requestId = pickSingle(filters.requestId);
+
+  const requestForPrefill = requestId
+    ? await getDepartmentFundRequestForOutflowPrefill(churchSlug, requestId)
+    : null;
+
+  const options = await getTreasuryFormOptions(churchSlug, {
+    includeFundIds: requestForPrefill?.preferred_fund_id
+      ? [requestForPrefill.preferred_fund_id]
+      : [],
+    includeDepartmentIds: requestForPrefill?.department_id
+      ? [requestForPrefill.department_id]
+      : [],
+  });
+
+  const defaults = requestForPrefill
+    ? {
+        outflowType: requestForPrefill.outflow_type,
+        fundId: requestForPrefill.preferred_fund_id ?? "",
+        departmentId: requestForPrefill.department_id,
+        amount: requestForPrefill.amount,
+        outflowDate: requestForPrefill.requested_date,
+        payee: requestForPrefill.payee ?? "",
+        purpose: requestForPrefill.purpose,
+        projectName: requestForPrefill.project_name ?? "",
+        note: requestForPrefill.note ?? "",
+        departmentFundRequestId: requestForPrefill.id,
+      }
+    : undefined;
 
   return (
     <div className="space-y-6">
@@ -28,7 +63,15 @@ export default async function MoneyOutPage({ params }: MoneyOutPageProps) {
         </Link>
       </div>
 
-      <MoneyOutForm churchSlug={churchSlug} options={options} />
+      {requestForPrefill ? (
+        <div className="rounded-md border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-900">
+          Processing department request:{" "}
+          <span className="font-semibold">{requestForPrefill.title}</span>. Review and adjust the
+          prefilled outflow details before submitting.
+        </div>
+      ) : null}
+
+      <MoneyOutForm churchSlug={churchSlug} options={options} defaults={defaults} />
     </div>
   );
 }

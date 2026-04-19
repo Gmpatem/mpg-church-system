@@ -354,8 +354,12 @@ export function TreasuryWorkspace({
     .join(" • ");
 
   const contributionRows = useMemo<LedgerRow[]>(
-    () =>
-      (recentInflows ?? []).map((item: any) => ({
+    () => {
+      const departmentNameById = new Map(
+        (formOptions.departments ?? []).map((dept: any) => [dept.id, dept.department_name])
+      );
+
+      return (recentInflows ?? []).map((item: any) => ({
         id: `in-${item.id}`,
         direction: "inflow",
         typeLabel: getLabel(inflowTypeLabels, item.inflow_type),
@@ -364,13 +368,18 @@ export function TreasuryWorkspace({
         memberOrPayee:
           item.member_name ??
           item.member_display_name ??
+          (item.department_id
+            ? departmentNameById.get(item.department_id) ??
+              t.pages.treasury.forms.sourceModes.department
+            : null) ??
           (item.member_id
             ? t.pages.treasury.forms.selectedMember
             : `${t.pages.treasury.forms.sourceModes.anonymous} / ${t.pages.treasury.forms.sourceModes.visitor}`),
         context: item.fund_name ?? item.fund_code ?? "-",
         reference: item.reference_number ?? item.note ?? "-",
-      })),
-    [recentInflows]
+      }));
+    },
+    [formOptions.departments, recentInflows, t.pages.treasury.forms.selectedMember, t.pages.treasury.forms.sourceModes.anonymous, t.pages.treasury.forms.sourceModes.department, t.pages.treasury.forms.sourceModes.visitor]
   );
 
   const expenseRows = useMemo<LedgerRow[]>(

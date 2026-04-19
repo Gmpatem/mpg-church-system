@@ -1,10 +1,18 @@
 "use server";
 
+import { randomUUID } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireChurchRole } from "@/features/access/queries";
 import type { ActionState } from "@/features/access/types";
 import type { TreasuryFinanceSettings } from "@/features/treasury/types";
+import {
+  formatCurrencyLabel,
+  getDepartmentLeaderProfileIds,
+  getDepartmentMemberProfileIds,
+  getMemberProfileId,
+  insertChurchNotifications,
+} from "@/features/department-finance/helpers";
 
 /**
  * Helper to revalidate treasury-related caches for a church.
@@ -51,6 +59,45 @@ function mergePaymentMethodIntoNote(note: string | null, paymentMethod: string |
   if (!paymentLabel) return note;
   const paymentLine = `Payment Method: ${paymentLabel}`;
   return [paymentLine, note].filter(Boolean).join("\n");
+}
+
+function mapTreasuryWriteErrorMessage(rawMessage: string, sourceTable: "treasury_inflows" | "treasury_outflows" | "treasury_funds") {
+  const message = rawMessage || "Treasury write failed.";
+  const normalized = message.toLowerCase();
+
+  if (normalized.includes("row-level security") && normalized.includes("treasury_audit_logs")) {
+    return "Treasury write is blocked by treasury_audit_logs RLS. This flow relies on server-managed audit logging after the base write, so treasury_audit_logs must allow trigger-driven inserts for authorized treasury managers in the same church.";
+  }
+
+  if (normalized.includes("row-level security") && normalized.includes(sourceTable)) {
+    if (sourceTable === "treasury_inflows") {
+      return "Contribution entry is blocked by treasury_inflows RLS policy. Ensure insert/update policies allow active church treasury managers (church_admin, pastor, treasurer) for this church and accept recorded_by_user_id/auth.uid().";
+    }
+    if (sourceTable === "treasury_outflows") {
+      return "Expense entry is blocked by treasury_outflows RLS policy. Ensure insert/update policies allow active church treasury managers (church_admin, pastor, treasurer) for this church and keep church_id scoped to the active church.";
+    }
+    return "Fund write is blocked by treasury_funds RLS policy. Ensure insert/update policies allow active church treasury managers (church_admin, pastor, treasurer) only within their church.";
+  }
+
+  return message;
+}
+
+type InflowSourceType = "member" | "department" | "anonymous" | "visitor";
+
+function normalizeInflowSourceType(sourceTypeRaw: string, hasMember: boolean, hasDepartment: boolean, isAnonymous: boolean): InflowSourceType {
+  if (sourceTypeRaw === "member" || sourceTypeRaw === "department" || sourceTypeRaw === "anonymous" || sourceTypeRaw === "visitor") {
+    return sourceTypeRaw;
+  }
+
+  if (hasDepartment) return "department";
+  if (hasMember && !isAnonymous) return "member";
+  if (isAnonymous) return "anonymous";
+  return "visitor";
+}
+
+function normalizeJoinedRow<T>(value: T | T[] | null | undefined): T | null {
+  if (!value) return null;
+  return Array.isArray(value) ? value[0] ?? null : value;
 }
 
 const DEFAULT_TREASURY_FINANCE_SETTINGS: TreasuryFinanceSettings = {
@@ -352,16 +399,17 @@ async function insertTreasuryInflowWithFallback(
   candidateRow: Record<string, unknown>
 ): Promise<{ ok: true; id: string } | { ok: false; error: string }> {
   const payload = { ...omitEmptyFields(candidateRow) };
+  if (typeof payload.id !== "string" || payload.id.trim().length === 0) {
+    payload.id = randomUUID();
+  }
   const maxAttempts = 10;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const { data, error } = await supabase
-      .from("treasury_inflows")
-      .insert(payload)
-      .select("id")
-      .maybeSingle();
+    const { error } = await supabase.from("treasury_inflows").insert(payload);
 
-    if (!error && data?.id) return { ok: true, id: data.id };
+    if (!error && typeof payload.id === "string") {
+      return { ok: true, id: payload.id };
+    }
 
     const message = String(error?.message || "");
     const missingColumnMatch =
@@ -370,7 +418,19 @@ async function insertTreasuryInflowWithFallback(
 
     if (missingColumnMatch) {
       const column = missingColumnMatch[1];
-      if (column && Object.prototype.hasOwnProperty.call(payload, column)) {
+      if (
+        column === "department_id" &&
+        candidateRow.department_id !== undefined &&
+        candidateRow.department_id !== null &&
+        String(candidateRow.department_id).trim().length > 0
+      ) {
+        return {
+          ok: false,
+          error:
+            "Department-linked inflow requires treasury_inflows.department_id. Apply department finance migration before retrying.",
+        };
+      }
+      if (column && column !== "id" && Object.prototype.hasOwnProperty.call(payload, column)) {
         delete payload[column];
         continue;
       }
@@ -486,6 +546,248 @@ async function ensureDepartmentBelongsToChurch(supabase: any, churchId: string, 
   return !!data;
 }
 
+async function getTreasuryManagerAccessDiagnostics(
+  supabase: any,
+  churchId: string,
+  userId: string
+): Promise<{ membershipOk: boolean; managerRoleOk: boolean }> {
+  const { data: membership, error: membershipError } = await supabase
+    .from("church_users")
+    .select("id")
+    .eq("church_id", churchId)
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .maybeSingle();
+
+  if (membershipError) {
+    throw new Error(membershipError.message);
+  }
+
+  const { data: roleRows, error: roleError } = await supabase
+    .from("church_role_assignments")
+    .select("start_date, end_date, role_definitions(code)")
+    .eq("church_id", churchId)
+    .eq("user_id", userId)
+    .eq("is_active", true);
+
+  if (roleError) {
+    throw new Error(roleError.message);
+  }
+
+  const today = new Date().toISOString().slice(0, 10);
+  const managerRoleOk = (roleRows ?? []).some((row: any) => {
+    const role = normalizeJoinedRow<{ code: string | null }>(row.role_definitions);
+    const code = role?.code ?? null;
+    if (!code || !["church_admin", "pastor", "treasurer"].includes(code)) return false;
+
+    const startsOn = typeof row.start_date === "string" ? row.start_date : null;
+    const endsOn = typeof row.end_date === "string" ? row.end_date : null;
+    const startsOk = !startsOn || startsOn <= today;
+    const endsOk = !endsOn || endsOn >= today;
+    return startsOk && endsOk;
+  });
+
+  return {
+    membershipOk: Boolean(membership),
+    managerRoleOk,
+  };
+}
+
+function mapInflowTypeLabel(value: string) {
+  if (value === "tithe") return "Tithe";
+  if (value === "offering") return "Offering";
+  if (value === "donation") return "Donation";
+  if (value === "special_contribution") return "Special Contribution";
+  return value;
+}
+
+function mapOutflowTypeLabel(value: string) {
+  if (value === "department_expense") return "Department Expense";
+  if (value === "mission_remittance") return "Mission Remittance";
+  if (value === "project") return "Project";
+  if (value === "evangelism") return "Evangelism";
+  if (value === "operations") return "Operations";
+  if (value === "welfare") return "Welfare";
+  if (value === "equipment") return "Equipment";
+  if (value === "other") return "Other";
+  return value;
+}
+
+async function notifyMemberContributionRecorded(params: {
+  supabase: any;
+  churchId: string;
+  churchSlug: string;
+  inflowId: string;
+  memberId: string | null;
+  inflowType: string;
+  amount: number;
+}) {
+  const { supabase, churchId, churchSlug, inflowId, memberId, inflowType, amount } = params;
+  const memberProfileId = await getMemberProfileId(supabase, churchId, memberId);
+  if (!memberProfileId) return;
+
+  await insertChurchNotifications(supabase, [
+    {
+      church_id: churchId,
+      target_user_id: memberProfileId,
+      event_type: "report",
+      entity_type: "treasury_inflow",
+      entity_id: inflowId,
+      title: "Contribution recorded",
+      message: `${mapInflowTypeLabel(inflowType)} of ${formatCurrencyLabel(amount)} was recorded under your name.`,
+      href: `/my/${churchSlug}?tab=giving`,
+      is_read: false,
+    },
+  ]);
+}
+
+async function notifyDepartmentInflowRecorded(params: {
+  supabase: any;
+  churchId: string;
+  churchSlug: string;
+  inflowId: string;
+  departmentId: string | null;
+  inflowType: string;
+  amount: number;
+}) {
+  const { supabase, churchId, churchSlug, inflowId, departmentId, inflowType, amount } = params;
+  if (!departmentId) return;
+
+  const [memberProfileIds, leaderProfileIds] = await Promise.all([
+    getDepartmentMemberProfileIds(supabase, churchId, departmentId),
+    getDepartmentLeaderProfileIds(supabase, churchId, departmentId),
+  ]);
+
+  const recipients = Array.from(new Set([...memberProfileIds, ...leaderProfileIds]));
+  if (recipients.length === 0) return;
+
+  await insertChurchNotifications(
+    supabase,
+    recipients.map((userId) => ({
+      church_id: churchId,
+      target_user_id: userId,
+      event_type: "report",
+      entity_type: "treasury_inflow",
+      entity_id: inflowId,
+      title: "Department income recorded",
+      message: `${mapInflowTypeLabel(inflowType)} income of ${formatCurrencyLabel(amount)} was recorded for your department.`,
+      href: `/c/${churchSlug}/departments/${departmentId}?tab=finance`,
+      is_read: false,
+    }))
+  );
+}
+
+async function notifyDepartmentOutflowRecorded(params: {
+  supabase: any;
+  churchId: string;
+  churchSlug: string;
+  outflowId: string;
+  departmentId: string | null;
+  outflowType: string;
+  amount: number;
+}) {
+  const { supabase, churchId, churchSlug, outflowId, departmentId, outflowType, amount } = params;
+  if (!departmentId) return;
+
+  const [memberProfileIds, leaderProfileIds] = await Promise.all([
+    getDepartmentMemberProfileIds(supabase, churchId, departmentId),
+    getDepartmentLeaderProfileIds(supabase, churchId, departmentId),
+  ]);
+
+  const recipients = Array.from(new Set([...memberProfileIds, ...leaderProfileIds]));
+  if (recipients.length === 0) return;
+
+  await insertChurchNotifications(
+    supabase,
+    recipients.map((userId) => ({
+      church_id: churchId,
+      target_user_id: userId,
+      event_type: "report",
+      entity_type: "treasury_outflow",
+      entity_id: outflowId,
+      title: "Department expense recorded",
+      message: `${mapOutflowTypeLabel(outflowType)} expense of ${formatCurrencyLabel(amount)} was recorded for your department.`,
+      href: `/c/${churchSlug}/departments/${departmentId}?tab=finance`,
+      is_read: false,
+    }))
+  );
+}
+
+async function markDepartmentFundRequestProcessedAfterOutflow(params: {
+  supabase: any;
+  churchId: string;
+  churchSlug: string;
+  requestId: string;
+  outflowId: string;
+  actorUserId: string;
+}) {
+  const { supabase, churchId, churchSlug, requestId, outflowId, actorUserId } = params;
+
+  const { data: requestRow, error: requestError } = await supabase
+    .from("department_fund_requests")
+    .select("*")
+    .eq("church_id", churchId)
+    .eq("id", requestId)
+    .maybeSingle();
+
+  if (requestError) throw new Error(requestError.message);
+  if (!requestRow) throw new Error("Department fund request was not found for processing.");
+
+  const status = String(requestRow.status ?? "");
+  if (!["pending", "approved"].includes(status)) {
+    throw new Error("Only pending or approved requests can be processed into outflows.");
+  }
+
+  const nowIso = new Date().toISOString();
+  const { error: updateError } = await supabase
+    .from("department_fund_requests")
+    .update({
+      status: "processed",
+      processed_outflow_id: outflowId,
+      processed_by_user_id: actorUserId,
+      processed_at: nowIso,
+      treasury_reviewed_by_user_id: actorUserId,
+      treasury_reviewed_at: nowIso,
+      updated_at: nowIso,
+    })
+    .eq("church_id", churchId)
+    .eq("id", requestId);
+
+  if (updateError) throw new Error(updateError.message);
+
+  const [memberProfileIds, leaderProfileIds] = await Promise.all([
+    getDepartmentMemberProfileIds(supabase, churchId, requestRow.department_id),
+    getDepartmentLeaderProfileIds(supabase, churchId, requestRow.department_id),
+  ]);
+
+  const recipients = Array.from(
+    new Set(
+      [
+        requestRow.requested_by_user_id,
+        ...memberProfileIds,
+        ...leaderProfileIds,
+      ].filter(Boolean)
+    )
+  );
+
+  if (recipients.length === 0) return;
+
+  await insertChurchNotifications(
+    supabase,
+    recipients.map((userId) => ({
+      church_id: churchId,
+      target_user_id: userId,
+      event_type: "approval",
+      entity_type: "department_fund_request",
+      entity_id: requestId,
+      title: "Department request processed",
+      message: `${requestRow.title} has been processed into a treasury outflow.`,
+      href: `/c/${churchSlug}/departments/${requestRow.department_id}?tab=finance&requestId=${requestId}`,
+      is_read: false,
+    }))
+  );
+}
+
 export async function createTreasuryInflowAction(
   _prevState: ActionState | null,
   formData: FormData
@@ -497,13 +799,24 @@ export async function createTreasuryInflowAction(
 
   const inflowType = getString(formData, "inflowType");
   const fundId = getString(formData, "fundId");
-  const memberId = getString(formData, "memberId") || null;
+  const memberIdRaw = getString(formData, "memberId") || null;
+  const departmentIdRaw = getString(formData, "departmentId") || null;
+  const sourceTypeRaw = getString(formData, "sourceType");
   const amount = getNumber(formData, "amount");
   const inflowDate = getString(formData, "inflowDate");
-  const isAnonymous = getString(formData, "isAnonymous") === "true";
+  const isAnonymousRaw = getString(formData, "isAnonymous") === "true";
   const note = getString(formData, "note") || null;
   const paymentMethod = getString(formData, "paymentMethod") || null;
   const referenceNumberInput = getString(formData, "referenceNumber");
+  const sourceType = normalizeInflowSourceType(
+    sourceTypeRaw,
+    Boolean(memberIdRaw),
+    Boolean(departmentIdRaw),
+    isAnonymousRaw
+  );
+  const isAnonymous = sourceType === "anonymous" || sourceType === "visitor";
+  const effectiveMemberId = sourceType === "member" ? memberIdRaw : null;
+  const effectiveDepartmentId = sourceType === "department" ? departmentIdRaw : null;
 
   if (!inflowType || !fundId || !inflowDate || !Number.isFinite(amount) || amount <= 0) {
     return { ok: false, error: "Please complete all required money-in fields." };
@@ -520,17 +833,50 @@ export async function createTreasuryInflowAction(
     const fund = await getFundMeta(supabase, ctx.churchId, fundId);
     if (!fund) return { ok: false, error: "Selected fund does not belong to this church." };
 
-    if (!isAnonymous && !memberId && financeSettings.require_member_for_named_inflows) {
+    if (sourceType === "member" && !memberIdRaw) {
+      return { ok: false, error: "Please select a member for member-linked contributions." };
+    }
+
+    if (sourceType === "department" && !departmentIdRaw) {
+      return { ok: false, error: "Please select a department for department-linked contributions." };
+    }
+
+    if (sourceType === "member" && financeSettings.require_member_for_named_inflows && !memberIdRaw) {
       return { ok: false, error: "Named inflows must be linked to a member." };
     }
 
-    if (isAnonymous && memberId) {
-      return { ok: false, error: "Anonymous inflows cannot have a linked member." };
+    if (isAnonymousRaw && (memberIdRaw || departmentIdRaw)) {
+      return { ok: false, error: "Anonymous inflows cannot have linked member or department records." };
     }
 
-    const effectiveMemberId = isAnonymous ? null : memberId;
+    if (!isAnonymous && !effectiveMemberId && !effectiveDepartmentId && financeSettings.require_member_for_named_inflows) {
+      return { ok: false, error: "Named inflows must be linked to a member or department." };
+    }
+
+    if (effectiveMemberId && effectiveDepartmentId) {
+      return { ok: false, error: "Contribution cannot be linked to both member and department in one entry." };
+    }
+
+    if (isAnonymous && (memberIdRaw || departmentIdRaw)) {
+      return { ok: false, error: "Anonymous inflows cannot have a linked member or department." };
+    }
+
     const validMember = await ensureMemberBelongsToChurch(supabase, ctx.churchId, effectiveMemberId);
     if (!validMember) return { ok: false, error: "Selected member does not belong to this church." };
+    const validDepartment = await ensureDepartmentBelongsToChurch(supabase, ctx.churchId, effectiveDepartmentId);
+    if (!validDepartment) return { ok: false, error: "Selected department does not belong to this church." };
+
+    const accessDiagnostics = await getTreasuryManagerAccessDiagnostics(
+      supabase,
+      ctx.churchId,
+      ctx.userId
+    );
+    if (!accessDiagnostics.membershipOk || !accessDiagnostics.managerRoleOk) {
+      return {
+        ok: false,
+        error: `Treasury inflow insert preflight failed (membership_ok=${accessDiagnostics.membershipOk}, manager_role_ok=${accessDiagnostics.managerRoleOk}). Ensure the acting user has active church_users membership and active church role code in church_admin, pastor, or treasurer for this church.`,
+      };
+    }
 
     if (inflowType === "tithe" && fund.fund_type !== "tithe") {
       return { ok: false, error: "Tithe must be recorded into a tithe fund." };
@@ -550,6 +896,7 @@ export async function createTreasuryInflowAction(
     const insertResult = await insertTreasuryInflowWithFallback(supabase, {
       church_id: ctx.churchId,
       member_id: effectiveMemberId,
+      department_id: effectiveDepartmentId,
       fund_id: fundId,
       inflow_type: inflowType,
       amount,
@@ -558,23 +905,13 @@ export async function createTreasuryInflowAction(
       note: finalNote,
       reference_number: referenceNumber,
       recorded_by_user_id: ctx.userId,
-      created_by_user_id: ctx.userId,
-      entered_by_user_id: ctx.userId,
     });
 
     if (!insertResult.ok) {
-      const normalized = insertResult.error.toLowerCase();
-      if (
-        normalized.includes("row-level security") &&
-        normalized.includes("treasury_inflows")
-      ) {
-        return {
-          ok: false,
-          error:
-            "Contribution entry is blocked by treasury_inflows RLS policy. Ensure insert policy allows active church treasury managers (church_admin, pastor, treasurer) for this church and accepts recorded_by_user_id/auth.uid().",
-        };
-      }
-      return { ok: false, error: insertResult.error };
+      return {
+        ok: false,
+        error: mapTreasuryWriteErrorMessage(insertResult.error, "treasury_inflows"),
+      };
     }
 
     await createInflowAllocationsIfEnabled({
@@ -587,7 +924,31 @@ export async function createTreasuryInflowAction(
       financeSettings,
     });
 
+    await Promise.all([
+      notifyMemberContributionRecorded({
+        supabase,
+        churchId: ctx.churchId,
+        churchSlug,
+        inflowId: insertResult.id,
+        memberId: effectiveMemberId,
+        inflowType,
+        amount,
+      }),
+      notifyDepartmentInflowRecorded({
+        supabase,
+        churchId: ctx.churchId,
+        churchSlug,
+        inflowId: insertResult.id,
+        departmentId: effectiveDepartmentId,
+        inflowType,
+        amount,
+      }),
+    ]);
+
     revalidateTreasuryData(churchSlug);
+    if (effectiveDepartmentId) {
+      revalidatePath(`/c/${churchSlug}/departments/${effectiveDepartmentId}`);
+    }
     return { ok: true, message: "Money-in entry recorded successfully." };
   } catch (error) {
     return {
@@ -609,6 +970,7 @@ export async function createTreasuryOutflowAction(
   const outflowType = getString(formData, "outflowType");
   const fundId = getString(formData, "fundId") || null;
   const departmentId = getString(formData, "departmentId") || null;
+  const departmentFundRequestId = getString(formData, "departmentFundRequestId") || null;
   const amount = getNumber(formData, "amount");
   const outflowDate = getString(formData, "outflowDate");
   const payee = getString(formData, "payee") || null;
@@ -636,6 +998,18 @@ export async function createTreasuryOutflowAction(
     const validDepartment = await ensureDepartmentBelongsToChurch(supabase, ctx.churchId, departmentId);
     if (!validDepartment) return { ok: false, error: "Selected department does not belong to this church." };
 
+    const accessDiagnostics = await getTreasuryManagerAccessDiagnostics(
+      supabase,
+      ctx.churchId,
+      ctx.userId
+    );
+    if (!accessDiagnostics.membershipOk || !accessDiagnostics.managerRoleOk) {
+      return {
+        ok: false,
+        error: `Treasury outflow insert preflight failed (membership_ok=${accessDiagnostics.membershipOk}, manager_role_ok=${accessDiagnostics.managerRoleOk}). Ensure the acting user has active church_users membership and active church role code in church_admin, pastor, or treasurer for this church.`,
+      };
+    }
+
     if (
       financeSettings.allow_tithe_outflow_only_for_remittance &&
       fund.fund_type === "tithe" &&
@@ -644,29 +1018,91 @@ export async function createTreasuryOutflowAction(
       return { ok: false, error: "Tithe fund can only be used for mission remittance." };
     }
 
+    if (departmentFundRequestId) {
+      const { data: requestRow, error: requestError } = await supabase
+        .from("department_fund_requests")
+        .select("id, department_id, status")
+        .eq("church_id", ctx.churchId)
+        .eq("id", departmentFundRequestId)
+        .maybeSingle();
+
+      if (requestError) {
+        return { ok: false, error: requestError.message };
+      }
+
+      if (!requestRow) {
+        return { ok: false, error: "Department fund request was not found." };
+      }
+
+      if (!["pending", "approved"].includes(String(requestRow.status))) {
+        return {
+          ok: false,
+          error: "Only pending or approved requests can be processed into outflows.",
+        };
+      }
+
+      if (requestRow.department_id && requestRow.department_id !== departmentId) {
+        return {
+          ok: false,
+          error: "Outflow department must match the selected department request.",
+        };
+      }
+    }
+
     const referenceNumber = referenceNumberInput || buildTreasuryReference("TOUT", outflowDate);
     const finalNote = mergePaymentMethodIntoNote(note, paymentMethod);
 
-    const { error } = await supabase.from("treasury_outflows").insert({
-      church_id: ctx.churchId,
-      fund_id: fundId,
-      department_id: departmentId,
-      outflow_type: outflowType,
-      amount,
-      outflow_date: outflowDate,
-      payee,
-      purpose,
-      project_name: projectName,
-      reference_number: referenceNumber,
-      note: finalNote,
-      recorded_by_user_id: ctx.userId,
-    });
+    const { data: outflowRow, error } = await supabase
+      .from("treasury_outflows")
+      .insert({
+        church_id: ctx.churchId,
+        fund_id: fundId,
+        department_id: departmentId,
+        outflow_type: outflowType,
+        amount,
+        outflow_date: outflowDate,
+        payee,
+        purpose,
+        project_name: projectName,
+        reference_number: referenceNumber,
+        note: finalNote,
+        recorded_by_user_id: ctx.userId,
+      })
+      .select("id")
+      .single();
 
-    if (error) {
-      return { ok: false, error: error.message };
+    if (error || !outflowRow?.id) {
+      return {
+        ok: false,
+        error: mapTreasuryWriteErrorMessage(error?.message ?? "Failed to create outflow record.", "treasury_outflows"),
+      };
     }
 
+    if (departmentFundRequestId) {
+      await markDepartmentFundRequestProcessedAfterOutflow({
+        supabase,
+        churchId: ctx.churchId,
+        churchSlug,
+        requestId: departmentFundRequestId,
+        outflowId: outflowRow.id,
+        actorUserId: ctx.userId,
+      });
+    }
+
+    await notifyDepartmentOutflowRecorded({
+      supabase,
+      churchId: ctx.churchId,
+      churchSlug,
+      outflowId: outflowRow.id,
+      departmentId,
+      outflowType,
+      amount,
+    });
+
     revalidateTreasuryData(churchSlug);
+    if (departmentId) {
+      revalidatePath(`/c/${churchSlug}/departments/${departmentId}`);
+    }
     return { ok: true, message: "Money-out entry recorded successfully." };
   } catch (error) {
     return {
@@ -688,13 +1124,24 @@ export async function updateTreasuryInflowAction(
 
   const inflowType = getString(formData, "inflowType");
   const fundId = getString(formData, "fundId");
-  const memberId = getString(formData, "memberId") || null;
+  const memberIdRaw = getString(formData, "memberId") || null;
+  const departmentIdRaw = getString(formData, "departmentId") || null;
+  const sourceTypeRaw = getString(formData, "sourceType");
   const amount = getNumber(formData, "amount");
   const inflowDate = getString(formData, "inflowDate");
-  const isAnonymous = getString(formData, "isAnonymous") === "true";
+  const isAnonymousRaw = getString(formData, "isAnonymous") === "true";
   const note = getString(formData, "note") || null;
   const referenceNumberInput = getString(formData, "referenceNumber");
   const correctionNote = getString(formData, "correctionNote");
+  const sourceType = normalizeInflowSourceType(
+    sourceTypeRaw,
+    Boolean(memberIdRaw),
+    Boolean(departmentIdRaw),
+    isAnonymousRaw
+  );
+  const isAnonymous = sourceType === "anonymous" || sourceType === "visitor";
+  const effectiveMemberId = sourceType === "member" ? memberIdRaw : null;
+  const effectiveDepartmentId = sourceType === "department" ? departmentIdRaw : null;
 
   if (!entryId || !inflowType || !fundId || !inflowDate || !Number.isFinite(amount) || amount <= 0) {
     return { ok: false, error: "Please complete all required fields." };
@@ -715,17 +1162,42 @@ export async function updateTreasuryInflowAction(
     const fund = await getFundMeta(supabase, ctx.churchId, fundId);
     if (!fund) return { ok: false, error: "Selected fund does not belong to this church." };
 
-    if (!isAnonymous && !memberId && financeSettings.require_member_for_named_inflows) {
-      return { ok: false, error: "Named inflows must be linked to a member." };
+    if (sourceType === "member" && !memberIdRaw) {
+      return { ok: false, error: "Please select a member for member-linked contributions." };
     }
 
-    if (isAnonymous && memberId) {
-      return { ok: false, error: "Anonymous inflows cannot have a linked member." };
+    if (sourceType === "department" && !departmentIdRaw) {
+      return { ok: false, error: "Please select a department for department-linked contributions." };
     }
 
-    const effectiveMemberId = isAnonymous ? null : memberId;
+    if (!isAnonymous && !effectiveMemberId && !effectiveDepartmentId && financeSettings.require_member_for_named_inflows) {
+      return { ok: false, error: "Named inflows must be linked to a member or department." };
+    }
+
+    if (effectiveMemberId && effectiveDepartmentId) {
+      return { ok: false, error: "Contribution cannot be linked to both member and department in one entry." };
+    }
+
+    if (isAnonymous && (memberIdRaw || departmentIdRaw)) {
+      return { ok: false, error: "Anonymous inflows cannot have a linked member or department." };
+    }
+
     const validMember = await ensureMemberBelongsToChurch(supabase, ctx.churchId, effectiveMemberId);
     if (!validMember) return { ok: false, error: "Selected member does not belong to this church." };
+    const validDepartment = await ensureDepartmentBelongsToChurch(supabase, ctx.churchId, effectiveDepartmentId);
+    if (!validDepartment) return { ok: false, error: "Selected department does not belong to this church." };
+
+    const accessDiagnostics = await getTreasuryManagerAccessDiagnostics(
+      supabase,
+      ctx.churchId,
+      ctx.userId
+    );
+    if (!accessDiagnostics.membershipOk || !accessDiagnostics.managerRoleOk) {
+      return {
+        ok: false,
+        error: `Treasury inflow update preflight failed (membership_ok=${accessDiagnostics.membershipOk}, manager_role_ok=${accessDiagnostics.managerRoleOk}). Ensure the acting user has active church_users membership and active church role code in church_admin, pastor, or treasurer for this church.`,
+      };
+    }
 
     if (inflowType === "tithe" && fund.fund_type !== "tithe") {
       return { ok: false, error: "Tithe must be recorded into a tithe fund." };
@@ -748,6 +1220,7 @@ export async function updateTreasuryInflowAction(
         inflow_type: inflowType,
         fund_id: fundId,
         member_id: effectiveMemberId,
+        department_id: effectiveDepartmentId,
         amount,
         inflow_date: inflowDate,
         is_anonymous: isAnonymous,
@@ -759,11 +1232,17 @@ export async function updateTreasuryInflowAction(
       .eq("id", entryId);
 
     if (error) {
-      return { ok: false, error: error.message };
+      return {
+        ok: false,
+        error: mapTreasuryWriteErrorMessage(error.message, "treasury_inflows"),
+      };
     }
 
     revalidateTreasuryData(churchSlug);
     revalidatePath(`/c/${churchSlug}/treasury/in/${entryId}/edit`);
+    if (effectiveDepartmentId) {
+      revalidatePath(`/c/${churchSlug}/departments/${effectiveDepartmentId}`);
+    }
 
     return { ok: true, message: "Money-in entry updated successfully." };
   } catch (error) {
@@ -818,6 +1297,18 @@ export async function updateTreasuryOutflowAction(
     const validDepartment = await ensureDepartmentBelongsToChurch(supabase, ctx.churchId, departmentId);
     if (!validDepartment) return { ok: false, error: "Selected department does not belong to this church." };
 
+    const accessDiagnostics = await getTreasuryManagerAccessDiagnostics(
+      supabase,
+      ctx.churchId,
+      ctx.userId
+    );
+    if (!accessDiagnostics.membershipOk || !accessDiagnostics.managerRoleOk) {
+      return {
+        ok: false,
+        error: `Treasury outflow update preflight failed (membership_ok=${accessDiagnostics.membershipOk}, manager_role_ok=${accessDiagnostics.managerRoleOk}). Ensure the acting user has active church_users membership and active church role code in church_admin, pastor, or treasurer for this church.`,
+      };
+    }
+
     if (
       financeSettings.allow_tithe_outflow_only_for_remittance &&
       fund.fund_type === "tithe" &&
@@ -848,11 +1339,17 @@ export async function updateTreasuryOutflowAction(
       .eq("id", entryId);
 
     if (error) {
-      return { ok: false, error: error.message };
+      return {
+        ok: false,
+        error: mapTreasuryWriteErrorMessage(error.message, "treasury_outflows"),
+      };
     }
 
     revalidateTreasuryData(churchSlug);
     revalidatePath(`/c/${churchSlug}/treasury/out/${entryId}/edit`);
+    if (departmentId) {
+      revalidatePath(`/c/${churchSlug}/departments/${departmentId}`);
+    }
 
     return { ok: true, message: "Money-out entry updated successfully." };
   } catch (error) {
@@ -890,15 +1387,10 @@ export async function createTreasuryFundAction(
   });
 
   if (!insertResult.ok) {
-    const normalized = insertResult.error.toLowerCase();
-    if (normalized.includes("row-level security")) {
-      return {
-        ok: false,
-        error:
-          "Fund creation is blocked by treasury_funds RLS policy. Apply the treasury_funds manager insert policy so church_admin, pastor, and treasurer can create funds for their church.",
-      };
-    }
-    return { ok: false, error: insertResult.error };
+    return {
+      ok: false,
+      error: mapTreasuryWriteErrorMessage(insertResult.error, "treasury_funds"),
+    };
   }
 
   revalidateTreasuryData(churchSlug);
@@ -943,7 +1435,12 @@ export async function toggleTreasuryFundAction(
     .eq("church_id", ctx.churchId)
     .eq("id", fundId);
 
-  if (error) return { ok: false, error: error.message };
+  if (error) {
+    return {
+      ok: false,
+      error: mapTreasuryWriteErrorMessage(error.message, "treasury_funds"),
+    };
+  }
 
   revalidateTreasuryData(churchSlug);
   return { ok: true, message: nextState ? "Fund activated." : "Fund deactivated." };

@@ -6,14 +6,16 @@ import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 import { createTreasuryInflowAction } from "@/features/treasury/actions";
 import { useI18n } from "@/features/i18n";
 import { TreasuryMemberPicker } from "@/app/(church)/c/[churchSlug]/treasury/components/TreasuryMemberPicker";
+import { TreasuryDepartmentPicker } from "@/app/(church)/c/[churchSlug]/treasury/components/TreasuryDepartmentPicker";
 
-type SourceMode = "member" | "anonymous" | "visitor";
+type SourceMode = "member" | "department" | "anonymous" | "visitor";
 
 interface ContributionEntryFormProps {
   churchSlug: string;
   options: {
     funds: Array<{ id: string; name: string; code: string; fund_type: string }>;
     members: Array<{ id: string; display_name?: string | null; first_name: string; last_name: string; member_code?: string | null }>;
+    departments: Array<{ id: string; department_name: string }>;
   };
   defaults?: {
     inflowType?: string;
@@ -42,6 +44,7 @@ function getLockedLabel(inflowType: string | undefined, t: { pages: { treasury: 
 
 function getSourceModeLabel(sourceMode: SourceMode, t: any) {
   if (sourceMode === "member") return t.pages.treasury.forms.sourceModes.member;
+  if (sourceMode === "department") return t.pages.treasury.forms.sourceModes.department;
   if (sourceMode === "anonymous") return t.pages.treasury.forms.sourceModes.anonymous;
   return t.pages.treasury.forms.sourceModes.visitor;
 }
@@ -96,6 +99,7 @@ export function ContributionEntryForm({
   const [entryType, setEntryType] = useState<string>(defaults?.inflowType ?? "tithe");
   const [sourceMode, setSourceMode] = useState<SourceMode>("member");
   const [selectedMemberId, setSelectedMemberId] = useState("");
+  const [selectedDepartmentId, setSelectedDepartmentId] = useState("");
   const [amount, setAmount] = useState("");
   const [inflowDate, setInflowDate] = useState(getTodayLocalDate());
   const [paymentMethod, setPaymentMethod] = useState("cash");
@@ -152,7 +156,10 @@ export function ContributionEntryForm({
     if (sourceMode !== "member" && selectedMemberId) {
       setSelectedMemberId("");
     }
-  }, [selectedMemberId, sourceMode]);
+    if (sourceMode !== "department" && selectedDepartmentId) {
+      setSelectedDepartmentId("");
+    }
+  }, [selectedDepartmentId, selectedMemberId, sourceMode]);
 
   useEffect(() => {
     if ((isFixedType ? defaults?.inflowType : entryType) === "tithe" && selectedMemberId && tithedSet.has(selectedMemberId)) {
@@ -169,9 +176,13 @@ export function ContributionEntryForm({
     if (sourceMode === "member") {
       setSelectedMemberId("");
     }
-  }, [sourceMode, state, submitMode]);
+    if (sourceMode === "department") {
+      setSelectedDepartmentId("");
+    }
+  }, [selectedDepartmentId, sourceMode, state, submitMode]);
 
   const memberRequired = sourceMode === "member";
+  const departmentRequired = sourceMode === "department";
   const currentEntryType = isFixedType ? (defaults?.inflowType ?? entryType) : entryType;
   const currentFundId = isFixedFund ? defaultFundId : fundId;
   const selectedFund = visibleFunds.find((fund) => fund.id === currentFundId);
@@ -182,16 +193,19 @@ export function ContributionEntryForm({
     Boolean(currentFundId) &&
     Boolean(inflowDate) &&
     Number(amount) > 0 &&
-    (!memberRequired || Boolean(selectedMemberId));
+    (!memberRequired || Boolean(selectedMemberId)) &&
+    (!departmentRequired || Boolean(selectedDepartmentId));
 
   return (
     <form action={formAction} className="space-y-5 rounded-lg border border-slate-200 bg-white p-4 lg:p-5">
       <input type="hidden" name="churchSlug" value={churchSlug} />
       <input type="hidden" name="submitMode" value={submitMode} />
+      <input type="hidden" name="sourceType" value={sourceMode} />
       <input type="hidden" name="inflowType" value={currentEntryType} />
       <input type="hidden" name="fundId" value={currentFundId} />
       <input type="hidden" name="memberId" value={sourceMode === "member" ? selectedMemberId : ""} />
-      <input type="hidden" name="isAnonymous" value={sourceMode === "member" ? "false" : "true"} />
+      <input type="hidden" name="departmentId" value={sourceMode === "department" ? selectedDepartmentId : ""} />
+      <input type="hidden" name="isAnonymous" value={sourceMode === "member" || sourceMode === "department" ? "false" : "true"} />
 
       <div>
         <h3 className="text-base font-semibold text-slate-900">{modeLabel ?? t.pages.treasury.forms.recordContribution}</h3>
@@ -240,6 +254,7 @@ export function ContributionEntryForm({
             className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="member">{t.pages.treasury.forms.sourceModes.member}</option>
+            <option value="department">{t.pages.treasury.forms.sourceModes.department}</option>
             <option value="anonymous">{t.pages.treasury.forms.sourceModes.anonymous}</option>
             <option value="visitor">{t.pages.treasury.forms.sourceModes.visitor}</option>
           </select>
@@ -260,6 +275,18 @@ export function ContributionEntryForm({
             }
             clearLabel={t.pages.treasury.forms.unlinked}
             selectedLabel={t.pages.treasury.forms.selectedMember}
+          />
+        ) : sourceMode === "department" ? (
+          <TreasuryDepartmentPicker
+            departments={options.departments}
+            selectedDepartmentId={selectedDepartmentId}
+            onSelect={setSelectedDepartmentId}
+            label="Department"
+            placeholder="Search department"
+            searchPlaceholder="Search department"
+            emptyMessage="No departments found."
+            clearLabel="Clear department"
+            selectedLabel="Selected department"
           />
         ) : (
           <div>
@@ -345,6 +372,12 @@ export function ContributionEntryForm({
       {sourceMode === "member" && !selectedMemberId ? (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
           {t.pages.treasury.forms.memberRequired}
+        </div>
+      ) : null}
+
+      {sourceMode === "department" && !selectedDepartmentId ? (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Please select a department for this department-linked contribution.
         </div>
       ) : null}
 

@@ -14,6 +14,16 @@ interface FinancialRecordEntryFormProps {
   };
   defaults?: {
     outflowType?: string;
+    fundId?: string;
+    departmentId?: string;
+    amount?: string | number;
+    outflowDate?: string;
+    payee?: string;
+    purpose?: string;
+    projectName?: string;
+    note?: string;
+    referenceNumber?: string;
+    departmentFundRequestId?: string;
   };
   modeLabel?: string;
   financeSettings?: {
@@ -96,16 +106,18 @@ export function FinancialRecordEntryForm({
   const [state, formAction, isPending] = useActionState(createTreasuryOutflowAction, null);
   const [submitMode, setSubmitMode] = useState<"save" | "save_add_another">("save");
   const [outflowType, setOutflowType] = useState(defaults?.outflowType ?? "operations");
-  const [fundId, setFundId] = useState("");
-  const [departmentId, setDepartmentId] = useState("");
-  const [amount, setAmount] = useState("");
-  const [outflowDate, setOutflowDate] = useState(getTodayLocalDate());
-  const [payee, setPayee] = useState("");
-  const [purpose, setPurpose] = useState("");
-  const [projectName, setProjectName] = useState("");
+  const [fundId, setFundId] = useState(defaults?.fundId ?? "");
+  const [departmentId, setDepartmentId] = useState(defaults?.departmentId ?? "");
+  const [amount, setAmount] = useState(
+    defaults?.amount !== undefined && defaults?.amount !== null ? String(defaults.amount) : ""
+  );
+  const [outflowDate, setOutflowDate] = useState(defaults?.outflowDate ?? getTodayLocalDate());
+  const [payee, setPayee] = useState(defaults?.payee ?? "");
+  const [purpose, setPurpose] = useState(defaults?.purpose ?? "");
+  const [projectName, setProjectName] = useState(defaults?.projectName ?? "");
   const [paymentMethod, setPaymentMethod] = useState("cash");
-  const [referenceNumber, setReferenceNumber] = useState("");
-  const [note, setNote] = useState("");
+  const [referenceNumber, setReferenceNumber] = useState(defaults?.referenceNumber ?? "");
+  const [note, setNote] = useState(defaults?.note ?? "");
 
   const isFixedType = Boolean(defaults?.outflowType);
   const activeOutflowType = isFixedType ? (defaults?.outflowType ?? outflowType) : outflowType;
@@ -134,12 +146,12 @@ export function FinancialRecordEntryForm({
     if (!state?.ok || submitMode !== "save_add_another") return;
 
     setAmount("");
-    setPayee("");
-    setPurpose("");
-    setProjectName("");
+    setPayee(defaults?.payee ?? "");
+    setPurpose(defaults?.purpose ?? "");
+    setProjectName(defaults?.projectName ?? "");
     setReferenceNumber("");
-    setNote("");
-  }, [state, submitMode]);
+    setNote(defaults?.note ?? "");
+  }, [defaults?.note, defaults?.payee, defaults?.projectName, defaults?.purpose, state, submitMode]);
 
   const canSubmit =
     !isPending &&
@@ -154,6 +166,7 @@ export function FinancialRecordEntryForm({
       <input type="hidden" name="churchSlug" value={churchSlug} />
       <input type="hidden" name="submitMode" value={submitMode} />
       <input type="hidden" name="outflowType" value={activeOutflowType} />
+      <input type="hidden" name="departmentFundRequestId" value={defaults?.departmentFundRequestId ?? ""} />
 
       <div>
         <h3 className="text-base font-semibold text-slate-900">{modeLabel ?? t.pages.treasury.forms.recordExpenseDisbursement}</h3>

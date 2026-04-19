@@ -512,6 +512,7 @@ export const fr: Translations = {
         sourceMode: "Mode de Source",
         sourceModes: {
           member: "Membre",
+          department: "Département",
           anonymous: "Anonyme",
           visitor: "Visiteur / Non-membre",
         },

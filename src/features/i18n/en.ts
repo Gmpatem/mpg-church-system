@@ -510,6 +510,7 @@ export const en = {
         sourceMode: "Source Mode",
         sourceModes: {
           member: "Member",
+          department: "Department",
           anonymous: "Anonymous",
           visitor: "Visitor / Non-member",
         },

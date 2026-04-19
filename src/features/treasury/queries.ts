@@ -16,6 +16,9 @@ function sumAmount(rows: any[]) {
 }
 
 const TREASURY_ALLOWED_ROLES = ["church_admin", "treasurer", "pastor"] as const;
+const TREASURY_INFLOWS_DEPARTMENT_COLUMN = "department_id";
+const TREASURY_DEPARTMENT_MIGRATION_REQUIRED_MESSAGE =
+  "Department-linked treasury inflows require the department finance migration (database/rls/20260418_department_finance_system.sql).";
 
 const DEFAULT_TREASURY_FINANCE_SETTINGS: TreasuryFinanceSettings = {
   tithe_auto_allocate: false,
@@ -35,6 +38,151 @@ function toBoolean(value: unknown, fallback: boolean) {
     if (["false", "0", "no", "off", "disabled"].includes(normalized)) return false;
   }
   return fallback;
+}
+
+function normalizeSupabaseErrorMessage(error: any, fallback: string) {
+  const parts = [error?.message, error?.details, error?.hint]
+    .map((value) => (typeof value === "string" ? value.trim() : ""))
+    .filter(Boolean);
+  return parts.length > 0 ? parts.join(" ") : fallback;
+}
+
+function withNullableDepartmentId<T extends Record<string, unknown>>(rows: T[] | null | undefined) {
+  return (rows ?? []).map((row) => ({
+    ...row,
+    department_id:
+      Object.prototype.hasOwnProperty.call(row, TREASURY_INFLOWS_DEPARTMENT_COLUMN) &&
+      row[TREASURY_INFLOWS_DEPARTMENT_COLUMN] !== undefined
+        ? (row[TREASURY_INFLOWS_DEPARTMENT_COLUMN] as string | null)
+        : null,
+  }));
+}
+
+async function getLinkedInflowsCountForChurch(
+  supabase: any,
+  churchId: string
+): Promise<{ count: number | null; error: any; hasDepartmentColumn: boolean }> {
+  const withDepartment = await supabase
+    .from("treasury_inflows")
+    .select("id", { count: "exact", head: true })
+    .eq("church_id", churchId)
+    .eq("is_anonymous", false)
+    .or("member_id.not.is.null,department_id.not.is.null");
+
+  if (!withDepartment.error) {
+    return {
+      count: withDepartment.count ?? 0,
+      error: null,
+      hasDepartmentColumn: true,
+    };
+  }
+
+  const withoutDepartment = await supabase
+    .from("treasury_inflows")
+    .select("id", { count: "exact", head: true })
+    .eq("church_id", churchId)
+    .eq("is_anonymous", false)
+    .not("member_id", "is", null);
+
+  if (!withoutDepartment.error) {
+    return {
+      count: withoutDepartment.count ?? 0,
+      error: null,
+      hasDepartmentColumn: false,
+    };
+  }
+
+  const nonAnonymousFallback = await supabase
+    .from("treasury_inflows")
+    .select("id", { count: "exact", head: true })
+    .eq("church_id", churchId)
+    .eq("is_anonymous", false);
+
+  if (!nonAnonymousFallback.error) {
+    return {
+      count: nonAnonymousFallback.count ?? 0,
+      error: null,
+      hasDepartmentColumn: false,
+    };
+  }
+
+  const composedMessage = [
+    normalizeSupabaseErrorMessage(
+      withDepartment.error,
+      "Department-aware linked inflows count failed."
+    ),
+    normalizeSupabaseErrorMessage(
+      withoutDepartment.error,
+      "Legacy member-linked inflows count failed."
+    ),
+    normalizeSupabaseErrorMessage(
+      nonAnonymousFallback.error,
+      "Non-anonymous inflows fallback count failed."
+    ),
+  ].join(" | ");
+
+  return {
+    count: null,
+    error: new Error(composedMessage),
+    hasDepartmentColumn: false,
+  };
+}
+
+async function getRecentInflowsForChurch(
+  supabase: any,
+  churchId: string,
+  limit: number
+): Promise<{ data: any[] | null; error: any; hasDepartmentColumn: boolean }> {
+  const withDepartment = await supabase
+    .from("treasury_inflows")
+    .select(
+      "id, inflow_type, amount, inflow_date, is_anonymous, note, reference_number, member_id, department_id, fund_id"
+    )
+    .eq("church_id", churchId)
+    .order("inflow_date", { ascending: false })
+    .limit(limit);
+
+  if (!withDepartment.error) {
+    return {
+      data: withNullableDepartmentId(withDepartment.data as unknown as Record<string, unknown>[]),
+      error: null,
+      hasDepartmentColumn: true,
+    };
+  }
+
+  const withoutDepartment = await supabase
+    .from("treasury_inflows")
+    .select(
+      "id, inflow_type, amount, inflow_date, is_anonymous, note, reference_number, member_id, fund_id"
+    )
+    .eq("church_id", churchId)
+    .order("inflow_date", { ascending: false })
+    .limit(limit);
+
+  if (withoutDepartment.error) {
+    const composedMessage = [
+      normalizeSupabaseErrorMessage(
+        withDepartment.error,
+        "Department-aware recent inflows query failed."
+      ),
+      normalizeSupabaseErrorMessage(
+        withoutDepartment.error,
+        "Legacy recent inflows fallback query failed."
+      ),
+    ].join(" | ");
+
+    return {
+      data: null,
+      error: new Error(composedMessage),
+      hasDepartmentColumn: false,
+    };
+  }
+
+  return {
+    data: withNullableDepartmentId(withoutDepartment.data as unknown as Record<string, unknown>[]),
+    error: null,
+    hasDepartmentColumn: false,
+  };
 }
 
 function pickStringFromRecord(row: Record<string, unknown>, keys: string[]) {
@@ -244,6 +392,8 @@ export async function getTreasuryDashboard(churchSlug: string) {
   const ctx = await requireChurchAccess(churchSlug);
   const supabase = await createClient();
 
+  const linkedInflowsPromise = getLinkedInflowsCountForChurch(supabase, ctx.churchId);
+
   const [
     { count: fundCount, error: fundError },
     { data: inflows, error: inflowError },
@@ -254,15 +404,15 @@ export async function getTreasuryDashboard(churchSlug: string) {
     supabase.from("treasury_funds").select("*", { count: "exact", head: true }).eq("church_id", ctx.churchId),
     supabase.from("treasury_inflows").select("amount, inflow_type, inflow_date").eq("church_id", ctx.churchId),
     supabase.from("treasury_outflows").select("amount, outflow_type, outflow_date").eq("church_id", ctx.churchId),
-    supabase.from("treasury_inflows").select("*", { count: "exact", head: true }).eq("church_id", ctx.churchId).eq("is_anonymous", false).not("member_id", "is", null),
+    linkedInflowsPromise,
     supabase.from("treasury_inflows").select("*", { count: "exact", head: true }).eq("church_id", ctx.churchId).eq("is_anonymous", true),
   ]);
 
-  if (fundError) throw new Error(fundError.message);
-  if (inflowError) throw new Error(inflowError.message);
-  if (outflowError) throw new Error(outflowError.message);
-  if (linkedError) throw new Error(linkedError.message);
-  if (anonymousError) throw new Error(anonymousError.message);
+  if (fundError) throw new Error(normalizeSupabaseErrorMessage(fundError, "Failed to load treasury funds count."));
+  if (inflowError) throw new Error(normalizeSupabaseErrorMessage(inflowError, "Failed to load treasury inflows."));
+  if (outflowError) throw new Error(normalizeSupabaseErrorMessage(outflowError, "Failed to load treasury outflows."));
+  if (linkedError) throw new Error(normalizeSupabaseErrorMessage(linkedError, "Failed to load linked inflows count."));
+  if (anonymousError) throw new Error(normalizeSupabaseErrorMessage(anonymousError, "Failed to load anonymous inflows count."));
 
   const totalIn = sumAmount(inflows ?? []);
   const totalOut = sumAmount(outflows ?? []);
@@ -327,15 +477,8 @@ export async function getTreasuryRecentInflows(churchSlug: string) {
   const ctx = await requireChurchAccess(churchSlug);
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("treasury_inflows")
-    .select("id, inflow_type, amount, inflow_date, is_anonymous, note, reference_number, member_id, fund_id")
-    .eq("church_id", ctx.churchId)
-    .order("inflow_date", { ascending: false })
-    .limit(10);
-
-  if (error) throw new Error(error.message);
-
+  const { data, error } = await getRecentInflowsForChurch(supabase, ctx.churchId, 10);
+  if (error) throw new Error(normalizeSupabaseErrorMessage(error, "Failed to load recent treasury inflows."));
   return data ?? [];
 }
 
@@ -491,34 +634,68 @@ export async function getTreasuryInflows(
   const inflowType = pickSingle(rawFilters?.inflowType);
   const fundId = pickSingle(rawFilters?.fundId);
   const memberId = pickSingle(rawFilters?.memberId);
+  const departmentId = pickSingle(rawFilters?.departmentId);
   const dateFrom = pickSingle(rawFilters?.dateFrom);
   const dateTo = pickSingle(rawFilters?.dateTo);
 
-  let query = supabase
-    .from("treasury_inflows")
-    .select("id, inflow_type, amount, inflow_date, is_anonymous, note, reference_number, member_id, fund_id, created_at")
-    .eq("church_id", ctx.churchId);
+  const applyFilters = (query: any, hasDepartmentColumn: boolean) => {
+    if (inflowType) query = query.eq("inflow_type", inflowType);
+    if (fundId) query = query.eq("fund_id", fundId);
+    if (memberId) query = query.eq("member_id", memberId);
+    if (departmentId) {
+      if (!hasDepartmentColumn) {
+        throw new Error(TREASURY_DEPARTMENT_MIGRATION_REQUIRED_MESSAGE);
+      }
+      query = query.eq("department_id", departmentId);
+    }
+    if (dateFrom) query = query.gte("inflow_date", dateFrom);
+    if (dateTo) query = query.lte("inflow_date", dateTo);
 
-  if (inflowType) query = query.eq("inflow_type", inflowType);
-  if (fundId) query = query.eq("fund_id", fundId);
-  if (memberId) query = query.eq("member_id", memberId);
-  if (dateFrom) query = query.gte("inflow_date", dateFrom);
-  if (dateTo) query = query.lte("inflow_date", dateTo);
+    if (q) {
+      const safe = q.replace(/,/g, " ");
+      query = query.or(
+        ["note.ilike.%" + safe + "%", "reference_number.ilike.%" + safe + "%"].join(",")
+      );
+    }
 
-  if (q) {
-    const safe = q.replace(/,/g, " ");
-    query = query.or([
-      "note.ilike.%" + safe + "%",
-      "reference_number.ilike.%" + safe + "%",
-    ].join(","));
+    return query.order("inflow_date", { ascending: false }).order("created_at", { ascending: false });
+  };
+
+  const runQuery = async (hasDepartmentColumn: boolean) => {
+    let query = supabase
+      .from("treasury_inflows")
+      .select(
+        hasDepartmentColumn
+          ? "id, inflow_type, amount, inflow_date, is_anonymous, note, reference_number, member_id, department_id, fund_id, created_at"
+          : "id, inflow_type, amount, inflow_date, is_anonymous, note, reference_number, member_id, fund_id, created_at"
+      )
+      .eq("church_id", ctx.churchId);
+
+    query = applyFilters(query, hasDepartmentColumn);
+    return query;
+  };
+
+  try {
+    const withDepartment = await runQuery(true);
+    if (!withDepartment.error) {
+      return withNullableDepartmentId(withDepartment.data as unknown as Record<string, unknown>[]);
+    }
+
+    const withoutDepartment = await runQuery(false);
+    if (withoutDepartment.error) {
+      const composedMessage = [
+        normalizeSupabaseErrorMessage(withDepartment.error, "Department-aware treasury inflows query failed."),
+        normalizeSupabaseErrorMessage(withoutDepartment.error, "Legacy treasury inflows fallback query failed."),
+      ].join(" | ");
+      throw new Error(composedMessage);
+    }
+
+    return withNullableDepartmentId(withoutDepartment.data as unknown as Record<string, unknown>[]);
+  } catch (error: any) {
+    throw error instanceof Error
+      ? error
+      : new Error(normalizeSupabaseErrorMessage(error, "Failed to load treasury inflows."));
   }
-
-  query = query.order("inflow_date", { ascending: false }).order("created_at", { ascending: false });
-
-  const { data, error } = await query;
-  if (error) throw new Error(error.message);
-
-  return data ?? [];
 }
 
 export async function getTreasuryOutflows(
@@ -570,7 +747,12 @@ export async function getTreasuryOutflows(
  * Previous: select("*") - fetched all fields including internal metadata
  * Now: explicit fields needed for editing and display
  */
-const INFLOW_DETAIL_FIELDS = `
+const INFLOW_DETAIL_FIELDS_WITH_DEPARTMENT = `
+  id, church_id, member_id, department_id, fund_id, 
+  inflow_type, amount, inflow_date, is_anonymous,
+  note, reference_number, created_at, updated_at
+`;
+const INFLOW_DETAIL_FIELDS_LEGACY = `
   id, church_id, member_id, fund_id, 
   inflow_type, amount, inflow_date, is_anonymous,
   note, reference_number, created_at, updated_at
@@ -580,16 +762,37 @@ export async function getTreasuryInflowById(churchSlug: string, entryId: string)
   const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  const withDepartment = await supabase
     .from("treasury_inflows")
-    .select(INFLOW_DETAIL_FIELDS)
+    .select(INFLOW_DETAIL_FIELDS_WITH_DEPARTMENT)
     .eq("church_id", ctx.churchId)
     .eq("id", entryId)
     .maybeSingle();
 
-  if (error) throw new Error(error.message);
+  if (!withDepartment.error) {
+    return withDepartment.data
+      ? withNullableDepartmentId([withDepartment.data as Record<string, unknown>])[0]
+      : null;
+  }
 
-  return data;
+  const legacy = await supabase
+    .from("treasury_inflows")
+    .select(INFLOW_DETAIL_FIELDS_LEGACY)
+    .eq("church_id", ctx.churchId)
+    .eq("id", entryId)
+    .maybeSingle();
+
+  if (legacy.error) {
+    const composedMessage = [
+      normalizeSupabaseErrorMessage(withDepartment.error, "Department-aware treasury inflow lookup failed."),
+      normalizeSupabaseErrorMessage(legacy.error, "Legacy treasury inflow lookup failed."),
+    ].join(" | ");
+    throw new Error(composedMessage);
+  }
+
+  return legacy.data
+    ? withNullableDepartmentId([legacy.data as Record<string, unknown>])[0]
+    : null;
 }
 
 /**
@@ -629,37 +832,66 @@ export async function getTreasurySummary(
   const dateFrom = pickSingle(rawFilters?.dateFrom);
   const dateTo = pickSingle(rawFilters?.dateTo);
 
-  let inflowQuery = supabase
-    .from("treasury_inflows")
-    .select("id, amount, inflow_type, fund_id, member_id, is_anonymous, inflow_date")
-    .eq("church_id", ctx.churchId);
+  const buildInflowSummaryQuery = (hasDepartmentColumn: boolean) => {
+    let query = supabase
+      .from("treasury_inflows")
+      .select(
+        hasDepartmentColumn
+          ? "id, amount, inflow_type, fund_id, member_id, department_id, is_anonymous, inflow_date"
+          : "id, amount, inflow_type, fund_id, member_id, is_anonymous, inflow_date"
+      )
+      .eq("church_id", ctx.churchId);
+
+    if (dateFrom) query = query.gte("inflow_date", dateFrom);
+    if (dateTo) query = query.lte("inflow_date", dateTo);
+    return query;
+  };
 
   let outflowQuery = supabase
     .from("treasury_outflows")
     .select("id, amount, outflow_type, fund_id, department_id, project_name, outflow_date")
     .eq("church_id", ctx.churchId);
 
-  if (dateFrom) {
-    inflowQuery = inflowQuery.gte("inflow_date", dateFrom);
-    outflowQuery = outflowQuery.gte("outflow_date", dateFrom);
-  }
-  if (dateTo) {
-    inflowQuery = inflowQuery.lte("inflow_date", dateTo);
-    outflowQuery = outflowQuery.lte("outflow_date", dateTo);
-  }
+  if (dateFrom) outflowQuery = outflowQuery.gte("outflow_date", dateFrom);
+  if (dateTo) outflowQuery = outflowQuery.lte("outflow_date", dateTo);
 
-  const [{ data: inflows, error: inflowError }, { data: outflows, error: outflowError }, { data: funds, error: fundsError }, { data: departments, error: departmentsError }] =
+  const [withDepartmentInflowsResult, { data: outflows, error: outflowError }, { data: funds, error: fundsError }, { data: departments, error: departmentsError }] =
     await Promise.all([
-      inflowQuery,
+      buildInflowSummaryQuery(true),
       outflowQuery,
       supabase.from("treasury_funds").select("id, code, name, fund_type").eq("church_id", ctx.churchId),
       supabase.from("church_departments").select("id, department_name").eq("church_id", ctx.churchId),
     ]);
 
-  if (inflowError) throw new Error(inflowError.message);
-  if (outflowError) throw new Error(outflowError.message);
-  if (fundsError) throw new Error(fundsError.message);
-  if (departmentsError) throw new Error(departmentsError.message);
+  let inflows = withNullableDepartmentId(
+    (withDepartmentInflowsResult.data as unknown as Record<string, unknown>[] | null) ?? []
+  );
+  let inflowError = withDepartmentInflowsResult.error;
+
+  if (inflowError) {
+    const legacyInflowsResult = await buildInflowSummaryQuery(false);
+    inflowError = legacyInflowsResult.error;
+    if (inflowError) {
+      const composedMessage = [
+        normalizeSupabaseErrorMessage(
+          withDepartmentInflowsResult.error,
+          "Department-aware treasury summary inflows query failed."
+        ),
+        normalizeSupabaseErrorMessage(
+          legacyInflowsResult.error,
+          "Legacy treasury summary inflows fallback query failed."
+        ),
+      ].join(" | ");
+      throw new Error(composedMessage);
+    }
+    inflows = withNullableDepartmentId((legacyInflowsResult.data as unknown as Record<string, unknown>[] | null) ?? []);
+  }
+
+  if (outflowError) throw new Error(normalizeSupabaseErrorMessage(outflowError, "Failed to load treasury outflow summary."));
+  if (fundsError) throw new Error(normalizeSupabaseErrorMessage(fundsError, "Failed to load treasury funds."));
+  if (departmentsError) {
+    throw new Error(normalizeSupabaseErrorMessage(departmentsError, "Failed to load church departments."));
+  }
 
   const fundMap = Object.fromEntries((funds ?? []).map((f: any) => [f.id, f]));
   const deptMap = Object.fromEntries((departments ?? []).map((d: any) => [d.id, d.department_name]));
@@ -667,7 +899,7 @@ export async function getTreasurySummary(
   const totalIn = sumAmount(inflows ?? []);
   const totalOut = sumAmount(outflows ?? []);
   const linkedInTotal = (inflows ?? [])
-    .filter((row: any) => !row.is_anonymous && row.member_id)
+    .filter((row: any) => !row.is_anonymous && (row.member_id || row.department_id))
     .reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
   const anonymousInTotal = (inflows ?? [])
     .filter((row: any) => row.is_anonymous)
@@ -869,6 +1101,8 @@ export async function getTreasuryAuditLogs(
 export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
   const ctx = await requireChurchRole(churchSlug, [...TREASURY_ALLOWED_ROLES]);
   const supabase = await createClient();
+  const linkedInflowsCountPromise = getLinkedInflowsCountForChurch(supabase, ctx.churchId);
+  const recentInflowsPromise = getRecentInflowsForChurch(supabase, ctx.churchId, 10);
 
   const [
     { count: fundCount, error: fundCountError },
@@ -901,12 +1135,7 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
       .select("amount, outflow_type")
       .eq("church_id", ctx.churchId),
 
-    supabase
-      .from("treasury_inflows")
-      .select("id", { count: "exact", head: true })
-      .eq("church_id", ctx.churchId)
-      .eq("is_anonymous", false)
-      .not("member_id", "is", null),
+    linkedInflowsCountPromise,
 
     supabase
       .from("treasury_inflows")
@@ -914,12 +1143,7 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
       .eq("church_id", ctx.churchId)
       .eq("is_anonymous", true),
 
-    supabase
-      .from("treasury_inflows")
-      .select("id, inflow_type, amount, inflow_date, is_anonymous, note, reference_number, member_id, fund_id")
-      .eq("church_id", ctx.churchId)
-      .order("inflow_date", { ascending: false })
-      .limit(10),
+    recentInflowsPromise,
 
     supabase
       .from("treasury_outflows")
@@ -944,15 +1168,33 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
     getTreasuryMemberOptions(churchSlug),
   ]);
 
-  if (fundCountError) throw new Error(fundCountError.message);
-  if (inflowSummaryError) throw new Error(inflowSummaryError.message);
-  if (outflowSummaryError) throw new Error(outflowSummaryError.message);
-  if (linkedInflowsCountError) throw new Error(linkedInflowsCountError.message);
-  if (anonymousInflowsCountError) throw new Error(anonymousInflowsCountError.message);
-  if (recentInflowsError) throw new Error(recentInflowsError.message);
-  if (recentOutflowsError) throw new Error(recentOutflowsError.message);
-  if (fundsError) throw new Error(fundsError.message);
-  if (departmentsError) throw new Error(departmentsError.message);
+  if (fundCountError) throw new Error(normalizeSupabaseErrorMessage(fundCountError, "Failed to load fund count."));
+  if (inflowSummaryError) {
+    throw new Error(normalizeSupabaseErrorMessage(inflowSummaryError, "Failed to load inflow summary."));
+  }
+  if (outflowSummaryError) {
+    throw new Error(normalizeSupabaseErrorMessage(outflowSummaryError, "Failed to load outflow summary."));
+  }
+  if (linkedInflowsCountError) {
+    throw new Error(
+      normalizeSupabaseErrorMessage(linkedInflowsCountError, "Failed to load linked inflows count.")
+    );
+  }
+  if (anonymousInflowsCountError) {
+    throw new Error(
+      normalizeSupabaseErrorMessage(anonymousInflowsCountError, "Failed to load anonymous inflows count.")
+    );
+  }
+  if (recentInflowsError) {
+    throw new Error(normalizeSupabaseErrorMessage(recentInflowsError, "Failed to load recent inflows."));
+  }
+  if (recentOutflowsError) {
+    throw new Error(normalizeSupabaseErrorMessage(recentOutflowsError, "Failed to load recent outflows."));
+  }
+  if (fundsError) throw new Error(normalizeSupabaseErrorMessage(fundsError, "Failed to load treasury funds."));
+  if (departmentsError) {
+    throw new Error(normalizeSupabaseErrorMessage(departmentsError, "Failed to load church departments."));
+  }
 
   const totalIn = sumAmount(inflowSummaryRows ?? []);
   const totalOut = sumAmount(outflowSummaryRows ?? []);

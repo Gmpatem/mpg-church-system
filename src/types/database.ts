@@ -1014,6 +1014,80 @@ export interface Database {
           updated_at?: string;
         };
       };
+      department_fund_requests: {
+        Row: {
+          id: string;
+          church_id: string;
+          department_id: string;
+          requested_by_user_id: string;
+          title: string;
+          purpose: string;
+          amount: number;
+          outflow_type: string;
+          preferred_fund_id: string | null;
+          payee: string | null;
+          project_name: string | null;
+          note: string | null;
+          requested_date: string;
+          status: string;
+          treasury_decision_note: string | null;
+          treasury_reviewed_by_user_id: string | null;
+          treasury_reviewed_at: string | null;
+          processed_outflow_id: string | null;
+          processed_by_user_id: string | null;
+          processed_at: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          department_id: string;
+          requested_by_user_id: string;
+          title: string;
+          purpose: string;
+          amount: number;
+          outflow_type: string;
+          preferred_fund_id?: string | null;
+          payee?: string | null;
+          project_name?: string | null;
+          note?: string | null;
+          requested_date: string;
+          status?: string;
+          treasury_decision_note?: string | null;
+          treasury_reviewed_by_user_id?: string | null;
+          treasury_reviewed_at?: string | null;
+          processed_outflow_id?: string | null;
+          processed_by_user_id?: string | null;
+          processed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          church_id?: string;
+          department_id?: string;
+          requested_by_user_id?: string;
+          title?: string;
+          purpose?: string;
+          amount?: number;
+          outflow_type?: string;
+          preferred_fund_id?: string | null;
+          payee?: string | null;
+          project_name?: string | null;
+          note?: string | null;
+          requested_date?: string;
+          status?: string;
+          treasury_decision_note?: string | null;
+          treasury_reviewed_by_user_id?: string | null;
+          treasury_reviewed_at?: string | null;
+          processed_outflow_id?: string | null;
+          processed_by_user_id?: string | null;
+          processed_at?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
       // Treasury
       treasury_funds: {
         Row: {
@@ -1055,6 +1129,7 @@ export interface Database {
           id: string;
           church_id: string;
           member_id: string | null;
+          department_id: string | null;
           fund_id: string;
           inflow_type: string;
           amount: number;
@@ -1071,6 +1146,7 @@ export interface Database {
           id?: string;
           church_id: string;
           member_id?: string | null;
+          department_id?: string | null;
           fund_id: string;
           inflow_type: string;
           amount: number;
@@ -1087,6 +1163,7 @@ export interface Database {
           id?: string;
           church_id?: string;
           member_id?: string | null;
+          department_id?: string | null;
           fund_id?: string;
           inflow_type?: string;
           amount?: number;
@@ -1537,6 +1614,7 @@ export type TreasuryAllocationRule = Tables<"treasury_allocation_rules">;
 export type TreasuryInflowAllocation = Tables<"treasury_inflow_allocations">;
 export type TreasuryFinanceSettings = Tables<"treasury_finance_settings">;
 export type TreasuryAuditLog = Tables<"treasury_audit_logs">;
+export type DepartmentFundRequest = Tables<"department_fund_requests">;
 
 // Approval types
 export type ApprovalPolicy = Tables<"approval_policies">;
