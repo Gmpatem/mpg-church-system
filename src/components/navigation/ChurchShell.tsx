@@ -7,6 +7,8 @@ import { ChurchHeader } from "@/components/navigation/ChurchHeader";
 import { ChurchSidebar } from "@/components/navigation/ChurchSidebar";
 import { ChurchMobileBottomNav } from "@/components/navigation/ChurchMobileBottomNav";
 import { ChurchMobileFab } from "@/components/navigation/ChurchMobileFab";
+import { OfflineProvider } from "@/components/offline/OfflineProvider";
+import { OfflineStatusBar } from "@/components/offline/OfflineStatusBar";
 
 interface ChurchNotificationItem {
   id: string;
@@ -86,55 +88,52 @@ export function ChurchShell({
     previousPathRef.current = pathname;
   }, [pathname]);
 
-  const isFocusedTreasuryEntry =
-    pathname.includes("/treasury/in/new") ||
-    pathname.includes("/treasury/out/new") ||
-    /\/treasury\/in\/[^/]+\/edit$/.test(pathname) ||
-    /\/treasury\/out\/[^/]+\/edit$/.test(pathname);
-
   return (
-    <div className="min-h-screen bg-white md:grid md:grid-cols-[272px_minmax(0,1fr)]">
-      <aside className="hidden border-r border-slate-200 bg-slate-950 md:sticky md:top-0 md:block md:h-screen">
-        <ChurchSidebar
-          church={church}
-          user={user}
-          roleLabel={roleLabel}
-          showAccessControl={showAccessControl}
-          pendingApprovalCount={pendingApprovalCount}
-        />
-      </aside>
-
-      <div className="min-w-0">
-        <ChurchHeader
-          church={church}
-          user={user}
-          roleLabel={roleLabel}
-          showAccessControl={showAccessControl}
-          notifications={notifications}
-          hideMobileModuleRail={isFocusedTreasuryEntry}
-        />
-
-        <main className="px-4 py-4 pb-24 sm:px-5 md:px-6 md:py-5 md:pb-6 xl:px-8">
-          <div
-            key={pathname}
-            className={cn("mx-auto w-full max-w-[1500px] mobile-route-frame", routeMotionClass)}
-          >
-            {children}
-          </div>
-        </main>
-      </div>
-
-      {!isFocusedTreasuryEntry ? (
-        <>
-          <ChurchMobileBottomNav
-            churchSlug={church.slug}
+    <OfflineProvider churchSlug={church.slug}>
+      <div className="min-h-screen bg-white md:grid md:grid-cols-[272px_minmax(0,1fr)]">
+        <aside className="hidden border-r border-slate-200 bg-slate-950 md:sticky md:top-0 md:block md:h-screen">
+          <ChurchSidebar
+            church={church}
+            user={user}
             roleLabel={roleLabel}
             showAccessControl={showAccessControl}
             pendingApprovalCount={pendingApprovalCount}
           />
-          <ChurchMobileFab churchSlug={church.slug} />
-        </>
-      ) : null}
-    </div>
+        </aside>
+
+        <div className="min-w-0">
+          <ChurchHeader
+            church={church}
+            user={user}
+            roleLabel={roleLabel}
+            showAccessControl={showAccessControl}
+            notifications={notifications}
+          />
+
+          <div className="border-b border-slate-100 bg-white px-4 py-1.5 sm:px-5 md:px-6 md:py-2 xl:px-8">
+            <div className="mx-auto flex max-w-[1500px] items-center justify-end">
+              <OfflineStatusBar />
+            </div>
+          </div>
+
+          <main className="px-3 py-3 pb-20 sm:px-4 md:px-6 md:py-5 md:pb-6 xl:px-8">
+            <div
+              key={pathname}
+              className={cn("mx-auto w-full max-w-[1500px] mobile-route-frame", routeMotionClass)}
+            >
+              {children}
+            </div>
+          </main>
+        </div>
+
+        <ChurchMobileBottomNav
+          churchSlug={church.slug}
+          roleLabel={roleLabel}
+          showAccessControl={showAccessControl}
+          pendingApprovalCount={pendingApprovalCount}
+        />
+        <ChurchMobileFab churchSlug={church.slug} />
+      </div>
+    </OfflineProvider>
   );
 }

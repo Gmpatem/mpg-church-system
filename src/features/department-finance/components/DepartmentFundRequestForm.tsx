@@ -4,6 +4,7 @@ import { useActionState, useState } from "react";
 import { createDepartmentFundRequestAction } from "@/features/department-finance/actions";
 import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 import { getTodayLocalDate } from "@/lib/utils/format";
+import { saveDepartmentFundRequestDraft } from "@/lib/offline/form-bridge";
 
 interface DepartmentFundRequestFormProps {
   churchSlug: string;
@@ -33,9 +34,30 @@ export function DepartmentFundRequestForm({
   const preferredFundDefault =
     funds.find((fund) => fund.is_department_default)?.id ?? "";
   const [requestedFundId, setRequestedFundId] = useState("");
+  const [offlineMessage, setOfflineMessage] = useState<string | null>(null);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      event.preventDefault();
+      const formData = new FormData(event.currentTarget);
+      const result = await saveDepartmentFundRequestDraft({
+        churchId: "", // will be resolved server-side during sync
+        churchSlug,
+        departmentId,
+        formData,
+      });
+      if (result.ok) {
+        setOfflineMessage(result.message);
+        event.currentTarget.reset();
+        setRequestedFundId("");
+      } else {
+        setOfflineMessage(result.error);
+      }
+    }
+  }
 
   return (
-    <form action={formAction} className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
+    <form action={formAction} onSubmit={handleSubmit} className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
       <input type="hidden" name="churchSlug" value={churchSlug} />
       <input type="hidden" name="departmentId" value={departmentId} />
       <input
@@ -54,6 +76,12 @@ export function DepartmentFundRequestForm({
       {state && state.ok ? (
         <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700">
           {state.message}
+        </div>
+      ) : null}
+
+      {offlineMessage ? (
+        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-700">
+          {offlineMessage}
         </div>
       ) : null}
 
@@ -244,7 +272,11 @@ export function DepartmentFundRequestForm({
               Submitting...
             </span>
           ) : (
-            "Submit Request"
+            <span>
+              {typeof navigator !== "undefined" && !navigator.onLine
+                ? "Save Draft"
+                : "Submit Request"}
+            </span>
           )}
         </button>
       </div>

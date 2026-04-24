@@ -20,6 +20,8 @@ import { getPublishedEvents } from "@/features/calendar/queries";
 import { requireChurchAccess } from "@/features/access/queries";
 import { CalendarView } from "@/components/shared/CalendarView";
 import { DepartmentFinanceTab } from "./DepartmentFinanceTab";
+import { OfflineDepartmentCache } from "@/components/offline/OfflineCacheWriter";
+import { OfflineDataBanner } from "@/components/offline/OfflineDataBanner";
 
 interface DepartmentDetailPageProps {
   params: Promise<{ churchSlug: string; departmentId: string }>;
@@ -267,6 +269,15 @@ export default async function DepartmentDetailPage({ params, searchParams }: Dep
           </form>
         </WorkspaceControlRail>
       ) : null}
+
+      <OfflineDepartmentCache
+        churchId={ctx.churchId}
+        department={department}
+        members={assignments}
+        activeMemberCount={activeAssignments.length}
+      />
+
+      <OfflineDataBanner />
 
       {tab === "members" ? (
         <div className="space-y-5">

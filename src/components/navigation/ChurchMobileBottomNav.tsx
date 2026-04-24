@@ -143,7 +143,7 @@ export function ChurchMobileBottomNav({
           <SheetHeader className="space-y-2 text-left">
             <div className="mx-auto h-1.5 w-12 rounded-full bg-slate-200" />
             <SheetTitle className="text-base font-semibold text-slate-900">
-              More Workspace Modules
+              More
             </SheetTitle>
           </SheetHeader>
 

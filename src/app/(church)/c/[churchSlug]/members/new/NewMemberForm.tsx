@@ -7,6 +7,7 @@ import { createMemberInviteAction } from "@/features/member-invite/actions";
 import { CopyableLink } from "@/components/ui/CopyableLink";
 import { InlineAlert } from "@/components/ui/InlineAlert";
 import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
+import { saveMemberDraft } from "@/lib/offline/form-bridge";
 
 interface Department {
   id: string;
@@ -55,6 +56,25 @@ export function NewMemberForm({
   const [inviteUrl, setInviteUrl] = useState<string | null>(null);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [invitePending, setInvitePending] = useState(false);
+  const [offlineMessage, setOfflineMessage] = useState<string | null>(null);
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    if (typeof navigator !== "undefined" && !navigator.onLine) {
+      event.preventDefault();
+      const formData = new FormData(event.currentTarget);
+      const result = await saveMemberDraft({
+        churchId: "",
+        churchSlug,
+        formData,
+      });
+      if (result.ok) {
+        setOfflineMessage(result.message);
+        event.currentTarget.reset();
+      } else {
+        setOfflineMessage(result.error);
+      }
+    }
+  }
 
   useEffect(() => {
     if (!state?.ok || !state.memberId || !sendInvite) return;
@@ -98,12 +118,18 @@ export function NewMemberForm({
         </Link>
       </div>
 
-      <form action={formAction} className="space-y-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
+      <form action={formAction} onSubmit={handleSubmit} className="space-y-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <input type="hidden" name="churchSlug" value={churchSlug} />
 
         {state && !state.ok && (
           <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {state.error}
+          </div>
+        )}
+
+        {offlineMessage && (
+          <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-700">
+            {offlineMessage}
           </div>
         )}
 
@@ -572,7 +598,13 @@ export function NewMemberForm({
                 <ButtonSpinner />
                 Creating...
               </span>
-            ) : "Create Member"}
+            ) : (
+              <span>
+                {typeof navigator !== "undefined" && !navigator.onLine
+                  ? "Save Draft"
+                  : "Create Member"}
+              </span>
+            )}
           </button>
         </div>
       </form>

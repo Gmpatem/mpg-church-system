@@ -28,7 +28,7 @@ function getFabTarget(pathname: string, churchSlug: string) {
   }
 
   if (pathname.startsWith(`${base}/treasury`)) {
-    return { href: `${base}/treasury/in/new`, label: "Record income" };
+    return { href: `${base}/treasury/in/new`, label: "Add Payment" };
   }
 
   return null;
@@ -44,7 +44,7 @@ export function ChurchMobileFab({ churchSlug }: ChurchMobileFabProps) {
     <Link
       href={target.href}
       aria-label={target.label}
-      className="mobile-touch-feedback fixed bottom-24 right-4 z-30 inline-flex h-14 w-14 items-center justify-center rounded-full bg-slate-900 text-white shadow-lg shadow-slate-900/25 md:hidden"
+      className="mobile-touch-feedback fixed bottom-20 right-3 z-30 inline-flex h-12 w-12 items-center justify-center rounded-full bg-slate-900 text-white shadow-lg shadow-slate-900/25 md:hidden"
     >
       <Plus className="h-6 w-6" />
       <span className="sr-only">{target.label}</span>

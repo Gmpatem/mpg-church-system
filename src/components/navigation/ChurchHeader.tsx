@@ -23,7 +23,7 @@ import {
 import { Bell, LogOut, Menu, Settings, User } from "lucide-react";
 import { LanguageSwitcher } from "@/components/marketing/LanguageSwitcher";
 import { useI18n } from "@/features/i18n";
-import { ChurchMobileModuleRail } from "@/components/navigation/ChurchMobileModuleRail";
+
 import {
   markAllChurchNotificationsReadAction,
   markChurchNotificationReadAction,
@@ -59,7 +59,7 @@ interface ChurchHeaderProps {
   showAccessControl?: boolean;
   onOpenSidebar?: () => void;
   notifications?: ChurchNotificationItem[];
-  hideMobileModuleRail?: boolean;
+
 }
 
 function getPageLabel(pathname: string, churchSlug: string, t: any) {
@@ -126,7 +126,7 @@ export function ChurchHeader({
   showAccessControl = false,
   onOpenSidebar,
   notifications = [],
-  hideMobileModuleRail = false,
+
 }: ChurchHeaderProps) {
   const pathname = usePathname();
   const router = useRouter();
@@ -428,13 +428,7 @@ export function ChurchHeader({
           </div>
         </div>
 
-        {!hideMobileModuleRail ? (
-          <ChurchMobileModuleRail
-            churchSlug={church.slug}
-            roleLabel={roleLabel}
-            showAccessControl={showAccessControl}
-          />
-        ) : null}
+
       </header>
 
       <Sheet open={mobileNotificationsOpen} onOpenChange={setMobileNotificationsOpen}>
