@@ -1,16 +1,20 @@
--- Department Finance System rollout
--- Purpose:
--- 1) Keep Treasury as the single processing engine.
--- 2) Add department-linked treasury references (no duplicate ledger).
--- 3) Add department fund request workflow with strict tenant-safe RLS.
+-- Department Finance alignment + automatic department treasury setup
+-- Safe, idempotent rollout for environments where department finance changes
+-- were only partially applied.
 
 begin;
 
 -- ---------------------------------------------------------------------------
--- Schema updates for department-linked treasury transactions
+-- Core schema alignment
 -- ---------------------------------------------------------------------------
 
 alter table public.treasury_inflows
+  add column if not exists department_id uuid null;
+
+alter table public.treasury_outflows
+  add column if not exists department_id uuid null;
+
+alter table public.treasury_funds
   add column if not exists department_id uuid null;
 
 do $$
@@ -93,6 +97,25 @@ begin
 end
 $$;
 
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conname = 'treasury_funds_church_department_fkey'
+      and conrelid = 'public.treasury_funds'::regclass
+  ) then
+    alter table public.treasury_funds
+      add constraint treasury_funds_church_department_fkey
+      foreign key (church_id, department_id)
+      references public.church_departments(church_id, id)
+      on update cascade
+      on delete set null
+      not valid;
+  end if;
+end
+$$;
+
 create index if not exists treasury_inflows_church_department_date_idx
   on public.treasury_inflows (church_id, department_id, inflow_date desc)
   where department_id is not null;
@@ -101,8 +124,16 @@ create index if not exists treasury_outflows_church_department_date_idx
   on public.treasury_outflows (church_id, department_id, outflow_date desc)
   where department_id is not null;
 
+create index if not exists treasury_funds_church_department_idx
+  on public.treasury_funds (church_id, department_id)
+  where department_id is not null;
+
+create unique index if not exists treasury_funds_church_department_unique_idx
+  on public.treasury_funds (church_id, department_id)
+  where department_id is not null;
+
 -- ---------------------------------------------------------------------------
--- Department fund requests table (maps directly to treasury outflow processing)
+-- Department fund requests (tenant-safe + role-safe)
 -- ---------------------------------------------------------------------------
 
 create table if not exists public.department_fund_requests (
@@ -229,12 +260,7 @@ before update on public.department_fund_requests
 for each row
 execute function public.set_department_fund_requests_updated_at();
 
--- ---------------------------------------------------------------------------
--- RLS for department_fund_requests
--- ---------------------------------------------------------------------------
-
 alter table public.department_fund_requests enable row level security;
-
 grant select, insert, update on table public.department_fund_requests to authenticated;
 
 drop policy if exists department_fund_requests_select_church_users_v1
@@ -385,8 +411,10 @@ with check (
 );
 
 -- ---------------------------------------------------------------------------
--- Tighten treasury inflow insert policy to include optional department check
+-- Treasury inflow insert policy with department-aware tenant validation
 -- ---------------------------------------------------------------------------
+
+alter table public.treasury_inflows enable row level security;
 
 do $$
 declare
@@ -404,7 +432,7 @@ begin
 end
 $$;
 
-create policy treasury_inflows_insert_managers_v3
+create policy treasury_inflows_insert_managers_v4
 on public.treasury_inflows
 for insert
 to authenticated
@@ -453,5 +481,134 @@ with check (
     )
   )
 );
+
+-- ---------------------------------------------------------------------------
+-- Automatic treasury setup for every new department
+-- ---------------------------------------------------------------------------
+
+create or replace function public.ensure_department_finance_setup()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  normalized_code text;
+  fund_code text;
+  fund_name text;
+begin
+  normalized_code := regexp_replace(
+    coalesce(nullif(trim(new.code), ''), new.department_name, 'department'),
+    '[^a-zA-Z0-9]+',
+    '_',
+    'g'
+  );
+  normalized_code := regexp_replace(normalized_code, '^_+|_+$', '', 'g');
+  if normalized_code is null or normalized_code = '' then
+    normalized_code := 'DEPARTMENT';
+  end if;
+
+  fund_code := upper(
+    left(
+      'DEPT_' || normalized_code || '_' || upper(substr(replace(new.id::text, '-', ''), 1, 8)),
+      50
+    )
+  );
+  fund_name := coalesce(new.department_name, 'Department') || ' Fund';
+
+  insert into public.treasury_funds (
+    church_id,
+    department_id,
+    code,
+    name,
+    fund_type,
+    description,
+    is_active
+  )
+  values (
+    new.church_id,
+    new.id,
+    fund_code,
+    fund_name,
+    'department',
+    'Auto-generated department fund.',
+    coalesce(new.is_active, true)
+  )
+  on conflict (church_id, department_id) where department_id is not null
+  do update set
+    code = excluded.code,
+    name = excluded.name,
+    fund_type = excluded.fund_type,
+    description = excluded.description,
+    is_active = excluded.is_active,
+    updated_at = now();
+
+  return new;
+end;
+$$;
+
+revoke all on function public.ensure_department_finance_setup() from public;
+revoke all on function public.ensure_department_finance_setup() from anon;
+revoke all on function public.ensure_department_finance_setup() from authenticated;
+
+drop trigger if exists trg_department_finance_setup
+  on public.church_departments;
+
+create trigger trg_department_finance_setup
+after insert or update of department_name, code, is_active
+on public.church_departments
+for each row
+execute function public.ensure_department_finance_setup();
+
+insert into public.treasury_funds (
+  church_id,
+  department_id,
+  code,
+  name,
+  fund_type,
+  description,
+  is_active
+)
+select
+  cd.church_id,
+  cd.id as department_id,
+  upper(
+    left(
+      'DEPT_' ||
+      coalesce(
+        nullif(
+          regexp_replace(
+            regexp_replace(
+              coalesce(nullif(trim(cd.code), ''), cd.department_name, 'department'),
+              '[^a-zA-Z0-9]+',
+              '_',
+              'g'
+            ),
+            '^_+|_+$',
+            '',
+            'g'
+          ),
+          ''
+        ),
+        'DEPARTMENT'
+      )
+      || '_' ||
+      upper(substr(replace(cd.id::text, '-', ''), 1, 8)),
+      50
+    )
+  ) as code,
+  coalesce(cd.department_name, 'Department') || ' Fund' as name,
+  'department' as fund_type,
+  'Auto-generated department fund.' as description,
+  coalesce(cd.is_active, true) as is_active
+from public.church_departments cd
+on conflict (church_id, department_id) where department_id is not null
+do update set
+  code = excluded.code,
+  name = excluded.name,
+  fund_type = excluded.fund_type,
+  description = excluded.description,
+  is_active = excluded.is_active,
+  updated_at = now();
 
 commit;

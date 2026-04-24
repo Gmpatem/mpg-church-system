@@ -6,6 +6,7 @@ import type {
   TreasuryAllocationPreviewEntry,
   TreasuryFinanceSettings,
 } from "@/features/treasury/types";
+import { normalizeSupabaseErrorMessage } from "@/lib/supabase/errors";
 
 function pickSingle(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value ?? "";
@@ -18,7 +19,7 @@ function sumAmount(rows: any[]) {
 const TREASURY_ALLOWED_ROLES = ["church_admin", "treasurer", "pastor"] as const;
 const TREASURY_INFLOWS_DEPARTMENT_COLUMN = "department_id";
 const TREASURY_DEPARTMENT_MIGRATION_REQUIRED_MESSAGE =
-  "Department-linked treasury inflows require the department finance migration (database/rls/20260418_department_finance_system.sql).";
+  "Department-linked treasury inflows require the department finance alignment migration (database/rls/20260419_department_finance_alignment_and_auto_setup.sql).";
 
 const DEFAULT_TREASURY_FINANCE_SETTINGS: TreasuryFinanceSettings = {
   tithe_auto_allocate: false,
@@ -38,13 +39,6 @@ function toBoolean(value: unknown, fallback: boolean) {
     if (["false", "0", "no", "off", "disabled"].includes(normalized)) return false;
   }
   return fallback;
-}
-
-function normalizeSupabaseErrorMessage(error: any, fallback: string) {
-  const parts = [error?.message, error?.details, error?.hint]
-    .map((value) => (typeof value === "string" ? value.trim() : ""))
-    .filter(Boolean);
-  return parts.length > 0 ? parts.join(" ") : fallback;
 }
 
 function withNullableDepartmentId<T extends Record<string, unknown>>(rows: T[] | null | undefined) {
@@ -519,17 +513,62 @@ export const getTreasuryMemberOptions = cache(async (churchSlug: string): Promis
   return (data ?? []) as TreasuryMemberOption[];
 });
 
+async function getActiveTreasuryFundsForOptions(supabase: any, churchId: string) {
+  const withDepartment = await supabase
+    .from("treasury_funds")
+    .select("id, code, name, fund_type, department_id")
+    .eq("church_id", churchId)
+    .eq("is_active", true)
+    .order("name", { ascending: true });
+
+  if (!withDepartment.error) {
+    return {
+      data: withNullableDepartmentId(
+        withDepartment.data as unknown as Record<string, unknown>[]
+      ),
+      error: null,
+    };
+  }
+
+  const withoutDepartment = await supabase
+    .from("treasury_funds")
+    .select("id, code, name, fund_type")
+    .eq("church_id", churchId)
+    .eq("is_active", true)
+    .order("name", { ascending: true });
+
+  if (!withoutDepartment.error) {
+    return {
+      data: withNullableDepartmentId(
+        withoutDepartment.data as unknown as Record<string, unknown>[]
+      ),
+      error: null,
+    };
+  }
+
+  const composedMessage = [
+    normalizeSupabaseErrorMessage(
+      withDepartment.error,
+      "Department-aware fund options query failed."
+    ),
+    normalizeSupabaseErrorMessage(
+      withoutDepartment.error,
+      "Legacy fund options fallback query failed."
+    ),
+  ].join(" | ");
+
+  return {
+    data: null,
+    error: new Error(composedMessage),
+  };
+}
+
 const getTreasuryFormOptionsBase = cache(async (churchSlug: string) => {
   const ctx = await requireChurchRole(churchSlug, [...TREASURY_ALLOWED_ROLES]);
   const supabase = await createClient();
 
   const [{ data: funds, error: fundsError }, { data: departments, error: departmentsError }, members] = await Promise.all([
-    supabase
-      .from("treasury_funds")
-      .select("id, code, name, fund_type")
-      .eq("church_id", ctx.churchId)
-      .eq("is_active", true)
-      .order("name", { ascending: true }),
+    getActiveTreasuryFundsForOptions(supabase, ctx.churchId),
     supabase
       .from("church_departments")
       .select("id, department_name")
@@ -575,7 +614,7 @@ export async function getTreasuryFormOptions(
     missingFundIds.length > 0
       ? supabase
           .from("treasury_funds")
-          .select("id, code, name, fund_type")
+          .select("id, code, name, fund_type, department_id")
           .eq("church_id", ctx.churchId)
           .in("id", missingFundIds)
       : Promise.resolve({ data: [], error: null as any }),
@@ -588,10 +627,32 @@ export async function getTreasuryFormOptions(
       : Promise.resolve({ data: [], error: null as any }),
   ]);
 
-  if (missingFunds.error) throw new Error(missingFunds.error.message);
+  if (missingFunds.error) {
+    if (String(missingFunds.error?.code || "").toLowerCase() === "42703") {
+      const legacyMissingFunds = await supabase
+        .from("treasury_funds")
+        .select("id, code, name, fund_type")
+        .eq("church_id", ctx.churchId)
+        .in("id", missingFundIds);
+      if (legacyMissingFunds.error) throw new Error(legacyMissingFunds.error.message);
+      const mergedFunds = [...base.funds, ...withNullableDepartmentId((legacyMissingFunds.data ?? []) as any[])].sort((a, b) =>
+        String(a.name).localeCompare(String(b.name))
+      );
+      const mergedDepartments = [...base.departments, ...(missingDepartments.data ?? [])].sort((a, b) =>
+        String(a.department_name).localeCompare(String(b.department_name))
+      );
+
+      return {
+        ...base,
+        funds: mergedFunds,
+        departments: mergedDepartments,
+      };
+    }
+    throw new Error(missingFunds.error.message);
+  }
   if (missingDepartments.error) throw new Error(missingDepartments.error.message);
 
-  const mergedFunds = [...base.funds, ...(missingFunds.data ?? [])].sort((a, b) =>
+  const mergedFunds = [...base.funds, ...withNullableDepartmentId((missingFunds.data ?? []) as any[])].sort((a, b) =>
     String(a.name).localeCompare(String(b.name))
   );
   const mergedDepartments = [...base.departments, ...(missingDepartments.data ?? [])].sort((a, b) =>
@@ -759,7 +820,7 @@ const INFLOW_DETAIL_FIELDS_LEGACY = `
 `;
 
 export async function getTreasuryInflowById(churchSlug: string, entryId: string) {
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
+  const ctx = await requireChurchRole(churchSlug, [...TREASURY_ALLOWED_ROLES]);
   const supabase = await createClient();
 
   const withDepartment = await supabase
@@ -807,7 +868,7 @@ const OUTFLOW_DETAIL_FIELDS = `
 `;
 
 export async function getTreasuryOutflowById(churchSlug: string, entryId: string) {
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
+  const ctx = await requireChurchRole(churchSlug, [...TREASURY_ALLOWED_ROLES]);
   const supabase = await createClient();
 
   const { data, error } = await supabase
@@ -1014,7 +1075,7 @@ export async function getTreasuryAuditLogs(
   churchSlug: string,
   rawFilters?: Record<string, string | string[] | undefined>
 ) {
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
+  const ctx = await requireChurchRole(churchSlug, [...TREASURY_ALLOWED_ROLES]);
   const supabase = await createClient();
 
   const q = pickSingle(rawFilters?.q);
@@ -1103,6 +1164,7 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
   const supabase = await createClient();
   const linkedInflowsCountPromise = getLinkedInflowsCountForChurch(supabase, ctx.churchId);
   const recentInflowsPromise = getRecentInflowsForChurch(supabase, ctx.churchId, 10);
+  const financeSettingsPromise = fetchTreasuryFinanceSettingsRaw(supabase, ctx.churchId);
 
   const [
     { count: fundCount, error: fundCountError },
@@ -1215,13 +1277,10 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
     }, {})
   ).map(([type, amount]) => ({ type, amount }));
 
-  const financeSettings = await fetchTreasuryFinanceSettingsRaw(supabase, ctx.churchId);
-  const allocationPreview = await getAllocationPreviewRaw(
-    supabase,
-    ctx.churchId,
-    (funds ?? []) as any[],
-    40
-  );
+  const [financeSettings, allocationPreview] = await Promise.all([
+    financeSettingsPromise,
+    getAllocationPreviewRaw(supabase, ctx.churchId, (funds ?? []) as any[], 40),
+  ]);
   const allocationSummary = summarizeAllocationPreview(allocationPreview);
 
   return {

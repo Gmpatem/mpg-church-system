@@ -5,6 +5,7 @@ import { useActionState } from "react";
 import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 import { createTreasuryInflowAction } from "@/features/treasury/actions";
 import { useI18n } from "@/features/i18n";
+import { getTodayLocalDate } from "@/lib/utils/format";
 
 interface TitheEntryFormProps {
   churchSlug: string;
@@ -13,14 +14,6 @@ interface TitheEntryFormProps {
     funds: Array<{ id: string; name: string; code: string; fund_type: string }>;
     members: Array<{ id: string; display_name?: string | null; first_name: string; last_name: string; member_code?: string | null }>;
   };
-}
-
-function getTodayLocalDate() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
 }
 
 export function TitheEntryForm({ churchSlug, options, alreadyTithedIds }: TitheEntryFormProps) {

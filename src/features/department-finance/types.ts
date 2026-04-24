@@ -26,6 +26,10 @@ export interface DepartmentFundRequestRecord {
   purpose: string;
   amount: number;
   outflow_type: string;
+  fund_id: string | null;
+  outflow_date: string;
+  reference_number: string | null;
+  event_id: string | null;
   preferred_fund_id: string | null;
   payee: string | null;
   project_name: string | null;
@@ -78,7 +82,14 @@ export interface DepartmentFinanceWorkspaceData {
     cancelled: number;
   };
   financeOptions: {
-    funds: Array<{ id: string; name: string; code: string; fund_type: string }>;
+    funds: Array<{
+      id: string;
+      name: string;
+      code: string;
+      fund_type: string;
+      department_id: string | null;
+      is_department_default: boolean;
+    }>;
   };
   permissions: DepartmentFinancePermissions;
 }

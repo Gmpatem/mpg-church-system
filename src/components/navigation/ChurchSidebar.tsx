@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { cn } from "@/lib/utils/cn";
+import { OFFICE_ALLOWED_ROLES } from "@/lib/constants/access";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
@@ -55,16 +56,16 @@ export function ChurchSidebar({
   const { t } = useI18n();
 
   const navigation = [
-    { name: t.navigation.dashboard, href: `/c/${church.slug}`, icon: LayoutDashboard, exact: true },
-    { name: t.navigation.members, href: `/c/${church.slug}/members`, icon: Users },
-    { name: t.navigation.households, href: `/c/${church.slug}/households`, icon: Home },
-    { name: t.navigation.departments, href: `/c/${church.slug}/departments`, icon: Building2 },
-    { name: t.navigation.treasury, href: `/c/${church.slug}/treasury`, icon: Wallet },
-    { name: t.navigation.events, href: `/c/${church.slug}/events`, icon: Calendar },
-    { name: t.navigation.office || "Church Office", href: `/c/${church.slug}/office`, icon: Briefcase, requiresOffice: true },
-    { name: t.navigation.reports, href: `/c/${church.slug}/reports`, icon: BarChart3 },
-    { name: t.navigation.approvals || "Approvals", href: `/c/${church.slug}/approvals`, icon: ClipboardCheck, requiresAuthority: true },
-    { name: t.navigation.accessControl || "Invites & Access", href: `/c/${church.slug}/access-control`, icon: Shield, requiresAuthority: true },
+    { key: "dashboard", name: t.navigation.dashboard, href: `/c/${church.slug}`, icon: LayoutDashboard, exact: true },
+    { key: "members", name: t.navigation.members, href: `/c/${church.slug}/members`, icon: Users },
+    { key: "households", name: t.navigation.households, href: `/c/${church.slug}/households`, icon: Home },
+    { key: "departments", name: t.navigation.departments, href: `/c/${church.slug}/departments`, icon: Building2 },
+    { key: "treasury", name: t.navigation.treasury, href: `/c/${church.slug}/treasury`, icon: Wallet },
+    { key: "events", name: t.navigation.events, href: `/c/${church.slug}/events`, icon: Calendar },
+    { key: "office", name: t.navigation.office || "Church Office", href: `/c/${church.slug}/office`, icon: Briefcase, requiresOffice: true },
+    { key: "reports", name: t.navigation.reports, href: `/c/${church.slug}/reports`, icon: BarChart3 },
+    { key: "approvals", name: t.navigation.approvals || "Approvals", href: `/c/${church.slug}/approvals`, icon: ClipboardCheck, requiresAuthority: true },
+    { key: "access-control", name: t.navigation.accessControl || "Invites & Access", href: `/c/${church.slug}/access-control`, icon: Shield, requiresAuthority: true },
   ];
 
   function isActive(href: string, exact?: boolean) {
@@ -123,25 +124,14 @@ export function ChurchSidebar({
               .filter((item) => !item.requiresAuthority || showAccessControl)
               .filter((item) => {
                 if (!item.requiresOffice) return true;
-
-                const allowedOfficeLabels = [
-                  "Clerk",
-                  "Church Secretary",
-                  "Church Admin",
-                  "Pastor",
-                  "Platform Owner",
-                  "Platform Admin",
-                  "Platform Support"
-                ];
-
-                return allowedOfficeLabels.includes(roleLabel ?? "");
+                return OFFICE_ALLOWED_ROLES.has(roleLabel ?? "");
               })
               .map((item) => {
               const active = isActive(item.href, item.exact);
 
               return (
                 <Link
-                  key={item.name}
+                  key={item.key}
                   href={item.href}
                   prefetch={true}
                   onClick={onNavigate}
@@ -154,7 +144,7 @@ export function ChurchSidebar({
                 >
                   <item.icon className="h-4 w-4 shrink-0" />
                   <span>{item.name}</span>
-                  {item.name === "Approvals" && pendingApprovalCount > 0 ? (
+                  {item.key === "approvals" && pendingApprovalCount > 0 ? (
                     <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-amber-500 text-[10px] font-bold text-white">
                       {pendingApprovalCount}
                     </span>
@@ -196,7 +186,6 @@ export function ChurchSidebar({
     </div>
   );
 }
-
 
 
 

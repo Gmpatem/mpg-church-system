@@ -114,6 +114,7 @@ export default async function DashboardPage({ params }: DashboardPageProps) {
     <div className="space-y-5 md:space-y-6">
       <WorkspaceHero
         size="compact"
+        mobileLayout="slim"
         eyebrow="Church Dashboard"
         title={church.name ?? churchSlug}
         description="Executive operations view for members, ministry activity, events, and church follow-up work."

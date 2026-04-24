@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { getTreasuryOutflows, getTreasuryFormOptions } from "@/features/treasury/queries";
-import { WorkspaceHero } from "@/components/workspace";
+import { WorkspaceEmptyState, WorkspaceHero } from "@/components/workspace";
 import { getLabel, outflowTypeLabels } from "@/lib/display-maps";
 
 interface TreasuryOutflowsPageProps {
@@ -11,6 +11,9 @@ interface TreasuryOutflowsPageProps {
 function pickSingle(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value ?? "";
 }
+
+const formatAmount = (v: number) =>
+  v.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
 export default async function TreasuryOutflowsPage({ params, searchParams }: TreasuryOutflowsPageProps) {
   const { churchSlug } = await params;
@@ -33,6 +36,12 @@ export default async function TreasuryOutflowsPage({ params, searchParams }: Tre
       />
 
       <div className="flex flex-wrap gap-3">
+        <Link
+          href={`/c/${churchSlug}/treasury/approvals`}
+          className="rounded-xl border border-blue-300 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-900 hover:bg-blue-100"
+        >
+          Treasury Approvals
+        </Link>
         <Link
           href={`/c/${churchSlug}/treasury/audit`}
           className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-sm font-medium text-amber-900 hover:bg-amber-100"
@@ -124,7 +133,14 @@ export default async function TreasuryOutflowsPage({ params, searchParams }: Tre
 
       <div className="overflow-hidden rounded-xl border border-slate-200 bg-white">
         {outflows.length === 0 ? (
-          <div className="px-6 py-10 text-sm text-slate-600">No outflow records matched your filters.</div>
+          <div className="px-6 py-10">
+            <WorkspaceEmptyState
+              title="No records found"
+              message="Try adjusting your filters or add a new record."
+              actionLabel="Record Money Out"
+              actionHref={`/c/${churchSlug}/treasury/out/new`}
+            />
+          </div>
         ) : (
           <>
             <div className="space-y-3 p-3 md:hidden">
@@ -135,7 +151,7 @@ export default async function TreasuryOutflowsPage({ params, searchParams }: Tre
                       <p className="text-sm font-semibold text-slate-900">{getLabel(outflowTypeLabels, item.outflow_type)}</p>
                       <p className="mt-1 text-xs text-slate-500">{item.outflow_date}</p>
                     </div>
-                    <span className="text-sm font-semibold text-slate-900">{Number(item.amount).toFixed(2)}</span>
+                    <span className="text-sm font-semibold text-slate-900">{formatAmount(Number(item.amount))}</span>
                   </div>
                   <p className="mt-2 text-xs text-slate-600">{item.payee ?? "No payee"} • {item.reference_number ?? "No reference"}</p>
                   <p className="mt-1 line-clamp-2 text-xs text-slate-500">{item.purpose ?? "No purpose"}</p>
@@ -172,7 +188,7 @@ export default async function TreasuryOutflowsPage({ params, searchParams }: Tre
                     <tr key={item.id}>
                       <td className="px-6 py-4 text-sm text-slate-600">{item.outflow_date}</td>
                       <td className="px-6 py-4 text-sm text-slate-600">{getLabel(outflowTypeLabels, item.outflow_type)}</td>
-                      <td className="px-6 py-4 text-sm font-medium text-slate-900">{Number(item.amount).toFixed(2)}</td>
+                      <td className="px-6 py-4 text-sm font-medium text-slate-900">{formatAmount(Number(item.amount))}</td>
                       <td className="px-6 py-4 text-sm text-slate-600">{item.payee ?? "—"}</td>
                       <td className="px-6 py-4 text-sm text-slate-600">{item.purpose}</td>
                       <td className="px-6 py-4 text-sm text-slate-600">{item.reference_number ?? "—"}</td>

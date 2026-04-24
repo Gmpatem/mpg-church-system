@@ -22,8 +22,8 @@ export default async function MoneyOutPage({ params, searchParams }: MoneyOutPag
     : null;
 
   const options = await getTreasuryFormOptions(churchSlug, {
-    includeFundIds: requestForPrefill?.preferred_fund_id
-      ? [requestForPrefill.preferred_fund_id]
+    includeFundIds: requestForPrefill?.fund_id || requestForPrefill?.preferred_fund_id
+      ? [requestForPrefill.fund_id || requestForPrefill.preferred_fund_id || ""]
       : [],
     includeDepartmentIds: requestForPrefill?.department_id
       ? [requestForPrefill.department_id]
@@ -31,16 +31,17 @@ export default async function MoneyOutPage({ params, searchParams }: MoneyOutPag
   });
 
   const defaults = requestForPrefill
-    ? {
+      ? {
         outflowType: requestForPrefill.outflow_type,
-        fundId: requestForPrefill.preferred_fund_id ?? "",
+        fundId: requestForPrefill.fund_id ?? requestForPrefill.preferred_fund_id ?? "",
         departmentId: requestForPrefill.department_id,
         amount: requestForPrefill.amount,
-        outflowDate: requestForPrefill.requested_date,
+        outflowDate: requestForPrefill.outflow_date || requestForPrefill.requested_date,
         payee: requestForPrefill.payee ?? "",
         purpose: requestForPrefill.purpose,
         projectName: requestForPrefill.project_name ?? "",
         note: requestForPrefill.note ?? "",
+        referenceNumber: requestForPrefill.reference_number ?? "",
         departmentFundRequestId: requestForPrefill.id,
       }
     : undefined;
@@ -49,15 +50,15 @@ export default async function MoneyOutPage({ params, searchParams }: MoneyOutPag
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Record Money Out</h2>
-          <p className="text-sm text-gray-600 mt-1">
+          <h2 className="text-2xl font-bold text-slate-900">Record Money Out</h2>
+          <p className="text-sm text-slate-600 mt-1">
             Project, evangelism, mission remittance, or church expense.
           </p>
         </div>
 
         <Link
           href={`/c/${churchSlug}/treasury`}
-          className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+          className="rounded-md border border-slate-300 bg-white px-4 py-2 text-sm text-slate-700 hover:bg-slate-50"
         >
           Back to Treasury
         </Link>

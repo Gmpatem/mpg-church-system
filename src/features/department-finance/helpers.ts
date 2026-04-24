@@ -1,7 +1,6 @@
 import "server-only";
 
 const TREASURY_MANAGER_ROLE_CODES = ["church_admin", "pastor", "treasurer"] as const;
-const DEPARTMENT_ADMIN_ROLE_CODES = ["church_admin", "pastor"] as const;
 
 type NotificationRow = {
   church_id: string;
@@ -22,12 +21,6 @@ function uniqueStrings(values: Array<string | null | undefined>) {
 export function isTreasuryManagerContext(roles: string[], _isPlatformAdmin: boolean) {
   return roles.some((role) =>
     (TREASURY_MANAGER_ROLE_CODES as readonly string[]).includes(role)
-  );
-}
-
-export function canSubmitDepartmentFundRequests(roles: string[], _isPlatformAdmin: boolean) {
-  return roles.some((role) =>
-    (DEPARTMENT_ADMIN_ROLE_CODES as readonly string[]).includes(role)
   );
 }
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { createMemberInviteAction } from "@/features/member-invite/actions";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { CopyableLink } from "@/components/ui/CopyableLink";
@@ -221,76 +222,124 @@ function MembersRegistryTable({
           />
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Member</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Household</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Departments</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Contact</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Added</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 bg-white">
-              {rows.map((member) => {
-                const isSelected = member.id === selectedMemberId;
-                const activeCount = member.active_departments?.length ?? 0;
-                const inactiveCount = member.inactive_departments?.length ?? 0;
+        <>
+          <div className="grid grid-cols-2 gap-3 p-3 md:hidden">
+            {rows.map((member) => {
+              const isSelected = member.id === selectedMemberId;
+              const activeCount = member.active_departments?.length ?? 0;
 
-                return (
-                  <tr key={member.id} className={isSelected ? "bg-blue-50/50" : undefined}>
-                    <td className="px-4 py-3.5">
-                      <button
-                        type="button"
-                        onClick={() => onSelectMember(member.id)}
-                        className="text-left"
-                      >
-                        <p className="text-sm font-semibold text-slate-900">{getMemberLabel(member)}</p>
-                        <p className="mt-0.5 text-xs text-slate-500">{member.member_code || t.pages.membersWorkspace.directory.noCode}</p>
-                      </button>
-                    </td>
-                    <td className="px-4 py-3.5">
+              return (
+                <div
+                  key={member.id}
+                  className={
+                    isSelected
+                      ? "rounded-2xl border border-blue-200 bg-blue-50/60 p-3"
+                      : "rounded-2xl border border-slate-200 bg-white p-3"
+                  }
+                >
+                  <button type="button" onClick={() => onSelectMember(member.id)} className="w-full text-left">
+                    <div className="flex items-start justify-between gap-1.5">
+                      <p className="line-clamp-2 text-sm font-semibold text-slate-900">{getMemberLabel(member)}</p>
                       <StatusBadge status={member.membership_status} context="member" />
-                    </td>
-                    <td className="px-4 py-3.5 text-sm text-slate-600">{member.household_name || t.pages.membersWorkspace.directory.noHousehold}</td>
-                    <td className="px-4 py-3.5 text-sm text-slate-600">
-                      <span className="font-medium text-slate-800">{activeCount}</span> active
-                      {inactiveCount > 0 ? ` / ${inactiveCount} inactive` : ""}
-                    </td>
-                    <td className="px-4 py-3.5 text-sm text-slate-600">{member.email || member.phone || t.pages.membersWorkspace.directory.noContact}</td>
-                    <td className="px-4 py-3.5 text-sm text-slate-600">{formatDate(member.created_at)}</td>
-                    <td className="px-4 py-3.5">
-                      <div className="flex justify-end gap-2">
-                        <a
-                          href={`/c/${churchSlug}/members/${member.id}`}
-                          className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
-                        >
-                          {t.pages.membersWorkspace.directory.viewMember}
-                        </a>
-                        <a
-                          href={`/c/${churchSlug}/members/${member.id}/edit`}
-                          className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
-                        >
-                          {t.pages.membersWorkspace.directory.edit}
-                        </a>
+                    </div>
+                    <p className="mt-1 truncate text-xs text-slate-500">
+                      {member.member_code || t.pages.membersWorkspace.directory.noCode}
+                    </p>
+                    <div className="mt-2 flex items-center justify-between gap-2 text-xs text-slate-600">
+                      <span className="truncate">{activeCount} {t.navigation.departments}</span>
+                      <span className="truncate">{member.phone || member.email || t.pages.membersWorkspace.directory.noContact}</span>
+                    </div>
+                  </button>
+                  <div className="mt-3 flex items-center gap-2">
+                    <Link
+                      href={`/c/${churchSlug}/members/${member.id}`}
+                      className="inline-flex min-h-[36px] flex-1 items-center justify-center rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                    >
+                      {t.pages.membersWorkspace.directory.viewMember}
+                    </Link>
+                    <Link
+                      href={`/c/${churchSlug}/members/${member.id}/edit`}
+                      className="inline-flex min-h-[36px] flex-1 items-center justify-center rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                    >
+                      {t.pages.membersWorkspace.directory.edit}
+                    </Link>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Member</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Household</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Departments</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Contact</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Added</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 bg-white">
+                {rows.map((member) => {
+                  const isSelected = member.id === selectedMemberId;
+                  const activeCount = member.active_departments?.length ?? 0;
+                  const inactiveCount = member.inactive_departments?.length ?? 0;
+
+                  return (
+                    <tr key={member.id} className={isSelected ? "bg-blue-50/50" : undefined}>
+                      <td className="px-4 py-3.5">
                         <button
                           type="button"
                           onClick={() => onSelectMember(member.id)}
-                          className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
+                          className="text-left"
                         >
-                          Details
+                          <p className="text-sm font-semibold text-slate-900">{getMemberLabel(member)}</p>
+                          <p className="mt-0.5 text-xs text-slate-500">{member.member_code || t.pages.membersWorkspace.directory.noCode}</p>
                         </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <StatusBadge status={member.membership_status} context="member" />
+                      </td>
+                      <td className="px-4 py-3.5 text-sm text-slate-600">{member.household_name || t.pages.membersWorkspace.directory.noHousehold}</td>
+                      <td className="px-4 py-3.5 text-sm text-slate-600">
+                        <span className="font-medium text-slate-800">{activeCount}</span> active
+                        {inactiveCount > 0 ? ` / ${inactiveCount} inactive` : ""}
+                      </td>
+                      <td className="px-4 py-3.5 text-sm text-slate-600">{member.email || member.phone || t.pages.membersWorkspace.directory.noContact}</td>
+                      <td className="px-4 py-3.5 text-sm text-slate-600">{formatDate(member.created_at)}</td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex justify-end gap-2">
+                          <a
+                            href={`/c/${churchSlug}/members/${member.id}`}
+                            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                          >
+                            {t.pages.membersWorkspace.directory.viewMember}
+                          </a>
+                          <a
+                            href={`/c/${churchSlug}/members/${member.id}/edit`}
+                            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                          >
+                            {t.pages.membersWorkspace.directory.edit}
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => onSelectMember(member.id)}
+                            className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
+                          >
+                            Details
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </WorkspaceSectionCard>
   );
@@ -472,6 +521,7 @@ export function MembersWorkspaceUnified({
     <div className="space-y-6">
       <WorkspaceHero
         size="compact"
+        mobileLayout="slim"
         eyebrow={t.pages.membersWorkspace.eyebrow}
         title={t.pages.membersWorkspace.title}
         description={t.pages.membersWorkspace.description}
@@ -487,7 +537,7 @@ export function MembersWorkspaceUnified({
         ]}
       />
 
-      <div className="grid grid-cols-4 gap-3 xl:grid-cols-6">
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
         <WorkspaceStatCard label={t.pages.membersWorkspace.stats.totalMembers} value={data.stats.totalMembers} hint={t.pages.membersWorkspace.stats.totalMembersHint} />
         <WorkspaceStatCard label={t.pages.membersWorkspace.stats.active} value={data.stats.activeMembers} hint={t.pages.membersWorkspace.stats.activeHint} />
         <WorkspaceStatCard label={t.pages.membersWorkspace.stats.inactive} value={data.stats.inactiveMembers} hint={t.pages.membersWorkspace.stats.inactiveHint} />

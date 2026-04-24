@@ -17,6 +17,7 @@ import {
   Wallet,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { OFFICE_ALLOWED_ROLES } from "@/lib/constants/access";
 import { useI18n } from "@/features/i18n";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
@@ -33,16 +34,6 @@ type SecondaryLink = {
   icon: React.ComponentType<{ className?: string }>;
   badge?: number;
 };
-
-const OFFICE_ALLOWED_ROLES = new Set([
-  "Clerk",
-  "Church Secretary",
-  "Church Admin",
-  "Pastor",
-  "Platform Owner",
-  "Platform Admin",
-  "Platform Support",
-]);
 
 function isPathActive(pathname: string, href: string, exact = false) {
   if (exact) return pathname === href;
@@ -191,4 +182,3 @@ export function ChurchMobileBottomNav({
     </>
   );
 }
-

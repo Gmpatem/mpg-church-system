@@ -4,16 +4,13 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireChurchRole } from "@/features/access/queries";
 import type { ActionState } from "@/features/access/types";
+import { CHURCH_MANAGEMENT_ROLE_CODES } from "@/lib/domain/church-access";
+import { getString } from "@/lib/domain/validation";
 import { parseCreateMemberInput, parseUpdateMemberInput } from "./validators";
 
 type CreateMemberState =
   | { ok: true; message?: string; memberId: string; error?: undefined }
   | { ok: false; error: string; message?: undefined; memberId?: undefined };
-
-function getString(formData: FormData, key: string) {
-  const value = formData.get(key);
-  return typeof value === "string" ? value.trim() : "";
-}
 
 function buildMemberCode(churchSlug: string) {
   const prefix = churchSlug.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 6) || "CHURCH";
@@ -70,7 +67,7 @@ export async function createMemberAction(
   formData: FormData
 ): Promise<CreateMemberState> {
   const churchSlug = getString(formData, "churchSlug");
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
+  const ctx = await requireChurchRole(churchSlug, CHURCH_MANAGEMENT_ROLE_CODES);
 
   const supabase = await createClient();
 
@@ -204,7 +201,7 @@ export async function updateMemberAction(
   formData: FormData
 ): Promise<ActionState> {
   const churchSlug = getString(formData, "churchSlug");
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
+  const ctx = await requireChurchRole(churchSlug, CHURCH_MANAGEMENT_ROLE_CODES);
   const supabase = await createClient();
 
   try {
@@ -312,7 +309,7 @@ export async function updateMemberStatusAction(
   const newStatus = getString(formData, "newStatus");
   const reason = getString(formData, "reason");
 
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
+  const ctx = await requireChurchRole(churchSlug, CHURCH_MANAGEMENT_ROLE_CODES);
   const supabase = await createClient();
 
   if (!memberId) {
@@ -393,7 +390,7 @@ export async function processMemberTransferAction(
   const previousChurch = getString(formData, "previousChurch");
   const reason = getString(formData, "reason");
 
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
+  const ctx = await requireChurchRole(churchSlug, CHURCH_MANAGEMENT_ROLE_CODES);
   const supabase = await createClient();
 
   if (!memberId) {
@@ -490,7 +487,7 @@ export async function assignMemberDepartmentAction(
   const roleInDepartment = getString(formData, "roleInDepartment");
   const joinedDate = getString(formData, "joinedDate");
 
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
+  const ctx = await requireChurchRole(churchSlug, CHURCH_MANAGEMENT_ROLE_CODES);
   const supabase = await createClient();
 
   if (!memberId || !departmentId) {
@@ -556,7 +553,7 @@ export async function removeMemberDepartmentAction(
   const memberId = getString(formData, "memberId");
   const assignmentId = getString(formData, "assignmentId");
 
-  await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
+  await requireChurchRole(churchSlug, CHURCH_MANAGEMENT_ROLE_CODES);
   const supabase = await createClient();
 
   if (!assignmentId) {
@@ -587,7 +584,7 @@ export async function reassignMemberHouseholdAction(
   const memberId = getString(formData, "memberId");
   const householdId = getString(formData, "householdId") || null;
 
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
+  const ctx = await requireChurchRole(churchSlug, CHURCH_MANAGEMENT_ROLE_CODES);
   const supabase = await createClient();
 
   if (!memberId) {

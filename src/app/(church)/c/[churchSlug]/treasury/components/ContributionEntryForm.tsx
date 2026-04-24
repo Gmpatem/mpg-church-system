@@ -2,18 +2,20 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useActionState } from "react";
+import { ChevronDown } from "lucide-react";
 import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 import { createTreasuryInflowAction } from "@/features/treasury/actions";
 import { useI18n } from "@/features/i18n";
 import { TreasuryMemberPicker } from "@/app/(church)/c/[churchSlug]/treasury/components/TreasuryMemberPicker";
 import { TreasuryDepartmentPicker } from "@/app/(church)/c/[churchSlug]/treasury/components/TreasuryDepartmentPicker";
+import { getTodayLocalDate } from "@/lib/utils/format";
 
 type SourceMode = "member" | "department" | "anonymous" | "visitor";
 
 interface ContributionEntryFormProps {
   churchSlug: string;
   options: {
-    funds: Array<{ id: string; name: string; code: string; fund_type: string }>;
+    funds: Array<{ id: string; name: string; code: string; fund_type: string; department_id?: string | null }>;
     members: Array<{ id: string; display_name?: string | null; first_name: string; last_name: string; member_code?: string | null }>;
     departments: Array<{ id: string; department_name: string }>;
   };
@@ -24,14 +26,6 @@ interface ContributionEntryFormProps {
   modeLabel?: string;
   alreadyTithedIds?: string[];
   onCreateFundRequest?: () => void;
-}
-
-function getTodayLocalDate() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
 }
 
 function getLockedLabel(inflowType: string | undefined, t: { pages: { treasury: { forms: { types: Record<string, string> } } } }) {
@@ -61,7 +55,7 @@ function getSupportedFundTypesForInflow(inflowType: string) {
 }
 
 function getVisibleFunds(
-  funds: Array<{ id: string; name: string; code: string; fund_type: string }>,
+  funds: Array<{ id: string; name: string; code: string; fund_type: string; department_id?: string | null }>,
   inflowType: string
 ) {
   const allowedTypes = new Set(getSupportedFundTypesForInflow(inflowType));
@@ -106,6 +100,7 @@ export function ContributionEntryForm({
   const [fundId, setFundId] = useState("");
   const [referenceNumber, setReferenceNumber] = useState("");
   const [note, setNote] = useState("");
+  const [optionalFieldsOpen, setOptionalFieldsOpen] = useState(false);
 
   const defaultFundId = useMemo(() => {
     if (!defaults?.fundCode) return "";
@@ -120,8 +115,29 @@ export function ContributionEntryForm({
     if (isFixedFund) {
       return options.funds.filter((fund) => fund.id === defaultFundId);
     }
-    return getVisibleFunds(options.funds, isFixedType ? (defaults?.inflowType ?? entryType) : entryType);
-  }, [defaultFundId, defaults?.inflowType, entryType, isFixedFund, isFixedType, options.funds]);
+    const baseFunds = getVisibleFunds(
+      options.funds,
+      isFixedType ? (defaults?.inflowType ?? entryType) : entryType
+    );
+    if (sourceMode !== "department") return baseFunds;
+    if (!selectedDepartmentId) return [];
+
+    const hasDepartmentMetadata = baseFunds.some((fund) =>
+      Object.prototype.hasOwnProperty.call(fund, "department_id")
+    );
+    if (!hasDepartmentMetadata) return baseFunds;
+
+    return baseFunds.filter((fund) => fund.department_id === selectedDepartmentId);
+  }, [
+    defaultFundId,
+    defaults?.inflowType,
+    entryType,
+    isFixedFund,
+    isFixedType,
+    options.funds,
+    selectedDepartmentId,
+    sourceMode,
+  ]);
   const compatibleFundTypes = useMemo(
     () => getSupportedFundTypesForInflow(isFixedType ? (defaults?.inflowType ?? entryType) : entryType),
     [defaults?.inflowType, entryType, isFixedType]
@@ -217,7 +233,7 @@ export function ContributionEntryForm({
       ) : null}
 
       {state && state.ok ? (
-        <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{state.message}</div>
+        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{state.message}</div>
       ) : null}
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -228,7 +244,7 @@ export function ContributionEntryForm({
               id="inflowType"
               value={entryType}
               onChange={(event) => setEntryType(event.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="tithe">{t.pages.treasury.forms.types.tithe}</option>
               <option value="offering">{t.pages.treasury.forms.types.offering}</option>
@@ -341,18 +357,23 @@ export function ContributionEntryForm({
 
         <div>
           <label htmlFor="amount" className="mb-1 block text-sm font-medium text-slate-700">{t.pages.treasury.forms.amount}</label>
-          <input
-            id="amount"
-            name="amount"
-            type="number"
-            step="0.01"
-            min="0.01"
-            required
-            inputMode="decimal"
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base font-semibold outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="relative">
+            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-slate-500">
+              FCFA
+            </span>
+            <input
+              id="amount"
+              name="amount"
+              type="number"
+              step="0.01"
+              min="0.01"
+              required
+              inputMode="decimal"
+              value={amount}
+              onChange={(event) => setAmount(event.target.value)}
+              className="w-full rounded-md border border-slate-300 pl-14 pr-3 py-2.5 text-base font-semibold outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
 
         <div>
@@ -389,7 +410,11 @@ export function ContributionEntryForm({
 
       {visibleFunds.length === 0 ? (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          <p>{t.pages.treasury.forms.noFundAvailable}</p>
+          <p>
+            {sourceMode === "department"
+              ? "No active fund is linked to this department yet."
+              : t.pages.treasury.forms.noFundAvailable}
+          </p>
           <p className="mt-1 text-amber-800">{t.pages.treasury.forms.noFundAvailableHint}</p>
           {onCreateFundRequest ? (
             <button
@@ -403,34 +428,47 @@ export function ContributionEntryForm({
         </div>
       ) : null}
 
-      <details className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-        <summary className="cursor-pointer text-sm font-medium text-slate-700">{t.pages.treasury.forms.optionalFields}</summary>
-        <div className="mt-3 space-y-3">
-          <div>
-            <label htmlFor="referenceNumber" className="mb-1 block text-sm font-medium text-slate-700">{t.pages.treasury.forms.reference}</label>
-            <input
-              id="referenceNumber"
-              name="referenceNumber"
-              value={referenceNumber}
-              onChange={(event) => setReferenceNumber(event.target.value)}
-              placeholder={t.pages.treasury.forms.placeholder.reference}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+      <div className="space-y-3">
+        <button
+          type="button"
+          onClick={() => setOptionalFieldsOpen((prev) => !prev)}
+          aria-expanded={optionalFieldsOpen}
+          className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700"
+        >
+          <span>{t.pages.treasury.forms.optionalFields}</span>
+          <ChevronDown
+            className={`h-4 w-4 transition-transform ${optionalFieldsOpen ? "rotate-180" : ""}`}
+          />
+        </button>
 
-          <div>
-            <label htmlFor="note" className="mb-1 block text-sm font-medium text-slate-700">{t.pages.treasury.forms.note}</label>
-            <textarea
-              id="note"
-              name="note"
-              rows={3}
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-            />
+        {optionalFieldsOpen ? (
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+            <div>
+              <label htmlFor="referenceNumber" className="mb-1 block text-sm font-medium text-slate-700">{t.pages.treasury.forms.reference}</label>
+              <input
+                id="referenceNumber"
+                name="referenceNumber"
+                value={referenceNumber}
+                onChange={(event) => setReferenceNumber(event.target.value)}
+                placeholder={t.pages.treasury.forms.placeholder.reference}
+                className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="note" className="mb-1 block text-sm font-medium text-slate-700">{t.pages.treasury.forms.note}</label>
+              <textarea
+                id="note"
+                name="note"
+                rows={3}
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+                className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
-        </div>
-      </details>
+        ) : null}
+      </div>
 
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
         <button

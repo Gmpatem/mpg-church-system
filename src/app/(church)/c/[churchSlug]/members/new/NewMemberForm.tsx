@@ -58,6 +58,7 @@ export function NewMemberForm({
 
   useEffect(() => {
     if (!state?.ok || !state.memberId || !sendInvite) return;
+    if (invitePending || inviteUrl || inviteError) return;
 
     setInvitePending(true);
     setInviteError(null);
@@ -77,7 +78,7 @@ export function NewMemberForm({
       .finally(() => {
         setInvitePending(false);
       });
-  }, [state]);
+  }, [churchSlug, inviteError, invitePending, inviteUrl, sendInvite, state]);
 
   return (
     <div className="mx-auto max-w-5xl">

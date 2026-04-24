@@ -1,34 +1,49 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useState } from "react";
 import { createDepartmentFundRequestAction } from "@/features/department-finance/actions";
 import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
+import { getTodayLocalDate } from "@/lib/utils/format";
 
 interface DepartmentFundRequestFormProps {
   churchSlug: string;
   departmentId: string;
-  funds: Array<{ id: string; name: string; code: string; fund_type: string }>;
-}
-
-function getTodayDate() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
+  funds: Array<{
+    id: string;
+    name: string;
+    code: string;
+    fund_type: string;
+    department_id: string | null;
+    is_department_default: boolean;
+  }>;
+  events?: Array<{
+    id: string;
+    title: string;
+    start: string;
+  }>;
 }
 
 export function DepartmentFundRequestForm({
   churchSlug,
   departmentId,
   funds,
+  events = [],
 }: DepartmentFundRequestFormProps) {
   const [state, formAction, isPending] = useActionState(createDepartmentFundRequestAction, null);
+  const preferredFundDefault =
+    funds.find((fund) => fund.is_department_default)?.id ?? "";
+  const [requestedFundId, setRequestedFundId] = useState("");
 
   return (
     <form action={formAction} className="space-y-4 rounded-xl border border-slate-200 bg-white p-4">
       <input type="hidden" name="churchSlug" value={churchSlug} />
       <input type="hidden" name="departmentId" value={departmentId} />
+      <input
+        type="hidden"
+        name="fundId"
+        value={requestedFundId || preferredFundDefault || funds[0]?.id || ""}
+        readOnly
+      />
 
       {state && !state.ok ? (
         <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
@@ -51,7 +66,7 @@ export function DepartmentFundRequestForm({
             id="title"
             name="title"
             required
-            className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+            className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="e.g. Youth outreach transport support"
           />
         </div>
@@ -73,28 +88,33 @@ export function DepartmentFundRequestForm({
           <label htmlFor="amount" className="mb-1 block text-sm font-medium text-slate-700">
             Amount
           </label>
-          <input
-            id="amount"
-            name="amount"
-            type="number"
-            min="0.01"
-            step="0.01"
-            required
-            inputMode="decimal"
-            className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="relative">
+            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-slate-500">
+              FCFA
+            </span>
+            <input
+              id="amount"
+              name="amount"
+              type="number"
+              min="0.01"
+              step="0.01"
+              required
+              inputMode="decimal"
+              className="w-full rounded-md border border-slate-300 pl-14 pr-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
 
         <div>
-          <label htmlFor="requestedDate" className="mb-1 block text-sm font-medium text-slate-700">
-            Requested Date
+          <label htmlFor="outflowDate" className="mb-1 block text-sm font-medium text-slate-700">
+            Outflow Date
           </label>
           <input
-            id="requestedDate"
-            name="requestedDate"
+            id="outflowDate"
+            name="outflowDate"
             type="date"
             required
-            defaultValue={getTodayDate()}
+            defaultValue={getTodayLocalDate()}
             className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
           />
         </div>
@@ -122,12 +142,13 @@ export function DepartmentFundRequestForm({
 
         <div>
           <label htmlFor="preferredFundId" className="mb-1 block text-sm font-medium text-slate-700">
-            Preferred Fund (optional)
+            Requested Fund (optional)
           </label>
           <select
             id="preferredFundId"
             name="preferredFundId"
-            defaultValue=""
+            value={requestedFundId}
+            onChange={(event) => setRequestedFundId(event.target.value)}
             className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
           >
             <option value="">No preference</option>
@@ -137,6 +158,9 @@ export function DepartmentFundRequestForm({
               </option>
             ))}
           </select>
+          <p className="mt-1 text-xs text-slate-500">
+            Which church fund should cover this expense? Leave blank if unsure.
+          </p>
         </div>
 
         <div>
@@ -174,6 +198,37 @@ export function DepartmentFundRequestForm({
             className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             placeholder="Any supporting details for treasury review"
           />
+        </div>
+
+        <div>
+          <label htmlFor="referenceNumber" className="mb-1 block text-sm font-medium text-slate-700">
+            Reference Number (optional)
+          </label>
+          <input
+            id="referenceNumber"
+            name="referenceNumber"
+            className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Internal or vendor reference"
+          />
+        </div>
+
+        <div>
+          <label htmlFor="eventId" className="mb-1 block text-sm font-medium text-slate-700">
+            Related Event (optional)
+          </label>
+          <select
+            id="eventId"
+            name="eventId"
+            defaultValue=""
+            className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">No related event</option>
+            {events.map((event) => (
+              <option key={event.id} value={event.id}>
+                {event.title}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 

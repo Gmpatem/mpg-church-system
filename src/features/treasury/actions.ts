@@ -6,6 +6,9 @@ import { createClient } from "@/lib/supabase/server";
 import { requireChurchRole } from "@/features/access/queries";
 import type { ActionState } from "@/features/access/types";
 import type { TreasuryFinanceSettings } from "@/features/treasury/types";
+import { TREASURY_MANAGEMENT_ROLE_CODES } from "@/lib/domain/church-access";
+import { getNumber, getString } from "@/lib/domain/validation";
+import { isMissingColumnError, isMissingRelationError } from "@/lib/supabase/errors";
 import {
   formatCurrencyLabel,
   getDepartmentLeaderProfileIds,
@@ -24,18 +27,8 @@ function revalidateTreasuryData(churchSlug: string) {
   revalidatePath(`/c/${churchSlug}/treasury`);
   revalidatePath(`/c/${churchSlug}/treasury/in`);
   revalidatePath(`/c/${churchSlug}/treasury/out`);
+  revalidatePath(`/c/${churchSlug}/treasury/approvals`);
   revalidatePath(`/c/${churchSlug}/reports`);
-}
-
-function getString(formData: FormData, key: string) {
-  const value = formData.get(key);
-  return typeof value === "string" ? value.trim() : "";
-}
-
-function getNumber(formData: FormData, key: string) {
-  const raw = getString(formData, key);
-  const num = Number(raw);
-  return Number.isFinite(num) ? num : NaN;
 }
 
 function buildTreasuryReference(prefix: string, txDate: string) {
@@ -507,15 +500,74 @@ async function ensureFundBelongsToChurch(supabase: any, churchId: string, fundId
 async function getFundMeta(supabase: any, churchId: string, fundId: string | null) {
   if (!fundId) return null;
 
-  const { data, error } = await supabase
+  const withDepartment = await supabase
+    .from("treasury_funds")
+    .select("id, code, fund_type, department_id")
+    .eq("church_id", churchId)
+    .eq("id", fundId)
+    .maybeSingle();
+
+  if (!withDepartment.error) return withDepartment.data ?? null;
+  if (!isMissingColumnError(withDepartment.error, "department_id")) {
+    throw new Error(withDepartment.error.message);
+  }
+
+  const legacy = await supabase
     .from("treasury_funds")
     .select("id, code, fund_type")
     .eq("church_id", churchId)
     .eq("id", fundId)
     .maybeSingle();
 
-  if (error) throw new Error(error.message);
-  return data ?? null;
+  if (legacy.error) throw new Error(legacy.error.message);
+  if (!legacy.data) return null;
+  return { ...legacy.data, department_id: null };
+}
+
+async function ensureDepartmentFundConsistency(params: {
+  departmentId: string | null;
+  fund: {
+    id: string;
+    fund_type: string;
+    code?: string | null;
+    department_id?: string | null;
+  } | null;
+  context: "inflow" | "outflow";
+}) {
+  const { departmentId, fund, context } = params;
+  if (!departmentId) return { ok: true as const };
+  if (!fund) {
+    return {
+      ok: false as const,
+      error: "Selected fund was not found for this department-linked transaction.",
+    };
+  }
+
+  if (fund.department_id === undefined) {
+    return { ok: true as const };
+  }
+
+  if (!fund.department_id) {
+    return {
+      ok: false as const,
+      error:
+        context === "inflow"
+          ? "Department-linked contributions must use a department fund."
+          : "Department-linked expenses must use a department fund.",
+    };
+  }
+
+  if (fund.department_id !== departmentId) {
+    return {
+      ok: false as const,
+      error:
+        context === "inflow"
+          ? "Selected fund does not belong to the selected department."
+          : "Selected expense fund does not belong to the selected department.",
+    };
+  }
+
+  return { ok: true as const };
 }
 
 async function ensureMemberBelongsToChurch(supabase: any, churchId: string, memberId: string | null) {
@@ -730,7 +782,14 @@ async function markDepartmentFundRequestProcessedAfterOutflow(params: {
     .eq("id", requestId)
     .maybeSingle();
 
-  if (requestError) throw new Error(requestError.message);
+  if (requestError) {
+    if (isMissingRelationError(requestError, "department_fund_requests")) {
+      throw new Error(
+        "Department finance requests table is missing. Apply department finance migrations before processing requests."
+      );
+    }
+    throw new Error(requestError.message);
+  }
   if (!requestRow) throw new Error("Department fund request was not found for processing.");
 
   const status = String(requestRow.status ?? "");
@@ -793,7 +852,7 @@ export async function createTreasuryInflowAction(
   formData: FormData
 ): Promise<ActionState> {
   const churchSlug = getString(formData, "churchSlug");
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
+  const ctx = await requireChurchRole(churchSlug, TREASURY_MANAGEMENT_ROLE_CODES);
   const supabase = await createClient();
   const financeSettings = await getTreasuryFinanceSettings(supabase, ctx.churchId);
 
@@ -865,6 +924,14 @@ export async function createTreasuryInflowAction(
     if (!validMember) return { ok: false, error: "Selected member does not belong to this church." };
     const validDepartment = await ensureDepartmentBelongsToChurch(supabase, ctx.churchId, effectiveDepartmentId);
     if (!validDepartment) return { ok: false, error: "Selected department does not belong to this church." };
+    const departmentFundConsistency = await ensureDepartmentFundConsistency({
+      departmentId: effectiveDepartmentId,
+      fund,
+      context: "inflow",
+    });
+    if (!departmentFundConsistency.ok) {
+      return { ok: false, error: departmentFundConsistency.error };
+    }
 
     const accessDiagnostics = await getTreasuryManagerAccessDiagnostics(
       supabase,
@@ -963,28 +1030,83 @@ export async function createTreasuryOutflowAction(
   formData: FormData
 ): Promise<ActionState> {
   const churchSlug = getString(formData, "churchSlug");
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
+  const ctx = await requireChurchRole(churchSlug, TREASURY_MANAGEMENT_ROLE_CODES);
   const supabase = await createClient();
   const financeSettings = await getTreasuryFinanceSettings(supabase, ctx.churchId);
 
-  const outflowType = getString(formData, "outflowType");
-  const fundId = getString(formData, "fundId") || null;
-  const departmentId = getString(formData, "departmentId") || null;
+  const outflowTypeInput = getString(formData, "outflowType");
+  const fundIdInput = getString(formData, "fundId") || null;
+  const departmentIdInput = getString(formData, "departmentId") || null;
   const departmentFundRequestId = getString(formData, "departmentFundRequestId") || null;
-  const amount = getNumber(formData, "amount");
-  const outflowDate = getString(formData, "outflowDate");
-  const payee = getString(formData, "payee") || null;
-  const purpose = getString(formData, "purpose");
-  const projectName = getString(formData, "projectName") || null;
+  const amountInput = getNumber(formData, "amount");
+  const outflowDateInput = getString(formData, "outflowDate");
+  const payeeInput = getString(formData, "payee") || null;
+  const purposeInput = getString(formData, "purpose");
+  const projectNameInput = getString(formData, "projectName") || null;
   const referenceNumberInput = getString(formData, "referenceNumber");
-  const note = getString(formData, "note") || null;
+  const noteInput = getString(formData, "note") || null;
   const paymentMethod = getString(formData, "paymentMethod") || null;
 
-  if (!outflowType || !outflowDate || !purpose || !Number.isFinite(amount) || amount <= 0) {
-    return { ok: false, error: "Please complete all required money-out fields." };
-  }
-
   try {
+    let requestTemplate: Record<string, any> | null = null;
+    if (departmentFundRequestId) {
+      const { data: requestRow, error: requestError } = await supabase
+        .from("department_fund_requests")
+        .select("*")
+        .eq("church_id", ctx.churchId)
+        .eq("id", departmentFundRequestId)
+        .maybeSingle();
+
+      if (requestError) {
+        if (isMissingRelationError(requestError, "department_fund_requests")) {
+          return {
+            ok: false,
+            error:
+              "Department finance requests are not enabled yet. Apply department finance migrations and retry.",
+          };
+        }
+        return { ok: false, error: requestError.message };
+      }
+
+      if (!requestRow) {
+        return { ok: false, error: "Department fund request was not found." };
+      }
+
+      if (!["pending", "approved"].includes(String(requestRow.status))) {
+        return {
+          ok: false,
+          error: "Only pending or approved requests can be processed into outflows.",
+        };
+      }
+
+      requestTemplate = requestRow as Record<string, any>;
+    }
+
+    const outflowType = String(requestTemplate?.outflow_type || outflowTypeInput || "");
+    const fundId = String(
+      requestTemplate?.fund_id ||
+        requestTemplate?.preferred_fund_id ||
+        fundIdInput ||
+        ""
+    ) || null;
+    const departmentId = String(
+      requestTemplate?.department_id || departmentIdInput || ""
+    ) || null;
+    const outflowDate = String(
+      requestTemplate?.outflow_date || requestTemplate?.requested_date || outflowDateInput || ""
+    );
+    const purpose = String(requestTemplate?.purpose || purposeInput || "");
+    const payee = payeeInput || requestTemplate?.payee || null;
+    const projectName = projectNameInput || requestTemplate?.project_name || null;
+    const note = noteInput || requestTemplate?.note || null;
+    const amount = Number.isFinite(amountInput) && amountInput > 0
+      ? amountInput
+      : Number(requestTemplate?.amount || NaN);
+
+    if (!outflowType || !outflowDate || !purpose || !Number.isFinite(amount) || amount <= 0) {
+      return { ok: false, error: "Please complete all required money-out fields." };
+    }
+
     if (!fundId) {
       return { ok: false, error: "Money-out entries must have a fund source." };
     }
@@ -997,6 +1119,14 @@ export async function createTreasuryOutflowAction(
 
     const validDepartment = await ensureDepartmentBelongsToChurch(supabase, ctx.churchId, departmentId);
     if (!validDepartment) return { ok: false, error: "Selected department does not belong to this church." };
+    const departmentFundConsistency = await ensureDepartmentFundConsistency({
+      departmentId,
+      fund,
+      context: "outflow",
+    });
+    if (!departmentFundConsistency.ok) {
+      return { ok: false, error: departmentFundConsistency.error };
+    }
 
     const accessDiagnostics = await getTreasuryManagerAccessDiagnostics(
       supabase,
@@ -1018,30 +1148,8 @@ export async function createTreasuryOutflowAction(
       return { ok: false, error: "Tithe fund can only be used for mission remittance." };
     }
 
-    if (departmentFundRequestId) {
-      const { data: requestRow, error: requestError } = await supabase
-        .from("department_fund_requests")
-        .select("id, department_id, status")
-        .eq("church_id", ctx.churchId)
-        .eq("id", departmentFundRequestId)
-        .maybeSingle();
-
-      if (requestError) {
-        return { ok: false, error: requestError.message };
-      }
-
-      if (!requestRow) {
-        return { ok: false, error: "Department fund request was not found." };
-      }
-
-      if (!["pending", "approved"].includes(String(requestRow.status))) {
-        return {
-          ok: false,
-          error: "Only pending or approved requests can be processed into outflows.",
-        };
-      }
-
-      if (requestRow.department_id && requestRow.department_id !== departmentId) {
+    if (departmentFundRequestId && requestTemplate) {
+      if (requestTemplate.department_id && requestTemplate.department_id !== departmentId) {
         return {
           ok: false,
           error: "Outflow department must match the selected department request.",
@@ -1049,7 +1157,11 @@ export async function createTreasuryOutflowAction(
       }
     }
 
-    const referenceNumber = referenceNumberInput || buildTreasuryReference("TOUT", outflowDate);
+    const requestReference = requestTemplate?.reference_number
+      ? String(requestTemplate.reference_number)
+      : "";
+    const referenceNumber =
+      referenceNumberInput || requestReference || buildTreasuryReference("TOUT", outflowDate);
     const finalNote = mergePaymentMethodIntoNote(note, paymentMethod);
 
     const { data: outflowRow, error } = await supabase
@@ -1118,7 +1230,7 @@ export async function updateTreasuryInflowAction(
 ): Promise<ActionState> {
   const churchSlug = getString(formData, "churchSlug");
   const entryId = getString(formData, "entryId");
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
+  const ctx = await requireChurchRole(churchSlug, TREASURY_MANAGEMENT_ROLE_CODES);
   const supabase = await createClient();
   const financeSettings = await getTreasuryFinanceSettings(supabase, ctx.churchId);
 
@@ -1186,6 +1298,14 @@ export async function updateTreasuryInflowAction(
     if (!validMember) return { ok: false, error: "Selected member does not belong to this church." };
     const validDepartment = await ensureDepartmentBelongsToChurch(supabase, ctx.churchId, effectiveDepartmentId);
     if (!validDepartment) return { ok: false, error: "Selected department does not belong to this church." };
+    const departmentFundConsistency = await ensureDepartmentFundConsistency({
+      departmentId: effectiveDepartmentId,
+      fund,
+      context: "inflow",
+    });
+    if (!departmentFundConsistency.ok) {
+      return { ok: false, error: departmentFundConsistency.error };
+    }
 
     const accessDiagnostics = await getTreasuryManagerAccessDiagnostics(
       supabase,
@@ -1259,7 +1379,7 @@ export async function updateTreasuryOutflowAction(
 ): Promise<ActionState> {
   const churchSlug = getString(formData, "churchSlug");
   const entryId = getString(formData, "entryId");
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
+  const ctx = await requireChurchRole(churchSlug, TREASURY_MANAGEMENT_ROLE_CODES);
   const supabase = await createClient();
   const financeSettings = await getTreasuryFinanceSettings(supabase, ctx.churchId);
 
@@ -1296,6 +1416,14 @@ export async function updateTreasuryOutflowAction(
 
     const validDepartment = await ensureDepartmentBelongsToChurch(supabase, ctx.churchId, departmentId);
     if (!validDepartment) return { ok: false, error: "Selected department does not belong to this church." };
+    const departmentFundConsistency = await ensureDepartmentFundConsistency({
+      departmentId,
+      fund,
+      context: "outflow",
+    });
+    if (!departmentFundConsistency.ok) {
+      return { ok: false, error: departmentFundConsistency.error };
+    }
 
     const accessDiagnostics = await getTreasuryManagerAccessDiagnostics(
       supabase,
@@ -1365,7 +1493,7 @@ export async function createTreasuryFundAction(
   formData: FormData
 ): Promise<ActionState> {
   const churchSlug = getString(formData, "churchSlug");
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
+  const ctx = await requireChurchRole(churchSlug, TREASURY_MANAGEMENT_ROLE_CODES);
   const supabase = await createClient();
 
   const code = getString(formData, "code").toLowerCase();
@@ -1404,7 +1532,7 @@ export async function toggleTreasuryFundAction(
   const churchSlug = getString(formData, "churchSlug");
   const fundId = getString(formData, "fundId");
   const nextState = getString(formData, "nextState") === "true";
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
+  const ctx = await requireChurchRole(churchSlug, TREASURY_MANAGEMENT_ROLE_CODES);
   const supabase = await createClient();
 
   if (!fundId) {
@@ -1449,7 +1577,7 @@ export async function toggleTreasuryFundAction(
 export async function getTreasuryFinanceSettingsAction(
   churchSlug: string
 ): Promise<TreasuryFinanceSettings> {
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
+  const ctx = await requireChurchRole(churchSlug, TREASURY_MANAGEMENT_ROLE_CODES);
   const supabase = await createClient();
   return getTreasuryFinanceSettings(supabase, ctx.churchId);
 }
@@ -1459,7 +1587,7 @@ export async function updateTreasuryFinanceSettingsAction(
   formData: FormData
 ): Promise<ActionState> {
   const churchSlug = getString(formData, "churchSlug");
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "treasurer", "pastor"]);
+  const ctx = await requireChurchRole(churchSlug, TREASURY_MANAGEMENT_ROLE_CODES);
   const supabase = await createClient();
 
   const titheAutoAllocate = getString(formData, "tithe_auto_allocate") === "true";

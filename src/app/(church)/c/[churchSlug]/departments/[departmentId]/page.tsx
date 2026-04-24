@@ -151,11 +151,13 @@ export default async function DepartmentDetailPage({ params, searchParams }: Dep
       </div>
 
       <div className="rounded-lg border border-slate-200 bg-white p-2">
-        <div className="flex flex-wrap gap-1.5">
+        <div className="flex flex-wrap gap-1.5" role="tablist">
           {tabs.map((item) => (
             <Link
               key={item.key}
               href={buildTabHref(item.key)}
+              role="tab"
+              aria-selected={item.key === tab}
               className={
                 item.key === tab
                   ? "inline-flex items-center rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white"
@@ -267,20 +269,51 @@ export default async function DepartmentDetailPage({ params, searchParams }: Dep
       ) : null}
 
       {tab === "members" ? (
-        <WorkspaceSectionCard
-          title="Department Members"
-          description="Registry of all member assignments in this department."
-        >
-          <DepartmentMembers churchSlug={churchSlug} assignments={assignments} />
-        </WorkspaceSectionCard>
+        <div className="space-y-5">
+          <WorkspaceSectionCard
+            title="Add Member"
+            description="Search and assign a church member to this department."
+          >
+            <AssignMemberToDepartment
+              churchSlug={churchSlug}
+              departmentId={departmentId}
+              members={options.members}
+              departments={options.departments}
+              existingActiveMemberIds={activeAssignments.map((item) => item.member_id)}
+            />
+          </WorkspaceSectionCard>
+          <WorkspaceSectionCard
+            title="Department Members"
+            description="Registry of all member assignments in this department."
+          >
+            <DepartmentMembers churchSlug={churchSlug} assignments={assignments} />
+          </WorkspaceSectionCard>
+        </div>
       ) : null}
 
       {tab === "leadership" ? (
         <WorkspaceSectionCard
           title="Leadership"
-          description="Leadership-focused subset derived from current role titles."
+          description="Department leadership and authority are managed through Access Control."
         >
-          <DepartmentMembers churchSlug={churchSlug} assignments={leadershipAssignments} />
+          <div className="space-y-4">
+            <p className="text-sm text-slate-700">
+              Leadership roles and permissions for this department are assigned centrally in Access Control.
+              Use Access Control to grant or revoke department-related roles and permissions for church users.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <Link
+                href={`/c/${churchSlug}/access-control`}
+                className="inline-flex items-center rounded-md bg-slate-950 px-4 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+              >
+                Open Access Control
+              </Link>
+            </div>
+            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-600">
+              Note: Membership (who belongs to a department) is managed in the Members tab.
+              Leadership and permissions are managed separately to keep authority centralized and auditable.
+            </div>
+          </div>
         </WorkspaceSectionCard>
       ) : null}
 
@@ -313,13 +346,13 @@ export default async function DepartmentDetailPage({ params, searchParams }: Dep
                 href={`/c/${churchSlug}/departments/${departmentId}/events`}
                 className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
               >
-                Open Department Events Route
+                Manage Department Events
               </Link>
               <Link
                 href={`/c/${churchSlug}/departments/${departmentId}/announcements`}
                 className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
               >
-                Open Department Announcements Route
+                Manage Announcements
               </Link>
             </div>
           </WorkspaceSectionCard>
@@ -341,7 +374,7 @@ export default async function DepartmentDetailPage({ params, searchParams }: Dep
             />
           </WorkspaceSectionCard>
           <WorkspaceSectionCard
-            title="Assignment Queue"
+            title="Current Members"
             description="Review and update assignment records from a table-first workflow."
           >
             <DepartmentMembers churchSlug={churchSlug} assignments={assignments} />
@@ -356,6 +389,7 @@ export default async function DepartmentDetailPage({ params, searchParams }: Dep
             departmentId={departmentId}
             data={financeData}
             focusRequestId={focusRequestId || null}
+            eventOptions={deptEvents}
           />
         ) : (
           <WorkspaceSectionCard
@@ -363,7 +397,7 @@ export default async function DepartmentDetailPage({ params, searchParams }: Dep
             description="Treasury-linked department finance data is unavailable for this department."
           >
             <p className="text-sm text-slate-600">
-              Confirm department finance migrations are applied, then refresh this workspace.
+              Department finance data isn&apos;t available yet. Please contact your system administrator.
             </p>
           </WorkspaceSectionCard>
         )

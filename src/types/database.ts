@@ -1024,6 +1024,10 @@ export interface Database {
           purpose: string;
           amount: number;
           outflow_type: string;
+          fund_id: string | null;
+          outflow_date: string;
+          reference_number: string | null;
+          event_id: string | null;
           preferred_fund_id: string | null;
           payee: string | null;
           project_name: string | null;
@@ -1048,6 +1052,10 @@ export interface Database {
           purpose: string;
           amount: number;
           outflow_type: string;
+          fund_id?: string | null;
+          outflow_date: string;
+          reference_number?: string | null;
+          event_id?: string | null;
           preferred_fund_id?: string | null;
           payee?: string | null;
           project_name?: string | null;
@@ -1072,6 +1080,10 @@ export interface Database {
           purpose?: string;
           amount?: number;
           outflow_type?: string;
+          fund_id?: string | null;
+          outflow_date?: string;
+          reference_number?: string | null;
+          event_id?: string | null;
           preferred_fund_id?: string | null;
           payee?: string | null;
           project_name?: string | null;
@@ -1093,6 +1105,7 @@ export interface Database {
         Row: {
           id: string;
           church_id: string;
+          department_id: string | null;
           code: string;
           name: string;
           fund_type: string;
@@ -1104,6 +1117,7 @@ export interface Database {
         Insert: {
           id?: string;
           church_id: string;
+          department_id?: string | null;
           code: string;
           name: string;
           fund_type: string;
@@ -1115,6 +1129,7 @@ export interface Database {
         Update: {
           id?: string;
           church_id?: string;
+          department_id?: string | null;
           code?: string;
           name?: string;
           fund_type?: string;

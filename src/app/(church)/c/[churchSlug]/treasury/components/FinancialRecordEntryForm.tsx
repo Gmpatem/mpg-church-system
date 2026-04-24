@@ -2,14 +2,22 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useActionState } from "react";
+import { ChevronDown } from "lucide-react";
 import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
 import { createTreasuryOutflowAction } from "@/features/treasury/actions";
 import { useI18n } from "@/features/i18n";
+import { getTodayLocalDate } from "@/lib/utils/format";
 
 interface FinancialRecordEntryFormProps {
   churchSlug: string;
   options: {
-    funds: Array<{ id: string; name: string; code: string; fund_type: string }>;
+    funds: Array<{
+      id: string;
+      name: string;
+      code: string;
+      fund_type: string;
+      department_id?: string | null;
+    }>;
     departments: Array<{ id: string; department_name: string }>;
   };
   defaults?: {
@@ -30,14 +38,6 @@ interface FinancialRecordEntryFormProps {
     allow_tithe_outflow_only_for_remittance?: boolean;
   };
   onCreateFundRequest?: () => void;
-}
-
-function getTodayLocalDate() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, "0");
-  const day = String(now.getDate()).padStart(2, "0");
-  return `${year}-${month}-${day}`;
 }
 
 function getLockedLabel(outflowType: string | undefined, t: { pages: { treasury: { forms: { types: Record<string, string> } } } }) {
@@ -68,19 +68,35 @@ function getSupportedFundTypesForOutflow(outflowType: string) {
 }
 
 function getVisibleFunds(
-  funds: Array<{ id: string; name: string; code: string; fund_type: string }>,
+  funds: Array<{
+    id: string;
+    name: string;
+    code: string;
+    fund_type: string;
+    department_id?: string | null;
+  }>,
   outflowType: string,
-  allowTitheOutflowOnlyForRemittance: boolean
+  allowTitheOutflowOnlyForRemittance: boolean,
+  departmentId: string
 ) {
   const allowed = new Set(getSupportedFundTypesForOutflow(outflowType));
   const scopedFunds = funds.filter((fund) => allowed.has(fund.fund_type));
 
-  if (allowTitheOutflowOnlyForRemittance && outflowType !== "mission_remittance") {
-    return scopedFunds.filter((fund) => fund.fund_type !== "tithe");
-  }
+  const baseFunds =
+    allowTitheOutflowOnlyForRemittance && outflowType !== "mission_remittance"
+      ? scopedFunds.filter((fund) => fund.fund_type !== "tithe")
+      : scopedFunds;
 
-  return scopedFunds;
+  if (!departmentId) return baseFunds;
+
+  const hasDepartmentMetadata = baseFunds.some((fund) =>
+    Object.prototype.hasOwnProperty.call(fund, "department_id")
+  );
+  if (!hasDepartmentMetadata) return baseFunds;
+
+  return baseFunds.filter((fund) => fund.department_id === departmentId);
 }
+
 
 function getFundTypeLabel(fundType: string, t: any) {
   if (fundType === "tithe") return t.pages.treasury.forms.fundForm.types.tithe;
@@ -118,13 +134,20 @@ export function FinancialRecordEntryForm({
   const [paymentMethod, setPaymentMethod] = useState("cash");
   const [referenceNumber, setReferenceNumber] = useState(defaults?.referenceNumber ?? "");
   const [note, setNote] = useState(defaults?.note ?? "");
+  const [optionalFieldsOpen, setOptionalFieldsOpen] = useState(false);
 
   const isFixedType = Boolean(defaults?.outflowType);
   const activeOutflowType = isFixedType ? (defaults?.outflowType ?? outflowType) : outflowType;
   const allowTitheOutflowOnlyForRemittance = financeSettings?.allow_tithe_outflow_only_for_remittance ?? true;
   const visibleFunds = useMemo(
-    () => getVisibleFunds(options.funds, activeOutflowType, allowTitheOutflowOnlyForRemittance),
-    [activeOutflowType, allowTitheOutflowOnlyForRemittance, options.funds]
+    () =>
+      getVisibleFunds(
+        options.funds,
+        activeOutflowType,
+        allowTitheOutflowOnlyForRemittance,
+        departmentId
+      ),
+    [activeOutflowType, allowTitheOutflowOnlyForRemittance, departmentId, options.funds]
   );
   const compatibleFundTypes = useMemo(
     () => getSupportedFundTypesForOutflow(activeOutflowType),
@@ -178,7 +201,7 @@ export function FinancialRecordEntryForm({
       ) : null}
 
       {state && state.ok ? (
-        <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">{state.message}</div>
+        <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{state.message}</div>
       ) : null}
 
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
@@ -189,7 +212,7 @@ export function FinancialRecordEntryForm({
               id="outflowType"
               value={outflowType}
               onChange={(event) => setOutflowType(event.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="project">{t.pages.treasury.forms.types.project}</option>
               <option value="evangelism">{t.pages.treasury.forms.types.evangelism}</option>
@@ -273,18 +296,23 @@ export function FinancialRecordEntryForm({
 
         <div>
           <label htmlFor="amount" className="mb-1 block text-sm font-medium text-slate-700">{t.pages.treasury.forms.amount}</label>
-          <input
-            id="amount"
-            name="amount"
-            type="number"
-            step="0.01"
-            min="0.01"
-            required
-            inputMode="decimal"
-            value={amount}
-            onChange={(event) => setAmount(event.target.value)}
-            className="w-full rounded-md border border-slate-300 px-3 py-2.5 text-base font-semibold outline-none focus:ring-2 focus:ring-blue-500"
-          />
+          <div className="relative">
+            <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-sm text-slate-500">
+              FCFA
+            </span>
+            <input
+              id="amount"
+              name="amount"
+              type="number"
+              step="0.01"
+              min="0.01"
+              required
+              inputMode="decimal"
+              value={amount}
+              onChange={(event) => setAmount(event.target.value)}
+              className="w-full rounded-md border border-slate-300 pl-14 pr-3 py-2.5 text-base font-semibold outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
 
         <div>
@@ -335,38 +363,55 @@ export function FinancialRecordEntryForm({
         </div>
       </div>
 
-      <details className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
-        <summary className="cursor-pointer text-sm font-medium text-slate-700">{t.pages.treasury.forms.optionalFields}</summary>
-        <div className="mt-3 space-y-3">
-          <div>
-            <label htmlFor="referenceNumber" className="mb-1 block text-sm font-medium text-slate-700">{t.pages.treasury.forms.reference}</label>
-            <input
-              id="referenceNumber"
-              name="referenceNumber"
-              value={referenceNumber}
-              onChange={(event) => setReferenceNumber(event.target.value)}
-              placeholder={t.pages.treasury.forms.placeholder.reference}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
+      <div className="space-y-3">
+        <button
+          type="button"
+          onClick={() => setOptionalFieldsOpen((prev) => !prev)}
+          aria-expanded={optionalFieldsOpen}
+          className="flex w-full items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700"
+        >
+          <span>{t.pages.treasury.forms.optionalFields}</span>
+          <ChevronDown
+            className={`h-4 w-4 transition-transform ${optionalFieldsOpen ? "rotate-180" : ""}`}
+          />
+        </button>
 
-          <div>
-            <label htmlFor="note" className="mb-1 block text-sm font-medium text-slate-700">{t.pages.treasury.forms.note}</label>
-            <textarea
-              id="note"
-              name="note"
-              rows={3}
-              value={note}
-              onChange={(event) => setNote(event.target.value)}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
-            />
+        {optionalFieldsOpen ? (
+          <div className="space-y-3 rounded-xl border border-slate-200 bg-slate-50 px-3 py-3">
+            <div>
+              <label htmlFor="referenceNumber" className="mb-1 block text-sm font-medium text-slate-700">{t.pages.treasury.forms.reference}</label>
+              <input
+                id="referenceNumber"
+                name="referenceNumber"
+                value={referenceNumber}
+                onChange={(event) => setReferenceNumber(event.target.value)}
+                placeholder={t.pages.treasury.forms.placeholder.reference}
+                className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label htmlFor="note" className="mb-1 block text-sm font-medium text-slate-700">{t.pages.treasury.forms.note}</label>
+              <textarea
+                id="note"
+                name="note"
+                rows={3}
+                value={note}
+                onChange={(event) => setNote(event.target.value)}
+                className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </div>
-        </div>
-      </details>
+        ) : null}
+      </div>
 
       {visibleFunds.length === 0 ? (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
-          <p>{t.pages.treasury.forms.noFundAvailable}</p>
+          <p>
+            {departmentId
+              ? "No active department fund is available for the selected department."
+              : t.pages.treasury.forms.noFundAvailable}
+          </p>
           <p className="mt-1 text-amber-800">{t.pages.treasury.forms.noFundAvailableHint}</p>
           {onCreateFundRequest ? (
             <button

@@ -5,8 +5,9 @@ import { ContributionEntryForm } from "@/app/(church)/c/[churchSlug]/treasury/co
 import { FinancialRecordEntryForm } from "@/app/(church)/c/[churchSlug]/treasury/components/FinancialRecordEntryForm";
 import { FundCreateForm } from "@/app/(church)/c/[churchSlug]/treasury/funds/new/FundCreateForm";
 import { useI18n } from "@/features/i18n";
-import { allocationKindLabels, allocationStatusLabels, fundTypeLabels, getLabel, inflowTypeLabels, outflowTypeLabels } from "@/lib/display-maps";
-import type { TreasuryAllocationPreviewEntry, TreasuryFinanceSettings } from "@/features/treasury/types";
+import { fundTypeLabels, getLabel, inflowTypeLabels, outflowTypeLabels } from "@/lib/display-maps";
+import { formatAmount } from "@/lib/utils/format";
+import type { TreasuryFinanceSettings } from "@/features/treasury/types";
 import {
   WorkspaceControlRail,
   WorkspaceEmptyState,
@@ -17,7 +18,7 @@ import {
   type WorkspaceTabItem,
 } from "@/components/workspace";
 
-type MainTab = "contributions" | "expenses" | "ledger" | "funds" | "fundSetup" | "allocations";
+type MainTab = "contributions" | "expenses" | "ledger" | "fundSetup";
 
 type LedgerRow = {
   id: string;
@@ -48,21 +49,13 @@ interface TreasuryWorkspaceProps {
   };
   recentInflows: any[];
   recentOutflows: any[];
-  allocationPreview: TreasuryAllocationPreviewEntry[];
   financeSettings: TreasuryFinanceSettings;
   formOptions: {
     churchId?: string;
-    funds: Array<{ id: string; code: string; name: string; fund_type: string }>;
+    funds: Array<{ id: string; code: string; name: string; fund_type: string; department_id?: string | null }>;
     members: Array<{ id: string; display_name?: string | null; first_name: string; last_name: string; member_code?: string | null }>;
     departments: Array<{ id: string; department_name: string }>;
   };
-}
-
-function formatAmount(value: number) {
-  return value.toLocaleString("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
 }
 
 function LedgerTable({
@@ -211,132 +204,12 @@ function FundSetupPanel({
   );
 }
 
-function AllocationsPanel({
-  allocations,
-  funds,
-}: {
-  allocations: TreasuryAllocationPreviewEntry[];
-  funds: Array<{ id: string; code: string; name: string; fund_type: string }>;
-}) {
-  const { t } = useI18n();
-  const fundMap = useMemo(() => new Map(funds.map((f) => [f.id, f])), [funds]);
-
-  const summary = useMemo(() => {
-    let missionRemittance = 0;
-    let localRetained = 0;
-    let pendingCount = 0;
-
-    for (const alloc of allocations) {
-      if (alloc.allocation_kind === "mission_remittance") {
-        missionRemittance += Number(alloc.allocated_amount || 0);
-      } else {
-        localRetained += Number(alloc.allocated_amount || 0);
-      }
-      if (alloc.status === "pending") {
-        pendingCount++;
-      }
-    }
-
-    return { missionRemittance, localRetained, pendingCount };
-  }, [allocations]);
-
-  return (
-    <div className="space-y-5">
-      <WorkspaceSectionCard
-        title={t.pages.treasury.workspace.sections.allocationSummary}
-        description={t.pages.treasury.workspace.sections.allocationSummaryDesc}
-      >
-        <div className="grid gap-3 sm:grid-cols-3">
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-500">{t.pages.treasury.workspace.stats.missionRemittance}</p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">{formatAmount(summary.missionRemittance)}</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-500">{t.pages.treasury.workspace.stats.localRetained}</p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">{formatAmount(summary.localRetained)}</p>
-          </div>
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-            <p className="text-xs uppercase tracking-[0.16em] text-slate-500">{t.pages.treasury.workspace.stats.pendingAllocations}</p>
-            <p className="mt-2 text-lg font-semibold text-slate-900">{summary.pendingCount}</p>
-          </div>
-        </div>
-      </WorkspaceSectionCard>
-
-      <WorkspaceSectionCard
-        title={t.pages.treasury.workspace.sections.allocationEntries}
-        description={t.pages.treasury.workspace.sections.allocationEntriesDesc}
-        contentClassName="p-0"
-      >
-        {allocations.length === 0 ? (
-          <div className="p-5">
-            <WorkspaceEmptyState
-              title={t.pages.treasury.workspace.empty.noAllocations}
-              message={t.pages.treasury.workspace.empty.noAllocationsDesc}
-            />
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-slate-200">
-              <thead className="bg-slate-50">
-                <tr>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.treasury.forms.date}</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.treasury.forms.entryType}</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.treasury.workspace.ledger.inflowAmount}</th>
-                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.treasury.workspace.stats.allocatedTo}</th>
-                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.treasury.workspace.stats.allocatedAmount}</th>
-                  <th className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wide text-slate-500">{t.pages.treasury.workspace.stats.allocationStatus}</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 bg-white">
-                {allocations.map((alloc) => {
-                  const targetFund = alloc.target_fund_id ? fundMap.get(alloc.target_fund_id) : null;
-                  return (
-                    <tr key={alloc.id}>
-                      <td className="px-4 py-3.5 text-sm text-slate-600">{alloc.inflow_date || "-"}</td>
-                      <td className="px-4 py-3.5 text-sm font-medium capitalize text-slate-900">
-                        {getLabel(inflowTypeLabels, alloc.inflow_type)}
-                      </td>
-                      <td className="px-4 py-3.5 text-sm text-slate-600">
-                        {alloc.inflow_amount ? formatAmount(alloc.inflow_amount) : "-"}
-                      </td>
-                      <td className="px-4 py-3.5 text-sm text-slate-600">
-                        {targetFund ? targetFund.name : alloc.target_fund_id ? `Fund ${alloc.target_fund_id.slice(0, 8)}...` : "-"}
-                      </td>
-                      <td className="px-4 py-3.5 text-right text-sm font-semibold text-slate-900">
-                        {formatAmount(Number(alloc.allocated_amount || 0))}
-                      </td>
-                      <td className="px-4 py-3.5 text-center">
-                        <span
-                          className={`inline-flex items-center rounded-full border px-2.5 py-1 text-xs font-medium ${
-                            alloc.status === "pending"
-                              ? "border-amber-200 bg-amber-50 text-amber-800"
-                              : alloc.status === "applied" || alloc.status === "posted"
-                              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-                              : "border-slate-200 bg-slate-50 text-slate-700"
-                          }`}
-                        >
-                          {getLabel(allocationStatusLabels, alloc.status)}
-                        </span>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </WorkspaceSectionCard>
-    </div>
-  );
-}
-
 export function TreasuryWorkspace({
   churchSlug,
   alreadyTithedIds,
   dashboard,
   recentInflows,
   recentOutflows,
-  allocationPreview,
   financeSettings,
   formOptions,
 }: TreasuryWorkspaceProps) {
@@ -394,7 +267,7 @@ export function TreasuryWorkspace({
         context: item.purpose ?? item.department_name ?? "-",
         reference: item.reference_number ?? item.note ?? "-",
       })),
-    [recentOutflows]
+    [recentOutflows, t.pages.treasury.forms.notSpecified]
   );
 
   const ledgerRows = useMemo<LedgerRow[]>(
@@ -408,18 +281,17 @@ export function TreasuryWorkspace({
   );
 
   const MAIN_TABS: WorkspaceTabItem[] = [
-    { key: "contributions", label: t.pages.treasury.workspace.tabs.contributions },
-    { key: "expenses", label: t.pages.treasury.workspace.tabs.recordExpenses },
-    { key: "ledger", label: t.pages.treasury.workspace.tabs.ledger },
-    { key: "funds", label: t.pages.treasury.workspace.tabs.funds },
-    { key: "fundSetup", label: t.pages.treasury.workspace.tabs.fundSetup },
-    { key: "allocations", label: t.pages.treasury.workspace.tabs.allocations },
+    { key: "contributions", label: "Income" },
+    { key: "expenses", label: "Expenses" },
+    { key: "ledger", label: "History" },
+    { key: "fundSetup", label: "Settings" },
   ];
 
   return (
     <div className="space-y-6">
       <WorkspaceHero
         size="compact"
+        mobileLayout="slim"
         eyebrow={t.pages.treasury.workspace.eyebrow}
         title={t.pages.treasury.workspace.title}
         description={t.pages.treasury.workspace.description}
@@ -432,6 +304,7 @@ export function TreasuryWorkspace({
         actions={[
           { label: t.treasury.addIncome, href: `/c/${churchSlug}/treasury/in`, variant: "primary" },
           { label: t.treasury.addExpense, href: `/c/${churchSlug}/treasury/out`, variant: "secondary" },
+          { label: "Approvals", href: `/c/${churchSlug}/treasury/approvals`, variant: "outline" },
           { label: t.navigation.reports, href: `/c/${churchSlug}/treasury/audit`, variant: "outline" },
         ]}
       />
@@ -464,26 +337,6 @@ export function TreasuryWorkspace({
             onChange={(key) => setMainTab(key as MainTab)}
             className="border-0 bg-transparent p-0 shadow-none"
           />
-          <div className="flex flex-wrap gap-2">
-            <a
-              href={`/c/${churchSlug}/treasury/in`}
-              className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
-            >
-              {t.treasury.addIncome}
-            </a>
-            <a
-              href={`/c/${churchSlug}/treasury/out`}
-              className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
-            >
-              {t.treasury.addExpense}
-            </a>
-            <a
-              href={`/c/${churchSlug}/treasury/audit`}
-              className="inline-flex items-center rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
-            >
-              {t.navigation.reports}
-            </a>
-          </div>
         </div>
       </WorkspaceControlRail>
 
@@ -535,16 +388,8 @@ export function TreasuryWorkspace({
         />
       ) : null}
 
-      {mainTab === "funds" ? (
-        <FundsPanel churchSlug={churchSlug} funds={formOptions.funds} />
-      ) : null}
-
       {mainTab === "fundSetup" ? (
         <FundSetupPanel churchSlug={churchSlug} funds={formOptions.funds} />
-      ) : null}
-
-      {mainTab === "allocations" ? (
-        <AllocationsPanel allocations={allocationPreview} funds={formOptions.funds} />
       ) : null}
     </div>
   );

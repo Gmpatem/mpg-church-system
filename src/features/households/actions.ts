@@ -4,11 +4,8 @@ import { revalidatePath } from "next/cache";
 import { requireChurchRole } from "@/features/access/queries";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/features/access/types";
-
-function getString(formData: FormData, key: string) {
-  const value = formData.get(key);
-  return typeof value === "string" ? value.trim() : "";
-}
+import { CHURCH_MANAGEMENT_ROLE_CODES } from "@/lib/domain/church-access";
+import { getString } from "@/lib/domain/validation";
 
 async function ensureHouseholdBelongsToChurch(supabase: any, churchId: string, householdId: string) {
   const { data, error } = await supabase
@@ -46,7 +43,7 @@ async function createHouseholdActionImpl(
   formData: FormData
 ): Promise<ActionState> {
   const churchSlug = getString(formData, "churchSlug");
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
+  const ctx = await requireChurchRole(churchSlug, CHURCH_MANAGEMENT_ROLE_CODES);
 
   const householdName = getString(formData, "household_name");
   const city = getString(formData, "city");
@@ -97,7 +94,7 @@ async function updateHouseholdActionImpl(
 ): Promise<ActionState> {
   const churchSlug = getString(formData, "churchSlug");
   const householdId = getString(formData, "householdId");
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
+  const ctx = await requireChurchRole(churchSlug, CHURCH_MANAGEMENT_ROLE_CODES);
 
   if (!householdId) {
     return { ok: false, error: "Household ID is required." };
@@ -159,7 +156,7 @@ async function assignMemberToHouseholdActionImpl(
   const memberId = getString(formData, "memberId");
   const householdRole = getString(formData, "householdRole") || null;
 
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
+  const ctx = await requireChurchRole(churchSlug, CHURCH_MANAGEMENT_ROLE_CODES);
   const supabase = await createClient();
 
   if (!householdId || !memberId) {
@@ -213,7 +210,7 @@ async function setHouseholdHeadActionImpl(
   const householdId = getString(formData, "householdId");
   const memberId = getString(formData, "memberId");
 
-  const ctx = await requireChurchRole(churchSlug, ["church_admin", "pastor", "elder", "clerk"]);
+  const ctx = await requireChurchRole(churchSlug, CHURCH_MANAGEMENT_ROLE_CODES);
   const supabase = await createClient();
 
   if (!householdId || !memberId) {

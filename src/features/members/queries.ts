@@ -202,35 +202,36 @@ export async function getMemberProfile(churchSlug: string, memberId: string): Pr
   const member = await getMemberById(churchSlug, memberId);
   if (!member) return null;
 
-  let household = null;
+  const householdPromise = member.household_id
+    ? supabase
+        .from("households")
+        .select("id, household_name, city, country, phone, email")
+        .eq("church_id", ctx.churchId)
+        .eq("id", member.household_id)
+        .maybeSingle()
+    : Promise.resolve({ data: null, error: null as any });
 
-  if (member.household_id) {
-    const { data: householdData, error: householdError } = await supabase
-      .from("households")
-      .select("id, household_name, city, country, phone, email")
-      .eq("church_id", ctx.churchId)
-      .eq("id", member.household_id)
-      .maybeSingle();
-
-    if (householdError) throw new Error(householdError.message);
-    household = householdData;
-  }
-
-  const { data: departments, error: departmentError } = await supabase
+  const departmentsPromise = supabase
     .from("member_departments")
     .select("id, department_name, role_in_department, joined_date")
     .eq("member_id", member.id)
     .order("department_name", { ascending: true });
 
-  if (departmentError) throw new Error(departmentError.message);
-
-  const { data: statusHistory, error: statusError } = await supabase
+  const statusHistoryPromise = supabase
     .from("member_status_history")
     .select("id, old_status, new_status, reason, created_at")
     .eq("church_id", ctx.churchId)
     .eq("member_id", member.id)
     .order("created_at", { ascending: false });
 
+  const [
+    { data: household, error: householdError },
+    { data: departments, error: departmentError },
+    { data: statusHistory, error: statusError },
+  ] = await Promise.all([householdPromise, departmentsPromise, statusHistoryPromise]);
+
+  if (householdError) throw new Error(householdError.message);
+  if (departmentError) throw new Error(departmentError.message);
   if (statusError) throw new Error(statusError.message);
 
   return {
@@ -352,7 +353,9 @@ export async function getMemberReportSummary(churchSlug: string) {
     recentMembers: recentMembers ?? [],
     byDepartment,
   };
-}export async function getMemberFinancialProfile(churchSlug: string, memberId: string) {
+}
+
+export async function getMemberFinancialProfile(churchSlug: string, memberId: string) {
   const ctx = await requireChurchAccess(churchSlug);
   const supabase = await createClient();
 

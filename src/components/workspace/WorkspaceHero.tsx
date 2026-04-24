@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { cn } from "@/lib/utils/cn";
 
 interface WorkspaceHeroAction {
@@ -16,6 +17,7 @@ interface WorkspaceHeroProps {
   actions?: WorkspaceHeroAction[];
   className?: string;
   size?: "default" | "compact";
+  mobileLayout?: "default" | "slim";
 }
 
 function actionClasses(variant: WorkspaceHeroAction["variant"]) {
@@ -38,8 +40,10 @@ export function WorkspaceHero({
   actions,
   className,
   size = "default",
+  mobileLayout = "default",
 }: WorkspaceHeroProps) {
   const compact = size === "compact";
+  const primaryAction = actions?.[0];
 
   return (
     <section
@@ -49,9 +53,52 @@ export function WorkspaceHero({
         className
       )}
     >
+      {mobileLayout === "slim" ? (
+        <div className="flex items-center justify-between gap-3 sm:hidden">
+          <div className="min-w-0">
+            {eyebrow ? (
+              <p className="text-[10px] uppercase tracking-[0.18em] text-blue-300">{eyebrow}</p>
+            ) : null}
+            <h1 className="truncate text-lg font-bold">{title}</h1>
+          </div>
+          {primaryAction?.href ? (
+            primaryAction.href.startsWith("http") ? (
+              <a
+                href={primaryAction.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="shrink-0 rounded-xl bg-white px-3 py-1.5 text-sm font-semibold text-slate-950"
+              >
+                {primaryAction.label}
+              </a>
+            ) : (
+              <Link
+                href={primaryAction.href}
+                className="shrink-0 rounded-xl bg-white px-3 py-1.5 text-sm font-semibold text-slate-950"
+              >
+                {primaryAction.label}
+              </Link>
+            )
+          ) : primaryAction?.onClick ? (
+            <button
+              type="button"
+              onClick={primaryAction.onClick}
+              disabled={primaryAction.disabled}
+              className={cn(
+                "shrink-0 rounded-xl bg-white px-3 py-1.5 text-sm font-semibold text-slate-950",
+                primaryAction.disabled ? "cursor-not-allowed opacity-60" : ""
+              )}
+            >
+              {primaryAction.label}
+            </button>
+          ) : null}
+        </div>
+      ) : null}
+
       <div
         className={cn(
           "flex flex-col xl:flex-row xl:items-end xl:justify-between",
+          mobileLayout === "slim" ? "hidden sm:flex" : "flex",
           compact ? "gap-4" : "gap-6"
         )}
       >
@@ -103,14 +150,27 @@ export function WorkspaceHero({
                 "mobile-touch-feedback inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-medium transition";
 
               if (action.href) {
+                const isExternal = action.href.startsWith("http");
                 return (
-                  <a
-                    key={action.label}
-                    href={action.href}
-                    className={cn(common, actionClasses(action.variant))}
-                  >
-                    {action.label}
-                  </a>
+                  isExternal ? (
+                    <a
+                      key={action.label}
+                      href={action.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(common, actionClasses(action.variant))}
+                    >
+                      {action.label}
+                    </a>
+                  ) : (
+                    <Link
+                      key={action.label}
+                      href={action.href}
+                      className={cn(common, actionClasses(action.variant))}
+                    >
+                      {action.label}
+                    </Link>
+                  )
                 );
               }
 

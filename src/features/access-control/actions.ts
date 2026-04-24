@@ -17,6 +17,14 @@ async function canManageAccessControl(churchSlug: string) {
   return canCurrentUserManageAccessControl(churchSlug);
 }
 
+// TODO: Future Access Control needs department-scoped role/permission support.
+// Currently, church_role_assignments and church_permission_assignments are church-scoped only.
+// To assign department leaders through Access Control, we will need:
+// - Add optional department_id to church_role_assignments and/or church_permission_assignments
+// - Update RLS policies to respect department scope
+// - Update UI to allow department-scoped assignment alongside church-scoped assignment
+// - Bridge department_leadership_assignments with Access Control audit logging
+
 type AccessControlAuditAction =
   | "role_assigned"
   | "role_removed"

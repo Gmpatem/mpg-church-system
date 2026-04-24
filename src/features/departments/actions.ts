@@ -3,6 +3,8 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
+import { getBoolean, getString } from "@/lib/domain/validation";
+import { normalizeSupabaseErrorMessage } from "@/lib/supabase/errors";
 import { requireDepartmentManager } from "./queries";
 import type { ActionState } from "./types";
 
@@ -21,14 +23,218 @@ const assignmentSchema = z.object({
   is_active: z.boolean(),
 });
 
-function getString(formData: FormData, key: string) {
-  const value = formData.get(key);
-  return typeof value === "string" ? value.trim() : "";
+function isMissingColumnError(error: any, column: string) {
+  const code = String(error?.code || "").toLowerCase();
+  const combined = [error?.message, error?.details, error?.hint]
+    .map((value) => (typeof value === "string" ? value.toLowerCase() : ""))
+    .join(" ");
+
+  if (!combined.includes(column.toLowerCase())) return false;
+  return (
+    code === "42703" ||
+    combined.includes("does not exist") ||
+    combined.includes("could not find the")
+  );
 }
 
-function getBoolean(formData: FormData, key: string) {
-  const value = formData.get(key);
-  return value === "true" || value === "on";
+function isDuplicateKeyError(error: any) {
+  const code = String(error?.code || "").toLowerCase();
+  const message = String(error?.message || "").toLowerCase();
+  return code === "23505" || message.includes("duplicate key");
+}
+
+function normalizeFundCodeSegment(value: string) {
+  const cleaned = value
+    .trim()
+    .replace(/[^a-zA-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toUpperCase();
+  return cleaned || "DEPARTMENT";
+}
+
+function buildDepartmentFundCode(args: {
+  departmentId: string;
+  departmentCode?: string | null;
+  departmentName: string;
+}) {
+  const { departmentId, departmentCode, departmentName } = args;
+  const base = normalizeFundCodeSegment(departmentCode || departmentName);
+  const suffix = departmentId.replace(/-/g, "").slice(0, 8).toUpperCase();
+  return `DEPT_${base}_${suffix}`.slice(0, 50);
+}
+
+async function ensureDepartmentFinanceSetup(params: {
+  supabase: any;
+  churchId: string;
+  department: {
+    id: string;
+    department_name: string;
+    code: string | null;
+    is_active: boolean;
+  };
+}) {
+  const { supabase, churchId, department } = params;
+  const fundCode = buildDepartmentFundCode({
+    departmentId: department.id,
+    departmentCode: department.code,
+    departmentName: department.department_name,
+  });
+  const fundName = `${department.department_name} Fund`;
+  const fundDescription = `Auto-generated department fund for ${department.department_name}.`;
+
+  const existingByDepartment = await supabase
+    .from("treasury_funds")
+    .select("id")
+    .eq("church_id", churchId)
+    .eq("department_id", department.id)
+    .maybeSingle();
+
+  const departmentColumnMissing =
+    !!existingByDepartment.error &&
+    isMissingColumnError(existingByDepartment.error, "department_id");
+
+  if (existingByDepartment.error && !departmentColumnMissing) {
+    return {
+      ok: false,
+      error: normalizeSupabaseErrorMessage(
+        existingByDepartment.error,
+        "Failed to verify existing department fund setup."
+      ),
+    } as const;
+  }
+
+  if (existingByDepartment.data) {
+    const { error: updateExistingError } = await supabase
+      .from("treasury_funds")
+      .update({
+        code: fundCode,
+        name: fundName,
+        fund_type: "department",
+        description: fundDescription,
+        is_active: department.is_active,
+      })
+      .eq("church_id", churchId)
+      .eq("id", existingByDepartment.data.id);
+
+    if (updateExistingError) {
+      return {
+        ok: false,
+        error: normalizeSupabaseErrorMessage(
+          updateExistingError,
+          "Failed to synchronize existing department fund."
+        ),
+      } as const;
+    }
+
+    return { ok: true } as const;
+  }
+
+  const existingByCode = await supabase
+    .from("treasury_funds")
+    .select("id")
+    .eq("church_id", churchId)
+    .eq("code", fundCode)
+    .maybeSingle();
+
+  if (existingByCode.error) {
+    return {
+      ok: false,
+      error: normalizeSupabaseErrorMessage(
+        existingByCode.error,
+        "Failed to verify department fund code uniqueness."
+      ),
+    } as const;
+  }
+
+  if (existingByCode.data) {
+    const updatePayload: Record<string, unknown> = {
+      name: fundName,
+      fund_type: "department",
+      description: fundDescription,
+      is_active: department.is_active,
+    };
+    if (!departmentColumnMissing) {
+      updatePayload.department_id = department.id;
+    }
+
+    const { error: updateByCodeError } = await supabase
+      .from("treasury_funds")
+      .update(updatePayload)
+      .eq("church_id", churchId)
+      .eq("id", existingByCode.data.id);
+
+    if (updateByCodeError) {
+      return {
+        ok: false,
+        error: normalizeSupabaseErrorMessage(
+          updateByCodeError,
+          "Failed to link existing department fund."
+        ),
+      } as const;
+    }
+
+    return { ok: true } as const;
+  }
+
+  const insertPayload: Record<string, unknown> = {
+    church_id: churchId,
+    code: fundCode,
+    name: fundName,
+    fund_type: "department",
+    description: fundDescription,
+    is_active: department.is_active,
+  };
+  if (!departmentColumnMissing) {
+    insertPayload.department_id = department.id;
+  }
+
+  const withDepartmentInsert = await supabase
+    .from("treasury_funds")
+    .insert(insertPayload);
+
+  if (!withDepartmentInsert.error) {
+    return { ok: true } as const;
+  }
+
+  if (
+    !departmentColumnMissing &&
+    isMissingColumnError(withDepartmentInsert.error, "department_id")
+  ) {
+    const legacyInsert = await supabase
+      .from("treasury_funds")
+      .insert({
+        church_id: churchId,
+        code: fundCode,
+        name: fundName,
+        fund_type: "department",
+        description: fundDescription,
+        is_active: department.is_active,
+      });
+
+    if (!legacyInsert.error || isDuplicateKeyError(legacyInsert.error)) {
+      return { ok: true } as const;
+    }
+
+    return {
+      ok: false,
+      error: normalizeSupabaseErrorMessage(
+        legacyInsert.error,
+        "Failed to create department treasury fund."
+      ),
+    } as const;
+  }
+
+  if (isDuplicateKeyError(withDepartmentInsert.error)) {
+    return { ok: true } as const;
+  }
+
+  return {
+    ok: false,
+    error: normalizeSupabaseErrorMessage(
+      withDepartmentInsert.error,
+      "Failed to create department treasury fund."
+    ),
+  } as const;
 }
 
 function revalidateDepartmentPaths(churchSlug: string) {
@@ -81,23 +287,78 @@ export async function createDepartmentAction(
 
   const { department_name, code, description, is_active } = parsed.data;
 
-  const { error } = await supabase.from("church_departments").insert({
-    church_id: ctx.churchId,
-    department_name,
-    code: code || null,
-    description: description || null,
-    is_active,
-  });
+  const { data: insertedDepartment, error } = await supabase
+    .from("church_departments")
+    .insert({
+      church_id: ctx.churchId,
+      department_name,
+      code: code || null,
+      description: description || null,
+      is_active,
+    })
+    .select("id, department_name, code, is_active")
+    .single();
 
-  if (error) {
-    const message = error.message?.toLowerCase?.() || "";
+  if (error || !insertedDepartment) {
+    const message = error?.message?.toLowerCase?.() || "";
     if (message.includes("row-level security") || message.includes("policy")) {
       return { 
         ok: false, 
         error: "Department creation blocked by security policy. Ensure you have admin or clerk role." 
       };
     }
-    return { ok: false, error: error.message };
+    return {
+      ok: false,
+      error: normalizeSupabaseErrorMessage(error, "Failed to create department."),
+    };
+  }
+
+  const financeSetupResult = await ensureDepartmentFinanceSetup({
+    supabase,
+    churchId: ctx.churchId,
+    department: {
+      id: insertedDepartment.id,
+      department_name: insertedDepartment.department_name,
+      code: insertedDepartment.code,
+      is_active: insertedDepartment.is_active,
+    },
+  });
+
+  if (!financeSetupResult.ok) {
+    const normalizedSetupError = String(financeSetupResult.error || "").toLowerCase();
+    const softSetupFailure =
+      normalizedSetupError.includes("row-level security") ||
+      normalizedSetupError.includes("policy") ||
+      normalizedSetupError.includes("permission") ||
+      normalizedSetupError.includes("does not exist") ||
+      normalizedSetupError.includes("could not find");
+
+    if (softSetupFailure) {
+      revalidateDepartmentPaths(churchSlug);
+      return {
+        ok: true,
+        message:
+          "Department created. Finance setup will complete automatically once department finance migrations are applied.",
+      };
+    }
+
+    const { error: rollbackError } = await supabase
+      .from("church_departments")
+      .delete()
+      .eq("church_id", ctx.churchId)
+      .eq("id", insertedDepartment.id);
+
+    if (rollbackError) {
+      return {
+        ok: false,
+        error: `${financeSetupResult.error} Department was created, but rollback failed. Please delete the department manually and retry.`,
+      };
+    }
+
+    return {
+      ok: false,
+      error: `${financeSetupResult.error} Department creation was rolled back to keep finance setup consistent.`,
+    };
   }
 
   revalidateDepartmentPaths(churchSlug);
@@ -153,7 +414,24 @@ export async function updateDepartmentAction(
     return { ok: false, error: error.message };
   }
 
+  const financeSetupResult = await ensureDepartmentFinanceSetup({
+    supabase,
+    churchId: ctx.churchId,
+    department: {
+      id: departmentId,
+      department_name,
+      code: code || null,
+      is_active,
+    },
+  });
+
   revalidateDepartmentPaths(churchSlug);
+  if (!financeSetupResult.ok) {
+    return {
+      ok: true,
+      message: `Department updated, but finance setup sync needs attention: ${financeSetupResult.error}`,
+    };
+  }
   return { ok: true, message: "Department updated successfully." };
 }
 
