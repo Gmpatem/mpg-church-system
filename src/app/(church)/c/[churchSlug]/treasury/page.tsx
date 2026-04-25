@@ -22,6 +22,8 @@ export default async function TreasuryPage({ params }: TreasuryPageProps) {
         recentOutflows={data.recentOutflows}
         financeSettings={data.financeSettings}
         formOptions={data.formOptions}
+        transfers={data.transfers}
+        remittance={data.remittance}
         alreadyTithedIds={alreadyTithedIds}
       />
     </div>

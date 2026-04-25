@@ -12,3 +12,9 @@ export const TREASURY_MANAGEMENT_ROLE_CODES: RoleCode[] = [
   "treasurer",
   "pastor",
 ];
+
+export const TREASURY_TRANSFER_ROLE_CODES: RoleCode[] = [
+  "church_admin",
+  "treasurer",
+  "pastor",
+];

@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { getLabel, eventStatusLabels, workflowStateLabels } from "@/lib/display-maps";
 import { useEventDepartments } from "@/features/events/hooks";
@@ -16,6 +16,9 @@ import {
 } from "@/components/workspace";
 import { EventForm } from "@/features/events/components/EventForm";
 import { createEventAction, updateEventAction } from "@/features/events/actions";
+import { MobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
+import { MobileCompactStatsStrip } from "@/components/mobile/MobileCompactStatsStrip";
+import { MobilePageHeader } from "@/components/mobile/MobilePageHeader";
 
 const eventTypeLabels: Record<string, string> = {
   worship_service: "Worship Service",
@@ -369,6 +372,8 @@ export function EventsWorkspaceUnified({
   data,
 }: EventsWorkspaceUnifiedProps) {
   const [activeTab, setActiveTab] = useState<EventsMainTab>(data.activeTab ?? "all_events");
+  const [createSheetOpen, setCreateSheetOpen] = useState((data.activeTab ?? "all_events") === "create_event");
+  const [editSheetOpen, setEditSheetOpen] = useState((data.activeTab ?? "all_events") === "edit");
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -415,8 +420,63 @@ export function EventsWorkspaceUnified({
     return "Live workspace";
   }, [data.filters]);
 
+  useEffect(() => {
+    const nextTab = data.activeTab ?? "all_events";
+    setActiveTab(nextTab);
+    setCreateSheetOpen(nextTab === "create_event");
+    setEditSheetOpen(nextTab === "edit");
+  }, [data.activeTab]);
+
+  const eventTypeOptions = [
+    "worship_service",
+    "prayer_meeting",
+    "board_meeting",
+    "department_meeting",
+    "evangelism",
+    "youth_program",
+    "sabbath_school",
+    "community_outreach",
+    "special_program",
+    "other",
+  ];
+
   return (
     <div className="space-y-5 md:space-y-6">
+      <div className="space-y-3 md:hidden">
+        <MobilePageHeader
+          title="Events"
+          subtitle={`Upcoming: ${data.stats.upcomingCount} • Total: ${data.stats.totalEvents}`}
+          actionLabel="Create Event"
+          onActionClick={() => {
+            setCreateSheetOpen(true);
+            handleTabChange("create_event");
+          }}
+        />
+
+        <form method="get" action={`/c/${churchSlug}/events`} className="flex items-center gap-2">
+          <input
+            name="q"
+            defaultValue={data.filters.q ?? ""}
+            placeholder="Search events"
+            className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+          />
+          <button
+            type="submit"
+            className="mobile-touch-feedback inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl bg-slate-950 px-3 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"
+          >
+            Search
+          </button>
+        </form>
+
+        <MobileCompactStatsStrip
+          items={[
+            { label: "Scheduled", value: data.stats.scheduledCount },
+            { label: "Completed", value: data.stats.completedCount, tone: "success" },
+            { label: "Cancelled", value: data.stats.cancelledCount, tone: "danger" },
+          ]}
+        />
+      </div>
+
       <WorkspaceHero
         size="compact"
         eyebrow="Events Workspace"
@@ -431,9 +491,10 @@ export function EventsWorkspaceUnified({
           { label: "Create Event", onClick: () => handleTabChange("create_event"), variant: "primary" },
           { label: "Reports", href: `/c/${churchSlug}/reports`, variant: "secondary" },
         ]}
+        className="hidden md:block"
       />
 
-      <div className="mobile-stagger grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-6">
+      <div className="mobile-stagger hidden md:grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-6">
         <WorkspaceStatCard label="Total Events" value={data.stats.totalEvents} hint="Events in current view" />
         <WorkspaceStatCard label="Scheduled" value={data.stats.scheduledCount} hint="Still active on calendar" />
         <WorkspaceStatCard label="Completed" value={data.stats.completedCount} hint="Marked complete" />
@@ -445,6 +506,7 @@ export function EventsWorkspaceUnified({
       <WorkspaceControlRail
         title="Event Filters"
         description="Search and narrow the workspace without leaving the page."
+        className="hidden md:block"
       >
         <form
           method="get"
@@ -530,47 +592,45 @@ export function EventsWorkspaceUnified({
         items={EVENT_TABS}
         activeKey={activeTab}
         onChange={(key) => handleTabChange(key as EventsMainTab)}
+        className="hidden md:block"
       />
 
-      {activeTab === "all_events" ? (
+      <div className="md:hidden">
         <EventsList churchSlug={churchSlug} rows={data.events} />
+      </div>
+
+      {activeTab === "all_events" ? (
+        <div className="hidden md:block">
+          <EventsList churchSlug={churchSlug} rows={data.events} />
+        </div>
       ) : null}
 
       {activeTab === "create_event" ? (
-        <WorkspaceSectionCard
-          title="Create Event"
-          description="Record a new church event without leaving the workspace."
-        >
-          {deptLoader.loading && !deptLoader.loaded ? (
-            <div className="mb-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
-              Loading department options...
-            </div>
-          ) : null}
+        <div className="hidden md:block">
+          <WorkspaceSectionCard
+            title="Create Event"
+            description="Record a new church event without leaving the workspace."
+          >
+            {deptLoader.loading && !deptLoader.loaded ? (
+              <div className="mb-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+                Loading department options...
+              </div>
+            ) : null}
 
-          <EventForm
-            churchSlug={churchSlug}
-            action={createEventAction}
-            departments={mergedDepartments.map((department) => ({
-              id: department.id,
-              name: department.department_name,
-              code: department.code ?? null,
-              is_active: department.is_active ?? true,
-            }))}
-            eventTypes={[
-              "worship_service",
-              "prayer_meeting",
-              "board_meeting",
-              "department_meeting",
-              "evangelism",
-              "youth_program",
-              "sabbath_school",
-              "community_outreach",
-              "special_program",
-              "other"
-            ]}
-            submitLabel="Create Event"
-          />
-        </WorkspaceSectionCard>
+            <EventForm
+              churchSlug={churchSlug}
+              action={createEventAction}
+              departments={mergedDepartments.map((department) => ({
+                id: department.id,
+                name: department.department_name,
+                code: department.code ?? null,
+                is_active: department.is_active ?? true,
+              }))}
+              eventTypes={eventTypeOptions}
+              submitLabel="Create Event"
+            />
+          </WorkspaceSectionCard>
+        </div>
       ) : null}
 
       {activeTab === "detail" ? (
@@ -588,35 +648,26 @@ export function EventsWorkspaceUnified({
 
       {activeTab === "edit" ? (
         data.selectedEvent ? (
-          <WorkspaceSectionCard
-            title="Edit Event"
-            description="Update the selected event without leaving the workspace."
-          >
-            <EventForm
-              churchSlug={churchSlug}
-              action={updateEventAction}
-              departments={mergedDepartments.map((department) => ({
-                id: department.id,
-                name: department.department_name,
-                code: department.code ?? null,
-                is_active: department.is_active ?? true,
-              }))}
-              eventTypes={[
-                "worship_service",
-                "prayer_meeting",
-                "board_meeting",
-                "department_meeting",
-                "evangelism",
-                "youth_program",
-                "sabbath_school",
-                "community_outreach",
-                "special_program",
-                "other"
-              ]}
-              initialValues={data.selectedEvent as any}
-              submitLabel="Update Event"
-            />
-          </WorkspaceSectionCard>
+          <div className="hidden md:block">
+            <WorkspaceSectionCard
+              title="Edit Event"
+              description="Update the selected event without leaving the workspace."
+            >
+              <EventForm
+                churchSlug={churchSlug}
+                action={updateEventAction}
+                departments={mergedDepartments.map((department) => ({
+                  id: department.id,
+                  name: department.department_name,
+                  code: department.code ?? null,
+                  is_active: department.is_active ?? true,
+                }))}
+                eventTypes={eventTypeOptions}
+                initialValues={data.selectedEvent as any}
+                submitLabel="Update Event"
+              />
+            </WorkspaceSectionCard>
+          </div>
         ) : (
           <WorkspaceEmptyState
             title="No event selected for editing"
@@ -630,6 +681,78 @@ export function EventsWorkspaceUnified({
       {activeTab === "calendar_notes" ? (
         <CalendarNotesPanel stats={data.stats} />
       ) : null}
+
+      <MobileBottomSheet
+        open={createSheetOpen}
+        onOpenChange={(open) => {
+          setCreateSheetOpen(open);
+          if (!open) {
+            handleTabChange("all_events");
+          }
+        }}
+        title="Create Event"
+      >
+        {deptLoader.loading && !deptLoader.loaded ? (
+          <div className="mb-4 rounded-xl border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-500">
+            Loading department options...
+          </div>
+        ) : null}
+
+        <EventForm
+          churchSlug={churchSlug}
+          action={createEventAction}
+          departments={mergedDepartments.map((department) => ({
+            id: department.id,
+            name: department.department_name,
+            code: department.code ?? null,
+            is_active: department.is_active ?? true,
+          }))}
+          eventTypes={eventTypeOptions}
+          submitLabel="Create Event"
+          onSuccess={() => {
+            setCreateSheetOpen(false);
+            handleTabChange("all_events");
+          }}
+        />
+      </MobileBottomSheet>
+
+      <MobileBottomSheet
+        open={editSheetOpen}
+        onOpenChange={(open) => {
+          setEditSheetOpen(open);
+          if (!open) {
+            handleTabChange("all_events");
+          }
+        }}
+        title="Edit Event"
+      >
+        {data.selectedEvent ? (
+          <EventForm
+            churchSlug={churchSlug}
+            action={updateEventAction}
+            departments={mergedDepartments.map((department) => ({
+              id: department.id,
+              name: department.department_name,
+              code: department.code ?? null,
+              is_active: department.is_active ?? true,
+            }))}
+            eventTypes={eventTypeOptions}
+            initialValues={data.selectedEvent as any}
+            submitLabel="Update Event"
+            onSuccess={() => {
+              setEditSheetOpen(false);
+              handleTabChange("all_events");
+            }}
+          />
+        ) : (
+          <WorkspaceEmptyState
+            title="No event selected"
+            message="Choose an event from the list to edit."
+            actionLabel="Back to Events"
+            actionHref={`/c/${churchSlug}/events`}
+          />
+        )}
+      </MobileBottomSheet>
     </div>
   );
 }

@@ -2,13 +2,21 @@
 
 import { useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
+import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils/cn";
 import { ChurchHeader } from "@/components/navigation/ChurchHeader";
 import { ChurchSidebar } from "@/components/navigation/ChurchSidebar";
 import { ChurchMobileBottomNav } from "@/components/navigation/ChurchMobileBottomNav";
-import { ChurchMobileFab } from "@/components/navigation/ChurchMobileFab";
 import { OfflineProvider } from "@/components/offline/OfflineProvider";
 import { OfflineStatusBar } from "@/components/offline/OfflineStatusBar";
+
+const ChurchMobileFab = dynamic(
+  () =>
+    import("@/components/navigation/ChurchMobileFab").then(
+      (mod) => mod.ChurchMobileFab
+    ),
+  { ssr: false }
+);
 
 interface ChurchNotificationItem {
   id: string;

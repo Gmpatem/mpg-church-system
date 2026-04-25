@@ -38,6 +38,7 @@ interface FinancialRecordEntryFormProps {
     allow_tithe_outflow_only_for_remittance?: boolean;
   };
   onCreateFundRequest?: () => void;
+  onSuccess?: () => void;
 }
 
 function getLockedLabel(outflowType: string | undefined, t: { pages: { treasury: { forms: { types: Record<string, string> } } } }) {
@@ -52,21 +53,6 @@ function getLockedLabel(outflowType: string | undefined, t: { pages: { treasury:
   return outflowType ?? "";
 }
 
-const outflowFundCompatibility: Record<string, string[]> = {
-  mission_remittance: ["mission", "tithe", "general", "offering"],
-  operations: ["general", "offering", "donation"],
-  department_expense: ["department", "general", "offering"],
-  welfare: ["welfare", "general", "offering", "donation"],
-  project: ["project", "general", "offering", "donation"],
-  evangelism: ["mission", "general", "offering", "donation"],
-  equipment: ["general", "project", "offering", "donation"],
-  other: ["general", "offering", "donation", "project", "department", "mission", "welfare"],
-};
-
-function getSupportedFundTypesForOutflow(outflowType: string) {
-  return outflowFundCompatibility[outflowType] ?? outflowFundCompatibility.other;
-}
-
 function getVisibleFunds(
   funds: Array<{
     id: string;
@@ -79,22 +65,35 @@ function getVisibleFunds(
   allowTitheOutflowOnlyForRemittance: boolean,
   departmentId: string
 ) {
-  const allowed = new Set(getSupportedFundTypesForOutflow(outflowType));
-  const scopedFunds = funds.filter((fund) => allowed.has(fund.fund_type));
-
-  const baseFunds =
-    allowTitheOutflowOnlyForRemittance && outflowType !== "mission_remittance"
-      ? scopedFunds.filter((fund) => fund.fund_type !== "tithe")
-      : scopedFunds;
-
-  if (!departmentId) return baseFunds;
-
-  const hasDepartmentMetadata = baseFunds.some((fund) =>
+  const hasDepartmentMetadata = funds.some((fund) =>
     Object.prototype.hasOwnProperty.call(fund, "department_id")
   );
-  if (!hasDepartmentMetadata) return baseFunds;
 
-  return baseFunds.filter((fund) => fund.department_id === departmentId);
+  return funds.map((fund) => {
+    const disabledReasons: string[] = [];
+
+    if (
+      allowTitheOutflowOnlyForRemittance &&
+      outflowType !== "mission_remittance" &&
+      fund.fund_type === "tithe"
+    ) {
+      disabledReasons.push("Tithe fund can only be used for remittance.");
+    }
+
+    if (
+      departmentId &&
+      hasDepartmentMetadata &&
+      fund.department_id !== departmentId
+    ) {
+      disabledReasons.push("Selected department requires a matching department fund.");
+    }
+
+    return {
+      ...fund,
+      disabled: disabledReasons.length > 0,
+      disabledReason: disabledReasons.join(" "),
+    };
+  });
 }
 
 
@@ -117,6 +116,7 @@ export function FinancialRecordEntryForm({
   modeLabel,
   financeSettings,
   onCreateFundRequest,
+  onSuccess,
 }: FinancialRecordEntryFormProps) {
   const { t } = useI18n();
   const [state, formAction, isPending] = useActionState(createTreasuryOutflowAction, null);
@@ -149,21 +149,21 @@ export function FinancialRecordEntryForm({
       ),
     [activeOutflowType, allowTitheOutflowOnlyForRemittance, departmentId, options.funds]
   );
-  const compatibleFundTypes = useMemo(
-    () => getSupportedFundTypesForOutflow(activeOutflowType),
-    [activeOutflowType]
+  const enabledFunds = useMemo(
+    () => visibleFunds.filter((fund) => !fund.disabled),
+    [visibleFunds]
   );
 
   useEffect(() => {
-    if (visibleFunds.length === 0) {
+    if (enabledFunds.length === 0) {
       setFundId("");
       return;
     }
 
-    if (!visibleFunds.some((fund) => fund.id === fundId)) {
-      setFundId(visibleFunds[0]?.id ?? "");
+    if (!enabledFunds.some((fund) => fund.id === fundId)) {
+      setFundId(enabledFunds[0]?.id ?? "");
     }
-  }, [fundId, visibleFunds]);
+  }, [enabledFunds, fundId]);
 
   useEffect(() => {
     if (!state?.ok || submitMode !== "save_add_another") return;
@@ -175,6 +175,11 @@ export function FinancialRecordEntryForm({
     setReferenceNumber("");
     setNote(defaults?.note ?? "");
   }, [defaults?.note, defaults?.payee, defaults?.projectName, defaults?.purpose, state, submitMode]);
+
+  useEffect(() => {
+    if (!state?.ok || !onSuccess) return;
+    onSuccess();
+  }, [onSuccess, state]);
 
   const canSubmit =
     !isPending &&
@@ -243,18 +248,22 @@ export function FinancialRecordEntryForm({
             onChange={(event) => setFundId(event.target.value)}
             className="w-full rounded-md border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500"
           >
-            {visibleFunds.length === 0 ? <option value="">{t.pages.treasury.forms.noFundAvailable}</option> : null}
+            {visibleFunds.length === 0 ? (
+              <option value="">No funds found. Add a fund first in Treasury Settings.</option>
+            ) : null}
+            {enabledFunds.length === 0 && visibleFunds.length > 0 ? (
+              <option value="">No eligible funds for current selection.</option>
+            ) : null}
             {visibleFunds.map((fund) => (
-              <option key={fund.id} value={fund.id}>
+              <option key={fund.id} value={fund.id} disabled={fund.disabled}>
                 {fund.name}
+                {fund.code ? ` (${fund.code})` : ""}
+                {` • ${getFundTypeLabel(fund.fund_type, t)}`}
+                {fund.disabledReason ? ` — ${fund.disabledReason}` : ""}
               </option>
             ))}
           </select>
-          <p className="mt-1 text-xs text-slate-500">
-            {t.pages.treasury.forms.matchingFundTypes}:{" "}
-            {compatibleFundTypes.map((fundType) => getFundTypeLabel(fundType, t)).join(", ")}
-          </p>
-          {allowTitheOutflowOnlyForRemittance ? (
+          {allowTitheOutflowOnlyForRemittance && activeOutflowType !== "mission_remittance" ? (
             <p className="mt-1 text-xs text-slate-500">{t.pages.treasury.forms.titheReserved}</p>
           ) : null}
         </div>
@@ -410,7 +419,7 @@ export function FinancialRecordEntryForm({
           <p>
             {departmentId
               ? "No active department fund is available for the selected department."
-              : t.pages.treasury.forms.noFundAvailable}
+              : "No funds found. Add a fund first in Treasury Settings."}
           </p>
           <p className="mt-1 text-amber-800">{t.pages.treasury.forms.noFundAvailableHint}</p>
           {onCreateFundRequest ? (

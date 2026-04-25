@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import {
   WorkspaceControlRail,
   WorkspaceEmptyState,
@@ -8,6 +9,11 @@ import {
   WorkspaceSectionCard,
   WorkspaceStatCard,
 } from "@/components/workspace";
+import { MobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
+import { MobileCompactStatsStrip } from "@/components/mobile/MobileCompactStatsStrip";
+import { MobilePageHeader } from "@/components/mobile/MobilePageHeader";
+import { DepartmentForm } from "@/features/departments/components/DepartmentForm";
+import { createDepartmentAction } from "@/features/departments/actions";
 
 interface DepartmentsWorkspaceUnifiedProps {
   churchSlug: string;
@@ -101,72 +107,120 @@ function DepartmentsRegistry({
           />
         </div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
-              <tr>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Department</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Members</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Assignments</th>
-                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Events</th>
-                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-200 bg-white">
-              {rows.map((department) => {
-                const isSelected = department.id === selectedDepartmentId;
-
-                return (
-                  <tr key={department.id} className={isSelected ? "bg-blue-50/50" : undefined}>
-                    <td className="px-4 py-3.5">
-                      <button
-                        type="button"
-                        onClick={() => onSelectDepartment(department.id)}
-                        className="text-left"
-                      >
-                        <p className="text-sm font-semibold text-slate-900">{department.department_name}</p>
-                        <p className="mt-0.5 text-xs text-slate-500">{department.code || "No code"}</p>
-                      </button>
-                    </td>
-                    <td className="px-4 py-3.5">
+        <>
+          <div className="grid grid-cols-1 gap-3 p-3 md:hidden">
+            {rows.map((department) => {
+              const isSelected = department.id === selectedDepartmentId;
+              return (
+                <div
+                  key={department.id}
+                  className={
+                    isSelected
+                      ? "rounded-2xl border border-blue-200 bg-blue-50/60 p-3"
+                      : "rounded-2xl border border-slate-200 bg-white p-3"
+                  }
+                >
+                  <button
+                    type="button"
+                    onClick={() => onSelectDepartment(department.id)}
+                    className="w-full text-left"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="truncate text-sm font-semibold text-slate-900">{department.department_name}</p>
                       <DepartmentStatusBadge active={department.is_active} />
-                    </td>
-                    <td className="px-4 py-3.5 text-sm text-slate-600">{department.member_count}</td>
-                    <td className="px-4 py-3.5 text-sm text-slate-600">
-                      <span className="font-medium text-slate-800">{department.active_member_count}</span> active
-                      {department.inactive_member_count > 0 ? ` / ${department.inactive_member_count} inactive` : ""}
-                    </td>
-                    <td className="px-4 py-3.5 text-sm text-slate-600">{department.event_count}</td>
-                    <td className="px-4 py-3.5">
-                      <div className="flex justify-end gap-2">
-                        <a
-                          href={`/c/${churchSlug}/departments/${department.id}`}
-                          className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
-                        >
-                          View
-                        </a>
-                        <a
-                          href={`/c/${churchSlug}/departments/${department.id}?tab=overview`}
-                          className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
-                        >
-                          Edit
-                        </a>
+                    </div>
+                    <p className="mt-1 text-xs text-slate-500">{department.code || "No code"}</p>
+                    <p className="mt-2 text-xs text-slate-600">
+                      Members: {department.member_count} • Events: {department.event_count}
+                    </p>
+                  </button>
+                  <div className="mt-3 grid grid-cols-2 gap-2">
+                    <Link
+                      href={`/c/${churchSlug}/departments/${department.id}`}
+                      className="mobile-touch-feedback inline-flex min-h-[44px] items-center justify-center rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                    >
+                      View
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => onSelectDepartment(department.id)}
+                      className="mobile-touch-feedback inline-flex min-h-[44px] items-center justify-center rounded-lg border border-blue-200 bg-blue-50 px-2 py-2 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
+                    >
+                      Details
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="hidden overflow-x-auto md:block">
+            <table className="min-w-full divide-y divide-slate-200">
+              <thead className="bg-slate-50">
+                <tr>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Department</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Status</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Members</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Assignments</th>
+                  <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-slate-500">Events</th>
+                  <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-slate-500">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-200 bg-white">
+                {rows.map((department) => {
+                  const isSelected = department.id === selectedDepartmentId;
+
+                  return (
+                    <tr key={department.id} className={isSelected ? "bg-blue-50/50" : undefined}>
+                      <td className="px-4 py-3.5">
                         <button
                           type="button"
                           onClick={() => onSelectDepartment(department.id)}
-                          className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
+                          className="text-left"
                         >
-                          Details
+                          <p className="text-sm font-semibold text-slate-900">{department.department_name}</p>
+                          <p className="mt-0.5 text-xs text-slate-500">{department.code || "No code"}</p>
                         </button>
-                      </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                      </td>
+                      <td className="px-4 py-3.5">
+                        <DepartmentStatusBadge active={department.is_active} />
+                      </td>
+                      <td className="px-4 py-3.5 text-sm text-slate-600">{department.member_count}</td>
+                      <td className="px-4 py-3.5 text-sm text-slate-600">
+                        <span className="font-medium text-slate-800">{department.active_member_count}</span> active
+                        {department.inactive_member_count > 0 ? ` / ${department.inactive_member_count} inactive` : ""}
+                      </td>
+                      <td className="px-4 py-3.5 text-sm text-slate-600">{department.event_count}</td>
+                      <td className="px-4 py-3.5">
+                        <div className="flex justify-end gap-2">
+                          <a
+                            href={`/c/${churchSlug}/departments/${department.id}`}
+                            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                          >
+                            View
+                          </a>
+                          <a
+                            href={`/c/${churchSlug}/departments/${department.id}?tab=overview`}
+                            className="rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                          >
+                            Edit
+                          </a>
+                          <button
+                            type="button"
+                            onClick={() => onSelectDepartment(department.id)}
+                            className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
+                          >
+                            Details
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </WorkspaceSectionCard>
   );
@@ -308,6 +362,8 @@ export function DepartmentsWorkspaceUnified({
   const [selectedDepartmentId, setSelectedDepartmentId] = useState<string | null>(
     data.departments[0]?.id ?? null
   );
+  const [createSheetOpen, setCreateSheetOpen] = useState(false);
+  const [detailSheetOpen, setDetailSheetOpen] = useState(false);
 
   const selectedDepartment = useMemo(
     () => data.departments.find((department) => department.id === selectedDepartmentId) ?? data.departments[0] ?? null,
@@ -319,8 +375,49 @@ export function DepartmentsWorkspaceUnified({
     return "Live workspace";
   }, [data.filters]);
 
+  function handleSelectDepartment(departmentId: string) {
+    setSelectedDepartmentId(departmentId);
+
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+      setDetailSheetOpen(true);
+    }
+  }
+
   return (
     <div className="space-y-6">
+      <div className="space-y-3 md:hidden">
+        <MobilePageHeader
+          title="Departments"
+          subtitle={`Active: ${data.stats.activeDepartments} • Total: ${data.stats.totalDepartments}`}
+          actionLabel="Add Department"
+          onActionClick={() => setCreateSheetOpen(true)}
+        />
+
+        <form method="get" action={`/c/${churchSlug}/departments`} className="flex items-center gap-2">
+          <input
+            name="q"
+            defaultValue={data.filters.q ?? ""}
+            placeholder="Search departments"
+            className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+          />
+          <button
+            type="submit"
+            className="mobile-touch-feedback inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl bg-slate-950 px-3 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"
+          >
+            Search
+          </button>
+        </form>
+
+        <MobileCompactStatsStrip
+          items={[
+            { label: "Departments", value: data.stats.totalDepartments },
+            { label: "Active", value: data.stats.activeDepartments, tone: "success" },
+            { label: "Members", value: data.stats.assignedMembers },
+            { label: "Unassigned", value: data.stats.unassignedDepartments, tone: "attention" },
+          ]}
+        />
+      </div>
+
       <WorkspaceHero
         size="compact"
         eyebrow="Departments Workspace"
@@ -336,9 +433,10 @@ export function DepartmentsWorkspaceUnified({
           { label: "Members", href: `/c/${churchSlug}/members`, variant: "secondary" },
           { label: "Reports", href: `/c/${churchSlug}/reports`, variant: "outline" },
         ]}
+        className="hidden md:block"
       />
 
-      <div className="grid grid-cols-4 gap-3 xl:grid-cols-6">
+      <div className="hidden md:grid grid-cols-4 gap-3 xl:grid-cols-6">
         <WorkspaceStatCard label="Departments" value={data.stats.totalDepartments} hint="Visible department records" />
         <WorkspaceStatCard label="Active" value={data.stats.activeDepartments} hint="Active ministries or units" />
         <WorkspaceStatCard label="Inactive" value={data.stats.inactiveDepartments} hint="Inactive department records" />
@@ -347,9 +445,31 @@ export function DepartmentsWorkspaceUnified({
         <WorkspaceStatCard label="Event Linked" value={data.stats.eventLinkedDepartments} hint="Connected to church events" />
       </div>
 
+      <WorkspaceControlRail className="md:hidden" title="Filters">
+        <form method="get" action={`/c/${churchSlug}/departments`} className="grid grid-cols-2 gap-2">
+          <select
+            name="status"
+            defaultValue={data.filters.status ?? ""}
+            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+          >
+            <option value="">All</option>
+            <option value="active">Active only</option>
+            <option value="inactive">Inactive only</option>
+          </select>
+
+          <button
+            type="submit"
+            className="mobile-touch-feedback inline-flex min-h-[44px] items-center justify-center rounded-xl bg-slate-950 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+          >
+            Apply
+          </button>
+        </form>
+      </WorkspaceControlRail>
+
       <WorkspaceControlRail
         title="Department Filters"
         description="Search and narrow the departments workspace without leaving the page."
+        className="hidden md:block"
       >
         <form
           method="get"
@@ -408,15 +528,43 @@ export function DepartmentsWorkspaceUnified({
           churchSlug={churchSlug}
           rows={data.departments}
           selectedDepartmentId={selectedDepartment?.id ?? null}
-          onSelectDepartment={setSelectedDepartmentId}
+          onSelectDepartment={handleSelectDepartment}
         />
+        <div className="hidden md:block">
+          <DepartmentSidebar
+            selectedDepartment={selectedDepartment}
+            assignments={data.assignments}
+            stats={data.stats}
+            departments={data.departments}
+          />
+        </div>
+      </div>
+
+      <MobileBottomSheet
+        open={createSheetOpen}
+        onOpenChange={setCreateSheetOpen}
+        title="Add Department"
+      >
+        <DepartmentForm
+          churchSlug={churchSlug}
+          action={createDepartmentAction}
+          submitLabel="Add Department"
+          onSuccess={() => setCreateSheetOpen(false)}
+        />
+      </MobileBottomSheet>
+
+      <MobileBottomSheet
+        open={detailSheetOpen}
+        onOpenChange={setDetailSheetOpen}
+        title="Department Details"
+      >
         <DepartmentSidebar
           selectedDepartment={selectedDepartment}
           assignments={data.assignments}
           stats={data.stats}
           departments={data.departments}
         />
-      </div>
+      </MobileBottomSheet>
     </div>
   );
 }

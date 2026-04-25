@@ -26,6 +26,7 @@ interface ContributionEntryFormProps {
   modeLabel?: string;
   alreadyTithedIds?: string[];
   onCreateFundRequest?: () => void;
+  onSuccess?: () => void;
 }
 
 function getLockedLabel(inflowType: string | undefined, t: { pages: { treasury: { forms: { types: Record<string, string> } } } }) {
@@ -86,6 +87,7 @@ export function ContributionEntryForm({
   modeLabel,
   alreadyTithedIds = [],
   onCreateFundRequest,
+  onSuccess,
 }: ContributionEntryFormProps) {
   const { t } = useI18n();
   const [state, formAction, isPending] = useActionState(createTreasuryInflowAction, null);
@@ -196,6 +198,11 @@ export function ContributionEntryForm({
       setSelectedDepartmentId("");
     }
   }, [selectedDepartmentId, sourceMode, state, submitMode]);
+
+  useEffect(() => {
+    if (!state?.ok || !onSuccess) return;
+    onSuccess();
+  }, [onSuccess, state]);
 
   const memberRequired = sourceMode === "member";
   const departmentRequired = sourceMode === "department";

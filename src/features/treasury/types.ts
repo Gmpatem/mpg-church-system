@@ -35,6 +35,37 @@ export interface TreasuryFinanceSettings {
   updated_at?: string | null;
 }
 
+export type TreasuryRemittanceSourceType = "tithe" | "offering" | "both";
+export type TreasuryRemittanceFrequency = "daily" | "weekly" | "monthly" | "manual";
+export type TreasuryRemittanceMode = "auto_create" | "auto_process";
+
+export interface TreasuryRemittanceSettings {
+  is_enabled: boolean;
+  is_live: boolean;
+  tithe_enabled: boolean;
+  tithe_percentage: number;
+  offering_enabled: boolean;
+  offering_percentage: number;
+  source_type: TreasuryRemittanceSourceType;
+  percentage: number;
+  fixed_amount: number | null;
+  destination: "conference" | "mission" | "union";
+  frequency: TreasuryRemittanceFrequency;
+  mode: TreasuryRemittanceMode;
+  allow_override: boolean;
+  updated_at?: string | null;
+}
+
+export interface TreasuryRemittanceSnapshot {
+  settings: TreasuryRemittanceSettings;
+  migration_required: boolean;
+  last_run_date: string | null;
+  last_amount: number | null;
+  next_expected_run: string | null;
+  pending_amount: number;
+  can_manage: boolean;
+}
+
 export interface TreasuryAllocationPreviewEntry {
   id: string;
   inflow_id: string | null;

@@ -14,12 +14,19 @@ export function normalizeSupabaseErrorMessage(error: any, fallback: string) {
 export function isMissingRelationError(error: any, relation: string) {
   const code = String(error?.code || "").toLowerCase();
   const combined = buildSupabaseErrorText(error);
+  const relationName = relation.toLowerCase();
+  const fqRelationName = `public.${relationName}`;
 
   return (
     code === "42p01" ||
+    code === "pgrst205" ||
     (combined.includes("relation") &&
       combined.includes("does not exist") &&
-      combined.includes(relation.toLowerCase()))
+      combined.includes(relationName)) ||
+    (combined.includes("could not find the table") &&
+      (combined.includes(relationName) || combined.includes(fqRelationName))) ||
+    (combined.includes("schema cache") &&
+      (combined.includes(relationName) || combined.includes(fqRelationName)))
   );
 }
 

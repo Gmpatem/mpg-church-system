@@ -16,6 +16,10 @@ import {
   WorkspaceSectionCard,
   WorkspaceStatCard,
 } from "@/components/workspace";
+import { MobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
+import { MobileCompactStatsStrip } from "@/components/mobile/MobileCompactStatsStrip";
+import { MobilePageHeader } from "@/components/mobile/MobilePageHeader";
+import { NewMemberForm } from "@/app/(church)/c/[churchSlug]/members/new/NewMemberForm";
 
 interface MembersWorkspaceUnifiedProps {
   churchSlug: string;
@@ -149,7 +153,7 @@ function MemberInviteButton({
         type="button"
         onClick={handleGenerateInvite}
         disabled={status === "loading"}
-        className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
+        className="inline-flex min-h-[44px] items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50 disabled:opacity-50"
       >
         {status === "loading" ? (
           <span className="inline-flex items-center gap-2">
@@ -253,13 +257,13 @@ function MembersRegistryTable({
                   <div className="mt-3 flex items-center gap-2">
                     <Link
                       href={`/c/${churchSlug}/members/${member.id}`}
-                      className="inline-flex min-h-[36px] flex-1 items-center justify-center rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                      className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
                     >
                       {t.pages.membersWorkspace.directory.viewMember}
                     </Link>
                     <Link
                       href={`/c/${churchSlug}/members/${member.id}/edit`}
-                      className="inline-flex min-h-[36px] flex-1 items-center justify-center rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
+                      className="inline-flex min-h-[44px] flex-1 items-center justify-center rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
                     >
                       {t.pages.membersWorkspace.directory.edit}
                     </Link>
@@ -471,6 +475,8 @@ export function MembersWorkspaceUnified({
   const { t } = useI18n();
   const router = useRouter();
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(data.members[0]?.id ?? null);
+  const [memberFormOpen, setMemberFormOpen] = useState(false);
+  const [memberDetailOpen, setMemberDetailOpen] = useState(false);
 
   useEffect(() => {
     router.prefetch(`/c/${churchSlug}/households`);
@@ -517,8 +523,59 @@ export function MembersWorkspaceUnified({
     return t.pages.membersWorkspace.badges.live;
   }, [data.filters, t]);
 
+  const departmentOptionsForForm = useMemo(
+    () =>
+      data.departments.map((department) => ({
+        id: department.id,
+        department_name: department.name,
+        description: null,
+      })),
+    [data.departments]
+  );
+
+  function handleSelectMember(memberId: string) {
+    setSelectedMemberId(memberId);
+
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 767px)").matches) {
+      setMemberDetailOpen(true);
+    }
+  }
+
   return (
     <div className="space-y-6">
+      <div className="space-y-3 md:hidden">
+        <MobilePageHeader
+          title="Members"
+          subtitle={`Active: ${data.stats.activeMembers} • Inactive: ${data.stats.inactiveMembers}`}
+          actionLabel="Add Member"
+          onActionClick={() => setMemberFormOpen(true)}
+        />
+
+        <form method="get" action={`/c/${churchSlug}/members`} className="flex items-center gap-2">
+          <input
+            name="q"
+            defaultValue={data.filters.q ?? ""}
+            placeholder={t.pages.membersWorkspace.filters.searchPlaceholder}
+            className="w-full rounded-xl border border-slate-300 px-3 py-2.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+          />
+          <button
+            type="submit"
+            className="mobile-touch-feedback inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl bg-slate-950 px-3 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"
+          >
+            Search
+          </button>
+        </form>
+
+        <MobileCompactStatsStrip
+          items={[
+            { label: "Members", value: data.stats.totalMembers },
+            { label: "Active", value: data.stats.activeMembers, tone: "success" },
+            { label: "Inactive", value: data.stats.inactiveMembers },
+            { label: "Unassigned", value: data.stats.unassignedMembersCount, tone: "attention" },
+          ]}
+        />
+      </div>
+
       <WorkspaceHero
         size="compact"
         mobileLayout="slim"
@@ -535,9 +592,10 @@ export function MembersWorkspaceUnified({
           { label: t.pages.membersWorkspace.actions.openHouseholds, href: `/c/${churchSlug}/households`, variant: "secondary" },
           { label: t.pages.membersWorkspace.actions.reports, href: `/c/${churchSlug}/reports`, variant: "outline" },
         ]}
+        className="hidden md:block"
       />
 
-      <div className="grid grid-cols-3 gap-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
+      <div className="hidden md:grid grid-cols-3 gap-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-6">
         <WorkspaceStatCard label={t.pages.membersWorkspace.stats.totalMembers} value={data.stats.totalMembers} hint={t.pages.membersWorkspace.stats.totalMembersHint} />
         <WorkspaceStatCard label={t.pages.membersWorkspace.stats.active} value={data.stats.activeMembers} hint={t.pages.membersWorkspace.stats.activeHint} />
         <WorkspaceStatCard label={t.pages.membersWorkspace.stats.inactive} value={data.stats.inactiveMembers} hint={t.pages.membersWorkspace.stats.inactiveHint} />
@@ -546,9 +604,32 @@ export function MembersWorkspaceUnified({
         <WorkspaceStatCard label={t.pages.membersWorkspace.stats.unassigned} value={data.stats.unassignedMembersCount} hint={t.pages.membersWorkspace.stats.unassignedHint} />
       </div>
 
+      <WorkspaceControlRail className="md:hidden" title="Filters">
+        <form method="get" action={`/c/${churchSlug}/members`} className="grid grid-cols-2 gap-2">
+          <select
+            name="status"
+            defaultValue={data.filters.status ?? ""}
+            className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+          >
+            <option value="">{t.pages.membersWorkspace.filters.statusOptions.all}</option>
+            <option value="active">{t.pages.membersWorkspace.filters.statusOptions.active}</option>
+            <option value="inactive">{t.pages.membersWorkspace.filters.statusOptions.inactive}</option>
+            <option value="visitor">{t.pages.membersWorkspace.filters.statusOptions.visitor}</option>
+          </select>
+
+          <button
+            type="submit"
+            className="mobile-touch-feedback inline-flex min-h-[44px] items-center justify-center rounded-xl bg-slate-950 px-3 py-2 text-sm font-medium text-white transition hover:bg-slate-800"
+          >
+            Apply
+          </button>
+        </form>
+      </WorkspaceControlRail>
+
       <WorkspaceControlRail
         title={t.pages.membersWorkspace.filters.title}
         description={t.pages.membersWorkspace.filters.description}
+        className="hidden md:block"
       >
         <form
           method="get"
@@ -644,8 +725,38 @@ export function MembersWorkspaceUnified({
           churchSlug={churchSlug}
           rows={data.members}
           selectedMemberId={selectedMember?.id ?? null}
-          onSelectMember={setSelectedMemberId}
+          onSelectMember={handleSelectMember}
         />
+        <div className="hidden md:block">
+          <MemberWorkspaceSidebar
+            churchSlug={churchSlug}
+            selectedMember={selectedMember}
+            households={data.households}
+            recentMembers={data.recentMembers}
+            stats={data.stats}
+          />
+        </div>
+      </div>
+
+      <MobileBottomSheet
+        open={memberFormOpen}
+        onOpenChange={setMemberFormOpen}
+        title="Add Member"
+      >
+        <NewMemberForm
+          churchSlug={churchSlug}
+          departments={departmentOptionsForForm}
+          households={data.households}
+          embedded
+          onCreated={() => setMemberFormOpen(false)}
+        />
+      </MobileBottomSheet>
+
+      <MobileBottomSheet
+        open={memberDetailOpen}
+        onOpenChange={setMemberDetailOpen}
+        title="Member Details"
+      >
         <MemberWorkspaceSidebar
           churchSlug={churchSlug}
           selectedMember={selectedMember}
@@ -653,7 +764,7 @@ export function MembersWorkspaceUnified({
           recentMembers={data.recentMembers}
           stats={data.stats}
         />
-      </div>
+      </MobileBottomSheet>
     </div>
   );
 }

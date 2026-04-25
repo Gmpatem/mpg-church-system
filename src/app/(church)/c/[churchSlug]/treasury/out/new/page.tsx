@@ -1,5 +1,8 @@
 import Link from "next/link";
-import { getTreasuryFormOptions } from "@/features/treasury/queries";
+import {
+  getTreasuryFinanceSettings,
+  getTreasuryFormOptions,
+} from "@/features/treasury/queries";
 import { getDepartmentFundRequestForOutflowPrefill } from "@/features/department-finance/queries";
 import { MoneyOutForm } from "./MoneyOutForm";
 
@@ -21,14 +24,17 @@ export default async function MoneyOutPage({ params, searchParams }: MoneyOutPag
     ? await getDepartmentFundRequestForOutflowPrefill(churchSlug, requestId)
     : null;
 
-  const options = await getTreasuryFormOptions(churchSlug, {
-    includeFundIds: requestForPrefill?.fund_id || requestForPrefill?.preferred_fund_id
-      ? [requestForPrefill.fund_id || requestForPrefill.preferred_fund_id || ""]
-      : [],
-    includeDepartmentIds: requestForPrefill?.department_id
-      ? [requestForPrefill.department_id]
-      : [],
-  });
+  const [options, financeSettings] = await Promise.all([
+    getTreasuryFormOptions(churchSlug, {
+      includeFundIds: requestForPrefill?.fund_id || requestForPrefill?.preferred_fund_id
+        ? [requestForPrefill.fund_id || requestForPrefill.preferred_fund_id || ""]
+        : [],
+      includeDepartmentIds: requestForPrefill?.department_id
+        ? [requestForPrefill.department_id]
+        : [],
+    }),
+    getTreasuryFinanceSettings(churchSlug),
+  ]);
 
   const defaults = requestForPrefill
       ? {
@@ -72,7 +78,12 @@ export default async function MoneyOutPage({ params, searchParams }: MoneyOutPag
         </div>
       ) : null}
 
-      <MoneyOutForm churchSlug={churchSlug} options={options} defaults={defaults} />
+      <MoneyOutForm
+        churchSlug={churchSlug}
+        options={options}
+        defaults={defaults}
+        financeSettings={financeSettings}
+      />
     </div>
   );
 }

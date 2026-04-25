@@ -4,6 +4,11 @@ import { createClient } from "@/lib/supabase/server";
 import { requireChurchAccess } from "@/features/access/queries";
 import type { ApprovalModuleKey, ApprovalPolicyRecord, ApprovalRequestRecord } from "./types";
 
+const APPROVAL_POLICY_FIELDS =
+  "id, church_id, module_key, request_type, requires_office_review, requires_leadership_review, requires_treasury_review, final_approver_role_code, is_active";
+const APPROVAL_REQUEST_FIELDS =
+  "id, church_id, module_key, entity_type, entity_id, request_type, submitted_by_user_id, current_stage, status, priority, current_assignee_role_code, payload, submitted_at, decided_at, decided_by_user_id, decision_note, created_at, updated_at";
+
 export async function getApprovalPolicy(
   churchSlug: string,
   moduleKey: ApprovalModuleKey,
@@ -14,7 +19,7 @@ export async function getApprovalPolicy(
 
   const { data, error } = await supabase
     .from("approval_policies")
-    .select("*")
+    .select(APPROVAL_POLICY_FIELDS)
     .eq("church_id", ctx.churchId)
     .eq("module_key", moduleKey)
     .eq("request_type", requestType)
@@ -38,7 +43,7 @@ export async function getApprovalRequestByEntity(
 
   const { data, error } = await supabase
     .from("approval_requests")
-    .select("*")
+    .select(APPROVAL_REQUEST_FIELDS)
     .eq("church_id", ctx.churchId)
     .eq("entity_type", entityType)
     .eq("entity_id", entityId)
@@ -62,7 +67,7 @@ export async function getPendingApprovalQueue(
 
   let query = supabase
     .from("approval_requests")
-    .select("*")
+    .select(APPROVAL_REQUEST_FIELDS)
     .eq("church_id", ctx.churchId)
     .eq("status", "pending")
     .order("submitted_at", { ascending: false });
@@ -89,7 +94,7 @@ export async function getMyPendingApprovalCount(
     const supabase = await createClient();
     const { count } = await supabase
       .from("approval_requests")
-      .select("*", { count: "exact", head: true })
+      .select("id", { count: "exact", head: true })
       .eq("church_id", churchId)
       .eq("status", "pending")
       .in("current_assignee_role_code", roles);

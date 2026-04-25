@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useActionState, useEffect } from "react";
 import type { ActionState, DepartmentRecord } from "../types";
 
 interface DepartmentFormProps {
@@ -8,6 +8,7 @@ interface DepartmentFormProps {
   action: (prevState: ActionState | null, formData: FormData) => Promise<ActionState>;
   initialValues?: DepartmentRecord | null;
   submitLabel?: string;
+  onSuccess?: () => void;
 }
 
 const initialState: ActionState = { ok: false };
@@ -17,8 +18,14 @@ export function DepartmentForm({
   action,
   initialValues,
   submitLabel = "Save Department",
+  onSuccess,
 }: DepartmentFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
+
+  useEffect(() => {
+    if (!state?.ok || !onSuccess) return;
+    onSuccess();
+  }, [onSuccess, state]);
 
   return (
     <form action={formAction} className="space-y-6 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">

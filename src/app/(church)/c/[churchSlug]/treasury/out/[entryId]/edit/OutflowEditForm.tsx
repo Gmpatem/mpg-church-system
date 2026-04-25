@@ -13,6 +13,18 @@ interface OutflowEditFormProps {
   };
 }
 
+function getFundTypeLabel(fundType: string, t: any) {
+  if (fundType === "tithe") return t.pages.treasury.forms.fundForm.types.tithe;
+  if (fundType === "offering") return t.pages.treasury.forms.fundForm.types.offering;
+  if (fundType === "donation") return t.pages.treasury.forms.fundForm.types.donation;
+  if (fundType === "project") return t.pages.treasury.forms.fundForm.types.project;
+  if (fundType === "department") return t.pages.treasury.forms.fundForm.types.department;
+  if (fundType === "mission") return t.pages.treasury.forms.fundForm.types.mission;
+  if (fundType === "welfare") return t.pages.treasury.forms.fundForm.types.welfare;
+  if (fundType === "general") return t.pages.treasury.forms.fundForm.types.general;
+  return fundType.replace(/_/g, " ");
+}
+
 export function OutflowEditForm({ churchSlug, entry, options }: OutflowEditFormProps) {
   const { t } = useI18n();
   const [state, formAction, isPending] = useActionState(updateTreasuryOutflowAction, null);
@@ -53,7 +65,11 @@ export function OutflowEditForm({ churchSlug, entry, options }: OutflowEditFormP
           <label htmlFor="fundId" className="block text-sm font-medium text-slate-700 mb-1">{t.pages.treasury.forms.fundSource}</label>
           <select id="fundId" name="fundId" required defaultValue={entry.fund_id ?? ""} className="w-full rounded-xl border border-slate-300 px-3 py-2 outline-none focus:ring-2 focus:ring-blue-500">
             {options.funds.map((fund) => (
-              <option key={fund.id} value={fund.id}>{fund.name}</option>
+              <option key={fund.id} value={fund.id}>
+                {fund.name}
+                {fund.code ? ` (${fund.code})` : ""}
+                {` • ${getFundTypeLabel(fund.fund_type, t)}`}
+              </option>
             ))}
           </select>
         </div>

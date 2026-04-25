@@ -11,6 +11,7 @@ interface EventFormProps {
   eventTypes: string[];
   initialValues?: ChurchEventRecord | null;
   submitLabel?: string;
+  onSuccess?: () => void;
 }
 
 const initialState: ActionState = { ok: false };
@@ -42,6 +43,7 @@ export function EventForm({
   eventTypes,
   initialValues,
   submitLabel,
+  onSuccess,
 }: EventFormProps) {
   const { t } = useI18n();
   const [state, formAction, pending] = useActionState(action, initialState);
@@ -116,6 +118,11 @@ export function EventForm({
 
     createAnother.checked = true;
   }, [state, initialValues]);
+
+  useEffect(() => {
+    if (!state?.ok || !onSuccess) return;
+    onSuccess();
+  }, [onSuccess, state]);
 
   const finalSubmitLabel = submitLabel ?? t.pages.eventForm.save;
 

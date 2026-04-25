@@ -6,6 +6,8 @@ import {
   WorkspaceSectionCard,
   WorkspaceStatCard,
 } from "@/components/workspace";
+import { MobileCompactStatsStrip } from "@/components/mobile/MobileCompactStatsStrip";
+import { MobilePageHeader } from "@/components/mobile/MobilePageHeader";
 import type {
   AccessControlPermissionsData,
   AccessControlTabData,
@@ -43,8 +45,8 @@ function renderTabNav(churchSlug: string, activeTab: AccessControlTabKey) {
             href={buildTabHref(churchSlug, tab.key)}
             className={
               isActive
-                ? "mobile-touch-feedback shrink-0 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition"
-                : "mobile-touch-feedback shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                ? "mobile-touch-feedback inline-flex min-h-[44px] shrink-0 items-center rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition"
+                : "mobile-touch-feedback inline-flex min-h-[44px] shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
             }
           >
             {tab.label}
@@ -75,7 +77,18 @@ function renderPermissionsTab(
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="md:hidden">
+        <MobileCompactStatsStrip
+          items={[
+            { label: "Users", value: data.summary.totalUsers },
+            { label: "Roles", value: data.summary.activeRoleAssignments },
+            { label: "Permissions", value: data.summary.activePermissionAssignments },
+            { label: "Types", value: data.permissions.length },
+          ]}
+        />
+      </div>
+
+      <div className="hidden gap-4 md:grid md:grid-cols-2 xl:grid-cols-4">
         <WorkspaceStatCard
           label="Church Users"
           value={String(data.summary.totalUsers)}
@@ -150,11 +163,18 @@ export function AccessControlWorkspace({
 }: AccessControlWorkspaceProps) {
   return (
     <div className="space-y-5 md:space-y-6">
+      <MobilePageHeader
+        className="md:hidden"
+        title="Access"
+        subtitle="Manage roles, permissions, and requests"
+      />
+
       <WorkspaceHero
         size="compact"
         eyebrow="Access Control"
         title={`Manage access for ${permissionsData.churchName ?? "this church"}`}
         description="Control church roles and page permissions, manage secure invites, and review pending access requests from one workspace."
+        className="hidden md:block"
       />
 
       {renderTabNav(permissionsData.churchSlug, activeTab)}

@@ -22,20 +22,51 @@ import { Church, User, Shield, Wallet } from "lucide-react";
 import { LanguageSwitcher } from "@/components/marketing/LanguageSwitcher";
 import { useI18n } from "@/features/i18n";
 import { useActionState } from "react";
-import { updateTreasuryFinanceSettingsAction, getTreasuryFinanceSettingsAction } from "@/features/treasury/actions";
-import type { TreasuryFinanceSettings } from "@/features/treasury/types";
+import {
+  updateTreasuryFinanceSettingsAction,
+  getTreasuryFinanceSettingsAction,
+  getTreasuryRemittanceSettingsAction,
+  updateTreasuryRemittanceSettingsAction,
+  runTreasuryRemittanceNowAction,
+} from "@/features/treasury/actions";
+import type {
+  TreasuryFinanceSettings,
+  TreasuryRemittanceSettings,
+} from "@/features/treasury/types";
+
+type TreasuryRemittancePanelData = {
+  settings: TreasuryRemittanceSettings;
+  migrationRequired: boolean;
+  lastRunDate: string | null;
+  lastAmount: number | null;
+  nextExpectedRun: string | null;
+  pendingAmount: number;
+};
 
 function FinanceSettingsPanel({ churchSlug }: { churchSlug: string }) {
   const { t } = useI18n();
   const [settings, setSettings] = useState<TreasuryFinanceSettings | null>(null);
+  const [remittance, setRemittance] = useState<TreasuryRemittancePanelData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [state, formAction, isPending] = useActionState(updateTreasuryFinanceSettingsAction, null);
+  const [remittanceState, remittanceFormAction, remittancePending] = useActionState(
+    updateTreasuryRemittanceSettingsAction,
+    null
+  );
+  const [runState, runFormAction, runPending] = useActionState(
+    runTreasuryRemittanceNowAction,
+    null
+  );
 
   useEffect(() => {
     async function loadSettings() {
       try {
-        const data = await getTreasuryFinanceSettingsAction(churchSlug);
-        setSettings(data);
+        const [financeData, remittanceData] = await Promise.all([
+          getTreasuryFinanceSettingsAction(churchSlug),
+          getTreasuryRemittanceSettingsAction(churchSlug),
+        ]);
+        setSettings(financeData);
+        setRemittance(remittanceData);
       } catch (error) {
         console.error("Failed to load finance settings:", error);
       } finally {
@@ -43,7 +74,32 @@ function FinanceSettingsPanel({ churchSlug }: { churchSlug: string }) {
       }
     }
     loadSettings();
-  }, [churchSlug]);
+  }, [churchSlug, state?.ok, remittanceState?.ok, runState?.ok]);
+
+  const remittanceSettings = remittance?.settings ?? {
+    is_enabled: false,
+    is_live: false,
+    tithe_enabled: true,
+    tithe_percentage: 100,
+    offering_enabled: false,
+    offering_percentage: 100,
+    source_type: "tithe" as const,
+    percentage: 100,
+    fixed_amount: null,
+    destination: "conference" as const,
+    frequency: "manual" as const,
+    mode: "auto_create" as const,
+    allow_override: true,
+    updated_at: null,
+  };
+
+  const formatCurrency = (value: number | null) =>
+    value === null
+      ? "—"
+      : value.toLocaleString("en-US", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
 
   if (isLoading) {
     return (
@@ -175,6 +231,191 @@ function FinanceSettingsPanel({ churchSlug }: { churchSlug: string }) {
             </Button>
           </div>
         </form>
+
+        <div className="mt-8 space-y-4 rounded-xl border border-slate-200 bg-slate-50/60 p-4">
+          <div>
+            <h4 className="text-sm font-semibold text-slate-900">
+              Automatic Remittance
+            </h4>
+            <p className="mt-1 text-xs text-slate-600">
+              Configure automatic remittance for tithe and sabbath offering allocations.
+            </p>
+          </div>
+
+          {remittance && remittance.migrationRequired ? (
+            <div className="rounded-md border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              Automatic remittance requires database migration. Apply{" "}
+              <code>database/rls/20260425_treasury_auto_remittance.sql</code>.
+            </div>
+          ) : null}
+
+          {remittanceState && !remittanceState.ok ? (
+            <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {remittanceState.error}
+            </div>
+          ) : null}
+          {remittanceState && remittanceState.ok ? (
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              {remittanceState.message}
+            </div>
+          ) : null}
+          {runState && !runState.ok ? (
+            <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {runState.error}
+            </div>
+          ) : null}
+          {runState && runState.ok ? (
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+              {runState.message}
+            </div>
+          ) : null}
+
+          <div className="grid gap-2 rounded-lg border border-slate-200 bg-white p-3 text-xs text-slate-700 md:grid-cols-3">
+            <div>
+              <p className="font-medium text-slate-900">Last remittance</p>
+              <p>{remittance?.lastRunDate || "Never"}</p>
+              <p className="text-slate-500">Amount: {formatCurrency(remittance?.lastAmount ?? null)}</p>
+            </div>
+            <div>
+              <p className="font-medium text-slate-900">Pending</p>
+              <p>{formatCurrency(remittance?.pendingAmount ?? 0)}</p>
+            </div>
+            <div>
+              <p className="font-medium text-slate-900">Next expected run</p>
+              <p>{remittance?.nextExpectedRun || "Manual trigger"}</p>
+            </div>
+          </div>
+
+          <form action={remittanceFormAction} className="space-y-4">
+            <input type="hidden" name="churchSlug" value={churchSlug} />
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="remittance-enabled">Enable Auto Remittance</Label>
+                <select
+                  id="remittance-enabled"
+                  name="is_enabled"
+                  defaultValue={remittanceSettings.is_enabled ? "true" : "false"}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <option value="true">{t.common.yes}</option>
+                  <option value="false">{t.common.no}</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="remittance-source">Remittance Source</Label>
+                <select
+                  id="remittance-source"
+                  name="source_type"
+                  defaultValue={remittanceSettings.source_type}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <option value="tithe">Tithe</option>
+                  <option value="offering">Sabbath Offering</option>
+                  <option value="both">Both</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="remittance-percentage">Remittance Percentage</Label>
+                <Input
+                  id="remittance-percentage"
+                  name="percentage"
+                  type="number"
+                  min="0"
+                  max="100"
+                  step="0.01"
+                  defaultValue={remittanceSettings.percentage}
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="remittance-fixed">
+                  Fixed Amount (optional override)
+                </Label>
+                <Input
+                  id="remittance-fixed"
+                  name="fixed_amount"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  defaultValue={remittanceSettings.fixed_amount ?? ""}
+                  placeholder="Leave blank to use percentage"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="remittance-destination">Destination</Label>
+                <select
+                  id="remittance-destination"
+                  name="destination"
+                  defaultValue={remittanceSettings.destination}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <option value="conference">Conference</option>
+                  <option value="mission">Mission</option>
+                  <option value="union">Union</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="remittance-frequency">Frequency</Label>
+                <select
+                  id="remittance-frequency"
+                  name="frequency"
+                  defaultValue={remittanceSettings.frequency}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <option value="daily">Daily</option>
+                  <option value="weekly">Weekly</option>
+                  <option value="monthly">Monthly</option>
+                  <option value="manual">Manual trigger</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="remittance-mode">Mode</Label>
+                <select
+                  id="remittance-mode"
+                  name="mode"
+                  defaultValue={remittanceSettings.mode}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <option value="auto_create">Auto-create</option>
+                  <option value="auto_process">Auto-process</option>
+                </select>
+              </div>
+
+              <div className="space-y-1.5">
+                <Label htmlFor="remittance-override">Allow manual override</Label>
+                <select
+                  id="remittance-override"
+                  name="allow_override"
+                  defaultValue={remittanceSettings.allow_override ? "true" : "false"}
+                  className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                >
+                  <option value="true">{t.common.yes}</option>
+                  <option value="false">{t.common.no}</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              <Button type="submit" disabled={remittancePending}>
+                {remittancePending ? t.common.loading : "Save Remittance Settings"}
+              </Button>
+            </div>
+          </form>
+
+          <form action={runFormAction}>
+            <input type="hidden" name="churchSlug" value={churchSlug} />
+            <input type="hidden" name="manualOverride" value="true" />
+            <Button type="submit" variant="outline" disabled={runPending}>
+              {runPending ? "Running..." : "Run Remittance Now"}
+            </Button>
+          </form>
+        </div>
       </CardContent>
     </Card>
   );

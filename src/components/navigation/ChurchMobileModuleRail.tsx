@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useI18n } from "@/features/i18n";
 import { cn } from "@/lib/utils/cn";
+import { OFFICE_ALLOWED_ROLES } from "@/lib/constants/access";
 
 type ChurchMobileModuleRailProps = {
   churchSlug: string;
@@ -11,19 +12,115 @@ type ChurchMobileModuleRailProps = {
   roleLabel?: string;
 };
 
-const OFFICE_ALLOWED_ROLES = new Set([
-  "Clerk",
-  "Church Secretary",
-  "Church Admin",
-  "Pastor",
-  "Platform Owner",
-  "Platform Admin",
-  "Platform Support",
-]);
+type ModuleSubItem = {
+  label: string;
+  href: string;
+  exact?: boolean;
+};
 
 function isPathActive(pathname: string, href: string, exact = false) {
   if (exact) return pathname === href;
   return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function getModuleSubItems({
+  pathname,
+  base,
+  t,
+  showAccessControl,
+  canOpenOffice,
+}: {
+  pathname: string;
+  base: string;
+  t: any;
+  showAccessControl: boolean;
+  canOpenOffice: boolean;
+}): ModuleSubItem[] {
+  if (pathname === base) {
+    return [];
+  }
+
+  if (pathname.startsWith(`${base}/treasury`)) {
+    return [
+      { label: "Overview", href: `${base}/treasury`, exact: true },
+      { label: "Money In", href: `${base}/treasury/in` },
+      { label: "Money Out", href: `${base}/treasury/out` },
+      { label: t.navigation.approvals, href: `${base}/treasury/approvals` },
+      { label: t.navigation.reports, href: `${base}/treasury/audit` },
+    ];
+  }
+
+  if (pathname.startsWith(`${base}/members`)) {
+    return [
+      { label: "All Members", href: `${base}/members`, exact: true },
+      { label: "Add Member", href: `${base}/members/new` },
+      { label: t.navigation.households, href: `${base}/households` },
+    ];
+  }
+
+  if (pathname.startsWith(`${base}/households`)) {
+    return [
+      { label: t.navigation.households, href: `${base}/households`, exact: true },
+      { label: "Add Household", href: `${base}/households/new` },
+      { label: t.navigation.members, href: `${base}/members` },
+    ];
+  }
+
+  if (pathname.startsWith(`${base}/departments`)) {
+    return [
+      { label: "All Departments", href: `${base}/departments`, exact: true },
+      { label: "Add Department", href: `${base}/departments/new` },
+      { label: t.navigation.members, href: `${base}/members` },
+    ];
+  }
+
+  if (pathname.startsWith(`${base}/events`) || pathname.startsWith(`${base}/calendar`)) {
+    return [
+      { label: "All Events", href: `${base}/events`, exact: true },
+      { label: t.navigation.calendar, href: `${base}/calendar` },
+      { label: "Add Event", href: `${base}/events?tab=create_event` },
+      ...(showAccessControl ? [{ label: t.navigation.approvals, href: `${base}/approvals` }] : []),
+    ];
+  }
+
+  if (pathname.startsWith(`${base}/approvals`)) {
+    return [
+      { label: t.navigation.approvals, href: `${base}/approvals`, exact: true },
+      { label: t.navigation.events, href: `${base}/events` },
+      { label: t.navigation.treasury, href: `${base}/treasury` },
+    ];
+  }
+
+  if (pathname.startsWith(`${base}/access-control`) && showAccessControl) {
+    return [
+      { label: "Permissions", href: `${base}/access-control?tab=permissions` },
+      { label: "Invites", href: `${base}/access-control?tab=invites` },
+      { label: "Requests", href: `${base}/access-control?tab=pending_access` },
+    ];
+  }
+
+  if (pathname.startsWith(`${base}/reports`)) {
+    return [
+      { label: t.navigation.reports, href: `${base}/reports`, exact: true },
+      { label: t.navigation.treasury, href: `${base}/treasury` },
+    ];
+  }
+
+  if (pathname.startsWith(`${base}/office`) && canOpenOffice) {
+    return [
+      { label: t.navigation.office || "Office", href: `${base}/office`, exact: true },
+      { label: t.navigation.approvals, href: `${base}/approvals` },
+    ];
+  }
+
+  if (pathname.startsWith(`${base}/settings`)) {
+    return [
+      { label: t.navigation.settings, href: `${base}/settings`, exact: true },
+      { label: t.navigation.dashboard, href: `${base}` },
+    ];
+  }
+
+  return [];
 }
 
 export function ChurchMobileModuleRail({
@@ -36,29 +133,19 @@ export function ChurchMobileModuleRail({
 
   const base = `/c/${churchSlug}`;
   const canOpenOffice = roleLabel ? OFFICE_ALLOWED_ROLES.has(roleLabel) : false;
+  const items = getModuleSubItems({
+    pathname,
+    base,
+    t,
+    showAccessControl,
+    canOpenOffice,
+  });
 
-  const items = [
-    { label: t.navigation.dashboard, href: base, exact: true },
-    { label: t.navigation.members, href: `${base}/members` },
-    { label: t.navigation.households, href: `${base}/households` },
-    { label: t.navigation.departments, href: `${base}/departments` },
-    { label: t.navigation.events, href: `${base}/events` },
-    { label: t.navigation.calendar, href: `${base}/calendar` },
-    { label: t.navigation.treasury, href: `${base}/treasury` },
-    { label: t.navigation.reports, href: `${base}/reports` },
-    { label: t.navigation.approvals, href: `${base}/approvals` },
-    ...(showAccessControl
-      ? [{ label: t.navigation.accessControl || "Invites & Access", href: `${base}/access-control` }]
-      : []),
-    { label: t.navigation.announcements || "Announcements", href: `${base}/announcements` },
-    { label: t.navigation.leadership || "Leadership", href: `${base}/leadership` },
-    ...(canOpenOffice ? [{ label: t.navigation.office || "Church Office", href: `${base}/office` }] : []),
-    { label: t.navigation.settings, href: `${base}/settings` },
-  ];
+  if (items.length === 0) return null;
 
   return (
-    <div className="border-t border-slate-100 bg-white px-4 py-2 md:hidden">
-      <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
+    <div className="border-t border-slate-100 bg-white px-3 py-2 md:hidden">
+      <div className="flex gap-1.5 overflow-x-auto">
         {items.map((item) => {
           const active = isPathActive(pathname, item.href, item.exact);
 
@@ -67,10 +154,10 @@ export function ChurchMobileModuleRail({
               key={item.href}
               href={item.href}
               className={cn(
-                "mobile-touch-feedback shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition",
+                "mobile-touch-feedback inline-flex min-h-[40px] shrink-0 items-center rounded-full border px-3 py-2 text-xs font-medium transition",
                 active
                   ? "border-blue-200 bg-blue-50 text-blue-700"
-                  : "border-slate-200 bg-white text-slate-700 hover:bg-slate-50"
+                  : "border-transparent bg-transparent text-slate-600 hover:bg-slate-100"
               )}
             >
               {item.label}

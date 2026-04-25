@@ -5,8 +5,14 @@ import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { requireChurchRole } from "@/features/access/queries";
 import type { ActionState } from "@/features/access/types";
-import type { TreasuryFinanceSettings } from "@/features/treasury/types";
-import { TREASURY_MANAGEMENT_ROLE_CODES } from "@/lib/domain/church-access";
+import type {
+  TreasuryFinanceSettings,
+  TreasuryRemittanceSettings,
+} from "@/features/treasury/types";
+import {
+  TREASURY_MANAGEMENT_ROLE_CODES,
+  TREASURY_TRANSFER_ROLE_CODES,
+} from "@/lib/domain/church-access";
 import { getNumber, getString } from "@/lib/domain/validation";
 import { isMissingColumnError, isMissingRelationError } from "@/lib/supabase/errors";
 import {
@@ -54,7 +60,14 @@ function mergePaymentMethodIntoNote(note: string | null, paymentMethod: string |
   return [paymentLine, note].filter(Boolean).join("\n");
 }
 
-function mapTreasuryWriteErrorMessage(rawMessage: string, sourceTable: "treasury_inflows" | "treasury_outflows" | "treasury_funds") {
+function mapTreasuryWriteErrorMessage(
+  rawMessage: string,
+  sourceTable:
+    | "treasury_inflows"
+    | "treasury_outflows"
+    | "treasury_funds"
+    | "treasury_fund_transfers"
+) {
   const message = rawMessage || "Treasury write failed.";
   const normalized = message.toLowerCase();
 
@@ -68,6 +81,9 @@ function mapTreasuryWriteErrorMessage(rawMessage: string, sourceTable: "treasury
     }
     if (sourceTable === "treasury_outflows") {
       return "Expense entry is blocked by treasury_outflows RLS policy. Ensure insert/update policies allow active church treasury managers (church_admin, pastor, treasurer) for this church and keep church_id scoped to the active church.";
+    }
+    if (sourceTable === "treasury_fund_transfers") {
+      return "Fund transfer is blocked by treasury_fund_transfers RLS policy. Ensure insert policy allows active church treasury managers (church_admin, treasurer, pastor) within their church.";
     }
     return "Fund write is blocked by treasury_funds RLS policy. Ensure insert/update policies allow active church treasury managers (church_admin, pastor, treasurer) only within their church.";
   }
@@ -102,6 +118,23 @@ const DEFAULT_TREASURY_FINANCE_SETTINGS: TreasuryFinanceSettings = {
   updated_at: null,
 };
 
+const DEFAULT_TREASURY_REMITTANCE_SETTINGS: TreasuryRemittanceSettings = {
+  is_enabled: false,
+  is_live: false,
+  tithe_enabled: true,
+  tithe_percentage: 100,
+  offering_enabled: false,
+  offering_percentage: 100,
+  source_type: "tithe",
+  percentage: 100,
+  fixed_amount: null,
+  destination: "conference",
+  frequency: "manual",
+  mode: "auto_create",
+  allow_override: true,
+  updated_at: null,
+};
+
 function boolFromUnknown(value: unknown, fallback: boolean) {
   if (typeof value === "boolean") return value;
   if (typeof value === "number") return value !== 0;
@@ -111,6 +144,382 @@ function boolFromUnknown(value: unknown, fallback: boolean) {
     if (["false", "0", "no", "off", "disabled"].includes(normalized)) return false;
   }
   return fallback;
+}
+
+function numberFromUnknown(value: unknown, fallback: number) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function normalizeRemittanceSourceType(
+  value: unknown
+): TreasuryRemittanceSettings["source_type"] {
+  const normalized = typeof value === "string" ? value.toLowerCase().trim() : "";
+  if (normalized === "tithe" || normalized === "offering" || normalized === "both") {
+    return normalized;
+  }
+  return DEFAULT_TREASURY_REMITTANCE_SETTINGS.source_type;
+}
+
+function normalizeRemittanceDestination(
+  value: unknown
+): TreasuryRemittanceSettings["destination"] {
+  const normalized = typeof value === "string" ? value.toLowerCase().trim() : "";
+  if (normalized === "conference" || normalized === "mission" || normalized === "union") {
+    return normalized;
+  }
+  return DEFAULT_TREASURY_REMITTANCE_SETTINGS.destination;
+}
+
+function normalizeRemittanceFrequency(
+  value: unknown
+): TreasuryRemittanceSettings["frequency"] {
+  const normalized = typeof value === "string" ? value.toLowerCase().trim() : "";
+  if (normalized === "daily" || normalized === "weekly" || normalized === "monthly" || normalized === "manual") {
+    return normalized;
+  }
+  return DEFAULT_TREASURY_REMITTANCE_SETTINGS.frequency;
+}
+
+function normalizeRemittanceMode(value: unknown): TreasuryRemittanceSettings["mode"] {
+  const normalized = typeof value === "string" ? value.toLowerCase().trim() : "";
+  if (normalized === "auto_create" || normalized === "auto_process") return normalized;
+  return DEFAULT_TREASURY_REMITTANCE_SETTINGS.mode;
+}
+
+function normalizeRemittanceSettings(
+  row: Record<string, unknown> | null
+): TreasuryRemittanceSettings {
+  if (!row) return { ...DEFAULT_TREASURY_REMITTANCE_SETTINGS };
+
+  const legacySourceType = normalizeRemittanceSourceType(row.source_type);
+  const legacyPercentage = Math.max(
+    0,
+    Math.min(
+      100,
+      numberFromUnknown(row.percentage, DEFAULT_TREASURY_REMITTANCE_SETTINGS.percentage)
+    )
+  );
+
+  return {
+    is_enabled: boolFromUnknown(
+      row.is_enabled,
+      DEFAULT_TREASURY_REMITTANCE_SETTINGS.is_enabled
+    ),
+    is_live: boolFromUnknown(
+      row.is_live,
+      DEFAULT_TREASURY_REMITTANCE_SETTINGS.is_live
+    ),
+    tithe_enabled: boolFromUnknown(
+      row.tithe_enabled,
+      legacySourceType === "tithe" || legacySourceType === "both"
+    ),
+    tithe_percentage: Math.max(
+      0,
+      Math.min(100, numberFromUnknown(row.tithe_percentage, legacyPercentage))
+    ),
+    offering_enabled: boolFromUnknown(
+      row.offering_enabled,
+      legacySourceType === "offering" || legacySourceType === "both"
+    ),
+    offering_percentage: Math.max(
+      0,
+      Math.min(100, numberFromUnknown(row.offering_percentage, legacyPercentage))
+    ),
+    source_type: legacySourceType,
+    percentage: legacyPercentage,
+    fixed_amount:
+      row.fixed_amount === null || row.fixed_amount === undefined
+        ? null
+        : Math.max(0, numberFromUnknown(row.fixed_amount, 0)),
+    destination: normalizeRemittanceDestination(row.destination),
+    frequency: normalizeRemittanceFrequency(row.frequency),
+    mode: normalizeRemittanceMode(row.mode),
+    allow_override: boolFromUnknown(
+      row.allow_override,
+      DEFAULT_TREASURY_REMITTANCE_SETTINGS.allow_override
+    ),
+    updated_at: typeof row.updated_at === "string" ? row.updated_at : null,
+  };
+}
+
+type RemittanceSettingsLoadResult = {
+  settings: TreasuryRemittanceSettings;
+  migrationRequired: boolean;
+};
+
+async function getTreasuryRemittanceSettings(
+  supabase: any,
+  churchId: string
+): Promise<RemittanceSettingsLoadResult> {
+  try {
+    const { data, error } = await supabase
+      .from("treasury_remittance_settings")
+      .select("*")
+      .eq("church_id", churchId)
+      .maybeSingle();
+
+    if (error) {
+      if (isMissingRelationError(error, "treasury_remittance_settings")) {
+        return {
+          settings: { ...DEFAULT_TREASURY_REMITTANCE_SETTINGS },
+          migrationRequired: true,
+        };
+      }
+      return {
+        settings: { ...DEFAULT_TREASURY_REMITTANCE_SETTINGS },
+        migrationRequired: false,
+      };
+    }
+
+    return {
+      settings: normalizeRemittanceSettings(
+        (data ?? null) as Record<string, unknown> | null
+      ),
+      migrationRequired: false,
+    };
+  } catch {
+    return {
+      settings: { ...DEFAULT_TREASURY_REMITTANCE_SETTINGS },
+      migrationRequired: false,
+    };
+  }
+}
+
+function getNextExpectedRemittanceDate(
+  frequency: TreasuryRemittanceSettings["frequency"],
+  lastRunDate: string | null
+) {
+  if (frequency === "manual") return null;
+
+  const base = lastRunDate ? new Date(`${lastRunDate}T00:00:00`) : new Date();
+  if (Number.isNaN(base.getTime())) return null;
+
+  if (frequency === "daily") base.setDate(base.getDate() + 1);
+  if (frequency === "weekly") base.setDate(base.getDate() + 7);
+  if (frequency === "monthly") base.setMonth(base.getMonth() + 1);
+
+  const year = base.getFullYear();
+  const month = String(base.getMonth() + 1).padStart(2, "0");
+  const day = String(base.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+type PendingRemittanceAllocationRow = {
+  source_inflow_id: string;
+  source_fund_id: string;
+  inflow_type: "tithe" | "offering";
+  inflow_amount: number;
+  remitted_amount: number;
+  amount: number;
+  inflow_date: string;
+};
+
+function getRemittanceSourceRules(settings: TreasuryRemittanceSettings) {
+  return [
+    {
+      inflow_type: "tithe" as const,
+      enabled: settings.tithe_enabled,
+      percentage: settings.tithe_percentage,
+    },
+    {
+      inflow_type: "offering" as const,
+      enabled: settings.offering_enabled,
+      percentage: settings.offering_percentage,
+    },
+  ];
+}
+
+function getRemittanceSourceTypeFromRules(settings: TreasuryRemittanceSettings) {
+  if (settings.tithe_enabled && settings.offering_enabled) return "both" as const;
+  if (settings.offering_enabled) return "offering" as const;
+  return "tithe" as const;
+}
+
+async function getPendingRemittanceAllocations(
+  supabase: any,
+  churchId: string,
+  settings: TreasuryRemittanceSettings
+): Promise<PendingRemittanceAllocationRow[]> {
+  if (!settings.is_enabled) return [];
+
+  const activeRules = getRemittanceSourceRules(settings)
+    .filter((rule) => rule.enabled)
+    .map((rule) => ({
+      inflow_type: rule.inflow_type,
+      percentage: Math.max(0, Math.min(100, Number(rule.percentage || 0))),
+    }))
+    .filter((rule) => rule.percentage > 0);
+
+  if (activeRules.length === 0) return [];
+
+  const sourceTypes = activeRules.map((rule) => rule.inflow_type);
+
+  const { data: inflowRows, error: inflowError } = await supabase
+    .from("treasury_inflows")
+    .select("id, fund_id, inflow_type, amount, inflow_date")
+    .eq("church_id", churchId)
+    .in("inflow_type", sourceTypes)
+    .order("inflow_date", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (inflowError) {
+    throw new Error(inflowError.message);
+  }
+
+  const inflows = (inflowRows ?? [])
+    .map((row: any) => ({
+      id: String(row.id || ""),
+      source_fund_id: String(row.fund_id || ""),
+      inflow_type: String(row.inflow_type || ""),
+      inflow_amount: Number(row.amount || 0),
+      inflow_date: String(row.inflow_date || ""),
+    }))
+    .filter(
+      (row: {
+        id: string;
+        source_fund_id: string;
+        inflow_type: string;
+        inflow_amount: number;
+        inflow_date: string;
+      }) =>
+        Boolean(row.id) &&
+        Boolean(row.source_fund_id) &&
+        (row.inflow_type === "tithe" || row.inflow_type === "offering") &&
+        Number.isFinite(row.inflow_amount) &&
+        row.inflow_amount > 0
+    ) as Array<{
+    id: string;
+    source_fund_id: string;
+    inflow_type: "tithe" | "offering";
+    inflow_amount: number;
+    inflow_date: string;
+  }>;
+
+  if (inflows.length === 0) return [];
+
+  const inflowIds = Array.from(new Set(inflows.map((row) => row.id)));
+  const { data: allocationRows, error: allocationError } = await supabase
+    .from("treasury_inflow_allocations")
+    .select("source_inflow_id, amount, status")
+    .eq("church_id", churchId)
+    .eq("allocation_kind", "mission_remittance")
+    .in("source_inflow_id", inflowIds);
+
+  if (allocationError) {
+    if (isMissingRelationError(allocationError, "treasury_inflow_allocations")) {
+      return [];
+    }
+    throw new Error(allocationError.message);
+  }
+
+  const remittedByInflowId = new Map<string, number>();
+  for (const row of allocationRows ?? []) {
+    const inflowId = String((row as any).source_inflow_id || "");
+    if (!inflowId) continue;
+    const status = String((row as any).status || "").toLowerCase();
+    if (status === "failed" || status === "cancelled" || status === "voided") {
+      continue;
+    }
+    const amount = Number((row as any).amount || 0);
+    remittedByInflowId.set(
+      inflowId,
+      roundMoney((remittedByInflowId.get(inflowId) ?? 0) + amount)
+    );
+  }
+
+  const percentageByType = new Map<"tithe" | "offering", number>(
+    activeRules.map((rule) => [rule.inflow_type, rule.percentage] as const)
+  );
+
+  const transferByFundId = new Map<string, number>();
+  const { data: transferRows, error: transferError } = await supabase
+    .from("treasury_fund_transfers")
+    .select("source_fund_id, amount, reason, note")
+    .eq("church_id", churchId)
+    .order("transfer_date", { ascending: true })
+    .order("created_at", { ascending: true });
+
+  if (
+    !transferError &&
+    Array.isArray(transferRows) &&
+    transferRows.length > 0
+  ) {
+    for (const row of transferRows) {
+      const sourceFundId = String((row as any).source_fund_id || "");
+      if (!sourceFundId) continue;
+      const reason = String((row as any).reason || "").toLowerCase();
+      const note = String((row as any).note || "").toLowerCase();
+      const isRemittanceTransfer =
+        reason.includes("automatic remittance") || note.includes("auto remittance run");
+      if (!isRemittanceTransfer) continue;
+      const amount = Number((row as any).amount || 0);
+      if (!Number.isFinite(amount) || amount <= 0) continue;
+      transferByFundId.set(
+        sourceFundId,
+        roundMoney((transferByFundId.get(sourceFundId) ?? 0) + amount)
+      );
+    }
+  }
+
+  const trackedByFundId = new Map<string, number>();
+  for (const inflow of inflows) {
+    const remitted = remittedByInflowId.get(inflow.id) ?? 0;
+    if (remitted <= 0) continue;
+    trackedByFundId.set(
+      inflow.source_fund_id,
+      roundMoney((trackedByFundId.get(inflow.source_fund_id) ?? 0) + remitted)
+    );
+  }
+
+  const residualTransferByFundId = new Map<string, number>();
+  for (const [sourceFundId, transferAmount] of transferByFundId.entries()) {
+    const trackedAmount = trackedByFundId.get(sourceFundId) ?? 0;
+    const residual = roundMoney(transferAmount - trackedAmount);
+    if (residual > 0) {
+      residualTransferByFundId.set(sourceFundId, residual);
+    }
+  }
+
+  const candidates: PendingRemittanceAllocationRow[] = [];
+  for (const inflow of inflows) {
+    const configuredPercentage = percentageByType.get(inflow.inflow_type) ?? 0;
+    if (configuredPercentage <= 0) continue;
+
+    const targetAmount = roundMoney(
+      (inflow.inflow_amount * configuredPercentage) / 100
+    );
+    const alreadyRemitted = remittedByInflowId.get(inflow.id) ?? 0;
+    const pendingAmount = roundMoney(targetAmount - alreadyRemitted);
+    if (pendingAmount <= 0) continue;
+
+    candidates.push({
+      source_inflow_id: inflow.id,
+      source_fund_id: inflow.source_fund_id,
+      inflow_type: inflow.inflow_type,
+      inflow_amount: inflow.inflow_amount,
+      remitted_amount: alreadyRemitted,
+      amount: pendingAmount,
+      inflow_date: inflow.inflow_date,
+    });
+  }
+
+  if (residualTransferByFundId.size > 0) {
+    for (const inflow of candidates) {
+      const residual = residualTransferByFundId.get(inflow.source_fund_id) ?? 0;
+      if (residual <= 0) continue;
+      const reconcile = Math.min(inflow.amount, residual);
+      if (reconcile <= 0) continue;
+      inflow.remitted_amount = roundMoney(inflow.remitted_amount + reconcile);
+      inflow.amount = roundMoney(inflow.amount - reconcile);
+      residualTransferByFundId.set(
+        inflow.source_fund_id,
+        roundMoney(residual - reconcile)
+      );
+    }
+  }
+
+  return candidates.filter((row) => row.amount > 0);
 }
 
 function parseRuleString(row: Record<string, unknown>, keys: string[]) {
@@ -139,6 +548,178 @@ function normalizePercentage(value: number | null) {
 
 function roundMoney(value: number) {
   return Math.round(value * 100) / 100;
+}
+
+type RemittanceFundMeta = {
+  id: string;
+  name: string;
+  code: string;
+  wasCreated: boolean;
+};
+
+async function ensureRemittanceFundForChurch(
+  supabase: any,
+  churchId: string
+): Promise<RemittanceFundMeta> {
+  const { data: existingRows, error: existingError } = await supabase
+    .from("treasury_funds")
+    .select("id, name, code, is_active")
+    .eq("church_id", churchId)
+    .or("code.eq.remittance,name.eq.Remittance Fund")
+    .limit(5);
+
+  if (existingError) {
+    throw new Error(existingError.message);
+  }
+
+  const existing =
+    (existingRows ?? []).find((row: any) => String(row.code || "") === "remittance") ??
+    (existingRows ?? [])[0] ??
+    null;
+
+  if (existing) {
+    if (existing.is_active !== true) {
+      const { error: activateError } = await supabase
+        .from("treasury_funds")
+        .update({
+          is_active: true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("church_id", churchId)
+        .eq("id", existing.id);
+
+      if (activateError) {
+        throw new Error(
+          mapTreasuryWriteErrorMessage(activateError.message, "treasury_funds")
+        );
+      }
+    }
+
+    return {
+      id: String(existing.id),
+      name: String(existing.name || "Remittance Fund"),
+      code: String(existing.code || "remittance"),
+      wasCreated: false,
+    };
+  }
+
+  const createResult = await insertTreasuryFundWithFallback(supabase, {
+    church_id: churchId,
+    code: "remittance",
+    name: "Remittance Fund",
+    fund_type: "mission",
+    description:
+      "Dedicated destination fund for automatic remittance allocations.",
+    is_active: true,
+  });
+
+  if (!createResult.ok) {
+    const { data: fallbackRow, error: fallbackError } = await supabase
+      .from("treasury_funds")
+      .select("id, name, code")
+      .eq("church_id", churchId)
+      .eq("code", "remittance")
+      .maybeSingle();
+
+    if (fallbackError || !fallbackRow) {
+      throw new Error(
+        mapTreasuryWriteErrorMessage(createResult.error, "treasury_funds")
+      );
+    }
+
+    return {
+      id: String(fallbackRow.id),
+      name: String(fallbackRow.name || "Remittance Fund"),
+      code: String(fallbackRow.code || "remittance"),
+      wasCreated: false,
+    };
+  }
+
+  const { data: createdRow, error: createdRowError } = await supabase
+    .from("treasury_funds")
+    .select("id, name, code")
+    .eq("church_id", churchId)
+    .eq("code", "remittance")
+    .maybeSingle();
+
+  if (createdRowError || !createdRow) {
+    throw new Error(
+      createdRowError?.message ??
+        "Remittance fund was created but could not be loaded."
+    );
+  }
+
+  return {
+    id: String(createdRow.id),
+    name: String(createdRow.name || "Remittance Fund"),
+    code: String(createdRow.code || "remittance"),
+    wasCreated: true,
+  };
+}
+
+async function getFundBalancesByIdForChurch(supabase: any, churchId: string) {
+  const [inflowsRes, outflowsRes, transfersRes] = await Promise.all([
+    supabase
+      .from("treasury_inflows")
+      .select("fund_id, amount")
+      .eq("church_id", churchId),
+    supabase
+      .from("treasury_outflows")
+      .select("fund_id, amount")
+      .eq("church_id", churchId),
+    supabase
+      .from("treasury_fund_transfers")
+      .select("source_fund_id, destination_fund_id, amount")
+      .eq("church_id", churchId),
+  ]);
+
+  if (inflowsRes.error) throw new Error(inflowsRes.error.message);
+  if (outflowsRes.error) throw new Error(outflowsRes.error.message);
+  if (transfersRes.error) {
+    if (isMissingRelationError(transfersRes.error, "treasury_fund_transfers")) {
+      throw new Error(
+        "Fund transfers are not enabled yet. Apply the treasury fund transfers migration and retry."
+      );
+    }
+    throw new Error(transfersRes.error.message);
+  }
+
+  const balances = new Map<string, number>();
+
+  for (const row of inflowsRes.data ?? []) {
+    const fundId = String((row as any).fund_id || "");
+    if (!fundId) continue;
+    const amount = Number((row as any).amount || 0);
+    balances.set(fundId, roundMoney((balances.get(fundId) ?? 0) + amount));
+  }
+
+  for (const row of outflowsRes.data ?? []) {
+    const fundId = String((row as any).fund_id || "");
+    if (!fundId) continue;
+    const amount = Number((row as any).amount || 0);
+    balances.set(fundId, roundMoney((balances.get(fundId) ?? 0) - amount));
+  }
+
+  for (const row of transfersRes.data ?? []) {
+    const sourceFundId = String((row as any).source_fund_id || "");
+    const destinationFundId = String((row as any).destination_fund_id || "");
+    const amount = Number((row as any).amount || 0);
+
+    if (sourceFundId) {
+      balances.set(
+        sourceFundId,
+        roundMoney((balances.get(sourceFundId) ?? 0) - amount)
+      );
+    }
+    if (destinationFundId) {
+      balances.set(
+        destinationFundId,
+        roundMoney((balances.get(destinationFundId) ?? 0) + amount)
+      );
+    }
+  }
+
+  return balances;
 }
 
 async function getTreasuryFinanceSettings(
@@ -355,6 +936,43 @@ async function insertAllocationEntryWithFallback(
   }
 
   return false;
+}
+
+async function updateAllocationEntryWithFallback(
+  supabase: any,
+  churchId: string,
+  allocationId: string,
+  candidateRow: Record<string, unknown>
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const payload = { ...omitEmptyFields(candidateRow) };
+  const maxAttempts = 20;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const { error } = await supabase
+      .from("treasury_inflow_allocations")
+      .update(payload)
+      .eq("church_id", churchId)
+      .eq("id", allocationId);
+
+    if (!error) return { ok: true };
+
+    const message = String(error.message || "");
+    const missingColumnMatch =
+      message.match(/column ["']([^"']+)["']/i) ||
+      message.match(/Could not find the ['"]([^'"]+)['"] column/i);
+
+    if (missingColumnMatch) {
+      const column = missingColumnMatch[1];
+      if (column && Object.prototype.hasOwnProperty.call(payload, column)) {
+        delete payload[column];
+        continue;
+      }
+    }
+
+    return { ok: false, error: message || "Failed to update allocation row." };
+  }
+
+  return { ok: false, error: "Failed to update allocation row." };
 }
 
 async function insertTreasuryFundWithFallback(
@@ -1224,6 +1842,119 @@ export async function createTreasuryOutflowAction(
   }
 }
 
+export async function createTreasuryFundTransferAction(
+  _prevState: ActionState | null,
+  formData: FormData
+): Promise<ActionState> {
+  const churchSlug = getString(formData, "churchSlug");
+  const ctx = await requireChurchRole(churchSlug, TREASURY_TRANSFER_ROLE_CODES);
+  const supabase = await createClient();
+
+  const hasTransferRole = ctx.roles.some((role) =>
+    TREASURY_TRANSFER_ROLE_CODES.includes(role as any)
+  );
+  if (!hasTransferRole) {
+    return {
+      ok: false,
+      error:
+        "Only church admins, treasurers, and pastors can record fund transfers.",
+    };
+  }
+
+  const sourceFundId = getString(formData, "sourceFundId");
+  const destinationFundId = getString(formData, "destinationFundId");
+  const amount = getNumber(formData, "amount");
+  const transferDate = getString(formData, "transferDate");
+  const reason = getString(formData, "reason");
+  const referenceNumberInput = getString(formData, "referenceNumber");
+  const note = getString(formData, "note") || null;
+
+  if (!sourceFundId || !destinationFundId || !transferDate || !reason) {
+    return { ok: false, error: "Please complete all required transfer fields." };
+  }
+
+  if (sourceFundId === destinationFundId) {
+    return { ok: false, error: "From fund and To fund must be different." };
+  }
+
+  if (!Number.isFinite(amount) || amount <= 0) {
+    return { ok: false, error: "Transfer amount must be greater than zero." };
+  }
+
+  try {
+    const { data: fundRows, error: fundsError } = await supabase
+      .from("treasury_funds")
+      .select("id, name, code, is_active")
+      .eq("church_id", ctx.churchId)
+      .in("id", [sourceFundId, destinationFundId]);
+
+    if (fundsError) {
+      return {
+        ok: false,
+        error: fundsError.message,
+      };
+    }
+
+    const fundById = new Map((fundRows ?? []).map((fund: any) => [String(fund.id), fund]));
+    const sourceFund = fundById.get(sourceFundId);
+    const destinationFund = fundById.get(destinationFundId);
+
+    if (!sourceFund || !destinationFund) {
+      return {
+        ok: false,
+        error: "Selected funds must belong to this church.",
+      };
+    }
+
+    if (!sourceFund.is_active || !destinationFund.is_active) {
+      return {
+        ok: false,
+        error: "Transfers require both source and destination funds to be active.",
+      };
+    }
+
+    const referenceNumber =
+      referenceNumberInput || buildTreasuryReference("TTRF", transferDate);
+
+    const { error } = await supabase.from("treasury_fund_transfers").insert({
+      church_id: ctx.churchId,
+      source_fund_id: sourceFundId,
+      destination_fund_id: destinationFundId,
+      amount,
+      transfer_date: transferDate,
+      reason,
+      reference_number: referenceNumber,
+      note,
+      recorded_by_user_id: ctx.userId,
+    });
+
+    if (error) {
+      if (isMissingRelationError(error, "treasury_fund_transfers")) {
+        return {
+          ok: false,
+          error:
+            "Fund transfers are not enabled yet. Apply the treasury fund transfers migration and retry.",
+        };
+      }
+      return {
+        ok: false,
+        error: mapTreasuryWriteErrorMessage(
+          error.message,
+          "treasury_fund_transfers"
+        ),
+      };
+    }
+
+    revalidateTreasuryData(churchSlug);
+    return { ok: true, message: "Transfer recorded successfully." };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Failed to record transfer.",
+    };
+  }
+}
+
 export async function updateTreasuryInflowAction(
   _prevState: ActionState | null,
   formData: FormData
@@ -1637,4 +2368,518 @@ export async function updateTreasuryFinanceSettingsAction(
       error: error instanceof Error ? error.message : "Failed to update finance settings.",
     };
   }
+}
+
+export async function getTreasuryRemittanceSettingsAction(churchSlug: string): Promise<{
+  settings: TreasuryRemittanceSettings;
+  migrationRequired: boolean;
+  lastRunDate: string | null;
+  lastAmount: number | null;
+  nextExpectedRun: string | null;
+  pendingAmount: number;
+}> {
+  const ctx = await requireChurchRole(churchSlug, TREASURY_MANAGEMENT_ROLE_CODES);
+  const supabase = await createClient();
+  const remittanceSettingsLoad = await getTreasuryRemittanceSettings(
+    supabase,
+    ctx.churchId
+  );
+
+  let lastRunDate: string | null = null;
+  let lastAmount: number | null = null;
+  let remittanceLogsMissing = false;
+
+  const { data: lastLog, error: lastLogError } = await supabase
+    .from("treasury_remittance_logs")
+    .select("run_date, remitted_amount, created_at")
+    .eq("church_id", ctx.churchId)
+    .order("run_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (lastLogError) {
+    if (isMissingRelationError(lastLogError, "treasury_remittance_logs")) {
+      remittanceLogsMissing = true;
+    } else {
+      throw new Error(lastLogError.message);
+    }
+  } else if (lastLog) {
+    const runDate = String((lastLog as any).run_date || "");
+    lastRunDate = runDate || null;
+    lastAmount = Number((lastLog as any).remitted_amount || 0);
+  }
+
+  const pendingRows = await getPendingRemittanceAllocations(
+    supabase,
+    ctx.churchId,
+    remittanceSettingsLoad.settings
+  );
+  const pendingAmount = roundMoney(
+    pendingRows.reduce((sum, row) => sum + Number(row.amount || 0), 0)
+  );
+
+  return {
+    settings: remittanceSettingsLoad.settings,
+    migrationRequired:
+      remittanceSettingsLoad.migrationRequired || remittanceLogsMissing,
+    lastRunDate,
+    lastAmount,
+    nextExpectedRun: getNextExpectedRemittanceDate(
+      remittanceSettingsLoad.settings.frequency,
+      lastRunDate
+    ),
+    pendingAmount,
+  };
+}
+
+export async function updateTreasuryRemittanceSettingsAction(
+  _prevState: ActionState | null,
+  formData: FormData
+): Promise<ActionState> {
+  const churchSlug = getString(formData, "churchSlug");
+  const ctx = await requireChurchRole(churchSlug, TREASURY_MANAGEMENT_ROLE_CODES);
+  const supabase = await createClient();
+
+  const isEnabledValue = getString(formData, "is_enabled");
+  const isEnabled = isEnabledValue ? isEnabledValue === "true" : true;
+  const isLiveValue = getString(formData, "is_live");
+  const sourceType = normalizeRemittanceSourceType(getString(formData, "source_type"));
+  const percentageInput = getNumber(formData, "percentage");
+  const fixedAmountInput = getString(formData, "fixed_amount");
+  const destination = normalizeRemittanceDestination(getString(formData, "destination"));
+  const frequency = normalizeRemittanceFrequency(getString(formData, "frequency"));
+  const mode = normalizeRemittanceMode(getString(formData, "mode"));
+  const allowOverride = getString(formData, "allow_override") === "true";
+  const titheEnabledValue = getString(formData, "tithe_enabled");
+  const offeringEnabledValue = getString(formData, "offering_enabled");
+  const tithePercentageInput = getNumber(formData, "tithe_percentage");
+  const offeringPercentageInput = getNumber(formData, "offering_percentage");
+
+  const percentage = Math.max(
+    0,
+    Math.min(100, Number.isFinite(percentageInput) ? percentageInput : 100)
+  );
+  const titheEnabled =
+    titheEnabledValue.length > 0
+      ? titheEnabledValue === "true"
+      : sourceType === "tithe" || sourceType === "both";
+  const offeringEnabled =
+    offeringEnabledValue.length > 0
+      ? offeringEnabledValue === "true"
+      : sourceType === "offering" || sourceType === "both";
+  const tithePercentage = Math.max(
+    0,
+    Math.min(
+      100,
+      Number.isFinite(tithePercentageInput) ? tithePercentageInput : percentage
+    )
+  );
+  const offeringPercentage = Math.max(
+    0,
+    Math.min(
+      100,
+      Number.isFinite(offeringPercentageInput)
+        ? offeringPercentageInput
+        : percentage
+    )
+  );
+  const isLive =
+    isEnabled &&
+    (isLiveValue.length > 0 ? isLiveValue === "true" : isEnabledValue === "true");
+  const fixedAmount =
+    fixedAmountInput.trim().length > 0
+      ? Math.max(0, Number(fixedAmountInput))
+      : null;
+  const normalizedSourceType = getRemittanceSourceTypeFromRules({
+    ...DEFAULT_TREASURY_REMITTANCE_SETTINGS,
+    tithe_enabled: titheEnabled,
+    offering_enabled: offeringEnabled,
+  });
+  const normalizedPercentage = titheEnabled
+    ? tithePercentage
+    : offeringEnabled
+      ? offeringPercentage
+      : percentage;
+
+  if (isLive && !titheEnabled && !offeringEnabled) {
+    return {
+      ok: false,
+      error:
+        "Enable Tithe or Offering remittance before activating automatic remittance.",
+    };
+  }
+
+  try {
+    if (isLive) {
+      await ensureRemittanceFundForChurch(supabase, ctx.churchId);
+    }
+
+    const { data: existing, error: existingError } = await supabase
+      .from("treasury_remittance_settings")
+      .select("id")
+      .eq("church_id", ctx.churchId)
+      .maybeSingle();
+
+    if (existingError) {
+      if (isMissingRelationError(existingError, "treasury_remittance_settings")) {
+        return {
+          ok: false,
+          error:
+            "Automatic remittance settings are not enabled yet. Apply database/rls/20260425_treasury_auto_remittance.sql and retry.",
+        };
+      }
+      return { ok: false, error: existingError.message };
+    }
+
+    if (existing?.id) {
+      const { error: updateError } = await supabase
+        .from("treasury_remittance_settings")
+        .update({
+          is_enabled: isEnabled,
+          is_live: isLive,
+          tithe_enabled: titheEnabled,
+          tithe_percentage: tithePercentage,
+          offering_enabled: offeringEnabled,
+          offering_percentage: offeringPercentage,
+          source_type: normalizedSourceType,
+          percentage: normalizedPercentage,
+          fixed_amount: fixedAmount,
+          destination,
+          frequency,
+          mode,
+          allow_override: allowOverride,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("church_id", ctx.churchId)
+        .eq("id", existing.id);
+
+      if (updateError) {
+        return { ok: false, error: updateError.message };
+      }
+    } else {
+      const { error: insertError } = await supabase
+        .from("treasury_remittance_settings")
+        .insert({
+          church_id: ctx.churchId,
+          is_enabled: isEnabled,
+          is_live: isLive,
+          tithe_enabled: titheEnabled,
+          tithe_percentage: tithePercentage,
+          offering_enabled: offeringEnabled,
+          offering_percentage: offeringPercentage,
+          source_type: normalizedSourceType,
+          percentage: normalizedPercentage,
+          fixed_amount: fixedAmount,
+          destination,
+          frequency,
+          mode,
+          allow_override: allowOverride,
+        });
+
+      if (insertError) {
+        return { ok: false, error: insertError.message };
+      }
+    }
+
+    revalidatePath(`/c/${churchSlug}/settings`);
+    revalidatePath(`/c/${churchSlug}/treasury`);
+    return { ok: true, message: "Automatic remittance settings saved." };
+  } catch (error) {
+    return {
+      ok: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to save automatic remittance settings.",
+    };
+  }
+}
+
+export async function runTreasuryRemittanceNowAction(
+  _prevState: ActionState | null,
+  formData: FormData
+): Promise<ActionState> {
+  const churchSlug = getString(formData, "churchSlug");
+  const manualOverride = getString(formData, "manualOverride") === "true";
+  const ctx = await requireChurchRole(churchSlug, TREASURY_MANAGEMENT_ROLE_CODES);
+  const supabase = await createClient();
+
+  const remittanceSettingsLoad = await getTreasuryRemittanceSettings(
+    supabase,
+    ctx.churchId
+  );
+  if (remittanceSettingsLoad.migrationRequired) {
+    return {
+      ok: false,
+      error:
+        "Automatic remittance is not enabled yet. Apply database/rls/20260425_treasury_auto_remittance.sql and retry.",
+    };
+  }
+
+  const settings = remittanceSettingsLoad.settings;
+  if (!settings.is_enabled && !(settings.allow_override && manualOverride)) {
+    return {
+      ok: false,
+      error:
+        "Automatic remittance is disabled. Enable it in Treasury Settings or allow manual override first.",
+    };
+  }
+  if (!settings.is_live && !(settings.allow_override && manualOverride)) {
+    return {
+      ok: false,
+      error:
+        "Automatic remittance is not live. Turn on 'Activate Automatic Remittance' in Treasury Settings.",
+    };
+  }
+
+  const pendingRows = await getPendingRemittanceAllocations(
+    supabase,
+    ctx.churchId,
+    settings
+  );
+
+  if (pendingRows.length === 0) {
+    return {
+      ok: false,
+      error:
+        "No pending remittance amounts were found for the current rules.",
+    };
+  }
+
+  const remittanceFund = await ensureRemittanceFundForChurch(
+    supabase,
+    ctx.churchId
+  );
+  const runToken = `REM-${Date.now()}-${randomUUID().slice(0, 8)}`;
+  const runNote = `Auto remittance run ${runToken}`;
+  const runDate = new Date().toISOString().slice(0, 10);
+  const fixedAmount = settings.fixed_amount ?? null;
+
+  const sortedRows = [...pendingRows].sort((a, b) =>
+    String(a.inflow_date || "").localeCompare(String(b.inflow_date || ""))
+  );
+  let remainingCap =
+    fixedAmount && fixedAmount > 0 ? roundMoney(fixedAmount) : Number.POSITIVE_INFINITY;
+  const rowPlan = sortedRows.map((row) => {
+    if (remainingCap <= 0) {
+      return { ...row, processedAmount: 0 };
+    }
+    const processedAmount = Math.min(Number(row.amount || 0), remainingCap);
+    remainingCap = roundMoney(remainingCap - processedAmount);
+    return {
+      ...row,
+      processedAmount: roundMoney(processedAmount),
+    };
+  });
+
+  const processedRows = rowPlan.filter((row) => row.processedAmount > 0);
+  if (processedRows.length === 0) {
+    return {
+      ok: false,
+      error:
+        "Configured remittance rule produced 0 amount. Adjust percentages and retry.",
+    };
+  }
+
+  const processedAmount = roundMoney(
+    processedRows.reduce((sum, row) => sum + row.processedAmount, 0)
+  );
+  const sourceAmount = roundMoney(
+    processedRows.reduce((sum, row) => sum + Number(row.inflow_amount || 0), 0)
+  );
+
+  const amountsBySourceFundId = new Map<string, number>();
+  for (const row of processedRows) {
+    amountsBySourceFundId.set(
+      row.source_fund_id,
+      roundMoney(
+        (amountsBySourceFundId.get(row.source_fund_id) ?? 0) + row.processedAmount
+      )
+    );
+  }
+
+  const sourceFundIds = Array.from(amountsBySourceFundId.keys());
+  const { data: sourceFundRows, error: sourceFundError } = await supabase
+    .from("treasury_funds")
+    .select("id, name, code, is_active")
+    .eq("church_id", ctx.churchId)
+    .in("id", sourceFundIds);
+
+  if (sourceFundError) {
+    return { ok: false, error: sourceFundError.message };
+  }
+
+  const sourceFundById = new Map<string, any>(
+    (sourceFundRows ?? []).map((row: any) => [String(row.id), row])
+  );
+  const invalidSourceFundId = sourceFundIds.find((fundId) => {
+    const fund = sourceFundById.get(fundId);
+    return !fund || fund.is_active !== true;
+  });
+  if (invalidSourceFundId) {
+    return {
+      ok: false,
+      error:
+        "Automatic remittance can only run from active source funds. Reactivate required funds and retry.",
+    };
+  }
+
+  const fundBalances = await getFundBalancesByIdForChurch(supabase, ctx.churchId);
+  const insufficientFundLabels: string[] = [];
+  for (const fundId of sourceFundIds) {
+    const requiredAmount = amountsBySourceFundId.get(fundId) ?? 0;
+    const availableBalance = fundBalances.get(fundId) ?? 0;
+    if (requiredAmount - availableBalance > 0.0001) {
+      const label = sourceFundById.get(fundId)?.name ?? fundId;
+      insufficientFundLabels.push(
+        `${label} (needs ${formatCurrencyLabel(requiredAmount)}, available ${formatCurrencyLabel(
+          availableBalance
+        )})`
+      );
+    }
+  }
+
+  if (insufficientFundLabels.length > 0) {
+    return {
+      ok: false,
+      error: `Insufficient source fund balance for remittance: ${insufficientFundLabels.join(
+        "; "
+      )}.`,
+    };
+  }
+
+  const destinationLabel =
+    settings.destination.charAt(0).toUpperCase() + settings.destination.slice(1);
+  const transferPayload = sourceFundIds.map((sourceFundId) => ({
+    church_id: ctx.churchId,
+    source_fund_id: sourceFundId,
+    destination_fund_id: remittanceFund.id,
+    amount: amountsBySourceFundId.get(sourceFundId) ?? 0,
+    transfer_date: runDate,
+    reason: `Automatic remittance to ${destinationLabel}`,
+    reference_number: buildTreasuryReference("RMIT", runDate),
+    note: `${runNote} • destination=${destinationLabel}`,
+    recorded_by_user_id: ctx.userId,
+  }));
+
+  const { data: insertedTransfers, error: transferError } = await supabase
+    .from("treasury_fund_transfers")
+    .insert(transferPayload)
+    .select("reference_number, source_fund_id, amount");
+
+  if (transferError) {
+    if (isMissingRelationError(transferError, "treasury_fund_transfers")) {
+      return {
+        ok: false,
+        error:
+          "Fund transfers are not enabled yet. Apply the treasury fund transfers migration and retry.",
+      };
+    }
+    return {
+      ok: false,
+      error: mapTreasuryWriteErrorMessage(
+        transferError.message,
+        "treasury_fund_transfers"
+      ),
+    };
+  }
+
+  let trackingFailures = 0;
+  for (const row of processedRows) {
+    const insertOk = await insertAllocationEntryWithFallback(supabase, {
+      church_id: ctx.churchId,
+      source_inflow_id: row.source_inflow_id,
+      inflow_id: row.source_inflow_id,
+      treasury_inflow_id: row.source_inflow_id,
+      inflow_entry_id: row.source_inflow_id,
+      rule_id: null,
+      allocation_rule_id: null,
+      treasury_allocation_rule_id: null,
+      target_fund_id: remittanceFund.id,
+      fund_id: remittanceFund.id,
+      destination_fund_id: remittanceFund.id,
+      allocation_kind: "mission_remittance",
+      allocated_amount: row.processedAmount,
+      allocation_amount: row.processedAmount,
+      amount: row.processedAmount,
+      status: "processed",
+      allocation_status: "processed",
+      note: `Processed by ${runToken}`,
+      created_by_user_id: ctx.userId,
+      recorded_by_user_id: ctx.userId,
+    });
+
+    if (!insertOk) {
+      trackingFailures += 1;
+    }
+  }
+
+  const transferReferences = (insertedTransfers ?? [])
+    .map((row: any) => String(row.reference_number || "").trim())
+    .filter((value: string) => value.length > 0);
+  const sourceSummaries = sourceFundIds.map((fundId) => {
+    const amount = amountsBySourceFundId.get(fundId) ?? 0;
+    const name = sourceFundById.get(fundId)?.name ?? fundId;
+    return `${name}: ${formatCurrencyLabel(amount)}`;
+  });
+  const remittedFromTithe = roundMoney(
+    processedRows
+      .filter((row) => row.inflow_type === "tithe")
+      .reduce((sum, row) => sum + row.processedAmount, 0)
+  );
+  const remittedFromOffering = roundMoney(
+    processedRows
+      .filter((row) => row.inflow_type === "offering")
+      .reduce((sum, row) => sum + row.processedAmount, 0)
+  );
+  const effectiveSourceType = getRemittanceSourceTypeFromRules(settings);
+
+  const { error: remittanceLogError } = await supabase
+    .from("treasury_remittance_logs")
+    .insert({
+      church_id: ctx.churchId,
+      run_date: runDate,
+      source_type: effectiveSourceType,
+      source_amount: sourceAmount,
+      remitted_amount: processedAmount,
+      destination: settings.destination,
+      frequency: settings.frequency,
+      mode: settings.mode,
+      status: "processed",
+      outflow_reference: transferReferences.join(", "),
+      note: `Fund transfer to ${remittanceFund.name}. ${sourceSummaries.join(
+        " | "
+      )} • Tithe: ${formatCurrencyLabel(remittedFromTithe)} • Offering: ${formatCurrencyLabel(
+        remittedFromOffering
+      )}${trackingFailures > 0 ? ` • tracking_failures=${trackingFailures}` : ""}`,
+      recorded_by_user_id: ctx.userId,
+    });
+
+  let logWarning = "";
+  if (remittanceLogError) {
+    if (isMissingRelationError(remittanceLogError, "treasury_remittance_logs")) {
+      logWarning =
+        " Log table migration is not applied yet, so run history was not stored.";
+    } else {
+      return { ok: false, error: remittanceLogError.message };
+    }
+  }
+
+  revalidateTreasuryData(churchSlug);
+  revalidatePath(`/c/${churchSlug}/settings`);
+
+  const createdFundNote = remittanceFund.wasCreated
+    ? " Remittance Fund was created automatically."
+    : "";
+  const trackingWarning =
+    trackingFailures > 0
+      ? " Allocation tracking partially failed, but transfer-based reconciliation is active."
+      : "";
+  return {
+    ok: true,
+    message: `Remittance moved ${formatCurrencyLabel(
+      processedAmount
+    )} into ${remittanceFund.name}.${createdFundNote}${trackingWarning}${logWarning}`,
+  };
 }

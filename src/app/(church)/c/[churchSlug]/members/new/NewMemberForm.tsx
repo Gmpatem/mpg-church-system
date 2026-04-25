@@ -24,6 +24,8 @@ interface NewMemberFormProps {
   churchSlug: string;
   departments: Department[];
   households?: Household[];
+  embedded?: boolean;
+  onCreated?: () => void;
 }
 
 function Section({
@@ -50,6 +52,8 @@ export function NewMemberForm({
   churchSlug,
   departments,
   households = [],
+  embedded = false,
+  onCreated,
 }: NewMemberFormProps) {
   const [state, formAction, isPending] = useActionState(createMemberAction, null);
   const [sendInvite, setSendInvite] = useState(false);
@@ -100,23 +104,38 @@ export function NewMemberForm({
       });
   }, [churchSlug, inviteError, invitePending, inviteUrl, sendInvite, state]);
 
-  return (
-    <div className="mx-auto max-w-5xl">
-      <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
-        <div>
-          <h2 className="text-2xl font-bold text-slate-900">Add New Member</h2>
-          <p className="text-sm text-slate-600">
-            Create a member record now. Staff can enter essentials first, and the member can complete missing profile details later.
-          </p>
-        </div>
+  useEffect(() => {
+    if (!embedded || !onCreated || !state?.ok) return;
 
-        <Link
-          href={`/c/${churchSlug}/members`}
-          className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-        >
-          Back to Members
-        </Link>
-      </div>
+    if (!sendInvite) {
+      onCreated();
+      return;
+    }
+
+    if (inviteUrl || inviteError) {
+      onCreated();
+    }
+  }, [embedded, inviteError, inviteUrl, onCreated, sendInvite, state]);
+
+  return (
+    <div className={embedded ? "" : "mx-auto max-w-5xl"}>
+      {!embedded ? (
+        <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-center">
+          <div>
+            <h2 className="text-2xl font-bold text-slate-900">Add New Member</h2>
+            <p className="text-sm text-slate-600">
+              Create a member record now. Staff can enter essentials first, and the member can complete missing profile details later.
+            </p>
+          </div>
+
+          <Link
+            href={`/c/${churchSlug}/members`}
+            className="inline-flex items-center rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+          >
+            Back to Members
+          </Link>
+        </div>
+      ) : null}
 
       <form action={formAction} onSubmit={handleSubmit} className="space-y-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
         <input type="hidden" name="churchSlug" value={churchSlug} />
