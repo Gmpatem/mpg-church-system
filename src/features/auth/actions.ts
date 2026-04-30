@@ -67,6 +67,7 @@ export async function registerAction(
     password,
     options: {
       data: { full_name: fullName },
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || "https://mpg-church-system.vercel.app"}/auth/callback`,
     },
   });
 
