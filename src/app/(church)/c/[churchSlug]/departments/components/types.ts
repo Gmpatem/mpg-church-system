@@ -166,6 +166,62 @@ export type DepartmentWorkspaceStats = {
   pendingFundRequests: number;
 };
 
+export type DepartmentOverviewReportingPeriod = {
+  label: string;
+  startDate: string;
+  endDate: string;
+  value: string;
+};
+
+export type DepartmentOverviewFinanceBreakdown = {
+  departmentId: string;
+  departmentName: string;
+  primaryAmount: number | null;
+  spentAmount: number | null;
+  activityAmount: number | null;
+  utilizationPercent: number | null;
+};
+
+export type DepartmentsOverviewData = {
+  reportingPeriod: DepartmentOverviewReportingPeriod;
+  totalDepartments: number;
+  activeDepartments: number;
+  inactiveDepartments: number;
+  uniqueDepartmentMembers: number;
+  finance: {
+    currencyCode: string;
+    locale: string;
+    totalAmount: number | null;
+    totalSpent: number | null;
+    utilizationPercent: number | null;
+    departmentBreakdown: DepartmentOverviewFinanceBreakdown[];
+  };
+  topDepartments: Array<{
+    departmentId: string;
+    departmentName: string;
+    activeMemberCount: number;
+  }>;
+  upcomingActivities: Array<{
+    id: string;
+    title: string;
+    departmentId: string;
+    departmentName: string;
+    eventType: string;
+    startDatetime: string;
+  }>;
+  recentUpdates: Array<{
+    id: string;
+    title: string;
+    description: string;
+    departmentId: string | null;
+    departmentName: string | null;
+    actorName: string | null;
+    actorAvatarUrl: string | null;
+    createdAt: string;
+    source: "announcement" | "department" | "activity";
+  }>;
+};
+
 export type DepartmentWorkspaceCapabilities = {
   canManageDepartments: boolean;
   canManageAssignments: boolean;
@@ -182,6 +238,7 @@ export type DepartmentsWorkspaceData = {
     name: string;
   };
   stats: DepartmentWorkspaceStats;
+  overview: DepartmentsOverviewData;
   departments: DepartmentViewModel[];
   selectedDepartmentId: string | null;
   selectedBundle: DepartmentWorkspaceBundle | null;

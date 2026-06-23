@@ -11,6 +11,7 @@ import {
   type ActivityViewModel,
   type DepartmentViewModel,
   type DepartmentWorkspaceBundle,
+  type DepartmentsOverviewData,
   type DepartmentsWorkspaceData,
   type LeadershipAssignmentViewModel,
   type LeadershipRequestViewModel,
@@ -83,6 +84,136 @@ function isTransientFetchError(error: any) {
   return String(error?.message || "").toLowerCase().includes("fetch failed");
 }
 
+type DepartmentRow = {
+  id: string;
+  church_id: string;
+  department_name: string;
+  description: string | null;
+  code?: string | null;
+  is_active?: boolean | null;
+  created_at?: string | null;
+  updated_at?: string | null;
+};
+
+type AssignmentRow = {
+  id: string;
+  member_id: string | null;
+  department_id: string | null;
+  department_name: string | null;
+  is_active: boolean | null;
+};
+
+type MemberStatusRow = {
+  id: string;
+  membership_status: string | null;
+};
+
+type EventRow = {
+  id: string;
+  title: string;
+  event_type: string | null;
+  department_id: string | null;
+  start_datetime: string | null;
+  status: string | null;
+  created_at: string | null;
+};
+
+type EventDepartmentLinkRow = {
+  event_id: string;
+  department_id: string | null;
+};
+
+type AnnouncementRow = {
+  id: string;
+  title: string;
+  body: string | null;
+  department_id: string | null;
+  status: string | null;
+  published_at: string | null;
+  created_by_user_id: string | null;
+  created_at: string | null;
+};
+
+type ProfileRow = {
+  id: string;
+  full_name: string | null;
+  email: string | null;
+  avatar_url?: string | null;
+};
+
+type DepartmentFinanceRow = {
+  id: string;
+  department_id: string | null;
+  fund_id?: string | null;
+  amount: number | string | null;
+  inflow_date?: string | null;
+  outflow_date?: string | null;
+};
+
+type DepartmentFundRow = {
+  id: string;
+  department_id: string | null;
+};
+
+type FundTransferRow = {
+  id: string;
+  source_fund_id: string | null;
+  destination_fund_id: string | null;
+  amount: number | string | null;
+  transfer_date: string | null;
+};
+
+function toDateInputValue(date: Date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+function buildReportingPeriod(referenceDate = new Date()): DepartmentsOverviewData["reportingPeriod"] {
+  const year = referenceDate.getFullYear();
+  return {
+    label: `Jan 1 - Dec 31, ${year}`,
+    startDate: `${year}-01-01`,
+    endDate: `${year}-12-31`,
+    value: String(year),
+  };
+}
+
+function normalizeLookupName(value?: string | null) {
+  return (value ?? "").trim().toLowerCase();
+}
+
+function isDateWithinPeriod(value: string | null | undefined, period: DepartmentsOverviewData["reportingPeriod"]) {
+  if (!value) return false;
+  const time = new Date(value).getTime();
+  if (!Number.isFinite(time)) return false;
+
+  const start = new Date(`${period.startDate}T00:00:00`).getTime();
+  const end = new Date(`${period.endDate}T23:59:59`).getTime();
+  return time >= start && time <= end;
+}
+
+function isActiveMembershipStatus(status?: string | null) {
+  const normalized = normalizeLookupName(status);
+  return !["inactive", "transferred", "deceased", "removed", "archived"].includes(normalized);
+}
+
+function profileLabel(profile: ProfileRow | null | undefined) {
+  if (!profile) return null;
+  return profile.full_name || profile.email || null;
+}
+
+function resolveDepartmentId(
+  row: { department_id?: string | null; department_name?: string | null },
+  departmentIds: Set<string>,
+  departmentIdByName: Map<string, string>
+) {
+  if (row.department_id && departmentIds.has(row.department_id)) return row.department_id;
+  if (row.department_name) return departmentIdByName.get(normalizeLookupName(row.department_name)) ?? null;
+  return null;
+}
+
 function departmentFromRow(row: any, stats?: Partial<DepartmentViewModel>): DepartmentViewModel {
   return {
     id: row.id,
@@ -112,9 +243,11 @@ async function maybeRows<T>(promise: Promise<{ data: T[] | null; error: any }>, 
 }
 
 async function fetchRegistryRows(ctx: ChurchAccess, supabase: any) {
+  const reportingPeriod = buildReportingPeriod();
   const [
     departmentsResult,
     assignmentsResult,
+    membersResult,
     eventsResult,
     eventLinksResult,
     announcementsResult,
@@ -123,6 +256,7 @@ async function fetchRegistryRows(ctx: ChurchAccess, supabase: any) {
     fundsResult,
     inflowsResult,
     outflowsResult,
+    transfersResult,
   ] = await Promise.all([
     supabase
       .from("church_departments")
@@ -131,19 +265,23 @@ async function fetchRegistryRows(ctx: ChurchAccess, supabase: any) {
       .order("department_name", { ascending: true }),
     supabase
       .from("member_departments")
-      .select("id, department_id, department_name, is_active")
+      .select("id, member_id, department_id, department_name, is_active")
+      .eq("church_id", ctx.churchId),
+    supabase
+      .from("members")
+      .select("id, membership_status")
       .eq("church_id", ctx.churchId),
     supabase
       .from("church_events")
-      .select("id, department_id")
+      .select("id, title, event_type, department_id, start_datetime, status, created_at")
       .eq("church_id", ctx.churchId),
     supabase
       .from("church_event_departments")
-      .select("department_id")
+      .select("event_id, department_id")
       .eq("church_id", ctx.churchId),
     supabase
       .from("department_announcements")
-      .select("id, department_id, status")
+      .select("id, title, body, department_id, status, published_at, created_by_user_id, created_at")
       .eq("church_id", ctx.churchId),
     supabase
       .from("department_leadership_assignments")
@@ -159,22 +297,42 @@ async function fetchRegistryRows(ctx: ChurchAccess, supabase: any) {
       .eq("church_id", ctx.churchId),
     supabase
       .from("treasury_inflows")
-      .select("id, department_id, fund_id, amount")
+      .select("id, department_id, fund_id, amount, inflow_date")
       .eq("church_id", ctx.churchId),
     supabase
       .from("treasury_outflows")
-      .select("id, department_id, fund_id, amount")
+      .select("id, department_id, fund_id, amount, outflow_date")
+      .eq("church_id", ctx.churchId),
+    supabase
+      .from("treasury_fund_transfers")
+      .select("id, source_fund_id, destination_fund_id, amount, transfer_date")
       .eq("church_id", ctx.churchId),
   ]);
 
   if (departmentsResult.error) throw new Error(departmentsResult.error.message);
   if (assignmentsResult.error) throw new Error(assignmentsResult.error.message);
+  if (membersResult.error) throw new Error(membersResult.error.message);
   if (eventsResult.error) throw new Error(eventsResult.error.message);
 
-  const departments = departmentsResult.data ?? [];
-  const departmentIds = new Set(departments.map((department: any) => department.id));
-  const assignments = assignmentsResult.data ?? [];
-  const events = eventsResult.data ?? [];
+  const departments = (departmentsResult.data ?? []) as DepartmentRow[];
+  const departmentIds = new Set(departments.map((department) => department.id));
+  const departmentIdByName = new Map(
+    departments.map((department): [string, string] => [
+      normalizeLookupName(department.department_name),
+      department.id,
+    ])
+  );
+  const departmentNameById = new Map(
+    departments.map((department): [string, string] => [department.id, department.department_name])
+  );
+  const assignments = (assignmentsResult.data ?? []) as AssignmentRow[];
+  const memberStatusById = new Map(
+    ((membersResult.data ?? []) as MemberStatusRow[]).map((member): [string, string | null] => [
+      member.id,
+      member.membership_status,
+    ])
+  );
+  const events = (eventsResult.data ?? []) as EventRow[];
   const eventLinks = eventLinksResult.error
     ? isMissingRelationError(eventLinksResult.error, "church_event_departments") ||
       isTransientFetchError(eventLinksResult.error)
@@ -182,7 +340,7 @@ async function fetchRegistryRows(ctx: ChurchAccess, supabase: any) {
       : (() => {
           throw new Error(eventLinksResult.error.message);
         })()
-    : eventLinksResult.data ?? [];
+    : ((eventLinksResult.data ?? []) as EventDepartmentLinkRow[]);
   const announcements = announcementsResult.error
     ? isMissingRelationError(announcementsResult.error, "department_announcements") ||
       isTransientFetchError(announcementsResult.error)
@@ -190,7 +348,7 @@ async function fetchRegistryRows(ctx: ChurchAccess, supabase: any) {
       : (() => {
           throw new Error(announcementsResult.error.message);
         })()
-    : announcementsResult.data ?? [];
+    : ((announcementsResult.data ?? []) as AnnouncementRow[]);
   const leadershipAssignments = leadershipResult.error
     ? isMissingRelationError(leadershipResult.error, "department_leadership_assignments") ||
       isTransientFetchError(leadershipResult.error)
@@ -214,7 +372,7 @@ async function fetchRegistryRows(ctx: ChurchAccess, supabase: any) {
       : (() => {
           throw new Error(fundsResult.error.message);
         })()
-    : fundsResult.data ?? [];
+    : ((fundsResult.data ?? []) as DepartmentFundRow[]);
   const inflows = inflowsResult.error
     ? isMissingColumnError(inflowsResult.error, "department_id") ||
       isTransientFetchError(inflowsResult.error)
@@ -222,7 +380,7 @@ async function fetchRegistryRows(ctx: ChurchAccess, supabase: any) {
       : (() => {
           throw new Error(inflowsResult.error.message);
         })()
-    : inflowsResult.data ?? [];
+    : ((inflowsResult.data ?? []) as DepartmentFinanceRow[]);
   const outflows = outflowsResult.error
     ? isMissingColumnError(outflowsResult.error, "department_id") ||
       isTransientFetchError(outflowsResult.error)
@@ -230,9 +388,51 @@ async function fetchRegistryRows(ctx: ChurchAccess, supabase: any) {
       : (() => {
           throw new Error(outflowsResult.error.message);
         })()
-    : outflowsResult.data ?? [];
+    : ((outflowsResult.data ?? []) as DepartmentFinanceRow[]);
+  const transfers = transfersResult.error
+    ? isMissingRelationError(transfersResult.error, "treasury_fund_transfers") ||
+      isTransientFetchError(transfersResult.error)
+      ? []
+      : (() => {
+          throw new Error(transfersResult.error.message);
+        })()
+    : ((transfersResult.data ?? []) as FundTransferRow[]);
+
+  const creatorIds = Array.from(
+    new Set(announcements.map((announcement) => announcement.created_by_user_id).filter(Boolean))
+  ) as string[];
+  const profileResult =
+    creatorIds.length > 0
+      ? await supabase.from("profiles").select("id, full_name, email").in("id", creatorIds)
+      : { data: [], error: null };
+
+  if (profileResult.error) throw new Error(profileResult.error.message);
+
+  const profileById = new Map(
+    ((profileResult.data ?? []) as ProfileRow[]).map((profile): [string, ProfileRow] => [
+      profile.id,
+      profile,
+    ])
+  );
 
   const statsByDepartment = new Map<string, Partial<DepartmentViewModel>>();
+  const memberIdsByDepartment = new Map<string, Set<string>>();
+  const activeMemberIdsByDepartment = new Map<string, Set<string>>();
+  const inactiveMemberIdsByDepartment = new Map<string, Set<string>>();
+  const uniqueActiveMemberIds = new Set<string>();
+  const eventIdsByDepartment = new Map<string, Set<string>>();
+  const financeByDepartment = new Map<
+    string,
+    {
+      balance: number;
+      totalIncome: number;
+      totalExpenses: number;
+      periodIncome: number;
+      periodExpenses: number;
+      periodActivity: number;
+      touched: boolean;
+    }
+  >();
 
   function patch(departmentId: string | null | undefined, next: Partial<DepartmentViewModel>) {
     if (!departmentId || !departmentIds.has(departmentId)) return;
@@ -240,35 +440,69 @@ async function fetchRegistryRows(ctx: ChurchAccess, supabase: any) {
     statsByDepartment.set(departmentId, { ...current, ...next });
   }
 
+  function departmentMembers(map: Map<string, Set<string>>, departmentId: string) {
+    const current = map.get(departmentId) ?? new Set<string>();
+    map.set(departmentId, current);
+    return current;
+  }
+
+  function departmentFinance(departmentId: string) {
+    const current =
+      financeByDepartment.get(departmentId) ?? {
+        balance: 0,
+        totalIncome: 0,
+        totalExpenses: 0,
+        periodIncome: 0,
+        periodExpenses: 0,
+        periodActivity: 0,
+        touched: false,
+      };
+    financeByDepartment.set(departmentId, current);
+    return current;
+  }
+
+  function addEventToDepartment(eventId: string, departmentId: string | null | undefined) {
+    if (!departmentId || !departmentIds.has(departmentId)) return;
+    const current = eventIdsByDepartment.get(departmentId) ?? new Set<string>();
+    current.add(eventId);
+    eventIdsByDepartment.set(departmentId, current);
+  }
+
   for (const assignment of assignments) {
-    const departmentId = assignment.department_id;
-    const current = statsByDepartment.get(departmentId) ?? {};
+    const departmentId = resolveDepartmentId(assignment, departmentIds, departmentIdByName);
+    if (!departmentId || !assignment.member_id) continue;
+
+    departmentMembers(memberIdsByDepartment, departmentId).add(assignment.member_id);
+    const isActiveAssignment = assignment.is_active !== false;
+    const isActiveMember = isActiveMembershipStatus(memberStatusById.get(assignment.member_id));
+
+    if (isActiveAssignment && isActiveMember) {
+      departmentMembers(activeMemberIdsByDepartment, departmentId).add(assignment.member_id);
+      uniqueActiveMemberIds.add(assignment.member_id);
+    } else {
+      departmentMembers(inactiveMemberIdsByDepartment, departmentId).add(assignment.member_id);
+    }
+  }
+
+  for (const [departmentId, memberIds] of memberIdsByDepartment.entries()) {
     patch(departmentId, {
-      memberCount: (current.memberCount ?? 0) + 1,
-      activeMemberCount:
-        assignment.is_active === false
-          ? current.activeMemberCount ?? 0
-          : (current.activeMemberCount ?? 0) + 1,
-      inactiveMemberCount:
-        assignment.is_active === false
-          ? (current.inactiveMemberCount ?? 0) + 1
-          : current.inactiveMemberCount ?? 0,
+      memberCount: memberIds.size,
+      activeMemberCount: activeMemberIdsByDepartment.get(departmentId)?.size ?? 0,
+      inactiveMemberCount: inactiveMemberIdsByDepartment.get(departmentId)?.size ?? 0,
     });
   }
 
-  for (const event of events) {
-    const current = statsByDepartment.get(event.department_id) ?? {};
-    patch(event.department_id, { eventCount: (current.eventCount ?? 0) + 1 });
-  }
-
-  for (const link of eventLinks) {
-    const current = statsByDepartment.get(link.department_id) ?? {};
-    patch(link.department_id, { eventCount: (current.eventCount ?? 0) + 1 });
+  const eventById = new Map(events.map((event): [string, EventRow] => [event.id, event]));
+  for (const event of events) addEventToDepartment(event.id, event.department_id);
+  for (const link of eventLinks) addEventToDepartment(link.event_id, link.department_id);
+  for (const [departmentId, eventIds] of eventIdsByDepartment.entries()) {
+    patch(departmentId, { eventCount: eventIds.size });
   }
 
   for (const announcement of announcements) {
-    const current = statsByDepartment.get(announcement.department_id) ?? {};
-    patch(announcement.department_id, {
+    const departmentId = resolveDepartmentId(announcement, departmentIds, departmentIdByName);
+    const current = departmentId ? statsByDepartment.get(departmentId) ?? {} : {};
+    patch(departmentId, {
       announcementCount: (current.announcementCount ?? 0) + 1,
     });
   }
@@ -293,20 +527,203 @@ async function fetchRegistryRows(ctx: ChurchAccess, supabase: any) {
   }
 
   for (const inflow of inflows) {
-    const departmentId = inflow.department_id ?? fundDepartmentById.get(inflow.fund_id);
-    const current = statsByDepartment.get(departmentId) ?? {};
-    patch(departmentId, { balance: (current.balance ?? 0) + toMoney(inflow.amount) });
+    const departmentId =
+      inflow.department_id ??
+      (inflow.fund_id ? fundDepartmentById.get(inflow.fund_id) : undefined);
+    if (!departmentId || !departmentIds.has(departmentId)) continue;
+
+    const amount = toMoney(inflow.amount);
+    const current = departmentFinance(departmentId);
+    current.balance += amount;
+    current.totalIncome += amount;
+    current.touched = true;
+    if (isDateWithinPeriod(inflow.inflow_date, reportingPeriod)) {
+      current.periodIncome += amount;
+      current.periodActivity += amount;
+    }
   }
 
   for (const outflow of outflows) {
-    const departmentId = outflow.department_id ?? fundDepartmentById.get(outflow.fund_id);
-    const current = statsByDepartment.get(departmentId) ?? {};
-    patch(departmentId, { balance: (current.balance ?? 0) - toMoney(outflow.amount) });
+    const departmentId =
+      outflow.department_id ??
+      (outflow.fund_id ? fundDepartmentById.get(outflow.fund_id) : undefined);
+    if (!departmentId || !departmentIds.has(departmentId)) continue;
+
+    const amount = toMoney(outflow.amount);
+    const current = departmentFinance(departmentId);
+    current.balance -= amount;
+    current.totalExpenses += amount;
+    current.touched = true;
+    if (isDateWithinPeriod(outflow.outflow_date, reportingPeriod)) {
+      current.periodExpenses += amount;
+      current.periodActivity += amount;
+    }
   }
 
-  return departments.map((department: any) =>
+  for (const transfer of transfers) {
+    const amount = toMoney(transfer.amount);
+    const sourceDepartmentId = transfer.source_fund_id
+      ? fundDepartmentById.get(transfer.source_fund_id)
+      : null;
+    const destinationDepartmentId = transfer.destination_fund_id
+      ? fundDepartmentById.get(transfer.destination_fund_id)
+      : null;
+    const inPeriod = isDateWithinPeriod(transfer.transfer_date, reportingPeriod);
+
+    if (sourceDepartmentId && departmentIds.has(sourceDepartmentId)) {
+      const current = departmentFinance(sourceDepartmentId);
+      current.balance -= amount;
+      current.touched = true;
+      if (inPeriod) current.periodActivity += amount;
+    }
+
+    if (destinationDepartmentId && departmentIds.has(destinationDepartmentId)) {
+      const current = departmentFinance(destinationDepartmentId);
+      current.balance += amount;
+      current.touched = true;
+      if (inPeriod) current.periodActivity += amount;
+    }
+  }
+
+  for (const [departmentId, finance] of financeByDepartment.entries()) {
+    patch(departmentId, { balance: finance.touched ? finance.balance : null });
+  }
+
+  const departmentViews = departments.map((department) =>
     departmentFromRow(department, statsByDepartment.get(department.id))
   );
+
+  const financeRows = departmentViews
+    .map((department) => {
+      const finance = financeByDepartment.get(department.id);
+      if (!finance?.touched) return null;
+
+      return {
+        departmentId: department.id,
+        departmentName: department.name,
+        primaryAmount: finance.balance,
+        spentAmount: finance.periodExpenses,
+        activityAmount: finance.periodActivity,
+        utilizationPercent: null,
+      };
+    })
+    .filter((row): row is NonNullable<typeof row> => row !== null)
+    .sort((a, b) => {
+      const aValue = Math.abs(a.primaryAmount ?? 0) + (a.spentAmount ?? 0);
+      const bValue = Math.abs(b.primaryAmount ?? 0) + (b.spentAmount ?? 0);
+      return bValue - aValue;
+    })
+    .slice(0, 6);
+
+  const hasFinanceData = financeRows.length > 0;
+  const totalAmount = hasFinanceData
+    ? Array.from(financeByDepartment.values()).reduce(
+        (sum, finance) => sum + (finance.touched ? finance.balance : 0),
+        0
+      )
+    : null;
+  const totalSpent = hasFinanceData
+    ? Array.from(financeByDepartment.values()).reduce(
+        (sum, finance) => sum + (finance.touched ? finance.periodExpenses : 0),
+        0
+      )
+    : null;
+
+  const eventDepartmentPairs = new Map<string, string>();
+  for (const event of events) {
+    if (event.department_id && departmentIds.has(event.department_id)) {
+      eventDepartmentPairs.set(`${event.id}:${event.department_id}`, event.department_id);
+    }
+  }
+  for (const link of eventLinks) {
+    const event = eventById.get(link.event_id);
+    if (!event || !link.department_id || !departmentIds.has(link.department_id)) continue;
+    eventDepartmentPairs.set(`${event.id}:${link.department_id}`, link.department_id);
+  }
+
+  const nowTime = Date.now();
+  const upcomingActivities = Array.from(eventDepartmentPairs.entries())
+    .map(([key, departmentId]) => {
+      const eventId = key.split(":")[0];
+      const event = eventById.get(eventId);
+      if (!event?.start_datetime) return null;
+      const startTime = new Date(event.start_datetime).getTime();
+      if (!Number.isFinite(startTime) || startTime < nowTime) return null;
+      if (normalizeLookupName(event.status) === "cancelled") return null;
+
+      return {
+        id: key,
+        title: event.title,
+        departmentId,
+        departmentName: departmentNameById.get(departmentId) ?? "Department",
+        eventType: event.event_type ?? "department_activity",
+        startDatetime: event.start_datetime,
+      };
+    })
+    .filter((activity): activity is NonNullable<typeof activity> => activity !== null)
+    .sort((a, b) => new Date(a.startDatetime).getTime() - new Date(b.startDatetime).getTime())
+    .slice(0, 5);
+
+  const recentUpdates = [...announcements]
+    .filter((announcement) => {
+      const departmentId = resolveDepartmentId(announcement, departmentIds, departmentIdByName);
+      return Boolean(departmentId && announcement.created_at);
+    })
+    .sort((a, b) => {
+      const aTime = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const bTime = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return bTime - aTime;
+    })
+    .slice(0, 5)
+    .map((announcement) => {
+      const departmentId = resolveDepartmentId(announcement, departmentIds, departmentIdByName);
+      const profile = announcement.created_by_user_id
+        ? profileById.get(announcement.created_by_user_id)
+        : null;
+
+      return {
+        id: announcement.id,
+        title: announcement.title,
+        description: announcement.status
+          ? `Announcement ${announcement.status.replace(/_/g, " ")}`
+          : "Department announcement",
+        departmentId,
+        departmentName: departmentId ? departmentNameById.get(departmentId) ?? null : null,
+        actorName: profileLabel(profile),
+        actorAvatarUrl: null,
+        createdAt: announcement.created_at ?? new Date().toISOString(),
+        source: "announcement" as const,
+      };
+    });
+
+  const overview: DepartmentsOverviewData = {
+    reportingPeriod,
+    totalDepartments: departmentViews.length,
+    activeDepartments: departmentViews.filter((department) => department.isActive).length,
+    inactiveDepartments: departmentViews.filter((department) => !department.isActive).length,
+    uniqueDepartmentMembers: uniqueActiveMemberIds.size,
+    finance: {
+      currencyCode: "XAF",
+      locale: "fr-CM",
+      totalAmount,
+      totalSpent,
+      utilizationPercent: null,
+      departmentBreakdown: financeRows,
+    },
+    topDepartments: departmentViews
+      .filter((department) => department.activeMemberCount > 0)
+      .sort((a, b) => b.activeMemberCount - a.activeMemberCount)
+      .slice(0, 5)
+      .map((department) => ({
+        departmentId: department.id,
+        departmentName: department.name,
+        activeMemberCount: department.activeMemberCount,
+      })),
+    upcomingActivities,
+    recentUpdates,
+  };
+
+  return { departments: departmentViews, overview };
 }
 
 function toPerson(item: any): PersonViewModel {
@@ -706,10 +1123,14 @@ export async function getDepartmentsUnifiedWorkspaceData({
   const ctx = await requireChurchAccess(churchSlug);
   const supabase = await createClient();
 
-  const [departments, options] = await Promise.all([
+  const [registry, options] = await Promise.all([
     fetchRegistryRows(ctx, supabase),
     getDepartmentOptions(churchSlug),
-  ]) as [DepartmentViewModel[], Awaited<ReturnType<typeof getDepartmentOptions>>];
+  ]) as [
+    { departments: DepartmentViewModel[]; overview: DepartmentsOverviewData },
+    Awaited<ReturnType<typeof getDepartmentOptions>>,
+  ];
+  const { departments, overview } = registry;
 
   const selectedDepartmentId =
     departmentId && departments.some((department) => department.id === departmentId)
@@ -724,10 +1145,7 @@ export async function getDepartmentsUnifiedWorkspaceData({
     totalDepartments: departments.length,
     activeDepartments: departments.filter((department: DepartmentViewModel) => department.isActive).length,
     inactiveDepartments: departments.filter((department: DepartmentViewModel) => !department.isActive).length,
-    assignedMembers: departments.reduce(
-      (sum: number, department: DepartmentViewModel) => sum + department.activeMemberCount,
-      0
-    ),
+    assignedMembers: overview.uniqueDepartmentMembers,
     unassignedDepartments: departments.filter((department: DepartmentViewModel) => department.memberCount === 0).length,
     eventLinkedDepartments: departments.filter((department: DepartmentViewModel) => department.eventCount > 0).length,
     pendingFundRequests: departments.reduce(
@@ -743,6 +1161,7 @@ export async function getDepartmentsUnifiedWorkspaceData({
       name: ctx.churchName ?? ctx.churchSlug,
     },
     stats,
+    overview,
     departments,
     selectedDepartmentId,
     selectedBundle,

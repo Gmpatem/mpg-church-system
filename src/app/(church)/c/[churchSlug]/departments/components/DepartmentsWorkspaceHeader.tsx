@@ -25,7 +25,7 @@ import type {
 const tabCopy: Record<DepartmentTabKey, { title: string; description: string }> = {
   overview: {
     title: "Departments",
-    description: "Manage church departments, leaders, members, activities, and resources.",
+    description: "Manage church departments, leaders, members, and resources.",
   },
   "action-plan": {
     title: "Department Action Plan",
@@ -93,7 +93,7 @@ export function DepartmentsWorkspaceHeader({
   let action = (
     <Button
       type="button"
-      className="h-10 gap-2 rounded-lg font-semibold"
+      className="h-11 gap-2 rounded-lg font-semibold"
       disabled={!capabilities.canManageDepartments}
       onClick={() => onDialogChange({ type: "create-department" })}
     >

@@ -260,6 +260,15 @@ export function DepartmentsWorkspace({
     replaceWorkspaceQuery("budget", departmentId);
   }
 
+  function openActivities() {
+    setState((current) => ({
+      ...current,
+      activeTab: "activities",
+      activitiesState: { ...current.activitiesState, page: 1 },
+    }));
+    replaceWorkspaceQuery("activities", state.selectedDepartmentId);
+  }
+
   function updateOverviewState(next: Partial<DepartmentsWorkspaceState["overviewState"]>) {
     setState((current) => ({
       ...current,
@@ -333,7 +342,11 @@ export function DepartmentsWorkspace({
         capabilities={data.capabilities}
         onDialogChange={setActiveDialog}
       />
-      <DepartmentsTabBar activeTab={state.activeTab} onChange={setActiveTab} />
+      <DepartmentsTabBar
+        activeTab={state.activeTab}
+        reportingPeriod={data.overview.reportingPeriod}
+        onChange={setActiveTab}
+      />
 
       <section
         id="departments-panel-overview"
@@ -351,6 +364,7 @@ export function DepartmentsWorkspace({
             onSelectDepartment={selectDepartment}
             onOpenPeople={openPeople}
             onOpenBudget={openBudget}
+            onOpenActivities={openActivities}
             onDialogChange={setActiveDialog}
           />
         ) : null}
