@@ -33,7 +33,7 @@ export default async function MembersPage({ params, searchParams }: MembersPageP
   });
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0">
       <WorkspaceRouteStateBridge
         churchSlug={churchSlug}
         moduleKey="members"

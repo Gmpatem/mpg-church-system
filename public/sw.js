@@ -1,4 +1,7 @@
-const CACHE_NAME = "mpg-church-v1";
+const CACHE_PREFIX = "mpg-church-";
+const CACHE_NAME = `${CACHE_PREFIX}v2`;
+const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
+const IS_LOCALHOST = LOCAL_HOSTNAMES.has(self.location.hostname);
 const STATIC_ASSETS = [
   "/",
   "/offline.html",
@@ -8,6 +11,11 @@ const STATIC_ASSETS = [
 
 // Install: cache shell assets
 self.addEventListener("install", (event) => {
+  if (IS_LOCALHOST) {
+    event.waitUntil(self.skipWaiting());
+    return;
+  }
+
   event.waitUntil(
     caches
       .open(CACHE_NAME)
@@ -23,7 +31,9 @@ self.addEventListener("activate", (event) => {
       .keys()
       .then((keys) =>
         Promise.all(
-          keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+          keys
+            .filter((key) => key.startsWith(CACHE_PREFIX) && (IS_LOCALHOST || key !== CACHE_NAME))
+            .map((key) => caches.delete(key))
         )
       )
       .then(() => self.clients.claim())
@@ -37,6 +47,11 @@ self.addEventListener("fetch", (event) => {
 
   // Skip non-GET requests and external origins
   if (request.method !== "GET" || url.origin !== self.location.origin) {
+    return;
+  }
+
+  // Never intercept local development or Next.js build chunks.
+  if (IS_LOCALHOST || url.pathname.startsWith("/_next/") || url.pathname === "/sw.js") {
     return;
   }
 

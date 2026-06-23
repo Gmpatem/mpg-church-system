@@ -1,7 +1,7 @@
 import { requireChurchWorkspaceAccess } from "@/features/access/queries";
 import { getChurchNotifications } from "@/features/church-notifications/queries";
 import { getMyPendingApprovalCount } from "@/features/approvals/queries";
-import { ChurchShell } from "@/components/navigation/ChurchShell";
+import { ChurchAppShell } from "@/components/church-workspace";
 
 interface ChurchLayoutProps {
   children: React.ReactNode;
@@ -40,7 +40,7 @@ export default async function ChurchLayout({ children, params }: ChurchLayoutPro
   ]);
 
   return (
-    <ChurchShell
+    <ChurchAppShell
       church={{
         id: ctx.churchId,
         slug: ctx.churchSlug,
@@ -62,7 +62,7 @@ export default async function ChurchLayout({ children, params }: ChurchLayoutPro
       notifications={notifications}
     >
       {children}
-    </ChurchShell>
+    </ChurchAppShell>
   );
 }
 

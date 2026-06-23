@@ -2,6 +2,27 @@
 
 import { useEffect } from "react";
 
+const CHURCH_CACHE_PREFIX = "mpg-church-";
+
+function clearChurchCaches() {
+  if (typeof window === "undefined" || !("caches" in window)) {
+    return;
+  }
+
+  void window.caches
+    .keys()
+    .then((keys) =>
+      Promise.all(
+        keys
+          .filter((key) => key.startsWith(CHURCH_CACHE_PREFIX))
+          .map((key) => window.caches.delete(key))
+      )
+    )
+    .catch(() => {
+      // Cache cleanup is best-effort only.
+    });
+}
+
 export function ServiceWorkerRegistration() {
   useEffect(() => {
     if (typeof navigator === "undefined" || !("serviceWorker" in navigator)) {
@@ -9,6 +30,27 @@ export function ServiceWorkerRegistration() {
     }
 
     let aborted = false;
+
+    if (process.env.NODE_ENV !== "production") {
+      clearChurchCaches();
+
+      void navigator.serviceWorker
+        .getRegistrations()
+        .then((registrations) =>
+          Promise.all(
+            registrations
+              .filter((registration) => registration.scope === `${window.location.origin}/`)
+              .map((registration) => registration.unregister())
+          )
+        )
+        .catch(() => {
+          // Development can continue without service-worker cleanup.
+        });
+
+      return () => {
+        aborted = true;
+      };
+    }
 
     navigator.serviceWorker
       .register("/sw.js")

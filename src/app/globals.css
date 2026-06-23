@@ -56,6 +56,38 @@
   body {
     @apply bg-background text-foreground;
   }
+
+  .church-workspace {
+    --church-bg: 42 24% 96%;
+    --church-surface: 0 0% 100%;
+    --church-muted: 45 20% 93%;
+    --church-ink: 220 28% 10%;
+    --church-muted-ink: 220 10% 42%;
+    --church-border: 40 16% 86%;
+    --church-sidebar: 152 38% 13%;
+    --church-sidebar-ink: 0 0% 100%;
+    --church-primary: 151 46% 24%;
+    --church-primary-hover: 151 50% 18%;
+    --church-gold: 42 64% 58%;
+    --background: var(--church-surface);
+    --foreground: var(--church-ink);
+    --card: var(--church-surface);
+    --card-foreground: var(--church-ink);
+    --popover: var(--church-surface);
+    --popover-foreground: var(--church-ink);
+    --primary: var(--church-primary);
+    --primary-foreground: 0 0% 100%;
+    --secondary: var(--church-muted);
+    --secondary-foreground: var(--church-ink);
+    --muted: var(--church-muted);
+    --muted-foreground: var(--church-muted-ink);
+    --accent: 43 38% 90%;
+    --accent-foreground: var(--church-ink);
+    --border: var(--church-border);
+    --input: var(--church-border);
+    --ring: var(--church-primary);
+    --radius: 0.625rem;
+  }
 }
 
 @layer utilities {

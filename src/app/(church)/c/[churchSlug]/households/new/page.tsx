@@ -1,5 +1,4 @@
-import { HouseholdForm } from "./HouseholdForm";
-import { WorkspaceHero } from "@/components/workspace";
+import { redirect } from "next/navigation";
 
 interface HouseholdNewPageProps {
   params: Promise<{ churchSlug: string }>;
@@ -7,13 +6,5 @@ interface HouseholdNewPageProps {
 
 export default async function HouseholdNewPage({ params }: HouseholdNewPageProps) {
   const { churchSlug } = await params;
-  return (
-    <div className="space-y-6">
-      <WorkspaceHero
-        title="New Household"
-        description="Create a household record and add members."
-      />
-      <HouseholdForm churchSlug={churchSlug} />
-    </div>
-  );
+  redirect(`/c/${churchSlug}/households?action=new`);
 }

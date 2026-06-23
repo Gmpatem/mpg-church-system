@@ -1,5 +1,5 @@
-import { PageSpinner } from "@/components/feedback/PageSpinner";
+import { ChurchLoadingState } from "@/components/church-workspace";
 
 export default function Loading() {
-  return <PageSpinner />;
+  return <ChurchLoadingState />;
 }

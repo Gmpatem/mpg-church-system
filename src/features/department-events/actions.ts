@@ -35,6 +35,13 @@ export async function createDepartmentEventDraftAction(formData: FormData): Prom
   }
 }
 
+export async function createDepartmentEventDraftFormAction(
+  _prevState: ActionState | null,
+  formData: FormData
+): Promise<ActionState> {
+  return createDepartmentEventDraftActionImpl(_prevState, formData);
+}
+
 async function createDepartmentEventDraftActionImpl(
   _prevState: ActionState | null,
   formData: FormData

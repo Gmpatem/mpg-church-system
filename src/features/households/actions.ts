@@ -7,6 +7,10 @@ import type { ActionState } from "@/features/access/types";
 import { CHURCH_MANAGEMENT_ROLE_CODES } from "@/lib/domain/church-access";
 import { getString } from "@/lib/domain/validation";
 
+type CreateHouseholdActionState =
+  | { ok: true; message?: string; householdId?: string; error?: undefined }
+  | { ok: false; error: string; message?: undefined; householdId?: undefined };
+
 async function ensureHouseholdBelongsToChurch(supabase: any, churchId: string, householdId: string) {
   const { data, error } = await supabase
     .from("households")
@@ -38,10 +42,16 @@ export async function createHouseholdAction(formData: FormData): Promise<void> {
   }
 }
 
+export async function createHouseholdWorkspaceAction(
+  formData: FormData
+): Promise<CreateHouseholdActionState> {
+  return createHouseholdActionImpl(null, formData);
+}
+
 async function createHouseholdActionImpl(
   _prevState: ActionState | null,
   formData: FormData
-): Promise<ActionState> {
+): Promise<CreateHouseholdActionState> {
   const churchSlug = getString(formData, "churchSlug");
   const ctx = await requireChurchRole(churchSlug, CHURCH_MANAGEMENT_ROLE_CODES);
 
@@ -59,17 +69,21 @@ async function createHouseholdActionImpl(
 
   const supabase = await createClient();
 
-  const { error } = await supabase.from("households").insert({
-    church_id: ctx.churchId,
-    household_name: householdName,
-    city: city || null,
-    country: country || null,
-    phone: phone || null,
-    email: email || null,
-    address: address || null,
-    notes: notes || null,
-    created_by_user_id: ctx.userId,
-  });
+  const { data, error } = await supabase
+    .from("households")
+    .insert({
+      church_id: ctx.churchId,
+      household_name: householdName,
+      city: city || null,
+      country: country || null,
+      phone: phone || null,
+      email: email || null,
+      address: address || null,
+      notes: notes || null,
+      created_by_user_id: ctx.userId,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     return { ok: false, error: error.message };
@@ -78,7 +92,11 @@ async function createHouseholdActionImpl(
   revalidatePath(`/c/${churchSlug}/households`);
   revalidatePath(`/c/${churchSlug}/dashboard`);
 
-  return { ok: true, message: "Household created successfully." };
+  return {
+    ok: true,
+    message: "Household created successfully.",
+    householdId: data?.id,
+  };
 }
 
 export async function updateHouseholdAction(formData: FormData): Promise<void> {

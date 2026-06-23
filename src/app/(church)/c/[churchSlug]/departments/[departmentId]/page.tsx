@@ -1,68 +1,49 @@
-import Link from "next/link";
-import { Breadcrumb } from "@/components/navigation/Breadcrumb";
-import {
-  WorkspaceControlRail,
-  WorkspaceHero,
-  WorkspaceSectionCard,
-  WorkspaceStatCard,
-} from "@/components/workspace";
-import { DepartmentForm } from "@/app/(church)/c/[churchSlug]/departments/new/DepartmentForm";
-import { DepartmentMembers } from "./DepartmentMembers";
-import { AssignMemberToDepartment } from "./AssignMemberToDepartment";
-import {
-  getDepartmentById,
-  getDepartmentMembers,
-  getDepartmentOptions,
-} from "@/features/departments/queries";
-import { updateDepartmentAction } from "@/features/departments/actions";
-import { getDepartmentFinanceWorkspaceData } from "@/features/department-finance/queries";
-import { getPublishedEvents } from "@/features/calendar/queries";
-import { requireChurchAccess } from "@/features/access/queries";
-import { CalendarView } from "@/components/shared/CalendarView";
-import { DepartmentFinanceTab } from "./DepartmentFinanceTab";
-import { OfflineDepartmentCache } from "@/components/offline/OfflineCacheWriter";
-import { OfflineDataBanner } from "@/components/offline/OfflineDataBanner";
+import { redirect } from "next/navigation";
 
 interface DepartmentDetailPageProps {
   params: Promise<{ churchSlug: string; departmentId: string }>;
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
-const TABS = ["overview", "members", "leadership", "events", "assignments", "finance"] as const;
-type DepartmentDetailTab = (typeof TABS)[number];
+const legacyTabMap: Record<string, "overview" | "activities" | "people" | "budget"> = {
+  overview: "overview",
+  events: "activities",
+  members: "people",
+  leadership: "people",
+  assignments: "people",
+  finance: "budget",
+};
 
 function pickSingle(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value ?? "";
 }
 
-function isDepartmentDetailTab(value: string): value is DepartmentDetailTab {
-  return (TABS as readonly string[]).includes(value);
-}
-
-function roleLooksLikeLeadership(roleTitle?: string | null) {
-  if (!roleTitle) return false;
-  const value = roleTitle.toLowerCase();
-  return [
-    "leader",
-    "head",
-    "director",
-    "coordinator",
-    "pastor",
-    "elder",
-    "captain",
-    "chair",
-    "manager",
-    "supervisor",
-  ].some((keyword) => value.includes(keyword));
-}
-
-export default async function DepartmentDetailPage({ params, searchParams }: DepartmentDetailPageProps) {
+export default async function DepartmentDetailPage({
+  params,
+  searchParams,
+}: DepartmentDetailPageProps) {
   const { churchSlug, departmentId } = await params;
   const query = (await searchParams) ?? {};
+  const rawTab = pickSingle(query.tab);
   const q = pickSingle(query.q);
   const status = pickSingle(query.status);
-  const rawTab = pickSingle(query.tab);
   const focusRequestId = pickSingle(query.requestId);
+  const bridgeTab = legacyTabMap[rawTab] ?? "overview";
+  const bridgeParams = new URLSearchParams();
+
+  bridgeParams.set("department", departmentId);
+  if (bridgeTab !== "overview") bridgeParams.set("tab", bridgeTab);
+  if (q) bridgeParams.set("q", q);
+  if (status) bridgeParams.set("status", status);
+  if (focusRequestId) bridgeParams.set("requestId", focusRequestId);
+
+  redirect(`/c/${churchSlug}/departments?${bridgeParams.toString()}`);
+}
+
+/*
+Legacy detail implementation retained as reference while old URLs redirect to
+the unified Departments workspace.
+
   const tab: DepartmentDetailTab = isDepartmentDetailTab(rawTab) ? rawTab : "overview";
 
   const ctx = await requireChurchAccess(churchSlug);
@@ -412,7 +393,8 @@ export default async function DepartmentDetailPage({ params, searchParams }: Dep
             </p>
           </WorkspaceSectionCard>
         )
-      ) : null}
+  ) : null}
     </div>
   );
 }
+*/

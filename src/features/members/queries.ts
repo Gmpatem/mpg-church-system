@@ -617,6 +617,10 @@ export async function getMembersWorkspaceData(
       code: department.code ?? null,
     })),
     households,
+    householdOptions: (householdRows.data ?? []).map((household: any) => ({
+      id: household.id,
+      household_name: household.household_name,
+    })),
     recentMembers,
   };
 }

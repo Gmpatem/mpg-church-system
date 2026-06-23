@@ -3,10 +3,13 @@
 import type { KeyboardEvent, ReactNode } from "react";
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
   BarChart3,
+  CalendarDays,
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   Edit3,
   House,
   Mail,
@@ -19,12 +22,23 @@ import {
   X,
 } from "lucide-react";
 import { createMemberInviteAction } from "@/features/member-invite/actions";
-import { CopyableLink } from "@/components/ui/CopyableLink";
-import { InlineAlert } from "@/components/ui/InlineAlert";
-import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
+import { toast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -34,10 +48,15 @@ import { useI18n } from "@/features/i18n";
 import { getLabel, memberStatusLabels } from "@/lib/display-maps";
 import { cn } from "@/lib/utils/cn";
 import { WorkspaceEmptyState } from "@/components/workspace";
+import {
+  ChurchContentGrid,
+  ChurchMainPanel,
+  ChurchRightRail,
+} from "@/components/church-workspace/patterns/ChurchPanels";
 import { MobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
 import { MobileCompactStatsStrip } from "@/components/mobile/MobileCompactStatsStrip";
 import { MobilePageHeader } from "@/components/mobile/MobilePageHeader";
-import { NewMemberForm } from "@/app/(church)/c/[churchSlug]/members/new/NewMemberForm";
+import { AddMemberWizard } from "./AddMemberWizard";
 
 interface MembersWorkspaceUnifiedProps {
   churchSlug: string;
@@ -87,6 +106,10 @@ interface MembersWorkspaceUnifiedProps {
       id: string;
       household_name: string;
       member_count: number;
+    }>;
+    householdOptions?: Array<{
+      id: string;
+      household_name: string;
     }>;
     recentMembers: Array<{
       id: string;
@@ -231,134 +254,60 @@ function MemberAvatar({ member, size = "sm" }: { member: Member; size?: "sm" | "
   const classes = getStatusClasses(member.membership_status);
 
   return (
-    <span
+    <Avatar
       className={cn(
-        "inline-flex shrink-0 items-center justify-center rounded-full font-semibold ring-1",
-        classes.avatar,
-        size === "lg" ? "h-14 w-14 text-lg" : "h-9 w-9 text-xs"
+        "shrink-0 border border-border ring-1",
+        size === "lg" ? "size-14" : "size-9"
       )}
-      aria-hidden="true"
     >
-      {getInitials(member)}
-    </span>
-  );
-}
-
-function ScreenReaderLabel({ children }: { children: ReactNode }) {
-  return <span className="sr-only">{children}</span>;
-}
-
-function MemberInviteButton({
-  churchSlug,
-  member,
-  className,
-  buttonClassName,
-}: {
-  churchSlug: string;
-  member: Member;
-  className?: string;
-  buttonClassName?: string;
-}) {
-  const { t } = useI18n();
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
-  const [inviteUrl, setInviteUrl] = useState<string | null>(null);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-
-  async function handleGenerateInvite() {
-    setStatus("loading");
-    setErrorMsg(null);
-    try {
-      const result = await createMemberInviteAction(churchSlug, member.id);
-      if (result.ok) {
-        const fullUrl = window.location.origin + result.path;
-        setInviteUrl(fullUrl);
-        setStatus("success");
-      } else {
-        setErrorMsg(result.error);
-        setStatus("error");
-      }
-    } catch {
-      setErrorMsg(t.pages.membersWorkspace.directory.invite.error);
-      setStatus("error");
-    }
-  }
-
-  if (status === "success" && inviteUrl) {
-    return (
-      <div className={cn("space-y-2", className)}>
-        <CopyableLink url={inviteUrl} showWhatsApp={true} />
-        <button
-          type="button"
-          onClick={() => {
-            setStatus("idle");
-            setInviteUrl(null);
-          }}
-          className="text-xs font-medium text-slate-500 underline-offset-4 hover:text-slate-800 hover:underline"
-        >
-          {t.pages.membersWorkspace.directory.invite.newLink}
-        </button>
-      </div>
-    );
-  }
-
-  return (
-    <div className={cn("space-y-2", className)}>
-      <button
-        type="button"
-        onClick={handleGenerateInvite}
-        disabled={status === "loading"}
+      <AvatarFallback
         className={cn(
-          "inline-flex h-10 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 disabled:opacity-50",
-          buttonClassName
+          "font-semibold",
+          classes.avatar,
+          size === "lg" ? "text-lg" : "text-xs"
         )}
       >
-        <Mail className="h-4 w-4" aria-hidden="true" />
-        {status === "loading" ? (
-          <span className="inline-flex items-center gap-2">
-            <ButtonSpinner />
-            {t.pages.membersWorkspace.directory.invite.generating}
-          </span>
-        ) : (
-          t.pages.membersWorkspace.directory.invite.button
-        )}
-      </button>
-      {status === "error" && errorMsg ? (
-        <InlineAlert variant="error" message={errorMsg} className="rounded-lg px-3 py-2 text-xs" />
-      ) : null}
-    </div>
+        {getInitials(member)}
+      </AvatarFallback>
+    </Avatar>
   );
 }
 
 function MembersInlineStats({ stats }: { stats: Stats }) {
   const items = [
-    { label: "Total", value: stats.totalMembers },
-    { label: "Active", value: stats.activeMembers, tone: "active" },
-    { label: "Inactive", value: stats.inactiveMembers, tone: "inactive" },
-    { label: "Visitors", value: stats.visitorMembers, tone: "visitor" },
-    { label: "Transferred", value: stats.transferredMembers, tone: "transferred" },
-    { label: "Households", value: stats.householdsCount },
-    { label: "Assigned", value: stats.assignedMembersCount },
-    { label: "Unassigned", value: stats.unassignedMembersCount },
+    { label: "Total Members", value: stats.totalMembers, icon: Users },
+    { label: "Active", value: stats.activeMembers, dot: "bg-emerald-500" },
+    { label: "Visitors", value: stats.visitorMembers, dot: "bg-blue-500" },
+    { label: "Inactive", value: stats.inactiveMembers, dot: "bg-orange-500" },
+    { label: "Households", value: stats.householdsCount, icon: House },
   ];
 
   return (
-    <div className="flex min-w-0 items-stretch overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+    <div className="flex min-w-0 flex-1 items-stretch overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
       {items.map((item, index) => {
-        const toneClasses = getStatusClasses(item.tone);
         const isZero = item.value === 0;
+        const Icon = "icon" in item ? item.icon : undefined;
 
         return (
-          <div key={item.label} className="flex shrink-0 items-stretch">
-            {index > 0 ? <div className="my-1 w-px shrink-0 bg-slate-200" aria-hidden="true" /> : null}
-            <div className="min-w-[72px] shrink-0 px-3">
-              <div className="flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
-                {item.tone ? (
-                  <span className={cn("h-1.5 w-1.5 rounded-full", toneClasses.dot)} aria-hidden="true" />
+          <div key={item.label} className="flex min-w-[128px] shrink-0 items-stretch">
+            {index > 0 ? <Separator orientation="vertical" className="h-auto self-stretch" /> : null}
+            <div className="flex min-w-0 flex-1 flex-col justify-center px-5 first:pl-0">
+              <div className="flex items-center gap-1.5 text-[11px] font-medium text-muted-foreground">
+                {item.dot ? (
+                  <span className={cn("size-1.5 rounded-full", item.dot)} aria-hidden="true" />
                 ) : null}
                 <span>{item.label}</span>
               </div>
-              <div className={cn("mt-1 text-lg font-semibold leading-none tabular-nums text-slate-950", isZero && "text-slate-400")}>
+              <div
+                className={cn(
+                  "mt-3 flex items-center gap-3 text-2xl font-semibold leading-none tabular-nums text-foreground",
+                  isZero && "text-muted-foreground/70"
+                )}
+              >
                 {numberFormat(item.value)}
+                {Icon ? (
+                  <Icon className="size-4 text-muted-foreground" aria-hidden="true" />
+                ) : null}
               </div>
             </div>
           </div>
@@ -371,48 +320,40 @@ function MembersInlineStats({ stats }: { stats: Stats }) {
 function MembersWorkspaceHeader({
   churchSlug,
   stats,
+  onNewMember,
 }: {
   churchSlug: string;
   stats: Stats;
+  onNewMember: () => void;
 }) {
   const { t } = useI18n();
 
   return (
-    <header className="hidden border-b border-slate-200 bg-white px-6 py-4 md:block">
-      <div className="grid min-w-0 items-center gap-5 xl:grid-cols-[220px_minmax(0,1fr)_auto]">
-        <div className="min-w-0">
-          <h1 className="text-[28px] font-semibold leading-tight tracking-tight text-slate-950">Members</h1>
-          <p className="mt-1 text-sm leading-5 text-slate-500">
-            View, filter, and manage members, households, and assignments.
-          </p>
-        </div>
+    <header className="hidden rounded-2xl border border-border bg-background px-5 py-4 shadow-sm md:block">
+      <div className="flex min-w-0 flex-col gap-4 xl:flex-row xl:items-center xl:justify-between xl:gap-6">
+        <MembersInlineStats stats={stats} />
 
-        <div className="min-w-0">
-          <MembersInlineStats stats={stats} />
-        </div>
-
-        <div className="flex shrink-0 flex-wrap items-center gap-2">
-          <Link
-            href={`/c/${churchSlug}/members/new`}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md bg-indigo-600 px-4 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+        <div className="flex shrink-0 flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            onClick={onNewMember}
+            className="h-11 gap-2 rounded-lg px-5 font-semibold shadow-sm"
           >
-            <Plus className="h-4 w-4" aria-hidden="true" />
+            <Plus className="size-4" aria-hidden="true" />
             {t.pages.membersWorkspace.actions.newMember}
-          </Link>
-          <Link
-            href={`/c/${churchSlug}/households`}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
-          >
-            <Users className="h-4 w-4" aria-hidden="true" />
-            {t.navigation.households}
-          </Link>
-          <Link
-            href={`/c/${churchSlug}/reports`}
-            className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
-          >
-            <BarChart3 className="h-4 w-4" aria-hidden="true" />
-            {t.pages.membersWorkspace.actions.reports}
-          </Link>
+          </Button>
+          <Button asChild variant="outline" className="h-11 gap-2 rounded-lg bg-background px-5">
+            <Link href={`/c/${churchSlug}/households`}>
+              <Users className="size-4" aria-hidden="true" />
+              {t.navigation.households}
+            </Link>
+          </Button>
+          <Button asChild variant="outline" className="h-11 gap-2 rounded-lg bg-background px-5">
+            <Link href={`/c/${churchSlug}/reports`}>
+              <BarChart3 className="size-4" aria-hidden="true" />
+              {t.pages.membersWorkspace.actions.reports}
+            </Link>
+          </Button>
         </div>
       </div>
     </header>
@@ -434,22 +375,27 @@ function FilterSelect({
   className?: string;
   children: ReactNode;
 }) {
+  const [value, setValue] = useState(defaultValue ?? "");
+
+  useEffect(() => {
+    setValue(defaultValue ?? "");
+  }, [defaultValue]);
+
   return (
     <div className={cn("min-w-[150px]", className)}>
-      <label htmlFor={id} className="mb-1 block text-[11px] font-medium leading-none text-slate-500">
+      <Label htmlFor={id} className="mb-1.5 block text-[11px] font-medium text-muted-foreground">
         {label}
-      </label>
-      <div className="relative">
-        <select
-          id={id}
-          name={name}
-          defaultValue={defaultValue ?? ""}
-          className="h-10 w-full appearance-none rounded-md border border-slate-200 bg-white py-2 pl-3 pr-9 text-sm text-slate-700 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
-        >
-          {children}
-        </select>
-        <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-      </div>
+      </Label>
+      <input type="hidden" name={name} value={value} />
+      <Select
+        value={value || "__all"}
+        onValueChange={(nextValue) => setValue(nextValue === "__all" ? "" : nextValue)}
+      >
+        <SelectTrigger id={id} className="h-11 rounded-lg bg-background">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>{children}</SelectContent>
+      </Select>
     </div>
   );
 }
@@ -472,19 +418,19 @@ function MembersToolbar({
     <form
       method="get"
       action={`/c/${churchSlug}/members`}
-      className="hidden min-w-0 flex-wrap items-end gap-3 border-b border-slate-200 bg-white px-6 py-4 md:flex"
+      className="min-w-0 rounded-2xl border border-border bg-background p-4 shadow-sm md:grid md:grid-cols-2 md:items-end md:gap-3 xl:grid-cols-[minmax(300px,1fr)_145px_185px_195px_auto_auto]"
     >
-      <div className="relative min-w-[260px] flex-1">
+      <div className="relative min-w-0 md:col-span-2 xl:col-span-1">
           <label htmlFor="q" className="sr-only">
             {t.pages.membersWorkspace.filters.search}
           </label>
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-          <input
+          <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <Input
             id="q"
             name="q"
             defaultValue={filters.q ?? ""}
             placeholder="Search name, code, phone, email..."
-            className="h-10 w-full rounded-md border border-slate-200 bg-white py-2 pl-9 pr-3 text-sm text-slate-700 outline-none transition placeholder:text-slate-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+            className="h-11 rounded-lg pl-9"
           />
       </div>
 
@@ -493,13 +439,13 @@ function MembersToolbar({
           name="status"
           label={t.pages.membersWorkspace.filters.memberStatus}
           defaultValue={filters.status}
-          className="w-[130px] min-w-[130px]"
+          className="w-full min-w-0"
         >
-          <option value="">{t.pages.membersWorkspace.filters.statusOptions.all}</option>
-          <option value="active">{t.pages.membersWorkspace.filters.statusOptions.active}</option>
-          <option value="inactive">{t.pages.membersWorkspace.filters.statusOptions.inactive}</option>
-          <option value="visitor">{t.pages.membersWorkspace.filters.statusOptions.visitor}</option>
-          <option value="transferred">{t.pages.membersWorkspace.filters.statusOptions.transferred}</option>
+          <SelectItem value="__all">{t.pages.membersWorkspace.filters.statusOptions.all}</SelectItem>
+          <SelectItem value="active">{t.pages.membersWorkspace.filters.statusOptions.active}</SelectItem>
+          <SelectItem value="inactive">{t.pages.membersWorkspace.filters.statusOptions.inactive}</SelectItem>
+          <SelectItem value="visitor">{t.pages.membersWorkspace.filters.statusOptions.visitor}</SelectItem>
+          <SelectItem value="transferred">{t.pages.membersWorkspace.filters.statusOptions.transferred}</SelectItem>
         </FilterSelect>
 
         <FilterSelect
@@ -507,14 +453,14 @@ function MembersToolbar({
           name="departmentId"
           label={t.pages.membersWorkspace.filters.department}
           defaultValue={filters.departmentId}
-          className="w-[170px] min-w-[170px]"
+          className="w-full min-w-0"
         >
-          <option value="">{t.pages.membersWorkspace.filters.allDepartments}</option>
+          <SelectItem value="__all">{t.pages.membersWorkspace.filters.allDepartments}</SelectItem>
           {departments.map((department) => (
-            <option key={department.id} value={department.id}>
+            <SelectItem key={department.id} value={department.id}>
               {department.name}
               {department.code ? ` (${department.code})` : ""}
-            </option>
+            </SelectItem>
           ))}
         </FilterSelect>
 
@@ -523,30 +469,28 @@ function MembersToolbar({
           name="departmentAssignmentStatus"
           label={t.pages.membersWorkspace.filters.assignmentStatus}
           defaultValue={filters.departmentAssignmentStatus}
-          className="w-[180px] min-w-[180px]"
+          className="w-full min-w-0"
         >
-          <option value="">{t.pages.membersWorkspace.filters.assignmentOptions.any}</option>
-          <option value="active">{t.pages.membersWorkspace.filters.assignmentOptions.active}</option>
-          <option value="inactive">{t.pages.membersWorkspace.filters.assignmentOptions.inactive}</option>
+          <SelectItem value="__all">{t.pages.membersWorkspace.filters.assignmentOptions.any}</SelectItem>
+          <SelectItem value="active">{t.pages.membersWorkspace.filters.assignmentOptions.active}</SelectItem>
+          <SelectItem value="inactive">{t.pages.membersWorkspace.filters.assignmentOptions.inactive}</SelectItem>
         </FilterSelect>
-        <button
+        <Button
           type="submit"
-          className="inline-flex h-10 items-center justify-center gap-2 rounded-md border border-slate-200 bg-white px-3 text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
+          variant="outline"
+          className="h-11 gap-2 rounded-lg bg-background px-4"
         >
-          <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
+          <SlidersHorizontal className="size-4" aria-hidden="true" />
           Filters
-        </button>
-      <p className="whitespace-nowrap pb-2 text-sm text-slate-500">
-        {numberFormat(resultCount)} results
-      </p>
+        </Button>
+      <div className="flex items-center gap-1 self-center whitespace-nowrap text-sm text-muted-foreground">
+        <span>{numberFormat(resultCount)} results</span>
         {activeFilters ? (
-          <Link
-            href={`/c/${churchSlug}/members`}
-            className="inline-flex h-10 items-center justify-center rounded-md px-2 text-sm font-medium text-slate-500 transition hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
-          >
-            {t.pages.membersWorkspace.filters.reset}
-          </Link>
+          <Button asChild variant="link" className="h-auto px-1 py-0 text-xs">
+            <Link href={`/c/${churchSlug}/members`}>{t.pages.membersWorkspace.filters.reset}</Link>
+          </Button>
         ) : null}
+      </div>
     </form>
   );
 }
@@ -572,7 +516,7 @@ function MobileFiltersForm({
           id="mobile-status"
           name="status"
           defaultValue={filters.status ?? ""}
-          className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/20"
         >
           <option value="">{t.pages.membersWorkspace.filters.statusOptions.all}</option>
           <option value="active">{t.pages.membersWorkspace.filters.statusOptions.active}</option>
@@ -590,7 +534,7 @@ function MobileFiltersForm({
           id="mobile-departmentId"
           name="departmentId"
           defaultValue={filters.departmentId ?? ""}
-          className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/20"
         >
           <option value="">{t.pages.membersWorkspace.filters.allDepartments}</option>
           {departments.map((department) => (
@@ -610,7 +554,7 @@ function MobileFiltersForm({
           id="mobile-departmentAssignmentStatus"
           name="departmentAssignmentStatus"
           defaultValue={filters.departmentAssignmentStatus ?? ""}
-          className="h-11 w-full rounded-xl border border-slate-300 bg-white px-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+          className="h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none transition focus:border-primary focus:ring-2 focus:ring-ring/20"
         >
           <option value="">{t.pages.membersWorkspace.filters.assignmentOptions.any}</option>
           <option value="active">{t.pages.membersWorkspace.filters.assignmentOptions.active}</option>
@@ -671,13 +615,13 @@ function MemberIdentityCell({ member }: { member: Member }) {
   const label = getMemberLabel(member);
 
   return (
-    <div className="flex min-w-[210px] items-center gap-3">
+    <div className="flex min-w-0 items-center gap-3">
       <MemberAvatar member={member} />
       <div className="min-w-0">
-        <p className="truncate text-sm font-semibold text-slate-950" title={label}>
+        <p className="truncate text-sm font-semibold text-foreground" title={label}>
           {label}
         </p>
-        <p className="mt-0.5 truncate text-xs text-slate-500">
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">
           {member.member_code || "No member code"}
         </p>
       </div>
@@ -686,12 +630,10 @@ function MemberIdentityCell({ member }: { member: Member }) {
 }
 
 function MemberRow({
-  churchSlug,
   member,
   isSelected,
   onSelectMember,
 }: {
-  churchSlug: string;
   member: Member;
   isSelected: boolean;
   onSelectMember: (memberId: string) => void;
@@ -713,38 +655,38 @@ function MemberRow({
       onClick={() => onSelectMember(member.id)}
       onKeyDown={handleKeyDown}
       className={cn(
-        "group cursor-pointer border-b border-slate-100 bg-white outline-none transition hover:bg-slate-50 focus-visible:bg-indigo-50/70",
-        isSelected && "bg-indigo-50/70 shadow-[inset_2px_0_0_#4f46e5]"
+        "group h-[86px] cursor-pointer bg-background outline-none transition-colors hover:bg-muted/35 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
+        isSelected && "bg-primary/[0.045] shadow-[inset_3px_0_0_hsl(var(--primary))] hover:bg-primary/[0.06]"
       )}
     >
-      <td className="w-10 px-4 py-3">
+      <td className="border-b border-border/70 px-4 py-3 pr-0 align-middle">
         <input
           type="checkbox"
           checked={isSelected}
           readOnly
           aria-label={`Select ${label}`}
-          className="h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+          className="size-4 rounded border-border accent-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
           onClick={(event) => {
             event.stopPropagation();
             onSelectMember(member.id);
           }}
         />
       </td>
-      <td className="px-2 py-3">
+      <td className="border-b border-border/70 px-3 py-3 align-middle">
         <MemberIdentityCell member={member} />
       </td>
-      <td className="px-3 py-3">
+      <td className="border-b border-border/70 px-3 py-3 align-middle">
         <MemberStatusIndicator status={member.membership_status} />
       </td>
-      <td className="max-w-[170px] px-3 py-3 text-sm text-slate-700">
+      <td className="min-w-0 border-b border-border/70 px-3 py-3 align-middle text-sm text-foreground">
         <p className={cn("truncate", !member.household_name && "text-slate-400")} title={member.household_name ?? undefined}>
           {member.household_name || t.pages.membersWorkspace.directory.noHousehold}
         </p>
       </td>
-      <td className="px-3 py-3">
+      <td className="border-b border-border/70 px-3 py-3 align-middle">
         <MemberDepartmentSummary member={member} />
       </td>
-      <td className="max-w-[220px] px-3 py-3 text-sm">
+      <td className="min-w-0 border-b border-border/70 px-3 py-3 align-middle text-sm">
         <p className={cn("truncate text-slate-800", !member.phone && "text-slate-400")} title={member.phone ?? undefined}>
           {member.phone || "-"}
         </p>
@@ -752,47 +694,8 @@ function MemberRow({
           {member.email || t.pages.membersWorkspace.directory.noContact}
         </p>
       </td>
-      <td className="whitespace-nowrap px-3 py-3 text-sm text-slate-700">
+      <td className="whitespace-nowrap border-b border-border/70 px-3 py-3 align-middle text-sm text-foreground">
         {formatDate(member.created_at)}
-      </td>
-      <td className="w-12 px-3 py-3 text-right">
-        <div onClick={(event) => event.stopPropagation()}>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                aria-label={`Open actions for ${label}`}
-              >
-                <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44">
-              <DropdownMenuItem asChild>
-                <Link href={`/c/${churchSlug}/members/${member.id}`}>
-                  <UserRound className="mr-2 h-4 w-4" aria-hidden="true" />
-                  {t.pages.membersWorkspace.directory.viewMember}
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`/c/${churchSlug}/members/${member.id}/edit`}>
-                  <Edit3 className="mr-2 h-4 w-4" aria-hidden="true" />
-                  {t.pages.membersWorkspace.directory.edit}
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem
-                onSelect={(event) => {
-                  event.preventDefault();
-                  onSelectMember(member.id);
-                }}
-              >
-                <SlidersHorizontal className="mr-2 h-4 w-4" aria-hidden="true" />
-                Details
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
       </td>
     </tr>
   );
@@ -818,7 +721,7 @@ function MobileMemberCard({
     <article
       className={cn(
         "rounded-xl border bg-white p-3 shadow-sm transition",
-        isSelected ? "border-indigo-200 bg-indigo-50/60" : "border-slate-200"
+        isSelected ? "border-primary/25 bg-primary/[0.05]" : "border-border"
       )}
     >
       <button type="button" onClick={() => onSelectMember(member.id)} className="w-full text-left">
@@ -876,21 +779,18 @@ function MembersRegistryTable({
   const end = rows.length;
 
   return (
-    <section className="min-w-0 overflow-hidden rounded-xl border border-slate-200 bg-white">
+    <ChurchMainPanel className="min-w-0 overflow-hidden rounded-2xl">
       {rows.length === 0 ? (
         <div className="p-4">
           {hasFilters ? (
-            <div className="flex min-h-[260px] flex-col items-center justify-center rounded-lg border border-dashed border-slate-200 bg-slate-50 px-6 py-10 text-center">
-              <h2 className="text-base font-semibold text-slate-950">No members match these filters.</h2>
-              <p className="mt-2 max-w-md text-sm leading-6 text-slate-500">
+            <div className="flex min-h-[260px] flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/40 px-6 py-10 text-center">
+              <h2 className="text-base font-semibold text-foreground">No members match these filters.</h2>
+              <p className="mt-2 max-w-md text-sm leading-6 text-muted-foreground">
                 Try a broader search or reset the filters to return to the full member registry.
               </p>
-              <Link
-                href={`/c/${churchSlug}/members`}
-                className="mt-5 inline-flex h-10 items-center justify-center rounded-md border border-slate-200 bg-white px-4 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-              >
-                {t.pages.membersWorkspace.filters.reset}
-              </Link>
+              <Button asChild variant="outline" className="mt-5">
+                <Link href={`/c/${churchSlug}/members`}>{t.pages.membersWorkspace.filters.reset}</Link>
+              </Button>
             </div>
           ) : (
             <WorkspaceEmptyState
@@ -917,35 +817,40 @@ function MembersRegistryTable({
           </div>
 
           <TooltipProvider delayDuration={200}>
-            <div className="hidden min-w-0 overflow-x-auto md:block">
-              <table className="w-full min-w-[860px] border-separate border-spacing-0 text-left text-sm">
+            <div className="hidden min-w-0 md:block">
+              <table className="w-full table-fixed border-separate border-spacing-0 text-left text-sm">
+                <colgroup>
+                  <col style={{ width: "5%" }} />
+                  <col style={{ width: "25%" }} />
+                  <col style={{ width: "11%" }} />
+                  <col style={{ width: "13%" }} />
+                  <col style={{ width: "13%" }} />
+                  <col style={{ width: "22%" }} />
+                  <col style={{ width: "11%" }} />
+                </colgroup>
                 <thead>
-                  <tr className="border-b border-slate-200 bg-slate-50/80 text-xs font-semibold text-slate-500">
-                    <th className="w-10 px-4 py-3">
+                  <tr className="h-14 bg-muted/30 text-xs">
+                    <th className="border-b border-border px-4 pr-0 text-left align-middle font-medium text-muted-foreground">
                       <input
                         type="checkbox"
                         aria-label="Selected member"
                         checked={false}
                         readOnly
-                        className="h-4 w-4 rounded border-slate-300 text-indigo-600"
+                        className="size-4 rounded border-border accent-primary"
                       />
                     </th>
-                    <th className="px-2 py-3 font-semibold">Member</th>
-                    <th className="px-3 py-3 font-semibold">Status</th>
-                    <th className="px-3 py-3 font-semibold">Household</th>
-                    <th className="px-3 py-3 font-semibold">Departments</th>
-                    <th className="px-3 py-3 font-semibold">Contact</th>
-                    <th className="px-3 py-3 font-semibold">Joined</th>
-                    <th className="px-3 py-3 text-right font-semibold">
-                      <ScreenReaderLabel>{t.common.actions}</ScreenReaderLabel>
-                    </th>
+                    <th className="border-b border-border px-3 text-left align-middle font-medium text-muted-foreground">Member</th>
+                    <th className="border-b border-border px-3 text-left align-middle font-medium text-muted-foreground">Status</th>
+                    <th className="border-b border-border px-3 text-left align-middle font-medium text-muted-foreground">Household</th>
+                    <th className="border-b border-border px-3 text-left align-middle font-medium text-muted-foreground">Departments</th>
+                    <th className="border-b border-border px-3 text-left align-middle font-medium text-muted-foreground">Contact</th>
+                    <th className="border-b border-border px-3 text-left align-middle font-medium text-muted-foreground">Joined</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((member) => (
                     <MemberRow
                       key={member.id}
-                      churchSlug={churchSlug}
                       member={member}
                       isSelected={member.id === selectedMemberId}
                       onSelectMember={onSelectMember}
@@ -956,17 +861,25 @@ function MembersRegistryTable({
             </div>
           </TooltipProvider>
 
-          <div className="flex flex-col gap-2 border-t border-slate-200 px-4 py-3 text-sm text-slate-500 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-h-[80px] flex-col gap-3 border-t border-border px-5 py-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
             <p>
               Showing {numberFormat(start)} to {numberFormat(end)} of {numberFormat(rows.length)} members
             </p>
-            <p className="text-xs text-slate-400">
-              Pagination is not enabled for this registry view.
-            </p>
+            <nav className="flex items-center gap-2" aria-label="Member registry pagination">
+              <Button type="button" variant="outline" size="icon" className="size-9 rounded-lg" disabled aria-label="Previous page">
+                <ChevronLeft className="size-4" aria-hidden="true" />
+              </Button>
+              <Button type="button" size="icon" className="size-9 rounded-lg" aria-current="page" aria-label="Page 1">
+                1
+              </Button>
+              <Button type="button" variant="outline" size="icon" className="size-9 rounded-lg" disabled aria-label="Next page">
+                <ChevronRight className="size-4" aria-hidden="true" />
+              </Button>
+            </nav>
           </div>
         </>
       )}
-    </section>
+    </ChurchMainPanel>
   );
 }
 
@@ -980,53 +893,72 @@ function OverviewRow({
   title?: string;
 }) {
   return (
-    <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-4 text-sm">
-      <dt className="text-slate-500">{label}</dt>
-      <dd className="max-w-[190px] text-right font-medium text-slate-900" title={title}>
+    <div className="grid grid-cols-[88px_minmax(0,1fr)] gap-3 text-sm">
+      <dt className="text-muted-foreground">{label}</dt>
+      <dd className="min-w-0 truncate text-right font-medium text-foreground" title={title}>
         {value}
       </dd>
     </div>
   );
 }
 
-function DepartmentPills({
-  items,
-  tone,
+function MemberInviteMenuItem({
+  churchSlug,
+  member,
 }: {
-  items: string[];
-  tone: "active" | "inactive";
+  churchSlug: string;
+  member: Member;
 }) {
-  if (!items.length) {
-    return (
-      <p className="text-sm text-slate-500">
-        {tone === "active" ? "No active assignments" : "No inactive assignments"}
-      </p>
-    );
+  const { t } = useI18n();
+  const [status, setStatus] = useState<"idle" | "loading" | "success">("idle");
+
+  async function handleGenerateInvite() {
+    if (status === "loading") return;
+
+    setStatus("loading");
+    try {
+      const result = await createMemberInviteAction(churchSlug, member.id);
+      if (result.ok) {
+        const fullUrl = window.location.origin + result.path;
+        setStatus("success");
+        toast({
+          title: "Portal invite ready",
+          description: fullUrl,
+        });
+      } else {
+        setStatus("idle");
+        toast({
+          variant: "destructive",
+          title: "Invite failed",
+          description: result.error,
+        });
+      }
+    } catch {
+      setStatus("idle");
+      toast({
+        variant: "destructive",
+        title: "Invite failed",
+        description: t.pages.membersWorkspace.directory.invite.error,
+      });
+    }
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
-      {items.map((item) => (
-        <span
-          key={`${tone}-${item}`}
-          className={cn(
-            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium",
-            tone === "active"
-              ? "border-emerald-200 bg-emerald-50 text-emerald-800"
-              : "border-slate-200 bg-slate-50 text-slate-700"
-          )}
-        >
-          <span
-            className={cn(
-              "h-1.5 w-1.5 rounded-full",
-              tone === "active" ? "bg-emerald-500" : "bg-slate-400"
-            )}
-            aria-hidden="true"
-          />
-          {item}
-        </span>
-      ))}
-    </div>
+    <DropdownMenuItem
+      onSelect={(event) => {
+        event.preventDefault();
+        void handleGenerateInvite();
+      }}
+      disabled={status === "loading"}
+      className="h-10 gap-2"
+    >
+      <Mail className="size-4" aria-hidden="true" />
+      {status === "loading"
+        ? t.pages.membersWorkspace.directory.invite.generating
+        : status === "success"
+          ? "Invite ready"
+          : "Invite to portal"}
+    </DropdownMenuItem>
   );
 }
 
@@ -1038,52 +970,63 @@ function MemberInspectorActions({
   member: Member;
 }) {
   const { t } = useI18n();
-  const label = getMemberLabel(member);
+  const memberProfileHref = `/c/${churchSlug}/members/${member.id}`;
+  const memberEditHref = `/c/${churchSlug}/members/${member.id}/edit`;
 
   return (
-    <div className="mt-auto space-y-3 border-t border-slate-200 bg-white px-5 py-4">
-      <div className="grid grid-cols-2 gap-3">
-        <MemberInviteButton
-          churchSlug={churchSlug}
-          member={member}
-          buttonClassName="h-11 w-full rounded-lg"
-          className="min-w-0"
-        />
-        <Link
-          href={`/c/${churchSlug}/members/${member.id}/edit`}
-          className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 text-sm font-semibold text-white shadow-sm transition hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2"
-        >
-          <Edit3 className="h-4 w-4" aria-hidden="true" />
-          {t.pages.membersWorkspace.directory.edit}
+    <div className="space-y-2 px-4 pb-5 pt-4">
+      <Button asChild className="h-11 w-full gap-2 rounded-lg px-3 font-semibold shadow-sm">
+        <Link href={memberEditHref}>
+          <Edit3 className="size-4" aria-hidden="true" />
+          Edit member
         </Link>
-      </div>
+      </Button>
 
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button
+          <Button
             type="button"
-            className="inline-flex h-9 w-full items-center justify-center gap-2 rounded-md text-sm font-medium text-slate-700 transition hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            variant="outline"
+            className="h-10 w-full justify-between rounded-lg bg-background px-3"
           >
-            More actions
-            <ChevronDown className="h-4 w-4" aria-hidden="true" />
-          </button>
+            <span className="inline-flex items-center gap-2">
+              <MoreHorizontal className="size-4" aria-hidden="true" />
+              More actions
+            </span>
+            <ChevronDown className="size-4" aria-hidden="true" />
+          </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="center" className="w-52">
-          <DropdownMenuItem asChild>
-            <Link href={`/c/${churchSlug}/members/${member.id}`}>
-              <UserRound className="mr-2 h-4 w-4" aria-hidden="true" />
-              View full profile
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem asChild>
-            <Link href={`/c/${churchSlug}/households`}>
-              <House className="mr-2 h-4 w-4" aria-hidden="true" />
-              Open households
-            </Link>
-          </DropdownMenuItem>
+        <DropdownMenuContent align="end" sideOffset={6} className="w-60 rounded-lg p-1">
+          <DropdownMenuGroup>
+            <MemberInviteMenuItem churchSlug={churchSlug} member={member} />
+            <DropdownMenuItem asChild className="h-10 gap-2">
+              <Link href={memberEditHref}>
+                <Edit3 className="size-4" aria-hidden="true" />
+                View or edit notes
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem disabled>
-            <span className="truncate text-xs text-slate-400">Selected: {label}</span>
+          <DropdownMenuGroup>
+            <DropdownMenuItem asChild className="h-10 gap-2">
+              <Link href={memberProfileHref}>
+                <House className="size-4" aria-hidden="true" />
+                Assign to household
+              </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild className="h-10 gap-2">
+              <Link href={memberProfileHref}>
+                <Users className="size-4" aria-hidden="true" />
+                Manage departments
+              </Link>
+            </DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem asChild>
+            <Link href={memberProfileHref}>
+              <UserRound className="mr-2 size-4" aria-hidden="true" />
+              {t.pages.membersWorkspace.directory.viewMember}
+            </Link>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -1104,146 +1047,137 @@ function MemberInspector({
 }) {
   const { t } = useI18n();
   const isRail = variant === "rail";
+  const selectedStatusClasses = getStatusClasses(selectedMember?.membership_status);
+  const selectedMemberDuration = selectedMember
+    ? formatMemberSince(selectedMember.created_at)
+    : "-";
+  const selectedActiveDepartmentCount = selectedMember?.active_departments?.length ?? 0;
+  const selectedInactiveDepartmentCount = selectedMember?.inactive_departments?.length ?? 0;
 
   return (
-    <aside
+    <ChurchRightRail
       className={cn(
-        "min-h-0 min-w-0 flex-col overflow-hidden bg-white",
+        "min-w-0 overflow-hidden rounded-2xl",
         isRail
-          ? "hidden border-l border-slate-200 lg:sticky lg:top-0 lg:flex lg:h-[calc(100vh-64px)]"
-          : "flex min-h-[560px] rounded-lg border border-slate-200 shadow-sm xl:sticky xl:top-20 xl:h-[calc(100vh-7rem)]"
+          ? "hidden self-start xl:block"
+          : "flex min-h-[560px] flex-col rounded-xl"
       )}
     >
-      <div className="flex items-center justify-between px-6 py-5">
-        <h2 className="text-sm font-semibold text-slate-950">Selected Member</h2>
+      <div className="flex min-h-[58px] items-center justify-between px-5 py-4">
+        <h2 className="text-sm font-semibold text-foreground">Selected Member</h2>
         {onClearSelectedMember ? (
-          <button
+          <Button
             type="button"
+            variant="ghost"
+            size="icon"
             onClick={onClearSelectedMember}
-            className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            className="size-8 rounded-md text-muted-foreground"
             aria-label="Close selected member inspector"
           >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
+            <X className="size-4" aria-hidden="true" />
+          </Button>
         ) : null}
       </div>
 
       {selectedMember ? (
         <>
-          <div className="min-h-0 flex-1 overflow-y-auto">
-            <div className="flex items-center gap-4 px-6 pb-5">
-              <MemberAvatar member={selectedMember} size="lg" />
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <h3 className="truncate text-lg font-semibold text-slate-950">
-                    {getMemberLabel(selectedMember)}
-                  </h3>
-                  <MemberStatusIndicator status={selectedMember.membership_status} className="text-xs" />
-                </div>
-                <p className="mt-1 text-sm text-slate-500">
-                  {selectedMember.member_code || "No member code"}
-                </p>
+          <Separator />
+          <div className="flex items-center gap-4 px-5 py-5">
+            <MemberAvatar member={selectedMember} size="lg" />
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="truncate text-lg font-semibold text-foreground">
+                  {getMemberLabel(selectedMember)}
+                </h3>
+                <MemberStatusIndicator status={selectedMember.membership_status} className="text-xs" />
               </div>
-            </div>
-
-            <div className="border-t border-slate-200 px-6 py-5">
-              <h4 className="text-sm font-semibold text-slate-950">Overview</h4>
-              <dl className="mt-4 space-y-4">
-                <OverviewRow
-                  label={t.members.household}
-                  value={
-                    <span className={cn(!selectedMember.household_name && "text-slate-400")}>
-                      {selectedMember.household_name || t.pages.membersWorkspace.directory.noHousehold}
-                    </span>
-                  }
-                  title={selectedMember.household_name ?? undefined}
-                />
-                <OverviewRow
-                  label={t.members.email}
-                  value={
-                    <span className={cn("block truncate", !selectedMember.email && "text-slate-400")}>
-                      {selectedMember.email || "No email"}
-                    </span>
-                  }
-                  title={selectedMember.email ?? undefined}
-                />
-                <OverviewRow
-                  label={t.members.phone}
-                  value={
-                    <span className={cn(!selectedMember.phone && "text-slate-400")}>
-                      {selectedMember.phone || "No phone"}
-                    </span>
-                  }
-                  title={selectedMember.phone ?? undefined}
-                />
-                <OverviewRow
-                  label="Joined Date"
-                  value={formatDate(selectedMember.created_at)}
-                />
-                <OverviewRow
-                  label="Member Since"
-                  value={formatMemberSince(selectedMember.created_at)}
-                />
-                <OverviewRow
-                  label={t.common.status}
-                  value={getLabel(memberStatusLabels, selectedMember.membership_status)}
-                />
-              </dl>
-            </div>
-
-            <div className="border-t border-slate-200 px-6 py-5">
-              <h4 className="text-sm font-semibold text-slate-950">Department Assignments</h4>
-              <div className="mt-4 space-y-4">
-                <div>
-                  <p className="text-sm font-medium text-emerald-700">
-                    Active Departments ({selectedMember.active_departments?.length ?? 0})
-                  </p>
-                  <div className="mt-2">
-                    <DepartmentPills items={selectedMember.active_departments ?? []} tone="active" />
-                  </div>
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-slate-700">
-                    Inactive Departments ({selectedMember.inactive_departments?.length ?? 0})
-                  </p>
-                  <div className="mt-2">
-                    <DepartmentPills items={selectedMember.inactive_departments ?? []} tone="inactive" />
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="border-t border-slate-200 px-6 py-5">
-              <div className="flex items-center justify-between gap-3">
-                <h4 className="text-sm font-semibold text-slate-950">{t.members.notes}</h4>
-                <Link
-                  href={`/c/${churchSlug}/members/${selectedMember.id}/edit`}
-                  className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-500 transition hover:bg-slate-100 hover:text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
-                  aria-label="Edit member notes"
-                >
-                  <Edit3 className="h-4 w-4" aria-hidden="true" />
-                </Link>
-              </div>
-              <p className="mt-3 text-sm text-slate-500">
-                No notes available
+              <p className="mt-1 text-sm text-muted-foreground">
+                {selectedMember.member_code || "No member code"}
+              </p>
+              <p className="mt-2 inline-flex items-center gap-1.5 text-sm text-muted-foreground">
+                <CalendarDays className="size-4" aria-hidden="true" />
+                {selectedMemberDuration === "-"
+                  ? "Member timeline unavailable"
+                  : `Member for ${selectedMemberDuration}`}
               </p>
             </div>
           </div>
 
+          <Separator />
+          <div className="px-5 py-5">
+            <h4 className="text-sm font-semibold text-foreground">Overview</h4>
+            <dl className="mt-4 space-y-4">
+              <OverviewRow
+                label={t.members.household}
+                value={
+                  <span className={cn(!selectedMember.household_name && "text-muted-foreground")}>
+                    {selectedMember.household_name || t.pages.membersWorkspace.directory.noHousehold}
+                  </span>
+                }
+                title={selectedMember.household_name ?? undefined}
+              />
+              <OverviewRow
+                label={t.members.email}
+                value={
+                  <span className={cn("block truncate", !selectedMember.email && "text-muted-foreground")}>
+                    {selectedMember.email || "No email"}
+                  </span>
+                }
+                title={selectedMember.email ?? undefined}
+              />
+              <OverviewRow
+                label={t.members.phone}
+                value={
+                  <span className={cn(!selectedMember.phone && "text-muted-foreground")}>
+                    {selectedMember.phone || "No phone"}
+                  </span>
+                }
+                title={selectedMember.phone ?? undefined}
+              />
+              <OverviewRow
+                label="Joined"
+                value={formatDate(selectedMember.created_at)}
+              />
+              <OverviewRow
+                label={t.common.status}
+                value={
+                  <span className={selectedStatusClasses.text}>
+                    {getLabel(memberStatusLabels, selectedMember.membership_status)}
+                  </span>
+                }
+              />
+            </dl>
+          </div>
+
+          <Separator />
+          <Link
+            href={`/c/${churchSlug}/members/${selectedMember.id}`}
+            className="flex min-h-[58px] items-center justify-between gap-3 px-5 py-4 text-sm transition hover:bg-muted/35"
+          >
+            <span className="font-semibold text-foreground">Departments</span>
+            <span className="inline-flex min-w-0 items-center gap-1 text-muted-foreground">
+              <span className="truncate">
+                {selectedActiveDepartmentCount} active / {selectedInactiveDepartmentCount} inactive
+              </span>
+              <ChevronRight className="size-4 shrink-0" aria-hidden="true" />
+            </span>
+          </Link>
+
+          <Separator />
           <MemberInspectorActions churchSlug={churchSlug} member={selectedMember} />
         </>
       ) : (
         <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-500">
-            <UserRound className="h-5 w-5" aria-hidden="true" />
+          <div className="flex size-12 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <UserRound className="size-5" aria-hidden="true" />
           </div>
-          <h3 className="mt-4 text-sm font-semibold text-slate-950">Select a member to view their profile.</h3>
-          <p className="mt-2 text-sm leading-6 text-slate-500">
-            The inspector will show household, contact, assignment, notes, and portal invite actions.
+          <h3 className="mt-4 text-sm font-semibold text-foreground">Select a member to view their profile.</h3>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">
+            The inspector will show household, contact, assignments, and portal actions.
           </p>
         </div>
       )}
-    </aside>
+    </ChurchRightRail>
   );
 }
 
@@ -1253,8 +1187,11 @@ export function MembersWorkspaceUnified({
 }: MembersWorkspaceUnifiedProps) {
   const { t } = useI18n();
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(data.members[0]?.id ?? null);
-  const [memberFormOpen, setMemberFormOpen] = useState(false);
+  const [addMemberWizardOpen, setAddMemberWizardOpen] = useState(false);
+  const [pendingCreatedMemberId, setPendingCreatedMemberId] = useState<string | null>(null);
   const [memberDetailOpen, setMemberDetailOpen] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
 
@@ -1263,6 +1200,17 @@ export function MembersWorkspaceUnified({
     router.prefetch(`/c/${churchSlug}/departments`);
     router.prefetch(`/c/${churchSlug}/reports`);
   }, [churchSlug, router]);
+
+  useEffect(() => {
+    if (searchParams.get("action") !== "new") return;
+
+    setAddMemberWizardOpen(true);
+
+    const nextParams = new URLSearchParams(searchParams.toString());
+    nextParams.delete("action");
+    const nextQuery = nextParams.toString();
+    window.history.replaceState(null, "", nextQuery ? `${pathname}?${nextQuery}` : pathname);
+  }, [pathname, searchParams]);
 
   useEffect(() => {
     try {
@@ -1282,10 +1230,21 @@ export function MembersWorkspaceUnified({
     if (!selectedMemberId) return;
 
     const exists = data.members.some((member) => member.id === selectedMemberId);
+    if (exists) {
+      if (pendingCreatedMemberId === selectedMemberId) {
+        setPendingCreatedMemberId(null);
+      }
+      return;
+    }
+
+    if (pendingCreatedMemberId === selectedMemberId) {
+      return;
+    }
+
     if (!exists) {
       setSelectedMemberId(data.members[0]?.id ?? null);
     }
-  }, [data.members, selectedMemberId]);
+  }, [data.members, pendingCreatedMemberId, selectedMemberId]);
 
   useEffect(() => {
     try {
@@ -1302,7 +1261,7 @@ export function MembersWorkspaceUnified({
 
   const selectedMember = useMemo(() => {
     if (!selectedMemberId) return null;
-    return data.members.find((member) => member.id === selectedMemberId) ?? data.members[0] ?? null;
+    return data.members.find((member) => member.id === selectedMemberId) ?? null;
   }, [data.members, selectedMemberId]);
 
   const departmentOptionsForForm = useMemo(
@@ -1318,21 +1277,44 @@ export function MembersWorkspaceUnified({
   function handleSelectMember(memberId: string) {
     setSelectedMemberId(memberId);
 
-    if (typeof window !== "undefined" && window.matchMedia("(max-width: 1023px)").matches) {
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 1279px)").matches) {
       setMemberDetailOpen(true);
     }
+  }
+
+  function handleMemberCreated(memberId: string) {
+    setPendingCreatedMemberId(memberId);
+    setSelectedMemberId(memberId);
+    setAddMemberWizardOpen(false);
+    router.refresh();
   }
 
   const activeFilters = hasActiveFilters(data.filters);
 
   return (
-    <div className="-mx-3 -my-3 min-h-[calc(100vh-6rem)] min-w-0 overflow-hidden bg-white sm:-mx-4 md:-mx-6 md:-my-5 xl:-mx-8">
-      <div className="space-y-3 px-3 py-3 md:hidden">
+    <div className="min-w-0 space-y-4">
+      <div className="hidden space-y-4 md:block">
+        <MembersWorkspaceHeader
+          churchSlug={churchSlug}
+          stats={data.stats}
+          onNewMember={() => setAddMemberWizardOpen(true)}
+        />
+
+        <MembersToolbar
+          churchSlug={churchSlug}
+          filters={data.filters}
+          departments={data.departments}
+          resultCount={data.members.length}
+        />
+      </div>
+
+      <div className="!mt-0 space-y-3 md:hidden">
         <MobilePageHeader
           title="Members"
           subtitle={`Active: ${data.stats.activeMembers} / Inactive: ${data.stats.inactiveMembers}`}
           actionLabel="Add Member"
-          onActionClick={() => setMemberFormOpen(true)}
+          onActionClick={() => setAddMemberWizardOpen(true)}
+          className="[&_button]:bg-primary [&_button]:text-primary-foreground [&_button:hover]:bg-primary/90"
         />
 
         <form method="get" action={`/c/${churchSlug}/members`} className="flex items-center gap-2">
@@ -1340,29 +1322,28 @@ export function MembersWorkspaceUnified({
             <label htmlFor="mobile-q" className="sr-only">
               {t.pages.membersWorkspace.filters.search}
             </label>
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
-            <input
+            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+            <Input
               id="mobile-q"
               name="q"
               defaultValue={data.filters.q ?? ""}
               placeholder="Search name, code, phone, email..."
-              className="h-11 w-full rounded-xl border border-slate-300 bg-white py-2 pl-9 pr-3 text-sm outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+              className="h-11 rounded-xl pl-9"
             />
           </div>
-          <button
-            type="submit"
-            className="mobile-touch-feedback inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl bg-slate-950 px-3 py-2.5 text-sm font-medium text-white transition hover:bg-slate-800"
-          >
+          <Button type="submit" className="mobile-touch-feedback h-11 shrink-0 rounded-xl px-3">
             {t.common.search}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
+            variant="outline"
+            size="icon"
             onClick={() => setMobileFiltersOpen(true)}
-            className="mobile-touch-feedback inline-flex min-h-[44px] shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            className="mobile-touch-feedback size-11 shrink-0 rounded-xl bg-background"
             aria-label="Open member filters"
           >
-            <SlidersHorizontal className="h-4 w-4" aria-hidden="true" />
-          </button>
+            <SlidersHorizontal className="size-4" aria-hidden="true" />
+          </Button>
         </form>
 
         <MobileCompactStatsStrip
@@ -1379,17 +1360,8 @@ export function MembersWorkspaceUnified({
         />
       </div>
 
-      <MembersWorkspaceHeader churchSlug={churchSlug} stats={data.stats} />
-
-      <MembersToolbar
-        churchSlug={churchSlug}
-        filters={data.filters}
-        departments={data.departments}
-        resultCount={data.members.length}
-      />
-
-      <div className="grid min-w-0 grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px]">
-        <section className="min-w-0 px-5 py-5">
+      <ChurchContentGrid className="items-start gap-3 xl:grid-cols-[minmax(0,1fr)_340px]">
+        <section className="min-w-0">
           <MembersRegistryTable
             churchSlug={churchSlug}
             rows={data.members}
@@ -1405,7 +1377,7 @@ export function MembersWorkspaceUnified({
           onClearSelectedMember={() => setSelectedMemberId(null)}
           variant="rail"
         />
-      </div>
+      </ChurchContentGrid>
 
       <MobileBottomSheet
         open={mobileFiltersOpen}
@@ -1419,25 +1391,21 @@ export function MembersWorkspaceUnified({
         />
       </MobileBottomSheet>
 
-      <MobileBottomSheet
-        open={memberFormOpen}
-        onOpenChange={setMemberFormOpen}
-        title="Add Member"
-      >
-        <NewMemberForm
-          churchSlug={churchSlug}
-          departments={departmentOptionsForForm}
-          households={data.households}
-          embedded
-          onCreated={() => setMemberFormOpen(false)}
-        />
-      </MobileBottomSheet>
+      <AddMemberWizard
+        open={addMemberWizardOpen}
+        onOpenChange={setAddMemberWizardOpen}
+        churchId={data.church.id}
+        churchSlug={churchSlug}
+        departments={departmentOptionsForForm}
+        households={data.householdOptions ?? data.households}
+        onCreated={handleMemberCreated}
+      />
 
       <MobileBottomSheet
         open={memberDetailOpen}
         onOpenChange={setMemberDetailOpen}
         title="Member Details"
-        className="md:block lg:hidden"
+        className="md:block xl:hidden"
       >
         <MemberInspector
           churchSlug={churchSlug}

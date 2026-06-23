@@ -35,6 +35,7 @@ export function MobileBottomSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent
         side="bottom"
+        aria-describedby={undefined}
         className={cn(
           "h-[92vh] rounded-t-[24px] border-slate-200 bg-white px-0 pb-0 pt-0 md:hidden",
           className
