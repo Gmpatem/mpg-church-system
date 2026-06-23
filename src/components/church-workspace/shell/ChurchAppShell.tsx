@@ -9,6 +9,7 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import { ChurchPageFrame } from "../patterns/ChurchPageFrame";
+import { ChurchLiveRegion } from "../feedback/ChurchLiveRegion";
 import { ChurchSidebar } from "./ChurchSidebar";
 import { ChurchTopbar } from "./ChurchTopbar";
 import type {
@@ -41,6 +42,7 @@ export function ChurchAppShell({
   return (
     <OfflineProvider churchSlug={church.slug}>
       <div className="church-workspace min-h-screen bg-[hsl(var(--church-bg))] text-foreground lg:grid lg:grid-cols-[232px_minmax(0,1fr)] xl:grid-cols-[264px_minmax(0,1fr)]">
+        <ChurchLiveRegion />
         <aside className="sticky top-0 hidden h-screen min-h-0 border-r border-white/10 lg:block">
           <ChurchSidebar
             church={church}

@@ -1,5 +1,54 @@
 import type { LucideIcon } from "lucide-react";
 
+export type ChurchFeedbackVariant =
+  | "success"
+  | "error"
+  | "warning"
+  | "info"
+  | "offline"
+  | "progress";
+
+export type ChurchAsyncStatus =
+  | "idle"
+  | "loading"
+  | "success"
+  | "error"
+  | "empty"
+  | "partial"
+  | "offline";
+
+export type ChurchSaveState = "idle" | "dirty" | "saving" | "saved" | "error";
+
+export type ChurchOfflineActionStatus =
+  | "online"
+  | "offline"
+  | "queued"
+  | "syncing"
+  | "synced"
+  | "failed";
+
+export interface ChurchProgressState {
+  value?: number;
+  label: string;
+  description?: string;
+  indeterminate?: boolean;
+}
+
+export interface ChurchDataState {
+  status: ChurchAsyncStatus;
+  itemCount?: number;
+  filteredCount?: number;
+  updatedAt?: string | Date | null;
+  isPartial?: boolean;
+  isStale?: boolean;
+}
+
+export interface ChurchFieldErrorItem {
+  fieldId?: string;
+  label: string;
+  message: string;
+}
+
 export interface ChurchWorkspaceChurch {
   id: string;
   name: string;

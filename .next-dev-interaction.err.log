@@ -1,0 +1,9 @@
+⚠ Port 3000 is in use by process 43984, using available port 3001 instead.
+⨯ Another next dev server is already running.
+
+- Local:        http://localhost:3000
+- PID:          43984
+- Dir:          E:\mpg-church-system
+- Log:          .next\dev\logs\next-development.log
+
+Run taskkill /PID 43984 /F to stop it.

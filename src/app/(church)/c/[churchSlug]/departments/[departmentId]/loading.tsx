@@ -1,5 +1,5 @@
-import { PageSpinner } from "@/components/feedback/PageSpinner";
+import { ChurchWorkspaceSkeleton } from "@/components/church-workspace";
 
 export default function Loading() {
-  return <PageSpinner />;
+  return <ChurchWorkspaceSkeleton variant="detail" />;
 }
