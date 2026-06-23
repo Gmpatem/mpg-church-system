@@ -3,10 +3,16 @@ import { TreasuryWorkspace } from "./components/TreasuryWorkspace";
 
 interface TreasuryPageProps {
   params: Promise<{ churchSlug: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
-export default async function TreasuryPage({ params }: TreasuryPageProps) {
+function pickSingle(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value ?? "";
+}
+
+export default async function TreasuryPage({ params, searchParams }: TreasuryPageProps) {
   const { churchSlug } = await params;
+  const filters = (await searchParams) ?? {};
 
   const [data, alreadyTithedIds] = await Promise.all([
     getTreasuryWorkspaceBootstrap(churchSlug),
@@ -14,17 +20,23 @@ export default async function TreasuryPage({ params }: TreasuryPageProps) {
   ]);
 
   return (
-    <div className="space-y-6">
+    <div className="min-w-0">
       <TreasuryWorkspace
         churchSlug={churchSlug}
-        dashboard={data.dashboard}
-        recentInflows={data.recentInflows}
-        recentOutflows={data.recentOutflows}
-        financeSettings={data.financeSettings}
-        formOptions={data.formOptions}
-        transfers={data.transfers}
-        remittance={data.remittance}
+        data={data}
         alreadyTithedIds={alreadyTithedIds}
+        initialTab={pickSingle(filters.tab)}
+        initialView={pickSingle(filters.view)}
+        initialPeriod={pickSingle(filters.period)}
+        initialFrom={pickSingle(filters.from)}
+        initialTo={pickSingle(filters.to)}
+        initialEntityId={pickSingle(filters.entityId)}
+        initialRequestSearch={pickSingle(filters.q)}
+        initialRequestStatus={pickSingle(filters.status)}
+        initialAuditSearch={pickSingle(filters.q)}
+        initialAuditEntityType={pickSingle(filters.entityType)}
+        initialAuditActionType={pickSingle(filters.actionType)}
+        initialAuditChangedBy={pickSingle(filters.changedBy)}
       />
     </div>
   );

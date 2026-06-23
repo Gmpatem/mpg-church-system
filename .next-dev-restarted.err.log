@@ -1,0 +1,62 @@
+⚠ Slow filesystem detected. The benchmark took 374ms. If E:\mpg-church-system\.next/dev is a network drive, consider moving it to a local folder.
+See more: https://nextjs.org/docs/app/guides/local-development
+
+warn - The class `duration-[400ms]` is ambiguous and matches multiple utilities.
+warn - If this is content and not a class, replace it with `duration-&lsqb;400ms&rsqb;` to silence this warning.
+⨯ Error: TypeError: fetch failed
+    at <unknown> (src\features\treasury\queries.ts:896:20)
+    at async getTreasuryWorkspaceBootstrap (src\features\treasury\queries.ts:1751:7)
+    at async TreasuryPage (src\app\(church)\c\[churchSlug]\treasury\page.tsx:17:36)
+  894 |     .order("first_name", { ascending: true });
+  895 |
+> 896 |   if (error) throw new Error(error.message);
+      |                    ^
+  897 |   return (data ?? []) as TreasuryMemberOption[];
+  898 | });
+  899 | {
+  digest: '3781634810'
+}
+[browser] Error: TypeError: fetch failed
+    at <anonymous> (src\features\treasury\queries.ts:896:20)
+    at  getTreasuryWorkspaceBootstrap (src\features\treasury\queries.ts:1751:7)
+    at  TreasuryPage (src\app\(church)\c\[churchSlug]\treasury\page.tsx:17:36)
+  894 |     .order("first_name", { ascending: true });
+  895 |
+> 896 |   if (error) throw new Error(error.message);
+      |                    ^
+  897 |   return (data ?? []) as TreasuryMemberOption[];
+  898 | });
+  899 | (src/app/(church)
+[browser] Error: TypeError: fetch failed
+    at <anonymous> (src\features\treasury\queries.ts:896:20)
+    at  getTreasuryWorkspaceBootstrap (src\features\treasury\queries.ts:1751:7)
+    at  TreasuryPage (src\app\(church)\c\[churchSlug]\treasury\page.tsx:17:36)
+  894 |     .order("first_name", { ascending: true });
+  895 |
+> 896 |   if (error) throw new Error(error.message);
+      |                    ^
+  897 |   return (data ?? []) as TreasuryMemberOption[];
+  898 | });
+  899 | (src/app/(church)
+⨯ Error: TypeError: fetch failed
+    at <unknown> (src\features\access\queries.ts:239:11)
+  237 |
+  238 |   if (rolesResult.error) {
+> 239 |     throw new Error(rolesResult.error.message);
+      |           ^
+  240 |   }
+  241 |
+  242 |   if (linkedMembersResult.error) { {
+  digest: '2678615555'
+}
+⨯ Error: TypeError: fetch failed
+    at <unknown> (src\features\access\queries.ts:239:11)
+  237 |
+  238 |   if (rolesResult.error) {
+> 239 |     throw new Error(rolesResult.error.message);
+      |           ^
+  240 |   }
+  241 |
+  242 |   if (linkedMembersResult.error) { {
+  digest: '2678615555'
+}

@@ -1,0 +1,284 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - link "Church Workspace ghrace comunity church" [ref=e6] [cursor=pointer]:
+            - /url: /c/grace-community-church
+            - img [ref=e8]
+            - generic [ref=e12]:
+              - generic [ref=e13]: Church Workspace
+              - generic [ref=e14]: ghrace comunity church
+          - generic [ref=e15]: Church Admin
+        - navigation "Church workspace" [ref=e16]:
+          - generic [ref=e17]:
+            - generic [ref=e18]:
+              - paragraph [ref=e19]: Overview
+              - link "Dashboard" [ref=e21] [cursor=pointer]:
+                - /url: /c/grace-community-church
+                - img [ref=e22]
+                - generic [ref=e27]: Dashboard
+            - generic [ref=e28]:
+              - paragraph [ref=e29]: People
+              - generic [ref=e30]:
+                - link "Members" [ref=e31] [cursor=pointer]:
+                  - /url: /c/grace-community-church/members
+                  - img [ref=e32]
+                  - generic [ref=e37]: Members
+                - link "Households" [ref=e38] [cursor=pointer]:
+                  - /url: /c/grace-community-church/households
+                  - img [ref=e39]
+                  - generic [ref=e42]: Households
+            - generic [ref=e43]:
+              - paragraph [ref=e44]: Ministries
+              - generic [ref=e45]:
+                - link "Departments" [ref=e46] [cursor=pointer]:
+                  - /url: /c/grace-community-church/departments
+                  - img [ref=e47]
+                  - generic [ref=e51]: Departments
+                - link "Leadership" [ref=e52] [cursor=pointer]:
+                  - /url: /c/grace-community-church/leadership
+                  - img [ref=e53]
+                  - generic [ref=e65]: Leadership
+                - link "Small Groups" [ref=e66] [cursor=pointer]:
+                  - /url: /c/grace-community-church/small-groups
+                  - img [ref=e67]
+                  - generic [ref=e71]: Small Groups
+                - link "Events" [ref=e72] [cursor=pointer]:
+                  - /url: /c/grace-community-church/events
+                  - img [ref=e73]
+                  - generic [ref=e75]: Events
+                - link "Calendar" [ref=e76] [cursor=pointer]:
+                  - /url: /c/grace-community-church/calendar
+                  - img [ref=e77]
+                  - generic [ref=e79]: Calendar
+            - generic [ref=e80]:
+              - paragraph [ref=e81]: Treasury
+              - link "Treasury" [ref=e83] [cursor=pointer]:
+                - /url: /c/grace-community-church/treasury
+                - img [ref=e84]
+                - generic [ref=e87]: Treasury
+            - generic [ref=e88]:
+              - paragraph [ref=e89]: Operations
+              - generic [ref=e90]:
+                - link "Church Office" [ref=e91] [cursor=pointer]:
+                  - /url: /c/grace-community-church/office
+                  - img [ref=e92]
+                  - generic [ref=e96]: Church Office
+                - link "Announcements" [ref=e97] [cursor=pointer]:
+                  - /url: /c/grace-community-church/announcements
+                  - img [ref=e98]
+                  - generic [ref=e101]: Announcements
+                - link "Approvals" [ref=e102] [cursor=pointer]:
+                  - /url: /c/grace-community-church/approvals
+                  - img [ref=e103]
+                  - generic [ref=e107]: Approvals
+                - link "Reports" [ref=e108] [cursor=pointer]:
+                  - /url: /c/grace-community-church/reports
+                  - img [ref=e109]
+                  - generic [ref=e111]: Reports
+            - generic [ref=e112]:
+              - paragraph [ref=e113]: Administration
+              - generic [ref=e114]:
+                - link "Invites & Access" [ref=e115] [cursor=pointer]:
+                  - /url: /c/grace-community-church/access-control
+                  - img [ref=e116]
+                  - generic [ref=e118]: Invites & Access
+                - link "Settings" [ref=e119] [cursor=pointer]:
+                  - /url: /c/grace-community-church/settings
+                  - img [ref=e120]
+                  - generic [ref=e123]: Settings
+        - generic [ref=e125]:
+          - generic [ref=e126]:
+            - generic [ref=e128]: BD
+            - generic [ref=e129]:
+              - paragraph [ref=e130]: big dev
+              - paragraph [ref=e131]: bigdev830@gmail.com
+          - button "Logout" [ref=e132] [cursor=pointer]:
+            - img [ref=e133]
+            - text: Logout
+    - generic [ref=e136]:
+      - banner [ref=e137]:
+        - generic [ref=e138]:
+          - generic [ref=e140]:
+            - paragraph [ref=e141]: Treasury
+            - paragraph [ref=e142]: ghrace comunity church
+          - generic [ref=e143]:
+            - generic [ref=e145]:
+              - img [ref=e146]
+              - generic [ref=e150]: Online
+            - generic [ref=e151]: Church Admin
+            - generic [ref=e152]:
+              - button "Switch to English" [pressed] [ref=e153] [cursor=pointer]: EN
+              - button "Switch to Français" [ref=e154] [cursor=pointer]: FR
+            - button "Notifications" [ref=e155] [cursor=pointer]:
+              - img [ref=e156]
+            - button "Profile" [ref=e159] [cursor=pointer]:
+              - generic [ref=e161]: BD
+      - main [ref=e162]:
+        - generic [ref=e181]:
+          - generic [ref=e182]:
+            - generic [ref=e183]:
+              - heading "Treasury" [level=1] [ref=e184]
+              - paragraph [ref=e185]: Manage church income, expenses, funds, requests, transfers, and remittance.
+            - generic [ref=e186]:
+              - button "Record Money In" [ref=e187] [cursor=pointer]:
+                - img [ref=e188]
+                - text: Record Money In
+              - button "Record Money Out" [ref=e189] [cursor=pointer]:
+                - img [ref=e190]
+                - text: Record Money Out
+              - button "More Actions" [ref=e191] [cursor=pointer]:
+                - text: More Actions
+                - img [ref=e192]
+          - generic [ref=e197]:
+            - tablist "Treasury workspace sections" [ref=e198]:
+              - tab "Overview" [ref=e199] [cursor=pointer]
+              - tab "Transactions" [ref=e201] [cursor=pointer]
+              - tab "Funds" [ref=e202] [cursor=pointer]
+              - tab "Requests" [ref=e203] [cursor=pointer]
+              - tab "Transfers" [ref=e204] [cursor=pointer]
+              - tab "Reconciliation" [active] [selected] [ref=e205] [cursor=pointer]: Reconciliation
+            - button "This Month" [ref=e207] [cursor=pointer]:
+              - img [ref=e208]
+              - text: This Month
+          - tabpanel "Reconciliation" [ref=e782]:
+            - generic [ref=e783]:
+              - generic [ref=e785]:
+                - generic [ref=e787]:
+                  - img [ref=e789]
+                  - generic [ref=e791]:
+                    - paragraph [ref=e792]: Open Exceptions
+                    - paragraph [ref=e793]: "1"
+                    - paragraph [ref=e794]: Requires attention
+                - generic [ref=e796]:
+                  - img [ref=e798]
+                  - generic [ref=e802]:
+                    - paragraph [ref=e803]: Pending Remittance
+                    - paragraph [ref=e804]: XAF 25,000
+                    - paragraph [ref=e805]: Ready for next run
+                - generic [ref=e807]:
+                  - img [ref=e809]
+                  - generic [ref=e813]:
+                    - paragraph [ref=e814]: Pending Allocations
+                    - paragraph [ref=e815]: "0"
+                    - paragraph [ref=e816]: Awaiting remittance
+                - generic [ref=e818]:
+                  - img [ref=e820]
+                  - generic [ref=e824]:
+                    - paragraph [ref=e825]: Changes This Period
+                    - paragraph [ref=e826]: "16"
+                    - paragraph [ref=e827]: Audited Treasury changes
+              - generic [ref=e828]:
+                - generic [ref=e829]:
+                  - button "Exceptions 1" [ref=e830] [cursor=pointer]:
+                    - text: Exceptions
+                    - generic [ref=e831]: "1"
+                  - button "Remittance 0" [ref=e832] [cursor=pointer]:
+                    - text: Remittance
+                    - generic [ref=e833]: "0"
+                  - button "Allocations 0" [ref=e834] [cursor=pointer]:
+                    - text: Allocations
+                    - generic [ref=e835]: "0"
+                  - button "Audit Trail 16" [ref=e836] [cursor=pointer]:
+                    - text: Audit Trail
+                    - generic [ref=e837]: "16"
+                - generic [ref=e839]:
+                  - generic [ref=e840]:
+                    - generic [ref=e841]:
+                      - generic [ref=e842]:
+                        - generic [ref=e843]: Search exceptions...
+                        - img
+                        - textbox "Search exceptions..." [ref=e844]
+                      - combobox "Severity" [ref=e845] [cursor=pointer]:
+                        - generic: Severity
+                        - img [ref=e846]
+                      - combobox "Exception Type" [ref=e848] [cursor=pointer]:
+                        - generic: Exception Type
+                        - img [ref=e849]
+                      - combobox "Related Module" [ref=e851] [cursor=pointer]:
+                        - generic: Related Module
+                        - img [ref=e852]
+                      - button "Refresh Checks" [ref=e854] [cursor=pointer]:
+                        - img [ref=e855]
+                        - text: Refresh Checks
+                    - generic [ref=e860]:
+                      - heading "Exception Queue" [level=2] [ref=e862]
+                      - generic [ref=e863]:
+                        - table [ref=e865]:
+                          - rowgroup [ref=e866]:
+                            - row "Issue Severity Related Record Amount Detected Status Action" [ref=e867]:
+                              - columnheader "Issue" [ref=e868]
+                              - columnheader "Severity" [ref=e869]
+                              - columnheader "Related Record" [ref=e870]
+                              - columnheader "Amount" [ref=e871]
+                              - columnheader "Detected" [ref=e872]
+                              - columnheader "Status" [ref=e873]
+                              - columnheader "Action" [ref=e874]
+                          - rowgroup [ref=e875]:
+                            - row "Pending Mission Remittance Mission remittance is available for the next remittance run. Notice conference XAF 25,000 - Open Review" [ref=e876] [cursor=pointer]:
+                              - cell "Pending Mission Remittance Mission remittance is available for the next remittance run." [ref=e877]:
+                                - generic [ref=e878]:
+                                  - img [ref=e880]
+                                  - generic [ref=e882]:
+                                    - generic [ref=e883]: Pending Mission Remittance
+                                    - generic [ref=e884]: Mission remittance is available for the next remittance run.
+                              - cell "Notice" [ref=e885]:
+                                - generic [ref=e886]: Notice
+                              - cell "conference" [ref=e888]
+                              - cell "XAF 25,000" [ref=e889]
+                              - cell "-" [ref=e890]
+                              - cell "Open" [ref=e891]:
+                                - generic [ref=e892]: Open
+                              - cell "Review" [ref=e894]:
+                                - button "Review" [ref=e895]
+                        - generic [ref=e896]:
+                          - paragraph [ref=e897]: Showing 1-1 of 1 exceptions
+                          - navigation "Treasury pagination" [ref=e898]:
+                            - button "Previous page" [disabled]:
+                              - img
+                            - button "Page 1" [ref=e899] [cursor=pointer]: "1"
+                            - button "Next page" [disabled]:
+                              - img
+                  - generic [ref=e900]:
+                    - heading "Selected Exception" [level=2] [ref=e902]
+                    - generic [ref=e904]:
+                      - generic [ref=e905]:
+                        - generic [ref=e906]:
+                          - generic [ref=e907]: Notice
+                          - heading "Pending Mission Remittance" [level=3] [ref=e909]
+                          - paragraph [ref=e910]: conference
+                        - generic [ref=e911]: XAF 25,000
+                      - paragraph [ref=e912]: Mission remittance is available for the next remittance run.
+                      - generic [ref=e913]:
+                        - heading "Why it matters" [level=4] [ref=e914]
+                        - paragraph [ref=e915]: Mission remittance should be reviewed before period close.
+                      - generic [ref=e916]:
+                        - heading "Suggested resolution" [level=4] [ref=e917]
+                        - paragraph [ref=e918]: Open the remittance view and run remittance when ready.
+                      - generic [ref=e919]:
+                        - button "Run Remittance" [ref=e920] [cursor=pointer]:
+                          - img [ref=e921]
+                          - text: Run Remittance
+                        - link "Finance Settings" [ref=e923] [cursor=pointer]:
+                          - /url: /c/grace-community-church/settings
+                          - img [ref=e924]
+                          - text: Finance Settings
+                      - generic [ref=e927]:
+                        - generic [ref=e928]:
+                          - term [ref=e929]: Entity Type
+                          - definition [ref=e930]: Remittance
+                        - generic [ref=e931]:
+                          - term [ref=e932]: Entity Reference
+                          - definition [ref=e933]: "-"
+                        - generic [ref=e934]:
+                          - term [ref=e935]: Frequency
+                          - definition [ref=e936]: weekly
+                        - generic [ref=e937]:
+                          - term [ref=e938]: Mode
+                          - definition [ref=e939]: auto_create
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e175] [cursor=pointer]:
+    - img [ref=e176]
+  - alert [ref=e179]

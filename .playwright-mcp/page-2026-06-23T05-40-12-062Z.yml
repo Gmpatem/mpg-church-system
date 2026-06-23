@@ -1,0 +1,219 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - link "Church Workspace ghrace comunity church" [ref=e6] [cursor=pointer]:
+            - /url: /c/grace-community-church
+            - img [ref=e8]
+            - generic [ref=e12]:
+              - generic [ref=e13]: Church Workspace
+              - generic [ref=e14]: ghrace comunity church
+          - generic [ref=e15]: Church Admin
+        - navigation "Church workspace" [ref=e16]:
+          - generic [ref=e17]:
+            - generic [ref=e18]:
+              - paragraph [ref=e19]: Overview
+              - link "Dashboard" [ref=e21] [cursor=pointer]:
+                - /url: /c/grace-community-church
+                - img [ref=e22]
+                - generic [ref=e27]: Dashboard
+            - generic [ref=e28]:
+              - paragraph [ref=e29]: People
+              - generic [ref=e30]:
+                - link "Members" [ref=e31] [cursor=pointer]:
+                  - /url: /c/grace-community-church/members
+                  - img [ref=e32]
+                  - generic [ref=e37]: Members
+                - link "Households" [ref=e38] [cursor=pointer]:
+                  - /url: /c/grace-community-church/households
+                  - img [ref=e39]
+                  - generic [ref=e42]: Households
+            - generic [ref=e43]:
+              - paragraph [ref=e44]: Ministries
+              - generic [ref=e45]:
+                - link "Departments" [ref=e46] [cursor=pointer]:
+                  - /url: /c/grace-community-church/departments
+                  - img [ref=e47]
+                  - generic [ref=e51]: Departments
+                - link "Leadership" [ref=e52] [cursor=pointer]:
+                  - /url: /c/grace-community-church/leadership
+                  - img [ref=e53]
+                  - generic [ref=e65]: Leadership
+                - link "Small Groups" [ref=e66] [cursor=pointer]:
+                  - /url: /c/grace-community-church/small-groups
+                  - img [ref=e67]
+                  - generic [ref=e71]: Small Groups
+                - link "Events" [ref=e72] [cursor=pointer]:
+                  - /url: /c/grace-community-church/events
+                  - img [ref=e73]
+                  - generic [ref=e75]: Events
+                - link "Calendar" [ref=e76] [cursor=pointer]:
+                  - /url: /c/grace-community-church/calendar
+                  - img [ref=e77]
+                  - generic [ref=e79]: Calendar
+            - generic [ref=e80]:
+              - paragraph [ref=e81]: Treasury
+              - link "Treasury" [ref=e83] [cursor=pointer]:
+                - /url: /c/grace-community-church/treasury
+                - img [ref=e84]
+                - generic [ref=e87]: Treasury
+            - generic [ref=e88]:
+              - paragraph [ref=e89]: Operations
+              - generic [ref=e90]:
+                - link "Church Office" [ref=e91] [cursor=pointer]:
+                  - /url: /c/grace-community-church/office
+                  - img [ref=e92]
+                  - generic [ref=e96]: Church Office
+                - link "Announcements" [ref=e97] [cursor=pointer]:
+                  - /url: /c/grace-community-church/announcements
+                  - img [ref=e98]
+                  - generic [ref=e101]: Announcements
+                - link "Approvals" [ref=e102] [cursor=pointer]:
+                  - /url: /c/grace-community-church/approvals
+                  - img [ref=e103]
+                  - generic [ref=e107]: Approvals
+                - link "Reports" [ref=e108] [cursor=pointer]:
+                  - /url: /c/grace-community-church/reports
+                  - img [ref=e109]
+                  - generic [ref=e111]: Reports
+            - generic [ref=e112]:
+              - paragraph [ref=e113]: Administration
+              - generic [ref=e114]:
+                - link "Invites & Access" [ref=e115] [cursor=pointer]:
+                  - /url: /c/grace-community-church/access-control
+                  - img [ref=e116]
+                  - generic [ref=e118]: Invites & Access
+                - link "Settings" [ref=e119] [cursor=pointer]:
+                  - /url: /c/grace-community-church/settings
+                  - img [ref=e120]
+                  - generic [ref=e123]: Settings
+        - generic [ref=e125]:
+          - generic [ref=e126]:
+            - generic [ref=e128]: BD
+            - generic [ref=e129]:
+              - paragraph [ref=e130]: big dev
+              - paragraph [ref=e131]: bigdev830@gmail.com
+          - button "Logout" [ref=e132] [cursor=pointer]:
+            - img [ref=e133]
+            - text: Logout
+    - generic [ref=e136]:
+      - banner [ref=e137]:
+        - generic [ref=e138]:
+          - generic [ref=e140]:
+            - paragraph [ref=e141]: Departments
+            - paragraph [ref=e142]: ghrace comunity church
+          - generic [ref=e143]:
+            - generic [ref=e145]:
+              - img [ref=e146]
+              - generic [ref=e150]: Online
+            - generic [ref=e151]: Church Admin
+            - generic [ref=e152]:
+              - button "Switch to English" [pressed] [ref=e153] [cursor=pointer]: EN
+              - button "Switch to Français" [ref=e154] [cursor=pointer]: FR
+            - button "Notifications" [ref=e155] [cursor=pointer]:
+              - img [ref=e156]
+            - button "Profile" [ref=e159] [cursor=pointer]:
+              - generic [ref=e161]: BD
+      - main [ref=e162]:
+        - generic [ref=e165]:
+          - generic [ref=e166]:
+            - generic [ref=e167]:
+              - heading "Department Documents" [level=1] [ref=e168]
+              - paragraph [ref=e169]: Prepare document categories without showing files until storage is configured.
+            - generic [ref=e171]:
+              - button "Upload Document" [disabled]:
+                - img
+                - text: Upload Document
+          - tablist "Department workspace sections" [ref=e173]:
+            - tab "Overview" [ref=e174] [cursor=pointer]
+            - tab "Action Plan" [ref=e175] [cursor=pointer]
+            - tab "Activities" [ref=e176] [cursor=pointer]
+            - tab "People" [ref=e177] [cursor=pointer]
+            - tab "Budget" [ref=e178] [cursor=pointer]
+            - tab "Documents" [selected] [ref=e179] [cursor=pointer]: Documents
+          - tabpanel "Documents" [ref=e181]:
+            - generic [ref=e182]:
+              - generic [ref=e183]:
+                - generic [ref=e184]:
+                  - generic [ref=e185]:
+                    - heading "Document Library" [level=2] [ref=e186]
+                    - paragraph [ref=e187]: Storage state for media department.
+                  - generic [ref=e188]:
+                    - generic [ref=e189]:
+                      - generic [ref=e190]: Search categories...
+                      - img
+                      - textbox "Search categories..." [ref=e191]
+                    - generic [ref=e192]:
+                      - generic [ref=e193]: Document category
+                      - combobox "Document category" [ref=e194]:
+                        - option "All categories" [selected]
+                        - option "Plans"
+                        - option "Reports"
+                        - option "Minutes"
+                        - option "Budget Files"
+                        - option "Forms"
+                        - option "Media"
+                - generic [ref=e195]:
+                  - generic [ref=e197]:
+                    - img [ref=e199]
+                    - generic [ref=e201]:
+                      - heading "Plans" [level=3] [ref=e202]
+                      - paragraph [ref=e203]: 0 files
+                  - generic [ref=e205]:
+                    - img [ref=e207]
+                    - generic [ref=e209]:
+                      - heading "Reports" [level=3] [ref=e210]
+                      - paragraph [ref=e211]: 0 files
+                  - generic [ref=e213]:
+                    - img [ref=e215]
+                    - generic [ref=e217]:
+                      - heading "Minutes" [level=3] [ref=e218]
+                      - paragraph [ref=e219]: 0 files
+                  - generic [ref=e221]:
+                    - img [ref=e223]
+                    - generic [ref=e225]:
+                      - heading "Budget Files" [level=3] [ref=e226]
+                      - paragraph [ref=e227]: 0 files
+                  - generic [ref=e229]:
+                    - img [ref=e231]
+                    - generic [ref=e233]:
+                      - heading "Forms" [level=3] [ref=e234]
+                      - paragraph [ref=e235]: 0 files
+                  - generic [ref=e237]:
+                    - img [ref=e239]
+                    - generic [ref=e241]:
+                      - heading "Media" [level=3] [ref=e242]
+                      - paragraph [ref=e243]: 0 files
+                - generic [ref=e245]:
+                  - heading "Document storage unavailable" [level=3] [ref=e246]
+                  - paragraph [ref=e247]: Department document storage has not been configured.
+                  - generic [ref=e248]:
+                    - button "Upload Document" [disabled]:
+                      - img
+                      - text: Upload Document
+              - complementary [ref=e249]:
+                - generic [ref=e250]:
+                  - heading "Document Preview" [level=2] [ref=e251]
+                  - paragraph [ref=e252]: No file is selected.
+                - generic [ref=e253]:
+                  - generic [ref=e254]:
+                    - generic [ref=e255]:
+                      - img [ref=e256]
+                      - text: Configured files
+                    - generic [ref=e259]: "0"
+                  - generic [ref=e260]:
+                    - generic [ref=e261]:
+                      - img [ref=e262]
+                      - text: Pending approval
+                    - generic [ref=e265]: "0"
+                  - generic [ref=e266]:
+                    - generic [ref=e267]:
+                      - img [ref=e268]
+                      - text: Archived files
+                    - generic [ref=e271]: "0"
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e277] [cursor=pointer]:
+    - img [ref=e278]
+  - alert [ref=e281]

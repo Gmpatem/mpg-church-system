@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { getTreasuryAuditLogs } from "@/features/treasury/queries";
 import { WorkspaceHero } from "@/components/workspace";
 
@@ -9,6 +10,20 @@ interface TreasuryAuditPageProps {
 
 function pickSingle(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value ?? "";
+}
+
+function appendSearchParam(
+  params: URLSearchParams,
+  key: string,
+  value: string | string[] | undefined
+) {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      if (item) params.append(key, item);
+    }
+    return;
+  }
+  if (value) params.set(key, value);
 }
 
 function formatActor(actor: any, fallbackId?: string | null) {
@@ -62,6 +77,15 @@ export default async function TreasuryAuditPage({
 }: TreasuryAuditPageProps) {
   const { churchSlug } = await params;
   const filters = (await searchParams) ?? {};
+  const next = new URLSearchParams();
+  next.set("tab", "reconciliation");
+  next.set("view", "audit");
+  for (const [key, value] of Object.entries(filters)) {
+    if (key === "tab" || key === "view") continue;
+    appendSearchParam(next, key, value);
+  }
+  redirect(`/c/${churchSlug}/treasury?${next.toString()}`);
+
   const result = await getTreasuryAuditLogs(churchSlug, filters);
 
   const q = pickSingle(filters.q);

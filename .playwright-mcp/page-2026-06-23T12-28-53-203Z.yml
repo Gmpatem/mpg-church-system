@@ -1,0 +1,429 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - link "Church Workspace ghrace comunity church" [ref=e6] [cursor=pointer]:
+            - /url: /c/grace-community-church
+            - img [ref=e8]
+            - generic [ref=e12]:
+              - generic [ref=e13]: Church Workspace
+              - generic [ref=e14]: ghrace comunity church
+          - generic [ref=e15]: Church Admin
+        - navigation "Church workspace" [ref=e16]:
+          - generic [ref=e17]:
+            - generic [ref=e18]:
+              - paragraph [ref=e19]: Overview
+              - link "Dashboard" [ref=e21] [cursor=pointer]:
+                - /url: /c/grace-community-church
+                - img [ref=e22]
+                - generic [ref=e27]: Dashboard
+            - generic [ref=e28]:
+              - paragraph [ref=e29]: People
+              - generic [ref=e30]:
+                - link "Members" [ref=e31] [cursor=pointer]:
+                  - /url: /c/grace-community-church/members
+                  - img [ref=e32]
+                  - generic [ref=e37]: Members
+                - link "Households" [ref=e38] [cursor=pointer]:
+                  - /url: /c/grace-community-church/households
+                  - img [ref=e39]
+                  - generic [ref=e42]: Households
+            - generic [ref=e43]:
+              - paragraph [ref=e44]: Ministries
+              - generic [ref=e45]:
+                - link "Departments" [ref=e46] [cursor=pointer]:
+                  - /url: /c/grace-community-church/departments
+                  - img [ref=e47]
+                  - generic [ref=e51]: Departments
+                - link "Leadership" [ref=e52] [cursor=pointer]:
+                  - /url: /c/grace-community-church/leadership
+                  - img [ref=e53]
+                  - generic [ref=e65]: Leadership
+                - link "Small Groups" [ref=e66] [cursor=pointer]:
+                  - /url: /c/grace-community-church/small-groups
+                  - img [ref=e67]
+                  - generic [ref=e71]: Small Groups
+                - link "Events" [ref=e72] [cursor=pointer]:
+                  - /url: /c/grace-community-church/events
+                  - img [ref=e73]
+                  - generic [ref=e75]: Events
+                - link "Calendar" [ref=e76] [cursor=pointer]:
+                  - /url: /c/grace-community-church/calendar
+                  - img [ref=e77]
+                  - generic [ref=e79]: Calendar
+            - generic [ref=e80]:
+              - paragraph [ref=e81]: Treasury
+              - link "Treasury" [ref=e83] [cursor=pointer]:
+                - /url: /c/grace-community-church/treasury
+                - img [ref=e84]
+                - generic [ref=e87]: Treasury
+            - generic [ref=e88]:
+              - paragraph [ref=e89]: Operations
+              - generic [ref=e90]:
+                - link "Church Office" [ref=e91] [cursor=pointer]:
+                  - /url: /c/grace-community-church/office
+                  - img [ref=e92]
+                  - generic [ref=e96]: Church Office
+                - link "Announcements" [ref=e97] [cursor=pointer]:
+                  - /url: /c/grace-community-church/announcements
+                  - img [ref=e98]
+                  - generic [ref=e101]: Announcements
+                - link "Approvals" [ref=e102] [cursor=pointer]:
+                  - /url: /c/grace-community-church/approvals
+                  - img [ref=e103]
+                  - generic [ref=e107]: Approvals
+                - link "Reports" [ref=e108] [cursor=pointer]:
+                  - /url: /c/grace-community-church/reports
+                  - img [ref=e109]
+                  - generic [ref=e111]: Reports
+            - generic [ref=e112]:
+              - paragraph [ref=e113]: Administration
+              - generic [ref=e114]:
+                - link "Invites & Access" [ref=e115] [cursor=pointer]:
+                  - /url: /c/grace-community-church/access-control
+                  - img [ref=e116]
+                  - generic [ref=e118]: Invites & Access
+                - link "Settings" [ref=e119] [cursor=pointer]:
+                  - /url: /c/grace-community-church/settings
+                  - img [ref=e120]
+                  - generic [ref=e123]: Settings
+        - generic [ref=e125]:
+          - generic [ref=e126]:
+            - generic [ref=e128]: BD
+            - generic [ref=e129]:
+              - paragraph [ref=e130]: big dev
+              - paragraph [ref=e131]: bigdev830@gmail.com
+          - button "Logout" [ref=e132] [cursor=pointer]:
+            - img [ref=e133]
+            - text: Logout
+    - generic [ref=e136]:
+      - banner [ref=e137]:
+        - generic [ref=e138]:
+          - generic [ref=e140]:
+            - paragraph [ref=e141]: Treasury
+            - paragraph [ref=e142]: ghrace comunity church
+          - generic [ref=e143]:
+            - generic [ref=e145]:
+              - img [ref=e146]
+              - generic [ref=e150]: Online
+            - generic [ref=e151]: Church Admin
+            - generic [ref=e152]:
+              - button "Switch to English" [pressed] [ref=e153] [cursor=pointer]: EN
+              - button "Switch to Français" [ref=e154] [cursor=pointer]: FR
+            - button "Notifications" [ref=e155] [cursor=pointer]:
+              - img [ref=e156]
+            - button "Profile" [ref=e159] [cursor=pointer]:
+              - generic [ref=e161]: BD
+      - main [ref=e162]:
+        - generic [ref=e181]:
+          - generic [ref=e182]:
+            - generic [ref=e183]:
+              - heading "Treasury" [level=1] [ref=e184]
+              - paragraph [ref=e185]: Manage church income, expenses, funds, requests, transfers, and remittance.
+            - generic [ref=e186]:
+              - button "Record Money In" [ref=e187] [cursor=pointer]:
+                - img [ref=e188]
+                - text: Record Money In
+              - button "Record Money Out" [ref=e189] [cursor=pointer]:
+                - img [ref=e190]
+                - text: Record Money Out
+              - button "More Actions" [ref=e191] [cursor=pointer]:
+                - text: More Actions
+                - img [ref=e192]
+          - generic [ref=e197]:
+            - tablist "Treasury workspace sections" [ref=e198]:
+              - tab "Overview" [ref=e199] [cursor=pointer]
+              - tab "Transactions" [ref=e201] [cursor=pointer]
+              - tab "Funds" [ref=e202] [cursor=pointer]
+              - tab "Requests" [ref=e203] [cursor=pointer]
+              - tab "Transfers" [ref=e204] [cursor=pointer]
+              - tab "Reconciliation" [selected] [ref=e205] [cursor=pointer]: Reconciliation
+            - button "This Month" [ref=e207] [cursor=pointer]:
+              - img [ref=e208]
+              - text: This Month
+          - tabpanel "Reconciliation" [ref=e782]:
+            - generic [ref=e783]:
+              - generic [ref=e785]:
+                - generic [ref=e787]:
+                  - img [ref=e789]
+                  - generic [ref=e791]:
+                    - paragraph [ref=e792]: Open Exceptions
+                    - paragraph [ref=e793]: "1"
+                    - paragraph [ref=e794]: Requires attention
+                - generic [ref=e796]:
+                  - img [ref=e798]
+                  - generic [ref=e802]:
+                    - paragraph [ref=e803]: Pending Remittance
+                    - paragraph [ref=e804]: XAF 25,000
+                    - paragraph [ref=e805]: Ready for next run
+                - generic [ref=e807]:
+                  - img [ref=e809]
+                  - generic [ref=e813]:
+                    - paragraph [ref=e814]: Pending Allocations
+                    - paragraph [ref=e815]: "0"
+                    - paragraph [ref=e816]: Awaiting remittance
+                - generic [ref=e818]:
+                  - img [ref=e820]
+                  - generic [ref=e824]:
+                    - paragraph [ref=e825]: Changes This Period
+                    - paragraph [ref=e826]: "16"
+                    - paragraph [ref=e827]: Audited Treasury changes
+              - generic [ref=e828]:
+                - generic [ref=e829]:
+                  - button "Exceptions 1" [ref=e830] [cursor=pointer]:
+                    - text: Exceptions
+                    - generic [ref=e831]: "1"
+                  - button "Remittance 0" [ref=e832] [cursor=pointer]:
+                    - text: Remittance
+                    - generic [ref=e833]: "0"
+                  - button "Allocations 0" [ref=e834] [cursor=pointer]:
+                    - text: Allocations
+                    - generic [ref=e835]: "0"
+                  - button "Audit Trail 16" [active] [ref=e836] [cursor=pointer]:
+                    - text: Audit Trail
+                    - generic [ref=e837]: "16"
+                - generic [ref=e1018]:
+                  - generic [ref=e1019]:
+                    - generic [ref=e1020]:
+                      - generic [ref=e1021]:
+                        - generic [ref=e1022]: Search audit trail...
+                        - img
+                        - textbox "Search audit trail..." [ref=e1023]
+                      - combobox "Entity" [ref=e1024] [cursor=pointer]:
+                        - generic: Entity
+                        - img [ref=e1025]
+                      - combobox "Action" [ref=e1027] [cursor=pointer]:
+                        - generic: Action
+                        - img [ref=e1028]
+                      - combobox "Actor" [ref=e1030] [cursor=pointer]:
+                        - generic: Actor
+                        - img [ref=e1031]
+                    - generic [ref=e1033]:
+                      - heading "Audit Trail" [level=2] [ref=e1035]
+                      - generic [ref=e1036]:
+                        - table [ref=e1038]:
+                          - rowgroup [ref=e1039]:
+                            - row "Changed Entity Record Actor Fields Correction" [ref=e1040]:
+                              - columnheader "Changed" [ref=e1041]
+                              - columnheader "Entity" [ref=e1042]
+                              - columnheader "Record" [ref=e1043]
+                              - columnheader "Actor" [ref=e1044]
+                              - columnheader "Fields" [ref=e1045]
+                              - columnheader "Correction" [ref=e1046]
+                          - rowgroup [ref=e1047]:
+                            - row "Apr 28, 2026, 11:45 PM Treasury Outflow Create TOUT-20260428-137047 2e51a728-aeec-4b8c-af7d-4ccb9f954b20 big dev 15 -" [ref=e1048] [cursor=pointer]:
+                              - cell "Apr 28, 2026, 11:45 PM" [ref=e1049]
+                              - cell "Treasury Outflow Create" [ref=e1050]:
+                                - generic [ref=e1051]: Treasury Outflow
+                                - paragraph [ref=e1053]: Create
+                              - cell "TOUT-20260428-137047 2e51a728-aeec-4b8c-af7d-4ccb9f954b20" [ref=e1054]:
+                                - paragraph [ref=e1055]: TOUT-20260428-137047
+                                - paragraph [ref=e1056]: 2e51a728-aeec-4b8c-af7d-4ccb9f954b20
+                              - cell "big dev" [ref=e1057]
+                              - cell "15" [ref=e1058]
+                              - cell "-" [ref=e1059]
+                            - row "Apr 28, 2026, 11:44 PM Treasury Inflow Create TIN-20260428-069960 c20f9b26-fbc6-4828-bd08-cbf6b9d3e2b8 big dev 15 -" [ref=e1060] [cursor=pointer]:
+                              - cell "Apr 28, 2026, 11:44 PM" [ref=e1061]
+                              - cell "Treasury Inflow Create" [ref=e1062]:
+                                - generic [ref=e1063]: Treasury Inflow
+                                - paragraph [ref=e1065]: Create
+                              - cell "TIN-20260428-069960 c20f9b26-fbc6-4828-bd08-cbf6b9d3e2b8" [ref=e1066]:
+                                - paragraph [ref=e1067]: TIN-20260428-069960
+                                - paragraph [ref=e1068]: c20f9b26-fbc6-4828-bd08-cbf6b9d3e2b8
+                              - cell "big dev" [ref=e1069]
+                              - cell "15" [ref=e1070]
+                              - cell "-" [ref=e1071]
+                            - row "Apr 25, 2026, 8:08 PM Treasury Inflow Create TIN-20260425-883334 62a25910-253c-4fd4-ad01-c3b3a479048d big dev 15 -" [ref=e1072] [cursor=pointer]:
+                              - cell "Apr 25, 2026, 8:08 PM" [ref=e1073]
+                              - cell "Treasury Inflow Create" [ref=e1074]:
+                                - generic [ref=e1075]: Treasury Inflow
+                                - paragraph [ref=e1077]: Create
+                              - cell "TIN-20260425-883334 62a25910-253c-4fd4-ad01-c3b3a479048d" [ref=e1078]:
+                                - paragraph [ref=e1079]: TIN-20260425-883334
+                                - paragraph [ref=e1080]: 62a25910-253c-4fd4-ad01-c3b3a479048d
+                              - cell "big dev" [ref=e1081]
+                              - cell "15" [ref=e1082]
+                              - cell "-" [ref=e1083]
+                            - row "Apr 25, 2026, 8:07 PM Treasury Inflow Create TIN-20260425-870406 296efabf-b576-42df-a0cc-65d3742888b6 big dev 15 -" [ref=e1084] [cursor=pointer]:
+                              - cell "Apr 25, 2026, 8:07 PM" [ref=e1085]
+                              - cell "Treasury Inflow Create" [ref=e1086]:
+                                - generic [ref=e1087]: Treasury Inflow
+                                - paragraph [ref=e1089]: Create
+                              - cell "TIN-20260425-870406 296efabf-b576-42df-a0cc-65d3742888b6" [ref=e1090]:
+                                - paragraph [ref=e1091]: TIN-20260425-870406
+                                - paragraph [ref=e1092]: 296efabf-b576-42df-a0cc-65d3742888b6
+                              - cell "big dev" [ref=e1093]
+                              - cell "15" [ref=e1094]
+                              - cell "-" [ref=e1095]
+                            - row "Apr 25, 2026, 7:40 PM Treasury Fund Create Remittance Fund 412972ce-1a11-489b-bac4-33400bdca0a9 big dev 10 -" [ref=e1096] [cursor=pointer]:
+                              - cell "Apr 25, 2026, 7:40 PM" [ref=e1097]
+                              - cell "Treasury Fund Create" [ref=e1098]:
+                                - generic [ref=e1099]: Treasury Fund
+                                - paragraph [ref=e1101]: Create
+                              - cell "Remittance Fund 412972ce-1a11-489b-bac4-33400bdca0a9" [ref=e1102]:
+                                - paragraph [ref=e1103]: Remittance Fund
+                                - paragraph [ref=e1104]: 412972ce-1a11-489b-bac4-33400bdca0a9
+                              - cell "big dev" [ref=e1105]
+                              - cell "10" [ref=e1106]
+                              - cell "-" [ref=e1107]
+                            - row "Apr 25, 2026, 6:27 PM Treasury Outflow Create TOUT-20260425-863812 624e61a2-16b3-43de-b145-ec162df2fc90 big dev 15 -" [ref=e1108] [cursor=pointer]:
+                              - cell "Apr 25, 2026, 6:27 PM" [ref=e1109]
+                              - cell "Treasury Outflow Create" [ref=e1110]:
+                                - generic [ref=e1111]: Treasury Outflow
+                                - paragraph [ref=e1113]: Create
+                              - cell "TOUT-20260425-863812 624e61a2-16b3-43de-b145-ec162df2fc90" [ref=e1114]:
+                                - paragraph [ref=e1115]: TOUT-20260425-863812
+                                - paragraph [ref=e1116]: 624e61a2-16b3-43de-b145-ec162df2fc90
+                              - cell "big dev" [ref=e1117]
+                              - cell "15" [ref=e1118]
+                              - cell "-" [ref=e1119]
+                            - row "Apr 25, 2026, 6:27 PM Treasury Inflow Create TIN-20260425-820610 826ae410-9877-4d81-a867-43d12916dd49 big dev 15 -" [ref=e1120] [cursor=pointer]:
+                              - cell "Apr 25, 2026, 6:27 PM" [ref=e1121]
+                              - cell "Treasury Inflow Create" [ref=e1122]:
+                                - generic [ref=e1123]: Treasury Inflow
+                                - paragraph [ref=e1125]: Create
+                              - cell "TIN-20260425-820610 826ae410-9877-4d81-a867-43d12916dd49" [ref=e1126]:
+                                - paragraph [ref=e1127]: TIN-20260425-820610
+                                - paragraph [ref=e1128]: 826ae410-9877-4d81-a867-43d12916dd49
+                              - cell "big dev" [ref=e1129]
+                              - cell "15" [ref=e1130]
+                              - cell "-" [ref=e1131]
+                            - row "Apr 25, 2026, 6:26 PM Treasury Fund Create Offerings 51710625-5649-40a0-8eb9-d6c08e190fc2 big dev 10 -" [ref=e1132] [cursor=pointer]:
+                              - cell "Apr 25, 2026, 6:26 PM" [ref=e1133]
+                              - cell "Treasury Fund Create" [ref=e1134]:
+                                - generic [ref=e1135]: Treasury Fund
+                                - paragraph [ref=e1137]: Create
+                              - cell "Offerings 51710625-5649-40a0-8eb9-d6c08e190fc2" [ref=e1138]:
+                                - paragraph [ref=e1139]: Offerings
+                                - paragraph [ref=e1140]: 51710625-5649-40a0-8eb9-d6c08e190fc2
+                              - cell "big dev" [ref=e1141]
+                              - cell "10" [ref=e1142]
+                              - cell "-" [ref=e1143]
+                            - row "Apr 25, 2026, 11:42 AM Treasury Inflow Create TIN-20260425-557421 3e28682f-9b68-409c-b41a-3ebb1f2b3d99 big dev 15 -" [ref=e1144] [cursor=pointer]:
+                              - cell "Apr 25, 2026, 11:42 AM" [ref=e1145]
+                              - cell "Treasury Inflow Create" [ref=e1146]:
+                                - generic [ref=e1147]: Treasury Inflow
+                                - paragraph [ref=e1149]: Create
+                              - cell "TIN-20260425-557421 3e28682f-9b68-409c-b41a-3ebb1f2b3d99" [ref=e1150]:
+                                - paragraph [ref=e1151]: TIN-20260425-557421
+                                - paragraph [ref=e1152]: 3e28682f-9b68-409c-b41a-3ebb1f2b3d99
+                              - cell "big dev" [ref=e1153]
+                              - cell "15" [ref=e1154]
+                              - cell "-" [ref=e1155]
+                            - row "Apr 25, 2026, 2:53 AM Treasury Fund Create condolence afab4994-42f3-497b-82b8-985f80160f33 big dev 10 -" [ref=e1156] [cursor=pointer]:
+                              - cell "Apr 25, 2026, 2:53 AM" [ref=e1157]
+                              - cell "Treasury Fund Create" [ref=e1158]:
+                                - generic [ref=e1159]: Treasury Fund
+                                - paragraph [ref=e1161]: Create
+                              - cell "condolence afab4994-42f3-497b-82b8-985f80160f33" [ref=e1162]:
+                                - paragraph [ref=e1163]: condolence
+                                - paragraph [ref=e1164]: afab4994-42f3-497b-82b8-985f80160f33
+                              - cell "big dev" [ref=e1165]
+                              - cell "10" [ref=e1166]
+                              - cell "-" [ref=e1167]
+                            - row "Apr 19, 2026, 11:22 AM Treasury Fund Create media department Fund 33b2cd2a-f777-446c-bbbd-e9c862222067 Unknown user 10 -" [ref=e1168] [cursor=pointer]:
+                              - cell "Apr 19, 2026, 11:22 AM" [ref=e1169]
+                              - cell "Treasury Fund Create" [ref=e1170]:
+                                - generic [ref=e1171]: Treasury Fund
+                                - paragraph [ref=e1173]: Create
+                              - cell "media department Fund 33b2cd2a-f777-446c-bbbd-e9c862222067" [ref=e1174]:
+                                - paragraph [ref=e1175]: media department Fund
+                                - paragraph [ref=e1176]: 33b2cd2a-f777-446c-bbbd-e9c862222067
+                              - cell "Unknown user" [ref=e1177]
+                              - cell "10" [ref=e1178]
+                              - cell "-" [ref=e1179]
+                            - row "Apr 19, 2026, 10:16 AM Treasury Inflow Create TIN-20260419-018936 d1632d6f-28ed-4158-93de-4e208c2c4e67 big dev 14 -" [ref=e1180] [cursor=pointer]:
+                              - cell "Apr 19, 2026, 10:16 AM" [ref=e1181]
+                              - cell "Treasury Inflow Create" [ref=e1182]:
+                                - generic [ref=e1183]: Treasury Inflow
+                                - paragraph [ref=e1185]: Create
+                              - cell "TIN-20260419-018936 d1632d6f-28ed-4158-93de-4e208c2c4e67" [ref=e1186]:
+                                - paragraph [ref=e1187]: TIN-20260419-018936
+                                - paragraph [ref=e1188]: d1632d6f-28ed-4158-93de-4e208c2c4e67
+                              - cell "big dev" [ref=e1189]
+                              - cell "14" [ref=e1190]
+                              - cell "-" [ref=e1191]
+                            - row "Apr 18, 2026, 8:45 PM Treasury Inflow Create TIN-20260418-344207 32c87f13-8928-4a8e-964b-4a69db4f2e7c big dev 14 -" [ref=e1192] [cursor=pointer]:
+                              - cell "Apr 18, 2026, 8:45 PM" [ref=e1193]
+                              - cell "Treasury Inflow Create" [ref=e1194]:
+                                - generic [ref=e1195]: Treasury Inflow
+                                - paragraph [ref=e1197]: Create
+                              - cell "TIN-20260418-344207 32c87f13-8928-4a8e-964b-4a69db4f2e7c" [ref=e1198]:
+                                - paragraph [ref=e1199]: TIN-20260418-344207
+                                - paragraph [ref=e1200]: 32c87f13-8928-4a8e-964b-4a69db4f2e7c
+                              - cell "big dev" [ref=e1201]
+                              - cell "14" [ref=e1202]
+                              - cell "-" [ref=e1203]
+                            - row "Apr 18, 2026, 8:44 PM Treasury Inflow Create TIN-20260418-294291 b17238c1-4e16-487f-ba25-97f7ca2a6282 big dev 14 -" [ref=e1204] [cursor=pointer]:
+                              - cell "Apr 18, 2026, 8:44 PM" [ref=e1205]
+                              - cell "Treasury Inflow Create" [ref=e1206]:
+                                - generic [ref=e1207]: Treasury Inflow
+                                - paragraph [ref=e1209]: Create
+                              - cell "TIN-20260418-294291 b17238c1-4e16-487f-ba25-97f7ca2a6282" [ref=e1210]:
+                                - paragraph [ref=e1211]: TIN-20260418-294291
+                                - paragraph [ref=e1212]: b17238c1-4e16-487f-ba25-97f7ca2a6282
+                              - cell "big dev" [ref=e1213]
+                              - cell "14" [ref=e1214]
+                              - cell "-" [ref=e1215]
+                            - row "Apr 18, 2026, 8:44 PM Treasury Inflow Create TIN-20260418-274789 5a7f2990-8519-4631-b677-d11ff3d6e582 big dev 14 -" [ref=e1216] [cursor=pointer]:
+                              - cell "Apr 18, 2026, 8:44 PM" [ref=e1217]
+                              - cell "Treasury Inflow Create" [ref=e1218]:
+                                - generic [ref=e1219]: Treasury Inflow
+                                - paragraph [ref=e1221]: Create
+                              - cell "TIN-20260418-274789 5a7f2990-8519-4631-b677-d11ff3d6e582" [ref=e1222]:
+                                - paragraph [ref=e1223]: TIN-20260418-274789
+                                - paragraph [ref=e1224]: 5a7f2990-8519-4631-b677-d11ff3d6e582
+                              - cell "big dev" [ref=e1225]
+                              - cell "14" [ref=e1226]
+                              - cell "-" [ref=e1227]
+                            - row "Apr 18, 2026, 8:22 PM Treasury Fund Create Tithe d9a0fad6-47ac-4a75-9158-1a10f0944c6d big dev 9 -" [ref=e1228] [cursor=pointer]:
+                              - cell "Apr 18, 2026, 8:22 PM" [ref=e1229]
+                              - cell "Treasury Fund Create" [ref=e1230]:
+                                - generic [ref=e1231]: Treasury Fund
+                                - paragraph [ref=e1233]: Create
+                              - cell "Tithe d9a0fad6-47ac-4a75-9158-1a10f0944c6d" [ref=e1234]:
+                                - paragraph [ref=e1235]: Tithe
+                                - paragraph [ref=e1236]: d9a0fad6-47ac-4a75-9158-1a10f0944c6d
+                              - cell "big dev" [ref=e1237]
+                              - cell "9" [ref=e1238]
+                              - cell "-" [ref=e1239]
+                        - generic [ref=e1240]:
+                          - paragraph [ref=e1241]: Showing 1-16 of 16 audit entries
+                          - navigation "Treasury pagination" [ref=e1242]:
+                            - button "Previous page" [disabled]:
+                              - img
+                            - button "Page 1" [ref=e1243] [cursor=pointer]: "1"
+                            - button "Next page" [disabled]:
+                              - img
+                  - generic [ref=e1244]:
+                    - heading "Audit Details" [level=2] [ref=e1246]
+                    - generic [ref=e1248]:
+                      - generic [ref=e1249]:
+                        - generic [ref=e1250]: Create
+                        - heading "TOUT-20260428-137047" [level=3] [ref=e1252]
+                        - paragraph [ref=e1253]: 2e51a728-aeec-4b8c-af7d-4ccb9f954b20
+                      - generic [ref=e1254]:
+                        - generic [ref=e1255]:
+                          - term [ref=e1256]: Entity Type
+                          - definition [ref=e1257]: Treasury Outflow
+                        - generic [ref=e1258]:
+                          - term [ref=e1259]: Action
+                          - definition [ref=e1260]: Create
+                        - generic [ref=e1261]:
+                          - term [ref=e1262]: Actor
+                          - definition [ref=e1263]: big dev
+                        - generic [ref=e1264]:
+                          - term [ref=e1265]: Changed At
+                          - definition [ref=e1266]: Apr 28, 2026, 11:45 PM
+                        - generic [ref=e1267]:
+                          - term [ref=e1268]: Fields Changed
+                          - definition [ref=e1269]: "15"
+                      - generic [ref=e1270]:
+                        - paragraph [ref=e1271]: Correction note
+                        - paragraph [ref=e1272]: No correction note was recorded.
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e175] [cursor=pointer]:
+    - img [ref=e176]
+  - alert [ref=e179]

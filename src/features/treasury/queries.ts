@@ -189,10 +189,11 @@ async function getRecentInflowsForChurch(
   const withDepartment = await supabase
     .from("treasury_inflows")
     .select(
-      "id, inflow_type, amount, inflow_date, is_anonymous, note, reference_number, member_id, department_id, fund_id"
+      "id, inflow_type, amount, inflow_date, is_anonymous, note, reference_number, member_id, department_id, fund_id, recorded_by_user_id, created_at"
     )
     .eq("church_id", churchId)
     .order("inflow_date", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(limit);
 
   if (!withDepartment.error) {
@@ -206,10 +207,11 @@ async function getRecentInflowsForChurch(
   const withoutDepartment = await supabase
     .from("treasury_inflows")
     .select(
-      "id, inflow_type, amount, inflow_date, is_anonymous, note, reference_number, member_id, fund_id"
+      "id, inflow_type, amount, inflow_date, is_anonymous, note, reference_number, member_id, fund_id, recorded_by_user_id, created_at"
     )
     .eq("church_id", churchId)
     .order("inflow_date", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(limit);
 
   if (withoutDepartment.error) {
@@ -1544,6 +1546,176 @@ export async function getTreasuryAuditLogs(
   };
 }
 
+async function fetchAllTreasuryFundsForWorkspace(supabase: any, churchId: string) {
+  const withDepartment = await supabase
+    .from("treasury_funds")
+    .select("id, code, name, fund_type, description, is_active, department_id, created_at, updated_at")
+    .eq("church_id", churchId)
+    .order("name", { ascending: true });
+
+  if (!withDepartment.error) {
+    return {
+      rows: withNullableDepartmentId(
+        (withDepartment.data ?? []) as unknown as Record<string, unknown>[]
+      ),
+      migrationRequired: false,
+    };
+  }
+
+  const withoutDepartment = await supabase
+    .from("treasury_funds")
+    .select("id, code, name, fund_type, description, is_active, created_at, updated_at")
+    .eq("church_id", churchId)
+    .order("name", { ascending: true });
+
+  if (withoutDepartment.error) {
+    throw new Error(
+      [
+        normalizeSupabaseErrorMessage(
+          withDepartment.error,
+          "Department-aware treasury funds query failed."
+        ),
+        normalizeSupabaseErrorMessage(
+          withoutDepartment.error,
+          "Legacy treasury funds query failed."
+        ),
+      ].join(" | ")
+    );
+  }
+
+  return {
+    rows: withNullableDepartmentId(
+      (withoutDepartment.data ?? []) as unknown as Record<string, unknown>[]
+    ),
+    migrationRequired: true,
+  };
+}
+
+async function fetchDepartmentFundRequestsForTreasuryWorkspace(
+  supabase: any,
+  churchId: string
+) {
+  const { data, error } = await supabase
+    .from("department_fund_requests")
+    .select("*")
+    .eq("church_id", churchId)
+    .order("created_at", { ascending: false })
+    .limit(120);
+
+  if (!error) {
+    return { rows: data ?? [], migrationRequired: false };
+  }
+
+  if (isMissingRelationError(error, "department_fund_requests")) {
+    return { rows: [], migrationRequired: true };
+  }
+
+  throw new Error(
+    normalizeSupabaseErrorMessage(
+      error,
+      "Failed to load department fund requests for Treasury."
+    )
+  );
+}
+
+async function fetchTreasuryAuditRowsForWorkspace(supabase: any, churchId: string) {
+  const { data, error } = await supabase
+    .from("treasury_audit_logs")
+    .select(`
+      id,
+      church_id,
+      entity_type,
+      entity_id,
+      action_type,
+      changed_by_user_id,
+      correction_note,
+      before_snapshot,
+      after_snapshot,
+      created_at,
+      changed_by:profiles!treasury_audit_logs_changed_by_user_id_fkey (
+        id,
+        full_name,
+        email
+      )
+    `)
+    .eq("church_id", churchId)
+    .order("created_at", { ascending: false })
+    .limit(120);
+
+  if (!error) {
+    return { rows: data ?? [], migrationRequired: false };
+  }
+
+  if (isMissingRelationError(error, "treasury_audit_logs")) {
+    return { rows: [], migrationRequired: true };
+  }
+
+  throw new Error(
+    normalizeSupabaseErrorMessage(error, "Failed to load Treasury audit trail.")
+  );
+}
+
+async function fetchTreasuryRemittanceLogsForWorkspace(supabase: any, churchId: string) {
+  const { data, error } = await supabase
+    .from("treasury_remittance_logs")
+    .select(
+      "id, run_date, source_type, source_amount, remitted_amount, destination, frequency, mode, status, outflow_reference, note, recorded_by_user_id, created_at"
+    )
+    .eq("church_id", churchId)
+    .order("run_date", { ascending: false })
+    .order("created_at", { ascending: false })
+    .limit(50);
+
+  if (!error) {
+    return { rows: data ?? [], migrationRequired: false };
+  }
+
+  if (isMissingRelationError(error, "treasury_remittance_logs")) {
+    return { rows: [], migrationRequired: true };
+  }
+
+  throw new Error(
+    normalizeSupabaseErrorMessage(error, "Failed to load Treasury remittance logs.")
+  );
+}
+
+function summarizeTreasuryRequests(rows: any[]) {
+  return rows.reduce(
+    (summary, row) => {
+      const status = String(row.status || "");
+      if (status === "pending") summary.pending += 1;
+      if (status === "approved") summary.approved += 1;
+      if (status === "processed") summary.processed += 1;
+      if (status === "rejected") summary.rejected += 1;
+      if (status === "cancelled") summary.cancelled += 1;
+      return summary;
+    },
+    { pending: 0, approved: 0, processed: 0, rejected: 0, cancelled: 0 }
+  );
+}
+
+function profileLabel(row: any, fallback?: string | null) {
+  if (!row) return fallback || "Unknown user";
+  return row.full_name || row.email || fallback || "Unknown user";
+}
+
+function memberLabel(row: any, fallback?: string | null) {
+  if (!row) return fallback || null;
+  return (
+    row.display_name ||
+    [row.first_name, row.last_name].filter(Boolean).join(" ").trim() ||
+    row.member_code ||
+    fallback ||
+    null
+  );
+}
+
+function toIsoDateTime(value?: string | null) {
+  if (!value) return 0;
+  const time = new Date(value).getTime();
+  return Number.isNaN(time) ? 0 : time;
+}
+
 export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
   const ctx = await requireChurchRole(churchSlug, [...TREASURY_ALLOWED_ROLES]);
   const supabase = await createClient();
@@ -1554,7 +1726,7 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
     TREASURY_ALLOWED_ROLES.includes(role as (typeof TREASURY_ALLOWED_ROLES)[number])
   );
   const linkedInflowsCountPromise = getLinkedInflowsCountForChurch(supabase, ctx.churchId);
-  const recentInflowsPromise = getRecentInflowsForChurch(supabase, ctx.churchId, 10);
+  const recentInflowsPromise = getRecentInflowsForChurch(supabase, ctx.churchId, 120);
   const financeSettingsPromise = fetchTreasuryFinanceSettingsRaw(supabase, ctx.churchId);
   const remittanceSettingsPromise = fetchTreasuryRemittanceSettingsRaw(
     supabase,
@@ -1604,10 +1776,11 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
 
     supabase
       .from("treasury_outflows")
-      .select("id, outflow_type, amount, outflow_date, payee, purpose, project_name, reference_number, fund_id, department_id")
+      .select("id, outflow_type, amount, outflow_date, payee, purpose, project_name, reference_number, note, fund_id, department_id, recorded_by_user_id, created_at")
       .eq("church_id", ctx.churchId)
       .order("outflow_date", { ascending: false })
-      .limit(10),
+      .order("created_at", { ascending: false })
+      .limit(120),
 
     getActiveTreasuryFundsForOptions(supabase, ctx.churchId),
 
@@ -1648,6 +1821,23 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
     throw new Error(normalizeSupabaseErrorMessage(departmentsError, "Failed to load church departments."));
   }
 
+  const [
+    allFundsLoad,
+    departmentRequestsLoad,
+    auditRowsLoad,
+    remittanceLogsLoad,
+  ] = await Promise.all([
+    fetchAllTreasuryFundsForWorkspace(supabase, ctx.churchId),
+    fetchDepartmentFundRequestsForTreasuryWorkspace(supabase, ctx.churchId),
+    fetchTreasuryAuditRowsForWorkspace(supabase, ctx.churchId),
+    canManageRemittance
+      ? fetchTreasuryRemittanceLogsForWorkspace(supabase, ctx.churchId)
+      : Promise.resolve({ rows: [], migrationRequired: false }),
+  ]);
+
+  const allFundRows = allFundsLoad.rows;
+  const departmentRows = departments ?? [];
+
   const totalIn = sumAmount(inflowSummaryRows ?? []);
   const totalOut = sumAmount(outflowSummaryRows ?? []);
 
@@ -1670,7 +1860,7 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
   const [financeSettings, remittanceSettingsLoad, allocationPreview] = await Promise.all([
     financeSettingsPromise,
     remittanceSettingsPromise,
-    getAllocationPreviewRaw(supabase, ctx.churchId, (funds ?? []) as any[], 40),
+    getAllocationPreviewRaw(supabase, ctx.churchId, allFundRows as any[], 80),
   ]);
   const allocationSummary = summarizeAllocationPreview(allocationPreview);
   const pendingRemittanceAmount = await getPendingRemittanceAmountRaw(
@@ -1738,30 +1928,60 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
     }
   }
 
-  const recorderIds = Array.from(
+  const memberIds = Array.from(
     new Set(
-      transferHistoryRows
-        .map((row) => row.recorded_by_user_id)
+      (recentInflows ?? [])
+        .map((row: any) => row.member_id)
         .filter((value): value is string => Boolean(value))
     )
   );
+  const profileIds = Array.from(
+    new Set(
+      [
+        ...transferHistoryRows.map((row) => row.recorded_by_user_id),
+        ...(recentInflows ?? []).map((row: any) => row.recorded_by_user_id),
+        ...(recentOutflows ?? []).map((row: any) => row.recorded_by_user_id),
+        ...departmentRequestsLoad.rows.flatMap((row: any) => [
+          row.requested_by_user_id,
+          row.treasury_reviewed_by_user_id,
+          row.processed_by_user_id,
+        ]),
+        ...remittanceLogsLoad.rows.map((row: any) => row.recorded_by_user_id),
+        ...auditRowsLoad.rows.map((row: any) => row.changed_by_user_id),
+      ].filter((value): value is string => Boolean(value))
+    )
+  );
 
-  const recorderLabelById = new Map<string, string>();
-  if (recorderIds.length > 0) {
-    const { data: recorderRows } = await supabase
-      .from("profiles")
-      .select("id, full_name, email")
-      .in("id", recorderIds);
-    for (const row of recorderRows ?? []) {
-      recorderLabelById.set(
-        String((row as any).id),
-        (row as any).full_name || (row as any).email || String((row as any).id)
-      );
-    }
-  }
+  const [memberRowsResult, profileRowsResult] = await Promise.all([
+    memberIds.length > 0
+      ? supabase
+          .from("members")
+          .select("id, display_name, first_name, last_name, member_code")
+          .eq("church_id", ctx.churchId)
+          .in("id", memberIds)
+      : Promise.resolve({ data: [], error: null as any }),
+    profileIds.length > 0
+      ? supabase.from("profiles").select("id, full_name, email").in("id", profileIds)
+      : Promise.resolve({ data: [], error: null as any }),
+  ]);
 
+  if (memberRowsResult.error) throw new Error(memberRowsResult.error.message);
+  if (profileRowsResult.error) throw new Error(profileRowsResult.error.message);
+
+  const memberLabelById = new Map(
+    (memberRowsResult.data ?? []).map((row: any) => [String(row.id), memberLabel(row, row.id)])
+  );
+  const profileLabelById = new Map(
+    (profileRowsResult.data ?? []).map((row: any) => [String(row.id), profileLabel(row, row.id)])
+  );
+  const departmentById = new Map(
+    departmentRows.map((department: any) => [
+      String(department.id),
+      String(department.department_name ?? "Unknown department"),
+    ])
+  );
   const fundById = new Map(
-    (funds ?? []).map((fund: any) => [String(fund.id), fund as TreasuryFundOption])
+    allFundRows.map((fund: any) => [String(fund.id), fund as TreasuryFundOption & Record<string, any>])
   );
 
   const transferHistory: TreasuryFundTransferHistory[] = transferHistoryRows.map((row) => ({
@@ -1778,7 +1998,7 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
       fundById.get(row.destination_fund_id)?.name ?? "Unknown Destination Fund",
     recorded_by_user_id: row.recorded_by_user_id,
     recorded_by_label:
-      recorderLabelById.get(row.recorded_by_user_id) ?? row.recorded_by_user_id,
+      profileLabelById.get(row.recorded_by_user_id) ?? row.recorded_by_user_id,
   }));
 
   const inflowsByFundId = new Map<string, number>();
@@ -1815,7 +2035,7 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
     );
   }
 
-  const fundBalances: TreasuryFundBalanceRow[] = (funds ?? []).map((fund: any) => {
+  const fundBalances = allFundRows.map((fund: any) => {
     const fundId = String(fund.id);
     const inflows = inflowsByFundId.get(fundId) ?? 0;
     const outflows = outflowsByFundId.get(fundId) ?? 0;
@@ -1826,6 +2046,14 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
       fund_code: String(fund.code ?? ""),
       fund_name: String(fund.name ?? ""),
       fund_type: String(fund.fund_type ?? ""),
+      department_id: (fund as any).department_id ?? null,
+      department_name: (fund as any).department_id
+        ? departmentById.get(String((fund as any).department_id)) ?? null
+        : null,
+      description: (fund as any).description ?? null,
+      is_active: (fund as any).is_active !== false,
+      created_at: (fund as any).created_at ?? null,
+      updated_at: (fund as any).updated_at ?? null,
       inflows,
       outflows,
       transfers_in: transfersIn,
@@ -1833,6 +2061,343 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
       balance: inflows - outflows - transfersOut + transfersIn,
     };
   });
+
+  const ledgerRows = [
+    ...(recentInflows ?? []).map((row: any) => {
+      const fund = fundById.get(String(row.fund_id || ""));
+      const departmentId = row.department_id ? String(row.department_id) : null;
+      const memberId = row.member_id ? String(row.member_id) : null;
+      const sourceLabel = memberId
+        ? memberLabelById.get(memberId) ?? "Member"
+        : departmentId
+          ? departmentById.get(departmentId) ?? "Department"
+          : row.is_anonymous
+            ? "Anonymous"
+            : "Visitor / Non-member";
+
+      return {
+        id: `inflow:${row.id}`,
+        raw_id: row.id,
+        direction: "inflow",
+        transaction_type: row.inflow_type ?? "inflow",
+        amount: Number(row.amount || 0),
+        date: row.inflow_date ?? null,
+        created_at: row.created_at ?? null,
+        source_label: sourceLabel,
+        source_type: memberId ? "member" : departmentId ? "department" : row.is_anonymous ? "anonymous" : "visitor",
+        member_id: memberId,
+        department_id: departmentId,
+        department_name: departmentId ? departmentById.get(departmentId) ?? null : null,
+        fund_id: row.fund_id ?? null,
+        fund_name: fund?.name ?? "Unknown fund",
+        fund_code: fund?.code ?? "",
+        fund_type: fund?.fund_type ?? "",
+        reference_number: row.reference_number ?? null,
+        note: row.note ?? null,
+        recorded_by_user_id: row.recorded_by_user_id ?? null,
+        recorded_by_label: row.recorded_by_user_id
+          ? profileLabelById.get(String(row.recorded_by_user_id)) ?? "Unknown user"
+          : "Unknown user",
+        href: `/c/${churchSlug}/treasury/in/${row.id}/edit`,
+      };
+    }),
+    ...(recentOutflows ?? []).map((row: any) => {
+      const fund = fundById.get(String(row.fund_id || ""));
+      const departmentId = row.department_id ? String(row.department_id) : null;
+
+      return {
+        id: `outflow:${row.id}`,
+        raw_id: row.id,
+        direction: "outflow",
+        transaction_type: row.outflow_type ?? "outflow",
+        amount: Number(row.amount || 0),
+        date: row.outflow_date ?? null,
+        created_at: row.created_at ?? null,
+        source_label: row.payee || "Unspecified payee",
+        source_type: "payee",
+        member_id: null,
+        department_id: departmentId,
+        department_name: departmentId ? departmentById.get(departmentId) ?? null : null,
+        fund_id: row.fund_id ?? null,
+        fund_name: fund?.name ?? (row.fund_id ? "Unknown fund" : "No fund"),
+        fund_code: fund?.code ?? "",
+        fund_type: fund?.fund_type ?? "",
+        reference_number: row.reference_number ?? null,
+        note: row.note ?? row.purpose ?? null,
+        purpose: row.purpose ?? null,
+        project_name: row.project_name ?? null,
+        recorded_by_user_id: row.recorded_by_user_id ?? null,
+        recorded_by_label: row.recorded_by_user_id
+          ? profileLabelById.get(String(row.recorded_by_user_id)) ?? "Unknown user"
+          : "Unknown user",
+        href: `/c/${churchSlug}/treasury/out/${row.id}/edit`,
+      };
+    }),
+  ].sort((a, b) => {
+    const dateDiff = toIsoDateTime(b.date) - toIsoDateTime(a.date);
+    if (dateDiff !== 0) return dateDiff;
+    return toIsoDateTime(b.created_at) - toIsoDateTime(a.created_at);
+  });
+
+  const requestRows = departmentRequestsLoad.rows.map((row: any) => {
+    const fundId = row.fund_id || row.preferred_fund_id || null;
+    const fund = fundId ? fundById.get(String(fundId)) : null;
+    const departmentId = row.department_id ? String(row.department_id) : null;
+
+    return {
+      ...row,
+      amount: Number(row.amount || 0),
+      department_name: departmentId
+        ? departmentById.get(departmentId) ?? "Unknown department"
+        : "Unknown department",
+      requested_by_label: row.requested_by_user_id
+        ? profileLabelById.get(String(row.requested_by_user_id)) ?? "Unknown user"
+        : "Unknown user",
+      reviewed_by_label: row.treasury_reviewed_by_user_id
+        ? profileLabelById.get(String(row.treasury_reviewed_by_user_id)) ?? "Unknown user"
+        : null,
+      processed_by_label: row.processed_by_user_id
+        ? profileLabelById.get(String(row.processed_by_user_id)) ?? "Unknown user"
+        : null,
+      fund_label: fund?.name ?? (fundId ? "Unknown fund" : "No fund"),
+      fund_code: fund?.code ?? "",
+      outflow_date_effective: row.outflow_date || row.requested_date || null,
+      outflow_href: row.processed_outflow_id
+        ? `/c/${churchSlug}/treasury/out/${row.processed_outflow_id}/edit`
+        : null,
+    };
+  });
+
+  const requestSummary = summarizeTreasuryRequests(requestRows);
+  const pendingAllocations = allocationPreview.filter(
+    (row) => String(row.status || "").toLowerCase() === "allocated"
+  );
+
+  const remittanceHistory = remittanceLogsLoad.rows.map((row: any) => ({
+    ...row,
+    source_amount: Number(row.source_amount || 0),
+    remitted_amount: Number(row.remitted_amount || 0),
+    recorded_by_label: row.recorded_by_user_id
+      ? profileLabelById.get(String(row.recorded_by_user_id)) ?? "Unknown user"
+      : "Unknown user",
+  }));
+
+  const auditRows = auditRowsLoad.rows.map((row: any) => {
+    const after = (row.after_snapshot ?? {}) as Record<string, any>;
+    const before = (row.before_snapshot ?? {}) as Record<string, any>;
+    const label =
+      after.name ||
+      before.name ||
+      after.reference_number ||
+      before.reference_number ||
+      after.code ||
+      before.code ||
+      row.entity_id;
+
+    return {
+      ...row,
+      changed_by_label: profileLabel(row.changed_by, row.changed_by_user_id),
+      record_label: label,
+      changed_field_count: Array.from(
+        new Set([...Object.keys(before), ...Object.keys(after)])
+      ).filter((key) => JSON.stringify(before[key]) !== JSON.stringify(after[key])).length,
+    };
+  });
+
+  const exceptions: Array<{
+    id: string;
+    type: string;
+    severity: "critical" | "warning" | "notice";
+    title: string;
+    description: string;
+    entityType: string;
+    entityId: string | null;
+    entityLabel: string | null;
+    amount: number | null;
+    detectedLabel: string;
+    status: "open";
+    href: string | null;
+    actionLabel: string | null;
+    whyItMatters: string;
+    suggestedResolution: string;
+    details: Array<{ label: string; value: string }>;
+  }> = [];
+
+  for (const fund of fundBalances) {
+    if (fund.balance < 0) {
+      exceptions.push({
+        id: `negative-fund-balance:${fund.fund_id}`,
+        type: "negative_fund_balance",
+        severity: "critical",
+        title: "Negative Fund Balance",
+        description: `${fund.fund_name} is below zero after inflows, outflows, and transfers.`,
+        entityType: "Fund",
+        entityId: fund.fund_id,
+        entityLabel: fund.fund_name,
+        amount: fund.balance,
+        detectedLabel: "Current",
+        status: "open",
+        href: null,
+        actionLabel: "Open Fund",
+        whyItMatters: "A negative fund balance can indicate overspending, missing income, or an incorrect transfer.",
+        suggestedResolution: "Review recent transactions and transfers for this fund before recording more money out.",
+        details: [
+          { label: "Fund", value: fund.fund_name },
+          { label: "Code", value: fund.fund_code || "-" },
+          { label: "Status", value: fund.is_active ? "Active" : "Inactive" },
+        ],
+      });
+    }
+
+    if (!fund.is_active && (fund.inflows > 0 || fund.outflows > 0 || fund.transfers_in > 0 || fund.transfers_out > 0)) {
+      exceptions.push({
+        id: `inactive-fund-in-use:${fund.fund_id}`,
+        type: "inactive_fund_in_use",
+        severity: "warning",
+        title: "Inactive Fund With Activity",
+        description: `${fund.fund_name} is inactive but still has Treasury activity.`,
+        entityType: "Fund",
+        entityId: fund.fund_id,
+        entityLabel: fund.fund_name,
+        amount: fund.balance,
+        detectedLabel: "Current",
+        status: "open",
+        href: null,
+        actionLabel: "Open Fund",
+        whyItMatters: "Inactive funds with recent or active balances can confuse daily Treasury classification.",
+        suggestedResolution: "Review whether the fund should be reactivated or all activity should remain historical.",
+        details: [
+          { label: "Money In", value: String(fund.inflows) },
+          { label: "Money Out", value: String(fund.outflows) },
+        ],
+      });
+    }
+  }
+
+  if (financeSettings.require_reference_numbers) {
+    for (const row of ledgerRows) {
+      if (row.reference_number && String(row.reference_number).trim()) continue;
+      exceptions.push({
+        id: `missing-reference:${row.id}`,
+        type: "missing_reference",
+        severity: "warning",
+        title: "Missing Required Reference",
+        description: "This Treasury entry does not have a reference number, while church finance policy requires references.",
+        entityType: row.direction === "inflow" ? "Money In" : "Money Out",
+        entityId: row.raw_id,
+        entityLabel: row.source_label,
+        amount: row.amount,
+        detectedLabel: row.date || "Current",
+        status: "open",
+        href: row.href,
+        actionLabel: "Edit Transaction",
+        whyItMatters: "The transaction may be difficult to verify during reporting.",
+        suggestedResolution: "Open the transaction and add the correct receipt, voucher, or payment reference.",
+        details: [
+          { label: "Fund", value: row.fund_name },
+          { label: "Recorded By", value: row.recorded_by_label },
+        ],
+      });
+    }
+  }
+
+  if (financeSettings.require_member_for_named_inflows) {
+    for (const row of ledgerRows.filter((item) => item.direction === "inflow")) {
+      if (row.source_type === "member" || row.source_type === "anonymous" || row.source_type === "department") continue;
+      exceptions.push({
+        id: `named-inflow-without-member:${row.raw_id}`,
+        type: "named_inflow_without_member",
+        severity: "warning",
+        title: "Named Inflow Without Member",
+        description: "A non-anonymous money-in entry is not linked to a member record.",
+        entityType: "Money In",
+        entityId: row.raw_id,
+        entityLabel: row.source_label,
+        amount: row.amount,
+        detectedLabel: row.date || "Current",
+        status: "open",
+        href: row.href,
+        actionLabel: "Edit Transaction",
+        whyItMatters: "Member-linked giving can be missed in member financial history.",
+        suggestedResolution: "Link the transaction to the correct member or mark it anonymous/visitor if appropriate.",
+        details: [
+          { label: "Fund", value: row.fund_name },
+          { label: "Reference", value: row.reference_number || "-" },
+        ],
+      });
+    }
+  }
+
+  for (const request of requestRows) {
+    if (request.status === "approved" && !request.processed_outflow_id) {
+      exceptions.push({
+        id: `approved-request-unprocessed:${request.id}`,
+        type: "approved_request_unprocessed",
+        severity: "warning",
+        title: "Approved Request Awaiting Processing",
+        description: "A department fund request has been approved but not yet converted into a money-out entry.",
+        entityType: "Fund Request",
+        entityId: request.id,
+        entityLabel: request.title,
+        amount: Number(request.amount || 0),
+        detectedLabel: request.updated_at || request.created_at || "Current",
+        status: "open",
+        href: `/c/${churchSlug}/treasury/out/new?requestId=${request.id}`,
+        actionLabel: "Process Request",
+        whyItMatters: "Approved ministry spending is not reflected in Treasury until it is processed.",
+        suggestedResolution: "Process the request into a money-out entry or reject it if it should not be paid.",
+        details: [
+          { label: "Department", value: request.department_name },
+          { label: "Requested By", value: request.requested_by_label },
+        ],
+      });
+    }
+  }
+
+  if (pendingRemittanceAmount > 0) {
+    exceptions.push({
+      id: "pending-mission-remittance",
+      type: "pending_mission_remittance",
+      severity: "notice",
+      title: "Pending Mission Remittance",
+      description: "Mission remittance is available for the next remittance run.",
+      entityType: "Remittance",
+      entityId: null,
+      entityLabel: remittanceSettingsLoad.settings.destination,
+      amount: pendingRemittanceAmount,
+      detectedLabel: "Current",
+      status: "open",
+      href: null,
+      actionLabel: "Run Remittance",
+      whyItMatters: "Mission remittance should be reviewed before period close.",
+      suggestedResolution: "Open the remittance view and run remittance when ready.",
+      details: [
+        { label: "Frequency", value: remittanceSettingsLoad.settings.frequency },
+        { label: "Mode", value: remittanceSettingsLoad.settings.mode },
+      ],
+    });
+  }
+
+  if (pendingAllocations.length > 0) {
+    exceptions.push({
+      id: "pending-allocations",
+      type: "allocation_attention",
+      severity: "notice",
+      title: "Pending Allocations",
+      description: "Some allocation records remain allocated and not yet remitted or voided.",
+      entityType: "Allocation",
+      entityId: null,
+      entityLabel: "Treasury allocations",
+      amount: pendingAllocations.reduce((sum, row) => sum + Number(row.allocated_amount || 0), 0),
+      detectedLabel: "Current",
+      status: "open",
+      href: null,
+      actionLabel: "Review Allocations",
+      whyItMatters: "Allocated amounts should be reviewed before remittance reporting.",
+      suggestedResolution: "Open the allocations view and confirm which records are awaiting remittance.",
+      details: [{ label: "Records", value: String(pendingAllocations.length) }],
+    });
+  }
 
   return {
     dashboard: {
@@ -1867,7 +2432,9 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
     remittance: {
       canManage: canManageRemittance,
       migrationRequired:
-        remittanceSettingsLoad.migrationRequired || remittanceLogMissing,
+        remittanceSettingsLoad.migrationRequired ||
+        remittanceLogMissing ||
+        remittanceLogsLoad.migrationRequired,
       settings: remittanceSettingsLoad.settings,
       lastRunDate: lastRemittanceDate || null,
       lastAmount: lastRemittanceAmount,
@@ -1876,6 +2443,66 @@ export async function getTreasuryWorkspaceBootstrap(churchSlug: string) {
         lastRemittanceDate || null
       ),
       pendingAmount: pendingRemittanceAmount,
+    },
+    workspace: {
+      permissions: {
+        canManageTreasury: true,
+        canManageTransfers,
+        canManageRemittance,
+        canCreateFund: true,
+        canReviewRequests: true,
+        canProcessRequests: true,
+      },
+      migrations: {
+        fundDepartmentColumnRequired: allFundsLoad.migrationRequired,
+        transfersRequired: transferMigrationRequired,
+        requestsRequired: departmentRequestsLoad.migrationRequired,
+        auditRequired: auditRowsLoad.migrationRequired,
+        remittanceRequired:
+          remittanceSettingsLoad.migrationRequired ||
+          remittanceLogMissing ||
+          remittanceLogsLoad.migrationRequired,
+      },
+      ledgerRows,
+      funds: fundBalances,
+      requests: {
+        rows: requestRows,
+        summary: requestSummary,
+      },
+      allocations: {
+        rows: allocationPreview,
+        pendingCount: pendingAllocations.length,
+        pendingAmount: pendingAllocations.reduce(
+          (sum, row) => sum + Number(row.allocated_amount || 0),
+          0
+        ),
+      },
+      audit: {
+        rows: auditRows,
+        actorOptions: Array.from(profileLabelById.entries()).map(([id, label]) => ({
+          id,
+          label,
+        })),
+      },
+      exceptions,
+      remittanceHistory,
+      summary: {
+        totalFunds: allFundRows.length,
+        activeFunds: fundBalances.filter((fund) => fund.is_active).length,
+        inactiveFunds: fundBalances.filter((fund) => !fund.is_active).length,
+        combinedFundBalance: fundBalances.reduce(
+          (sum, fund) => sum + Number(fund.balance || 0),
+          0
+        ),
+        fundsRequiringAttention: fundBalances.filter((fund) => fund.balance < 0).length,
+        transactionCount: ledgerRows.length,
+        inflowCount: ledgerRows.filter((row) => row.direction === "inflow").length,
+        outflowCount: ledgerRows.filter((row) => row.direction === "outflow").length,
+        requestCount: requestRows.length,
+        transferCount: transferHistory.length,
+        auditCount: auditRows.length,
+        openExceptionCount: exceptions.length,
+      },
     },
   };
 }

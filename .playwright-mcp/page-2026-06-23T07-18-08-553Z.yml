@@ -1,0 +1,138 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e6] [cursor=pointer]:
+    - button "Open Next.js Dev Tools" [ref=e7]:
+      - img [ref=e8]
+    - generic [ref=e11]:
+      - button "Open issues overlay" [ref=e12]:
+        - generic [ref=e13]:
+          - generic [ref=e14]: "2"
+          - generic [ref=e15]: "3"
+        - generic [ref=e16]:
+          - text: Issue
+          - generic [ref=e17]: s
+      - button "Collapse issues badge" [ref=e18]:
+        - img [ref=e19]
+  - generic [ref=e21]:
+    - complementary [ref=e22]:
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - link "Church Workspace ghrace comunity church" [ref=e25] [cursor=pointer]:
+            - /url: /c/grace-community-church
+            - img [ref=e27]
+            - generic [ref=e31]:
+              - generic [ref=e32]: Church Workspace
+              - generic [ref=e33]: ghrace comunity church
+          - generic [ref=e34]: Church Admin
+        - navigation "Church workspace" [ref=e35]:
+          - generic [ref=e36]:
+            - generic [ref=e37]:
+              - paragraph [ref=e38]: Overview
+              - link "Dashboard" [ref=e40] [cursor=pointer]:
+                - /url: /c/grace-community-church
+                - img [ref=e41]
+                - generic [ref=e46]: Dashboard
+            - generic [ref=e47]:
+              - paragraph [ref=e48]: People
+              - generic [ref=e49]:
+                - link "Members" [ref=e50] [cursor=pointer]:
+                  - /url: /c/grace-community-church/members
+                  - img [ref=e51]
+                  - generic [ref=e56]: Members
+                - link "Households" [ref=e57] [cursor=pointer]:
+                  - /url: /c/grace-community-church/households
+                  - img [ref=e58]
+                  - generic [ref=e61]: Households
+            - generic [ref=e62]:
+              - paragraph [ref=e63]: Ministries
+              - generic [ref=e64]:
+                - link "Departments" [ref=e65] [cursor=pointer]:
+                  - /url: /c/grace-community-church/departments
+                  - img [ref=e66]
+                  - generic [ref=e70]: Departments
+                - link "Leadership" [ref=e71] [cursor=pointer]:
+                  - /url: /c/grace-community-church/leadership
+                  - img [ref=e72]
+                  - generic [ref=e84]: Leadership
+                - link "Small Groups" [ref=e85] [cursor=pointer]:
+                  - /url: /c/grace-community-church/small-groups
+                  - img [ref=e86]
+                  - generic [ref=e90]: Small Groups
+                - link "Events" [ref=e91] [cursor=pointer]:
+                  - /url: /c/grace-community-church/events
+                  - img [ref=e92]
+                  - generic [ref=e94]: Events
+                - link "Calendar" [ref=e95] [cursor=pointer]:
+                  - /url: /c/grace-community-church/calendar
+                  - img [ref=e96]
+                  - generic [ref=e98]: Calendar
+            - generic [ref=e99]:
+              - paragraph [ref=e100]: Treasury
+              - link "Treasury" [ref=e102] [cursor=pointer]:
+                - /url: /c/grace-community-church/treasury
+                - img [ref=e103]
+                - generic [ref=e106]: Treasury
+            - generic [ref=e107]:
+              - paragraph [ref=e108]: Operations
+              - generic [ref=e109]:
+                - link "Church Office" [ref=e110] [cursor=pointer]:
+                  - /url: /c/grace-community-church/office
+                  - img [ref=e111]
+                  - generic [ref=e115]: Church Office
+                - link "Announcements" [ref=e116] [cursor=pointer]:
+                  - /url: /c/grace-community-church/announcements
+                  - img [ref=e117]
+                  - generic [ref=e120]: Announcements
+                - link "Approvals" [ref=e121] [cursor=pointer]:
+                  - /url: /c/grace-community-church/approvals
+                  - img [ref=e122]
+                  - generic [ref=e126]: Approvals
+                - link "Reports" [ref=e127] [cursor=pointer]:
+                  - /url: /c/grace-community-church/reports
+                  - img [ref=e128]
+                  - generic [ref=e130]: Reports
+            - generic [ref=e131]:
+              - paragraph [ref=e132]: Administration
+              - generic [ref=e133]:
+                - link "Invites & Access" [ref=e134] [cursor=pointer]:
+                  - /url: /c/grace-community-church/access-control
+                  - img [ref=e135]
+                  - generic [ref=e137]: Invites & Access
+                - link "Settings" [ref=e138] [cursor=pointer]:
+                  - /url: /c/grace-community-church/settings
+                  - img [ref=e139]
+                  - generic [ref=e142]: Settings
+        - generic [ref=e144]:
+          - generic [ref=e145]:
+            - generic [ref=e147]: BD
+            - generic [ref=e148]:
+              - paragraph [ref=e149]: big dev
+              - paragraph [ref=e150]: bigdev830@gmail.com
+          - button "Logout" [ref=e151] [cursor=pointer]:
+            - img [ref=e152]
+            - text: Logout
+    - generic [ref=e155]:
+      - banner [ref=e156]:
+        - generic [ref=e157]:
+          - generic [ref=e159]:
+            - paragraph [ref=e160]: Departments
+            - paragraph [ref=e161]: ghrace comunity church
+          - generic [ref=e162]:
+            - generic [ref=e164]:
+              - img [ref=e165]
+              - generic [ref=e169]: Online
+            - generic [ref=e170]: Church Admin
+            - generic [ref=e171]:
+              - button "Switch to English" [pressed] [ref=e172] [cursor=pointer]: EN
+              - button "Switch to Français" [ref=e173] [cursor=pointer]: FR
+            - button "Notifications" [ref=e174] [cursor=pointer]:
+              - img [ref=e175]
+            - button "Profile" [ref=e178] [cursor=pointer]:
+              - generic [ref=e180]: BD
+      - main [ref=e181]:
+        - generic [ref=e184]:
+          - heading "Something went wrong" [level=2] [ref=e185]
+          - paragraph [ref=e186]: "TypeError: fetch failed"
+          - button "Try again" [ref=e187] [cursor=pointer]
+  - region "Notifications (F8)":
+    - list
+  - alert [ref=e188]

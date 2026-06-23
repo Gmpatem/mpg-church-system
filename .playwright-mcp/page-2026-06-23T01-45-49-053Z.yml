@@ -1,0 +1,44 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - banner [ref=e3]:
+      - generic [ref=e4]:
+        - link "MPG Church" [ref=e5] [cursor=pointer]:
+          - /url: /
+          - img [ref=e7]
+          - generic [ref=e11]: MPG Church
+        - generic [ref=e12]:
+          - generic [ref=e13]:
+            - button "Switch to English" [pressed] [ref=e14] [cursor=pointer]: EN
+            - button "Switch to Français" [ref=e15] [cursor=pointer]: FR
+          - link "Back to home" [ref=e16] [cursor=pointer]:
+            - /url: /
+    - main [ref=e17]:
+      - generic [ref=e19]:
+        - generic [ref=e20]:
+          - img [ref=e22]
+          - heading "Sign in to your church workspace" [level=1] [ref=e26]
+          - paragraph [ref=e27]: Enter your email and password to continue
+        - generic [ref=e28]:
+          - generic [ref=e29]:
+            - text: Email
+            - textbox "Email" [ref=e30]:
+              - /placeholder: you@example.com
+              - text: bigdev830@gmail.com
+          - generic [ref=e31]:
+            - text: Password
+            - generic [ref=e32]:
+              - textbox "Password" [ref=e33]:
+                - /placeholder: Enter your password
+                - text: "@Hotzone12345"
+              - button "Show password" [ref=e34] [cursor=pointer]:
+                - img [ref=e35]
+          - button "Sign In" [ref=e38] [cursor=pointer]
+        - paragraph [ref=e40]:
+          - text: Don't have an account?
+          - link "Create one" [ref=e41] [cursor=pointer]:
+            - /url: /register
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e47] [cursor=pointer]:
+    - img [ref=e48]
+  - alert [ref=e51]

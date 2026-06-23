@@ -1,0 +1,529 @@
+- generic [ref=e19]:
+  - generic [ref=e20]:
+    - complementary [ref=e21]:
+      - generic [ref=e22]:
+        - generic [ref=e23]:
+          - link [ref=e24] [cursor=pointer]:
+            - /url: /c/grace-community-church
+            - img [ref=e26]
+            - generic [ref=e30]:
+              - generic [ref=e31]: Church Workspace
+              - generic [ref=e32]: ghrace comunity church
+          - generic [ref=e33]: Church Admin
+        - navigation [ref=e34]:
+          - generic [ref=e35]:
+            - generic [ref=e36]:
+              - paragraph [ref=e37]: Overview
+              - link [ref=e39] [cursor=pointer]:
+                - /url: /c/grace-community-church
+                - img [ref=e40]
+                - generic [ref=e45]: Dashboard
+            - generic [ref=e46]:
+              - paragraph [ref=e47]: People
+              - generic [ref=e48]:
+                - link [ref=e49] [cursor=pointer]:
+                  - /url: /c/grace-community-church/members
+                  - img [ref=e50]
+                  - generic [ref=e55]: Members
+                - link [ref=e56] [cursor=pointer]:
+                  - /url: /c/grace-community-church/households
+                  - img [ref=e57]
+                  - generic [ref=e60]: Households
+            - generic [ref=e61]:
+              - paragraph [ref=e62]: Ministries
+              - generic [ref=e63]:
+                - link [ref=e64] [cursor=pointer]:
+                  - /url: /c/grace-community-church/departments
+                  - img [ref=e65]
+                  - generic [ref=e69]: Departments
+                - link [ref=e70] [cursor=pointer]:
+                  - /url: /c/grace-community-church/leadership
+                  - img [ref=e71]
+                  - generic [ref=e83]: Leadership
+                - link [ref=e84] [cursor=pointer]:
+                  - /url: /c/grace-community-church/small-groups
+                  - img [ref=e85]
+                  - generic [ref=e89]: Small Groups
+                - link [ref=e90] [cursor=pointer]:
+                  - /url: /c/grace-community-church/events
+                  - img [ref=e91]
+                  - generic [ref=e93]: Events
+                - link [ref=e94] [cursor=pointer]:
+                  - /url: /c/grace-community-church/calendar
+                  - img [ref=e95]
+                  - generic [ref=e97]: Calendar
+            - generic [ref=e98]:
+              - paragraph [ref=e99]: Treasury
+              - link [ref=e101] [cursor=pointer]:
+                - /url: /c/grace-community-church/treasury
+                - img [ref=e102]
+                - generic [ref=e105]: Treasury
+            - generic [ref=e106]:
+              - paragraph [ref=e107]: Operations
+              - generic [ref=e108]:
+                - link [ref=e109] [cursor=pointer]:
+                  - /url: /c/grace-community-church/office
+                  - img [ref=e110]
+                  - generic [ref=e114]: Church Office
+                - link [ref=e115] [cursor=pointer]:
+                  - /url: /c/grace-community-church/announcements
+                  - img [ref=e116]
+                  - generic [ref=e119]: Announcements
+                - link [ref=e120] [cursor=pointer]:
+                  - /url: /c/grace-community-church/approvals
+                  - img [ref=e121]
+                  - generic [ref=e125]: Approvals
+                - link [ref=e126] [cursor=pointer]:
+                  - /url: /c/grace-community-church/reports
+                  - img [ref=e127]
+                  - generic [ref=e129]: Reports
+            - generic [ref=e130]:
+              - paragraph [ref=e131]: Administration
+              - generic [ref=e132]:
+                - link [ref=e133] [cursor=pointer]:
+                  - /url: /c/grace-community-church/access-control
+                  - img [ref=e134]
+                  - generic [ref=e136]: Invites & Access
+                - link [ref=e137] [cursor=pointer]:
+                  - /url: /c/grace-community-church/settings
+                  - img [ref=e138]
+                  - generic [ref=e141]: Settings
+        - generic [ref=e143]:
+          - generic [ref=e144]:
+            - generic [ref=e146]: BD
+            - generic [ref=e147]:
+              - paragraph [ref=e148]: big dev
+              - paragraph [ref=e149]: bigdev830@gmail.com
+          - button [ref=e150] [cursor=pointer]:
+            - img [ref=e151]
+            - text: Logout
+    - generic [ref=e154]:
+      - banner [ref=e155]:
+        - generic [ref=e156]:
+          - generic [ref=e158]:
+            - paragraph [ref=e159]: Small Groups
+            - paragraph [ref=e160]: ghrace comunity church
+          - generic [ref=e161]:
+            - generic [ref=e163]:
+              - img [ref=e164]
+              - generic [ref=e168]: Online
+            - generic [ref=e169]: Church Admin
+            - generic [ref=e170]:
+              - button [pressed] [ref=e171] [cursor=pointer]: EN
+              - button [ref=e172] [cursor=pointer]: FR
+            - button [ref=e173] [cursor=pointer]:
+              - img [ref=e174]
+            - button [ref=e177] [cursor=pointer]:
+              - generic [ref=e179]: BD
+      - main [ref=e180]:
+        - generic [ref=e183]:
+          - generic [ref=e184]:
+            - generic [ref=e185]:
+              - heading [level=1] [ref=e186]: Small Groups
+              - paragraph [ref=e187]: Manage small groups, meetings, members, and outreach.
+            - generic [ref=e188]:
+              - generic [ref=e189]:
+                - button [ref=e190] [cursor=pointer]:
+                  - img [ref=e191]
+                  - text: New Group
+                - button [ref=e192] [cursor=pointer]:
+                  - img [ref=e193]
+              - button [ref=e195] [cursor=pointer]:
+                - img [ref=e196]
+          - tablist [ref=e201]:
+            - tab [ref=e202] [cursor=pointer]: Overview
+            - tab [selected] [ref=e203] [cursor=pointer]: Groups
+            - tab [ref=e205] [cursor=pointer]: Meetings
+            - tab [ref=e206] [cursor=pointer]: Group Members
+            - tab [ref=e207] [cursor=pointer]: Outreach
+          - tabpanel [ref=e208]:
+            - generic [ref=e209]:
+              - generic [ref=e210]:
+                - generic [ref=e211]:
+                  - generic [ref=e212]:
+                    - generic [ref=e213]: Search group name, leader, or location...
+                    - img
+                    - textbox [ref=e214]:
+                      - /placeholder: Search group name, leader, or location...
+                  - combobox [ref=e215] [cursor=pointer]:
+                    - generic: "Status: All"
+                    - img [ref=e216]
+                  - combobox [ref=e218]
+                  - combobox [ref=e219] [cursor=pointer]:
+                    - generic: "Neighborhood: All"
+                    - img [ref=e220]
+                  - combobox [ref=e222]
+                  - combobox [ref=e223] [cursor=pointer]:
+                    - generic: "Leader: All"
+                    - img [ref=e224]
+                  - combobox [ref=e226]
+                  - combobox [ref=e227] [cursor=pointer]:
+                    - generic: Meeting Day
+                    - img [ref=e228]
+                  - combobox [ref=e230]
+                  - button [ref=e231] [cursor=pointer]:
+                    - img [ref=e232]
+                    - text: Filters
+                - paragraph [ref=e234]: 6 results
+              - generic [ref=e235]:
+                - generic [ref=e237]:
+                  - table [ref=e239]:
+                    - rowgroup [ref=e250]:
+                      - row [ref=e251]:
+                        - columnheader [ref=e252]:
+                          - generic [ref=e253]: Selected group
+                        - columnheader [ref=e254]: Group
+                        - columnheader [ref=e255]: Leader
+                        - columnheader [ref=e256]: Members
+                        - columnheader [ref=e257]: Meeting Schedule
+                        - columnheader [ref=e258]: Location
+                        - columnheader [ref=e259]: Status
+                        - columnheader [ref=e260]: Next Meeting
+                        - columnheader [ref=e261]: Actions
+                    - rowgroup [ref=e262]:
+                      - row [selected] [ref=e263] [cursor=pointer]:
+                        - cell [ref=e264]:
+                          - checkbox [checked] [ref=e265]:
+                            - generic:
+                              - img
+                        - cell [ref=e266]:
+                          - generic [ref=e267]:
+                            - generic [ref=e268]: E
+                            - generic [ref=e269]:
+                              - paragraph [ref=e270]: Groupe Espoir
+                              - paragraph [ref=e271]: Bastos
+                        - cell [ref=e272]:
+                          - generic [ref=e273]:
+                            - generic [ref=e275]: B
+                            - generic [ref=e276]: bg
+                        - cell [ref=e277]:
+                          - generic [ref=e279]:
+                            - generic [ref=e281]: B
+                            - generic [ref=e283]: MP
+                            - generic [ref=e285]: MP
+                            - generic [ref=e286]: "+5"
+                        - cell [ref=e287]:
+                          - paragraph [ref=e288]: Friday
+                          - paragraph [ref=e289]: 6:00 PM
+                        - cell [ref=e290]:
+                          - paragraph [ref=e291]: Bastos Community Center
+                        - cell [ref=e292]:
+                          - generic [ref=e293]: Active
+                        - cell [ref=e295]: Jun 27, 2026
+                        - cell [ref=e296]:
+                          - button [ref=e297]:
+                            - img [ref=e298]
+                      - row [ref=e302] [cursor=pointer]:
+                        - cell [ref=e303]:
+                          - checkbox [ref=e304]
+                        - cell [ref=e305]:
+                          - generic [ref=e306]:
+                            - generic [ref=e307]: L
+                            - generic [ref=e308]:
+                              - paragraph [ref=e309]: Groupe Lumiere
+                              - paragraph [ref=e310]: Nlongkak
+                        - cell [ref=e311]:
+                          - generic [ref=e312]:
+                            - generic [ref=e314]: FR
+                            - generic [ref=e315]: fizer radaad
+                        - cell [ref=e316]:
+                          - generic [ref=e318]:
+                            - generic [ref=e320]: MP
+                            - generic [ref=e322]: MP
+                            - generic [ref=e324]: MP
+                            - generic [ref=e325]: "+3"
+                        - cell [ref=e326]:
+                          - paragraph [ref=e327]: Thursday
+                          - paragraph [ref=e328]: 5:30 PM
+                        - cell [ref=e329]:
+                          - paragraph [ref=e330]: Nlongkak
+                        - cell [ref=e331]:
+                          - generic [ref=e332]: Active
+                        - cell [ref=e334]: Jun 26, 2026
+                        - cell [ref=e335]:
+                          - button [ref=e336]:
+                            - img [ref=e337]
+                      - row [ref=e341] [cursor=pointer]:
+                        - cell [ref=e342]:
+                          - checkbox [ref=e343]
+                        - cell [ref=e344]:
+                          - generic [ref=e345]:
+                            - generic [ref=e346]: P
+                            - generic [ref=e347]:
+                              - paragraph [ref=e348]: Groupe Paix
+                              - paragraph [ref=e349]: Melen
+                        - cell [ref=e350]:
+                          - generic [ref=e351]:
+                            - generic [ref=e353]: MP
+                            - generic [ref=e354]: malcom patem
+                        - cell [ref=e355]:
+                          - generic [ref=e357]:
+                            - generic [ref=e359]: MP
+                            - generic [ref=e361]: FR
+                            - generic [ref=e363]: MA
+                            - generic [ref=e364]: "+2"
+                        - cell [ref=e365]:
+                          - paragraph [ref=e366]: Saturday
+                          - paragraph [ref=e367]: 3:00 PM
+                        - cell [ref=e368]:
+                          - paragraph [ref=e369]: Melen
+                        - cell [ref=e370]:
+                          - generic [ref=e371]: Active
+                        - cell [ref=e373]: Jun 27, 2026
+                        - cell [ref=e374]:
+                          - button [ref=e375]:
+                            - img [ref=e376]
+                      - row [ref=e380] [cursor=pointer]:
+                        - cell [ref=e381]:
+                          - checkbox [ref=e382]
+                        - cell [ref=e383]:
+                          - generic [ref=e384]:
+                            - generic [ref=e385]: G
+                            - generic [ref=e386]:
+                              - paragraph [ref=e387]: Groupe Grace
+                              - paragraph [ref=e388]: Biyem-Assi
+                        - cell [ref=e389]:
+                          - generic [ref=e390]:
+                            - generic [ref=e392]: MP
+                            - generic [ref=e393]: malcom patem
+                        - cell [ref=e394]:
+                          - generic [ref=e396]:
+                            - generic [ref=e398]: MA
+                            - generic [ref=e400]: PM
+                            - generic [ref=e402]: EF
+                            - generic [ref=e403]: "+1"
+                        - cell [ref=e404]:
+                          - paragraph [ref=e405]: Sunday
+                          - paragraph [ref=e406]: 4:00 PM
+                        - cell [ref=e407]:
+                          - paragraph [ref=e408]: Biyem-Assi
+                        - cell [ref=e409]:
+                          - generic [ref=e410]: Inactive
+                        - cell [ref=e412]: Not scheduled
+                        - cell [ref=e413]:
+                          - button [ref=e414]:
+                            - img [ref=e415]
+                      - row [ref=e419] [cursor=pointer]:
+                        - cell [ref=e420]:
+                          - checkbox [ref=e421]
+                        - cell [ref=e422]:
+                          - generic [ref=e423]:
+                            - generic [ref=e424]: F
+                            - generic [ref=e425]:
+                              - paragraph [ref=e426]: Groupe Foi
+                              - paragraph [ref=e427]: Omnisport
+                        - cell [ref=e428]:
+                          - generic [ref=e429]:
+                            - generic [ref=e431]: MP
+                            - generic [ref=e432]: malcom patem
+                        - cell [ref=e433]:
+                          - generic [ref=e435]:
+                            - generic [ref=e437]: EF
+                            - generic [ref=e439]: SE
+                            - generic [ref=e441]: B
+                            - generic [ref=e442]: "+4"
+                        - cell [ref=e443]:
+                          - paragraph [ref=e444]: Wednesday
+                          - paragraph [ref=e445]: 7:00 PM
+                        - cell [ref=e446]:
+                          - paragraph [ref=e447]: Omnisport
+                        - cell [ref=e448]:
+                          - generic [ref=e449]: Active
+                        - cell [ref=e451]: Jun 25, 2026
+                        - cell [ref=e452]:
+                          - button [ref=e453]:
+                            - img [ref=e454]
+                      - row [ref=e458] [cursor=pointer]:
+                        - cell [ref=e459]:
+                          - checkbox [ref=e460]
+                        - cell [ref=e461]:
+                          - generic [ref=e462]:
+                            - generic [ref=e463]: J
+                            - generic [ref=e464]:
+                              - paragraph [ref=e465]: Groupe Joie
+                              - paragraph [ref=e466]: Tsinga
+                        - cell [ref=e467]:
+                          - generic [ref=e468]:
+                            - generic [ref=e470]: MP
+                            - generic [ref=e471]: malcom patem
+                        - cell [ref=e472]:
+                          - generic [ref=e474]:
+                            - generic [ref=e476]: B
+                            - generic [ref=e478]: MP
+                            - generic [ref=e480]: MP
+                        - cell [ref=e481]:
+                          - paragraph [ref=e482]: Tuesday
+                          - paragraph [ref=e483]: 6:00 PM
+                        - cell [ref=e484]:
+                          - paragraph [ref=e485]: Tsinga
+                        - cell [ref=e486]:
+                          - generic [ref=e487]: Active
+                        - cell [ref=e489]: Jun 24, 2026
+                        - cell [ref=e490]:
+                          - button [ref=e491]:
+                            - img [ref=e492]
+                  - generic [ref=e496]:
+                    - paragraph [ref=e497]: Showing 1 to 6 of 6 groups
+                    - navigation [ref=e498]:
+                      - button [disabled]:
+                        - img
+                      - button [ref=e499] [cursor=pointer]: "1"
+                      - button [disabled]:
+                        - img
+                - complementary [ref=e500]:
+                  - generic [ref=e501]:
+                    - heading [level=2] [ref=e502]: Selected Group
+                    - generic [ref=e503]:
+                      - button [ref=e504] [cursor=pointer]:
+                        - img [ref=e505]
+                      - button [ref=e509] [cursor=pointer]:
+                        - img [ref=e510]
+                  - generic [ref=e514]:
+                    - generic [ref=e515]: E
+                    - generic [ref=e516]:
+                      - generic [ref=e517]:
+                        - heading [level=3] [ref=e518]: Groupe Espoir
+                        - generic [ref=e519]: Active
+                      - paragraph [ref=e521]: 8 members
+                      - paragraph [ref=e522]: Bastos
+                  - generic [ref=e523]:
+                    - generic [ref=e524]:
+                      - img [ref=e526]
+                      - term [ref=e529]: Leader
+                      - definition [ref=e530]: bg
+                    - generic [ref=e531]:
+                      - img [ref=e533]
+                      - term [ref=e538]: Assistant Leader
+                      - definition [ref=e539]: malcom patem
+                    - generic [ref=e540]:
+                      - img [ref=e542]
+                      - term [ref=e544]: Meeting Schedule
+                      - definition [ref=e545]: Friday · 6:00 PM
+                    - generic [ref=e546]:
+                      - img [ref=e548]
+                      - term [ref=e551]: Location
+                      - definition [ref=e552]: Bastos Community Center
+                    - generic [ref=e553]:
+                      - img [ref=e555]
+                      - term [ref=e557]: Next Meeting
+                      - definition [ref=e558]: Jun 27, 2026
+                    - generic [ref=e559]:
+                      - img [ref=e561]
+                      - term [ref=e563]: Avg. Attendance
+                      - definition [ref=e564]: 76%
+                    - generic [ref=e565]:
+                      - img [ref=e567]
+                      - term [ref=e569]: Group Since
+                      - definition [ref=e570]: Feb 12, 2023
+                    - generic [ref=e571]:
+                      - img [ref=e573]
+                      - term [ref=e576]: Group Type
+                      - definition [ref=e577]: Bible Study
+                    - generic [ref=e578]:
+                      - img [ref=e580]
+                      - term [ref=e583]: Description
+                      - definition [ref=e584]:
+                        - generic [ref=e585]: A community growing in the Word and in fellowship.
+                  - generic [ref=e586]:
+                    - button [ref=e587] [cursor=pointer]:
+                      - generic [ref=e588]:
+                        - img [ref=e590]
+                        - generic [ref=e595]: Members
+                      - generic [ref=e596]:
+                        - text: "8"
+                        - img [ref=e597]
+                    - button [ref=e599] [cursor=pointer]:
+                      - generic [ref=e600]:
+                        - img [ref=e602]
+                        - generic [ref=e604]: Meetings this month
+                      - generic [ref=e605]:
+                        - text: "4"
+                        - img [ref=e606]
+                    - button [ref=e608] [cursor=pointer]:
+                      - generic [ref=e609]:
+                        - img [ref=e611]
+                        - generic [ref=e613]: Attendance
+                      - generic [ref=e614]:
+                        - text: 76%
+                        - img [ref=e615]
+                    - button [ref=e617] [cursor=pointer]:
+                      - generic [ref=e618]:
+                        - img [ref=e620]
+                        - generic [ref=e622]: Outreach activities
+                      - generic [ref=e623]:
+                        - text: "2"
+                        - img [ref=e624]
+                  - generic [ref=e626]:
+                    - button [ref=e627] [cursor=pointer]:
+                      - img [ref=e628]
+                      - text: Edit Group
+                    - button [ref=e630] [cursor=pointer]:
+                      - generic [ref=e631]:
+                        - img [ref=e632]
+                        - text: More actions
+                      - img [ref=e636]
+          - generic [ref=e638]: bg selected
+  - list
+  - button "Open Next.js Dev Tools" [ref=e6] [cursor=pointer]:
+    - img [ref=e7]
+  - alert [ref=e639]
+  - dialog [ref=e640]:
+    - generic [ref=e642]:
+      - heading [level=2] [ref=e643]: Create small group
+      - paragraph [ref=e644]: Set up details, leadership, meeting rhythm, and initial members.
+    - generic [ref=e646]:
+      - navigation [ref=e647]:
+        - list [ref=e648]:
+          - listitem [ref=e649]:
+            - generic [ref=e650]:
+              - generic [ref=e651]: "1"
+              - generic [ref=e652]: Group Details
+          - listitem [ref=e654]:
+            - generic [ref=e655]:
+              - generic [ref=e656]: "2"
+              - generic [ref=e657]: Leadership
+          - listitem [ref=e659]:
+            - generic [ref=e660]:
+              - generic [ref=e661]: "3"
+              - generic [ref=e662]: Meeting Setup
+          - listitem [ref=e664]:
+            - generic [ref=e665]:
+              - generic [ref=e666]: "4"
+              - generic [ref=e667]: Initial Members
+          - listitem [ref=e669]:
+            - generic [ref=e670]:
+              - generic [ref=e671]: "5"
+              - generic [ref=e672]: Review
+      - generic [ref=e673]:
+        - paragraph [ref=e674]: Backend not connected yet.
+        - paragraph [ref=e675]: The Small Groups tables and server actions are not present in this repository, so this form is intentionally read-only for persistence.
+        - paragraph [ref=e676]: "Missing: createSmallGroup, assignMemberToGroup"
+      - generic [ref=e677]:
+        - generic [ref=e678]:
+          - generic [ref=e679]: Group Name
+          - textbox [ref=e680]
+        - generic [ref=e681]:
+          - generic [ref=e682]: Group Type
+          - textbox [ref=e683]: Bible Study
+        - generic [ref=e684]:
+          - generic [ref=e685]: Status
+          - textbox [ref=e686]: active
+        - generic [ref=e687]:
+          - generic [ref=e688]: Neighborhood
+          - textbox [ref=e689]
+        - generic [ref=e690]:
+          - generic [ref=e691]: Description
+          - textbox [ref=e692]
+    - generic [ref=e693]:
+      - button [ref=e694] [cursor=pointer]: Cancel
+      - button [ref=e695] [cursor=pointer]: Next
+    - button [ref=e696] [cursor=pointer]:
+      - img [ref=e697]
+      - generic [ref=e700]: Close
+  - alertdialog "Discard changes?" [ref=e12]:
+    - generic [ref=e13]:
+      - heading "Discard changes?" [level=2] [ref=e14]
+      - paragraph [ref=e15]: This form has unsaved local changes. Because no Small Groups backend exists yet, discarding will reset the fields in this dialog.
+    - generic [ref=e16]:
+      - button "Continue Editing" [ref=e17] [cursor=pointer]
+      - button "Discard Changes" [active] [ref=e18] [cursor=pointer]

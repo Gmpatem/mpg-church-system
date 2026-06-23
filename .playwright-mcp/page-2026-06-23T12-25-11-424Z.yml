@@ -1,0 +1,221 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - link "Church Workspace ghrace comunity church" [ref=e6] [cursor=pointer]:
+            - /url: /c/grace-community-church
+            - img [ref=e8]
+            - generic [ref=e12]:
+              - generic [ref=e13]: Church Workspace
+              - generic [ref=e14]: ghrace comunity church
+          - generic [ref=e15]: Church Admin
+        - navigation "Church workspace" [ref=e16]:
+          - generic [ref=e17]:
+            - generic [ref=e18]:
+              - paragraph [ref=e19]: Overview
+              - link "Dashboard" [ref=e21] [cursor=pointer]:
+                - /url: /c/grace-community-church
+                - img [ref=e22]
+                - generic [ref=e27]: Dashboard
+            - generic [ref=e28]:
+              - paragraph [ref=e29]: People
+              - generic [ref=e30]:
+                - link "Members" [ref=e31] [cursor=pointer]:
+                  - /url: /c/grace-community-church/members
+                  - img [ref=e32]
+                  - generic [ref=e37]: Members
+                - link "Households" [ref=e38] [cursor=pointer]:
+                  - /url: /c/grace-community-church/households
+                  - img [ref=e39]
+                  - generic [ref=e42]: Households
+            - generic [ref=e43]:
+              - paragraph [ref=e44]: Ministries
+              - generic [ref=e45]:
+                - link "Departments" [ref=e46] [cursor=pointer]:
+                  - /url: /c/grace-community-church/departments
+                  - img [ref=e47]
+                  - generic [ref=e51]: Departments
+                - link "Leadership" [ref=e52] [cursor=pointer]:
+                  - /url: /c/grace-community-church/leadership
+                  - img [ref=e53]
+                  - generic [ref=e65]: Leadership
+                - link "Small Groups" [ref=e66] [cursor=pointer]:
+                  - /url: /c/grace-community-church/small-groups
+                  - img [ref=e67]
+                  - generic [ref=e71]: Small Groups
+                - link "Events" [ref=e72] [cursor=pointer]:
+                  - /url: /c/grace-community-church/events
+                  - img [ref=e73]
+                  - generic [ref=e75]: Events
+                - link "Calendar" [ref=e76] [cursor=pointer]:
+                  - /url: /c/grace-community-church/calendar
+                  - img [ref=e77]
+                  - generic [ref=e79]: Calendar
+            - generic [ref=e80]:
+              - paragraph [ref=e81]: Treasury
+              - link "Treasury" [ref=e83] [cursor=pointer]:
+                - /url: /c/grace-community-church/treasury
+                - img [ref=e84]
+                - generic [ref=e87]: Treasury
+            - generic [ref=e88]:
+              - paragraph [ref=e89]: Operations
+              - generic [ref=e90]:
+                - link "Church Office" [ref=e91] [cursor=pointer]:
+                  - /url: /c/grace-community-church/office
+                  - img [ref=e92]
+                  - generic [ref=e96]: Church Office
+                - link "Announcements" [ref=e97] [cursor=pointer]:
+                  - /url: /c/grace-community-church/announcements
+                  - img [ref=e98]
+                  - generic [ref=e101]: Announcements
+                - link "Approvals" [ref=e102] [cursor=pointer]:
+                  - /url: /c/grace-community-church/approvals
+                  - img [ref=e103]
+                  - generic [ref=e107]: Approvals
+                - link "Reports" [ref=e108] [cursor=pointer]:
+                  - /url: /c/grace-community-church/reports
+                  - img [ref=e109]
+                  - generic [ref=e111]: Reports
+            - generic [ref=e112]:
+              - paragraph [ref=e113]: Administration
+              - generic [ref=e114]:
+                - link "Invites & Access" [ref=e115] [cursor=pointer]:
+                  - /url: /c/grace-community-church/access-control
+                  - img [ref=e116]
+                  - generic [ref=e118]: Invites & Access
+                - link "Settings" [ref=e119] [cursor=pointer]:
+                  - /url: /c/grace-community-church/settings
+                  - img [ref=e120]
+                  - generic [ref=e123]: Settings
+        - generic [ref=e125]:
+          - generic [ref=e126]:
+            - generic [ref=e128]: BD
+            - generic [ref=e129]:
+              - paragraph [ref=e130]: big dev
+              - paragraph [ref=e131]: bigdev830@gmail.com
+          - button "Logout" [ref=e132] [cursor=pointer]:
+            - img [ref=e133]
+            - text: Logout
+    - generic [ref=e136]:
+      - banner [ref=e137]:
+        - generic [ref=e138]:
+          - generic [ref=e140]:
+            - paragraph [ref=e141]: Treasury
+            - paragraph [ref=e142]: ghrace comunity church
+          - generic [ref=e143]:
+            - generic [ref=e145]:
+              - img [ref=e146]
+              - generic [ref=e150]: Online
+            - generic [ref=e151]: Church Admin
+            - generic [ref=e152]:
+              - button "Switch to English" [pressed] [ref=e153] [cursor=pointer]: EN
+              - button "Switch to Français" [ref=e154] [cursor=pointer]: FR
+            - button "Notifications" [ref=e155] [cursor=pointer]:
+              - img [ref=e156]
+            - button "Profile" [ref=e159] [cursor=pointer]:
+              - generic [ref=e161]: BD
+      - main [ref=e162]:
+        - generic [ref=e181]:
+          - generic [ref=e182]:
+            - generic [ref=e183]:
+              - heading "Treasury" [level=1] [ref=e184]
+              - paragraph [ref=e185]: Manage church income, expenses, funds, requests, transfers, and remittance.
+            - generic [ref=e186]:
+              - button "Record Money In" [ref=e187] [cursor=pointer]:
+                - img [ref=e188]
+                - text: Record Money In
+              - button "Record Money Out" [ref=e189] [cursor=pointer]:
+                - img [ref=e190]
+                - text: Record Money Out
+              - button "More Actions" [ref=e191] [cursor=pointer]:
+                - text: More Actions
+                - img [ref=e192]
+          - generic [ref=e197]:
+            - tablist "Treasury workspace sections" [ref=e198]:
+              - tab "Overview" [ref=e199] [cursor=pointer]
+              - tab "Transactions" [ref=e201] [cursor=pointer]
+              - tab "Funds" [ref=e202] [cursor=pointer]
+              - tab "Requests" [active] [selected] [ref=e203] [cursor=pointer]: Requests
+              - tab "Transfers" [ref=e204] [cursor=pointer]
+              - tab "Reconciliation" [ref=e205] [cursor=pointer]
+            - button "This Month" [ref=e207] [cursor=pointer]:
+              - img [ref=e208]
+              - text: This Month
+          - tabpanel "Requests" [ref=e555]:
+            - generic [ref=e556]:
+              - generic [ref=e558]:
+                - generic [ref=e560]:
+                  - img [ref=e562]
+                  - generic [ref=e567]:
+                    - paragraph [ref=e568]: Pending Review
+                    - paragraph [ref=e569]: "0"
+                    - paragraph [ref=e570]: Needs Treasury decision
+                - generic [ref=e572]:
+                  - img [ref=e574]
+                  - generic [ref=e577]:
+                    - paragraph [ref=e578]: Approved
+                    - paragraph [ref=e579]: "0"
+                    - paragraph [ref=e580]: Approved requests
+                - generic [ref=e582]:
+                  - img [ref=e584]
+                  - generic [ref=e587]:
+                    - paragraph [ref=e588]: Awaiting Processing
+                    - paragraph [ref=e589]: "0"
+                    - paragraph [ref=e590]: Approved, not yet paid
+                - generic [ref=e592]:
+                  - img [ref=e594]
+                  - generic [ref=e598]:
+                    - paragraph [ref=e599]: Total Requested
+                    - paragraph [ref=e600]: XAF 0
+                    - paragraph [ref=e601]: Across all requests
+              - generic [ref=e602]:
+                - generic [ref=e603]:
+                  - button "Pending 0" [ref=e604] [cursor=pointer]:
+                    - text: Pending
+                    - generic [ref=e605]: "0"
+                  - button "Approved 0" [ref=e606] [cursor=pointer]:
+                    - text: Approved
+                    - generic [ref=e607]: "0"
+                  - button "Awaiting Processing 0" [ref=e608] [cursor=pointer]:
+                    - text: Awaiting Processing
+                    - generic [ref=e609]: "0"
+                  - button "Processed 0" [ref=e610] [cursor=pointer]:
+                    - text: Processed
+                    - generic [ref=e611]: "0"
+                  - button "Rejected 0" [ref=e612] [cursor=pointer]:
+                    - text: Rejected
+                    - generic [ref=e613]: "0"
+                  - button "All 0" [ref=e614] [cursor=pointer]:
+                    - text: All
+                    - generic [ref=e615]: "0"
+                - generic [ref=e616]:
+                  - generic [ref=e617]:
+                    - generic [ref=e618]: Search fund requests...
+                    - img
+                    - textbox "Search fund requests..." [ref=e619]
+                  - combobox "Department" [ref=e620] [cursor=pointer]:
+                    - generic: Department
+                    - img [ref=e621]
+                  - combobox "Status" [ref=e623] [cursor=pointer]:
+                    - generic: Status
+                    - img [ref=e624]
+                  - combobox "Requested Fund" [ref=e626] [cursor=pointer]:
+                    - generic: Requested Fund
+                    - img [ref=e627]
+                - generic [ref=e629]:
+                  - generic [ref=e631]:
+                    - heading "Request Queue" [level=2] [ref=e633]
+                    - generic [ref=e636]:
+                      - heading "No requests match the current filters." [level=3] [ref=e637]
+                      - paragraph [ref=e638]: Adjust filters or return to All to review every department finance request.
+                  - generic [ref=e639]:
+                    - heading "Request Details" [level=2] [ref=e641]
+                    - generic [ref=e643]:
+                      - heading "Select a request" [level=3] [ref=e644]
+                      - paragraph [ref=e645]: Choose a request to review details, decision history, and available actions.
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e175] [cursor=pointer]:
+    - img [ref=e176]
+  - alert [ref=e179]

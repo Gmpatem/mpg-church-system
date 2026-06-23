@@ -1,0 +1,337 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - link "Church Workspace ghrace comunity church" [ref=e6] [cursor=pointer]:
+            - /url: /c/grace-community-church
+            - img [ref=e8]
+            - generic [ref=e12]:
+              - generic [ref=e13]: Church Workspace
+              - generic [ref=e14]: ghrace comunity church
+          - generic [ref=e15]: Church Admin
+        - navigation "Church workspace" [ref=e16]:
+          - generic [ref=e17]:
+            - generic [ref=e18]:
+              - paragraph [ref=e19]: Overview
+              - link "Dashboard" [ref=e21] [cursor=pointer]:
+                - /url: /c/grace-community-church
+                - img [ref=e22]
+                - generic [ref=e27]: Dashboard
+            - generic [ref=e28]:
+              - paragraph [ref=e29]: People
+              - generic [ref=e30]:
+                - link "Members" [ref=e31] [cursor=pointer]:
+                  - /url: /c/grace-community-church/members
+                  - img [ref=e32]
+                  - generic [ref=e37]: Members
+                - link "Households" [ref=e38] [cursor=pointer]:
+                  - /url: /c/grace-community-church/households
+                  - img [ref=e39]
+                  - generic [ref=e42]: Households
+            - generic [ref=e43]:
+              - paragraph [ref=e44]: Ministries
+              - generic [ref=e45]:
+                - link "Departments" [ref=e46] [cursor=pointer]:
+                  - /url: /c/grace-community-church/departments
+                  - img [ref=e47]
+                  - generic [ref=e51]: Departments
+                - link "Leadership" [ref=e52] [cursor=pointer]:
+                  - /url: /c/grace-community-church/leadership
+                  - img [ref=e53]
+                  - generic [ref=e65]: Leadership
+                - link "Small Groups" [ref=e66] [cursor=pointer]:
+                  - /url: /c/grace-community-church/small-groups
+                  - img [ref=e67]
+                  - generic [ref=e71]: Small Groups
+                - link "Events" [ref=e72] [cursor=pointer]:
+                  - /url: /c/grace-community-church/events
+                  - img [ref=e73]
+                  - generic [ref=e75]: Events
+                - link "Calendar" [ref=e76] [cursor=pointer]:
+                  - /url: /c/grace-community-church/calendar
+                  - img [ref=e77]
+                  - generic [ref=e79]: Calendar
+            - generic [ref=e80]:
+              - paragraph [ref=e81]: Treasury
+              - link "Treasury" [ref=e83] [cursor=pointer]:
+                - /url: /c/grace-community-church/treasury
+                - img [ref=e84]
+                - generic [ref=e87]: Treasury
+            - generic [ref=e88]:
+              - paragraph [ref=e89]: Operations
+              - generic [ref=e90]:
+                - link "Church Office" [ref=e91] [cursor=pointer]:
+                  - /url: /c/grace-community-church/office
+                  - img [ref=e92]
+                  - generic [ref=e96]: Church Office
+                - link "Announcements" [ref=e97] [cursor=pointer]:
+                  - /url: /c/grace-community-church/announcements
+                  - img [ref=e98]
+                  - generic [ref=e101]: Announcements
+                - link "Approvals" [ref=e102] [cursor=pointer]:
+                  - /url: /c/grace-community-church/approvals
+                  - img [ref=e103]
+                  - generic [ref=e107]: Approvals
+                - link "Reports" [ref=e108] [cursor=pointer]:
+                  - /url: /c/grace-community-church/reports
+                  - img [ref=e109]
+                  - generic [ref=e111]: Reports
+            - generic [ref=e112]:
+              - paragraph [ref=e113]: Administration
+              - generic [ref=e114]:
+                - link "Invites & Access" [ref=e115] [cursor=pointer]:
+                  - /url: /c/grace-community-church/access-control
+                  - img [ref=e116]
+                  - generic [ref=e118]: Invites & Access
+                - link "Settings" [ref=e119] [cursor=pointer]:
+                  - /url: /c/grace-community-church/settings
+                  - img [ref=e120]
+                  - generic [ref=e123]: Settings
+        - generic [ref=e125]:
+          - generic [ref=e126]:
+            - generic [ref=e128]: BD
+            - generic [ref=e129]:
+              - paragraph [ref=e130]: big dev
+              - paragraph [ref=e131]: bigdev830@gmail.com
+          - button "Logout" [ref=e132] [cursor=pointer]:
+            - img [ref=e133]
+            - text: Logout
+    - generic [ref=e136]:
+      - banner [ref=e137]:
+        - generic [ref=e138]:
+          - generic [ref=e140]:
+            - paragraph [ref=e141]: Treasury
+            - paragraph [ref=e142]: ghrace comunity church
+          - generic [ref=e143]:
+            - generic [ref=e145]:
+              - img [ref=e146]
+              - generic [ref=e150]: Online
+            - generic [ref=e151]: Church Admin
+            - generic [ref=e152]:
+              - button "Switch to English" [pressed] [ref=e153] [cursor=pointer]: EN
+              - button "Switch to Français" [ref=e154] [cursor=pointer]: FR
+            - button "Notifications" [ref=e155] [cursor=pointer]:
+              - img [ref=e156]
+            - button "Profile" [ref=e159] [cursor=pointer]:
+              - generic [ref=e161]: BD
+      - main [ref=e162]:
+        - generic [ref=e181]:
+          - generic [ref=e182]:
+            - generic [ref=e183]:
+              - heading "Treasury" [level=1] [ref=e184]
+              - paragraph [ref=e185]: Manage church income, expenses, funds, requests, transfers, and remittance.
+            - generic [ref=e186]:
+              - button "Record Money In" [ref=e187] [cursor=pointer]:
+                - img [ref=e188]
+                - text: Record Money In
+              - button "Record Money Out" [ref=e189] [cursor=pointer]:
+                - img [ref=e190]
+                - text: Record Money Out
+              - button "More Actions" [ref=e191] [cursor=pointer]:
+                - text: More Actions
+                - img [ref=e192]
+          - generic [ref=e197]:
+            - tablist "Treasury workspace sections" [ref=e198]:
+              - tab "Overview" [ref=e199] [cursor=pointer]
+              - tab "Transactions" [ref=e201] [cursor=pointer]
+              - tab "Funds" [active] [selected] [ref=e202] [cursor=pointer]: Funds
+              - tab "Requests" [ref=e203] [cursor=pointer]
+              - tab "Transfers" [ref=e204] [cursor=pointer]
+              - tab "Reconciliation" [ref=e205] [cursor=pointer]
+            - button "This Month" [ref=e207] [cursor=pointer]:
+              - img [ref=e208]
+              - text: This Month
+          - tabpanel "Funds" [ref=e330]:
+            - generic [ref=e331]:
+              - generic [ref=e333]:
+                - generic [ref=e335]:
+                  - img [ref=e337]
+                  - generic [ref=e339]:
+                    - paragraph [ref=e340]: Total Funds
+                    - paragraph [ref=e341]: "5"
+                    - paragraph [ref=e342]: All configured funds
+                - generic [ref=e344]:
+                  - img [ref=e346]
+                  - generic [ref=e349]:
+                    - paragraph [ref=e350]: Active Funds
+                    - paragraph [ref=e351]: "5"
+                    - paragraph [ref=e352]: 0 inactive
+                - generic [ref=e354]:
+                  - img [ref=e356]
+                  - generic [ref=e360]:
+                    - paragraph [ref=e361]: Combined Balance
+                    - paragraph [ref=e362]: XAF 128,000
+                    - paragraph [ref=e363]: Across all funds
+                - generic [ref=e365]:
+                  - img [ref=e367]
+                  - generic [ref=e369]:
+                    - paragraph [ref=e370]: Funds Requiring Attention
+                    - paragraph [ref=e371]: "0"
+                    - paragraph [ref=e372]: Negative balances
+              - generic [ref=e373]:
+                - generic [ref=e374]:
+                  - generic [ref=e375]: Search funds...
+                  - img
+                  - textbox "Search funds..." [ref=e376]
+                - combobox "All Types" [ref=e377] [cursor=pointer]:
+                  - generic: All Types
+                  - img [ref=e378]
+                - combobox "All Statuses" [ref=e380] [cursor=pointer]:
+                  - generic: All Statuses
+                  - img [ref=e381]
+                - button "Create Fund" [ref=e383] [cursor=pointer]:
+                  - img [ref=e384]
+                  - text: Create Fund
+              - generic [ref=e385]:
+                - generic [ref=e386]:
+                  - heading "Fund Registry" [level=2] [ref=e388]
+                  - generic [ref=e389]:
+                    - table [ref=e391]:
+                      - rowgroup [ref=e392]:
+                        - row "Fund Type Money In Money Out Transfers Available Balance Status Actions" [ref=e393]:
+                          - columnheader "Fund" [ref=e394]
+                          - columnheader "Type" [ref=e395]
+                          - columnheader "Money In" [ref=e396]
+                          - columnheader "Money Out" [ref=e397]
+                          - columnheader "Transfers" [ref=e398]
+                          - columnheader "Available Balance" [ref=e399]
+                          - columnheader "Status" [ref=e400]
+                          - columnheader "Actions" [ref=e401]
+                      - rowgroup [ref=e402]:
+                        - row "condolence cd Welfare XAF 0 XAF 0 +XAF 0 -XAF 0 XAF 0 Active Actions for condolence" [ref=e403] [cursor=pointer]:
+                          - cell "condolence cd" [ref=e404]:
+                            - paragraph [ref=e405]: condolence
+                            - paragraph [ref=e406]: cd
+                          - cell "Welfare" [ref=e407]
+                          - cell "XAF 0" [ref=e408]
+                          - cell "XAF 0" [ref=e409]
+                          - cell "+XAF 0 -XAF 0" [ref=e410]:
+                            - generic [ref=e411]: +XAF 0
+                            - generic [ref=e412]: "-XAF 0"
+                          - cell "XAF 0" [ref=e413]
+                          - cell "Active" [ref=e414]:
+                            - generic [ref=e415]: Active
+                          - cell "Actions for condolence" [ref=e417]:
+                            - button "Actions for condolence" [ref=e418]:
+                              - img [ref=e419]
+                        - row "media department Fund dept_media_department_36ef3c96 Department XAF 0 XAF 0 +XAF 0 -XAF 0 XAF 0 Active Actions for media department Fund" [ref=e423] [cursor=pointer]:
+                          - cell "media department Fund dept_media_department_36ef3c96" [ref=e424]:
+                            - paragraph [ref=e425]: media department Fund
+                            - paragraph [ref=e426]: dept_media_department_36ef3c96
+                          - cell "Department" [ref=e427]
+                          - cell "XAF 0" [ref=e428]
+                          - cell "XAF 0" [ref=e429]
+                          - cell "+XAF 0 -XAF 0" [ref=e430]:
+                            - generic [ref=e431]: +XAF 0
+                            - generic [ref=e432]: "-XAF 0"
+                          - cell "XAF 0" [ref=e433]
+                          - cell "Active" [ref=e434]:
+                            - generic [ref=e435]: Active
+                          - cell "Actions for media department Fund" [ref=e437]:
+                            - button "Actions for media department Fund" [ref=e438]:
+                              - img [ref=e439]
+                        - row "Offerings sabbath offerings Offering XAF 50,000 XAF 7,000 +XAF 0 -XAF 0 XAF 43,000 Active Actions for Offerings" [ref=e443] [cursor=pointer]:
+                          - cell "Offerings sabbath offerings" [ref=e444]:
+                            - paragraph [ref=e445]: Offerings
+                            - paragraph [ref=e446]: sabbath offerings
+                          - cell "Offering" [ref=e447]
+                          - cell "XAF 50,000" [ref=e448]
+                          - cell "XAF 7,000" [ref=e449]
+                          - cell "+XAF 0 -XAF 0" [ref=e450]:
+                            - generic [ref=e451]: +XAF 0
+                            - generic [ref=e452]: "-XAF 0"
+                          - cell "XAF 43,000" [ref=e453]
+                          - cell "Active" [ref=e454]:
+                            - generic [ref=e455]: Active
+                          - cell "Actions for Offerings" [ref=e457]:
+                            - button "Actions for Offerings" [ref=e458]:
+                              - img [ref=e459]
+                        - row "Remittance Fund remittance Mission XAF 0 XAF 0 +XAF 25,000 -XAF 0 XAF 25,000 Active Actions for Remittance Fund" [ref=e463] [cursor=pointer]:
+                          - cell "Remittance Fund remittance" [ref=e464]:
+                            - paragraph [ref=e465]: Remittance Fund
+                            - paragraph [ref=e466]: remittance
+                          - cell "Mission" [ref=e467]
+                          - cell "XAF 0" [ref=e468]
+                          - cell "XAF 0" [ref=e469]
+                          - cell "+XAF 25,000 -XAF 0" [ref=e470]:
+                            - generic [ref=e471]: +XAF 25,000
+                            - generic [ref=e472]: "-XAF 0"
+                          - cell "XAF 25,000" [ref=e473]
+                          - cell "Active" [ref=e474]:
+                            - generic [ref=e475]: Active
+                          - cell "Actions for Remittance Fund" [ref=e477]:
+                            - button "Actions for Remittance Fund" [ref=e478]:
+                              - img [ref=e479]
+                        - row "Tithe sabbath tithe Tithe XAF 85,000 XAF 0 +XAF 0 -XAF 25,000 XAF 60,000 Active Actions for Tithe" [ref=e483] [cursor=pointer]:
+                          - cell "Tithe sabbath tithe" [ref=e484]:
+                            - paragraph [ref=e485]: Tithe
+                            - paragraph [ref=e486]: sabbath tithe
+                          - cell "Tithe" [ref=e487]
+                          - cell "XAF 85,000" [ref=e488]
+                          - cell "XAF 0" [ref=e489]
+                          - cell "+XAF 0 -XAF 25,000" [ref=e490]:
+                            - generic [ref=e491]: +XAF 0
+                            - generic [ref=e492]: "-XAF 25,000"
+                          - cell "XAF 60,000" [ref=e493]
+                          - cell "Active" [ref=e494]:
+                            - generic [ref=e495]: Active
+                          - cell "Actions for Tithe" [ref=e497]:
+                            - button "Actions for Tithe" [ref=e498]:
+                              - img [ref=e499]
+                    - generic [ref=e503]:
+                      - paragraph [ref=e504]: Showing 1-5 of 5 funds
+                      - navigation "Treasury pagination" [ref=e505]:
+                        - button "Previous page" [disabled]:
+                          - img
+                        - button "Page 1" [ref=e506] [cursor=pointer]: "1"
+                        - button "Next page" [disabled]:
+                          - img
+                - generic [ref=e507]:
+                  - heading "Fund Details" [level=2] [ref=e509]
+                  - generic [ref=e511]:
+                    - generic [ref=e512]:
+                      - generic [ref=e513]:
+                        - heading "condolence" [level=3] [ref=e514]
+                        - paragraph [ref=e515]: cd
+                      - generic [ref=e516]: Active
+                    - generic [ref=e518]:
+                      - paragraph [ref=e519]: Available Balance
+                      - paragraph [ref=e520]: XAF 0
+                    - generic [ref=e521]:
+                      - generic [ref=e522]:
+                        - paragraph [ref=e523]: Money In
+                        - paragraph [ref=e524]: XAF 0
+                      - generic [ref=e525]:
+                        - paragraph [ref=e526]: Money Out
+                        - paragraph [ref=e527]: XAF 0
+                      - generic [ref=e528]:
+                        - paragraph [ref=e529]: Transfers In
+                        - paragraph [ref=e530]: XAF 0
+                      - generic [ref=e531]:
+                        - paragraph [ref=e532]: Transfers Out
+                        - paragraph [ref=e533]: XAF 0
+                    - generic [ref=e534]:
+                      - generic [ref=e535]:
+                        - term [ref=e536]: Fund Type
+                        - definition [ref=e537]: Welfare
+                      - generic [ref=e538]:
+                        - term [ref=e539]: Department
+                        - definition [ref=e540]: "-"
+                      - generic [ref=e541]:
+                        - term [ref=e542]: Created
+                        - definition [ref=e543]: Apr 25, 2026, 2:53 AM
+                      - generic [ref=e544]:
+                        - term [ref=e545]: Last Updated
+                        - definition [ref=e546]: Apr 25, 2026, 2:53 AM
+                      - generic [ref=e547]:
+                        - term [ref=e548]: Description
+                        - definition [ref=e549]: "-"
+                    - button "View Fund Transactions" [ref=e550] [cursor=pointer]:
+                      - img [ref=e551]
+                      - text: View Fund Transactions
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e175] [cursor=pointer]:
+    - img [ref=e176]
+  - alert [ref=e179]

@@ -1,0 +1,236 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - complementary [ref=e3]:
+      - generic [ref=e4]:
+        - generic [ref=e5]:
+          - link "Church Workspace ghrace comunity church" [ref=e6] [cursor=pointer]:
+            - /url: /c/grace-community-church
+            - img [ref=e8]
+            - generic [ref=e12]:
+              - generic [ref=e13]: Church Workspace
+              - generic [ref=e14]: ghrace comunity church
+          - generic [ref=e15]: Church Admin
+        - navigation "Church workspace" [ref=e16]:
+          - generic [ref=e17]:
+            - generic [ref=e18]:
+              - paragraph [ref=e19]: Overview
+              - link "Dashboard" [ref=e21] [cursor=pointer]:
+                - /url: /c/grace-community-church
+                - img [ref=e22]
+                - generic [ref=e27]: Dashboard
+            - generic [ref=e28]:
+              - paragraph [ref=e29]: People
+              - generic [ref=e30]:
+                - link "Members" [ref=e31] [cursor=pointer]:
+                  - /url: /c/grace-community-church/members
+                  - img [ref=e32]
+                  - generic [ref=e37]: Members
+                - link "Households" [ref=e38] [cursor=pointer]:
+                  - /url: /c/grace-community-church/households
+                  - img [ref=e39]
+                  - generic [ref=e42]: Households
+            - generic [ref=e43]:
+              - paragraph [ref=e44]: Ministries
+              - generic [ref=e45]:
+                - link "Departments" [ref=e46] [cursor=pointer]:
+                  - /url: /c/grace-community-church/departments
+                  - img [ref=e47]
+                  - generic [ref=e51]: Departments
+                - link "Leadership" [ref=e52] [cursor=pointer]:
+                  - /url: /c/grace-community-church/leadership
+                  - img [ref=e53]
+                  - generic [ref=e65]: Leadership
+                - link "Small Groups" [ref=e66] [cursor=pointer]:
+                  - /url: /c/grace-community-church/small-groups
+                  - img [ref=e67]
+                  - generic [ref=e71]: Small Groups
+                - link "Events" [ref=e72] [cursor=pointer]:
+                  - /url: /c/grace-community-church/events
+                  - img [ref=e73]
+                  - generic [ref=e75]: Events
+                - link "Calendar" [ref=e76] [cursor=pointer]:
+                  - /url: /c/grace-community-church/calendar
+                  - img [ref=e77]
+                  - generic [ref=e79]: Calendar
+            - generic [ref=e80]:
+              - paragraph [ref=e81]: Treasury
+              - link "Treasury" [ref=e83] [cursor=pointer]:
+                - /url: /c/grace-community-church/treasury
+                - img [ref=e84]
+                - generic [ref=e87]: Treasury
+            - generic [ref=e88]:
+              - paragraph [ref=e89]: Operations
+              - generic [ref=e90]:
+                - link "Church Office" [ref=e91] [cursor=pointer]:
+                  - /url: /c/grace-community-church/office
+                  - img [ref=e92]
+                  - generic [ref=e96]: Church Office
+                - link "Announcements" [ref=e97] [cursor=pointer]:
+                  - /url: /c/grace-community-church/announcements
+                  - img [ref=e98]
+                  - generic [ref=e101]: Announcements
+                - link "Approvals" [ref=e102] [cursor=pointer]:
+                  - /url: /c/grace-community-church/approvals
+                  - img [ref=e103]
+                  - generic [ref=e107]: Approvals
+                - link "Reports" [ref=e108] [cursor=pointer]:
+                  - /url: /c/grace-community-church/reports
+                  - img [ref=e109]
+                  - generic [ref=e111]: Reports
+            - generic [ref=e112]:
+              - paragraph [ref=e113]: Administration
+              - generic [ref=e114]:
+                - link "Invites & Access" [ref=e115] [cursor=pointer]:
+                  - /url: /c/grace-community-church/access-control
+                  - img [ref=e116]
+                  - generic [ref=e118]: Invites & Access
+                - link "Settings" [ref=e119] [cursor=pointer]:
+                  - /url: /c/grace-community-church/settings
+                  - img [ref=e120]
+                  - generic [ref=e123]: Settings
+        - generic [ref=e125]:
+          - generic [ref=e126]:
+            - generic [ref=e128]: BD
+            - generic [ref=e129]:
+              - paragraph [ref=e130]: big dev
+              - paragraph [ref=e131]: bigdev830@gmail.com
+          - button "Logout" [ref=e132] [cursor=pointer]:
+            - img [ref=e133]
+            - text: Logout
+    - generic [ref=e136]:
+      - banner [ref=e137]:
+        - generic [ref=e138]:
+          - generic [ref=e140]:
+            - paragraph [ref=e141]: Departments
+            - paragraph [ref=e142]: ghrace comunity church
+          - generic [ref=e143]:
+            - generic [ref=e145]:
+              - img [ref=e146]
+              - generic [ref=e150]: Online
+            - generic [ref=e151]: Church Admin
+            - generic [ref=e152]:
+              - button "Switch to English" [pressed] [ref=e153] [cursor=pointer]: EN
+              - button "Switch to Français" [ref=e154] [cursor=pointer]: FR
+            - button "Notifications" [ref=e155] [cursor=pointer]:
+              - img [ref=e156]
+            - button "Profile" [ref=e159] [cursor=pointer]:
+              - generic [ref=e161]: BD
+      - main [ref=e162]:
+        - generic [ref=e181]:
+          - generic [ref=e182]:
+            - generic [ref=e183]:
+              - heading "Departments" [level=1] [ref=e184]
+              - paragraph [ref=e185]: Manage church departments, leaders, members, and resources.
+            - button "Add Department" [ref=e187] [cursor=pointer]:
+              - img [ref=e188]
+              - text: Add Department
+          - generic [ref=e189]:
+            - tablist "Department workspace sections" [ref=e190]:
+              - tab "Overview" [selected] [ref=e191] [cursor=pointer]: Overview
+              - tab "Action Plan" [ref=e193] [cursor=pointer]
+              - tab "Activities" [ref=e194] [cursor=pointer]
+              - tab "People" [ref=e195] [cursor=pointer]
+              - tab "Budget" [ref=e196] [cursor=pointer]
+              - tab "Documents" [ref=e197] [cursor=pointer]
+            - generic [ref=e198]:
+              - img [ref=e199]
+              - generic [ref=e201]: Department reporting period
+              - combobox "Department reporting period" [disabled] [ref=e202]:
+                - option "Jan 1 - Dec 31, 2026" [selected]
+          - tabpanel "Overview" [ref=e203]:
+            - generic [ref=e204]:
+              - generic [ref=e205]:
+                - generic [ref=e207]:
+                  - img [ref=e209]
+                  - generic [ref=e213]:
+                    - paragraph [ref=e214]: Total Departments
+                    - paragraph [ref=e215]: "1"
+                    - paragraph [ref=e216]: All departments in church
+                - generic [ref=e218]:
+                  - img [ref=e220]
+                  - generic [ref=e224]:
+                    - paragraph [ref=e225]: Active Departments
+                    - paragraph [ref=e226]: "1"
+                    - paragraph [ref=e227]: 100% of total departments
+                - generic [ref=e229]:
+                  - img [ref=e231]
+                  - generic [ref=e234]:
+                    - paragraph [ref=e235]: Total Members
+                    - paragraph [ref=e236]: "1"
+                    - paragraph [ref=e237]: Unique active Department members
+                - generic [ref=e239]:
+                  - img [ref=e241]
+                  - generic [ref=e245]:
+                    - paragraph [ref=e246]: Department Funds
+                    - paragraph [ref=e247]: "-"
+                    - paragraph [ref=e248]: Combined current Department balance
+                - generic [ref=e250]:
+                  - img [ref=e252]
+                  - generic [ref=e254]:
+                    - paragraph [ref=e255]: Budget Utilization
+                    - paragraph [ref=e256]: "-"
+                    - paragraph [ref=e257]: Utilization unavailable
+              - generic [ref=e258]:
+                - generic [ref=e259]:
+                  - heading "Budget Overview" [level=2] [ref=e261]
+                  - generic [ref=e263]:
+                    - heading "No Department finance activity yet" [level=3] [ref=e264]
+                    - paragraph [ref=e265]: Department fund balances and expenses will appear here when Treasury records are added.
+                  - generic [ref=e266]:
+                    - paragraph [ref=e267]:
+                      - img [ref=e268]
+                      - generic [ref=e270]: Department fund activity for Jan 1 - Dec 31, 2026
+                    - generic [ref=e271]: "- spent"
+                - generic [ref=e272]:
+                  - heading "Department Status" [level=2] [ref=e274]
+                  - generic [ref=e275]:
+                    - generic [ref=e276]:
+                      - img [ref=e279]:
+                        - img [ref=e283]
+                      - generic:
+                        - paragraph: "1"
+                        - paragraph: Active
+                        - paragraph: of 1 total
+                    - generic [ref=e284]:
+                      - generic [ref=e285]:
+                        - generic [ref=e288]: Active
+                        - generic [ref=e289]: "1"
+                      - generic [ref=e290]:
+                        - generic [ref=e293]: Inactive
+                        - generic [ref=e294]: "0"
+                  - generic [ref=e295]:
+                    - img [ref=e296]
+                    - generic [ref=e299]: All Departments are active
+              - generic [ref=e300]:
+                - generic [ref=e301]:
+                  - heading "Top Department by Members" [level=2] [ref=e303]
+                  - button "media department 1 members" [ref=e305] [cursor=pointer]:
+                    - img [ref=e307]
+                    - generic [ref=e312]: media department
+                    - generic [ref=e315]:
+                      - generic [ref=e316]: "1"
+                      - text: members
+                  - button "View all departments" [ref=e318] [cursor=pointer]:
+                    - text: View all departments
+                    - img [ref=e319]
+                - generic [ref=e321]:
+                  - heading "Upcoming Activities" [level=2] [ref=e323]
+                  - generic [ref=e325]:
+                    - heading "No upcoming Department activities" [level=3] [ref=e326]
+                    - paragraph [ref=e327]: Newly scheduled Department activities will appear here.
+                  - button "View all activities" [ref=e329] [cursor=pointer]:
+                    - text: View all activities
+                    - img [ref=e330]
+                - generic [ref=e332]:
+                  - heading "Recent Department Updates" [level=2] [ref=e334]
+                  - generic [ref=e336]:
+                    - heading "No recent Department updates" [level=3] [ref=e337]
+                    - paragraph [ref=e338]: Department announcements and activity changes will appear here.
+                  - button "View all updates" [ref=e340] [cursor=pointer]:
+                    - text: View all updates
+                    - img [ref=e341]
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e175] [cursor=pointer]:
+    - img [ref=e176]
+  - alert [ref=e179]

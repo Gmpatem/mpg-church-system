@@ -1,0 +1,8 @@
+- generic [ref=e2]:
+  - generic [ref=e3]: 📡
+  - heading "You are offline" [level=1] [ref=e4]
+  - paragraph [ref=e5]: This page is not available right now. Check your internet connection, or try a page you have visited before.
+  - generic [ref=e6]:
+    - button "Retry" [ref=e7] [cursor=pointer]
+    - button "Go back" [ref=e8] [cursor=pointer]
+  - paragraph [ref=e9]: Drafts and queued changes will sync automatically when you come back online.

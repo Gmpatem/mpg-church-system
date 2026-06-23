@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { WorkspaceHero } from "@/components/workspace";
 import { getLabel, outflowTypeLabels } from "@/lib/display-maps";
 import { getTreasuryDepartmentFundRequestsWorkspaceData } from "@/features/department-finance/queries";
@@ -16,6 +17,20 @@ function pickSingle(value: string | string[] | undefined) {
   return Array.isArray(value) ? value[0] : value ?? "";
 }
 
+function appendSearchParam(
+  params: URLSearchParams,
+  key: string,
+  value: string | string[] | undefined
+) {
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      if (item) params.append(key, item);
+    }
+    return;
+  }
+  if (value) params.set(key, value);
+}
+
 function statusClass(status: string) {
   if (status === "pending") return "border-amber-200 bg-amber-50 text-amber-800";
   if (status === "approved") return "border-blue-200 bg-blue-50 text-blue-800";
@@ -30,6 +45,14 @@ export default async function TreasuryApprovalsPage({
 }: TreasuryApprovalsPageProps) {
   const { churchSlug } = await params;
   const filters = (await searchParams) ?? {};
+  const next = new URLSearchParams();
+  next.set("tab", "requests");
+  for (const [key, value] of Object.entries(filters)) {
+    if (key === "tab") continue;
+    appendSearchParam(next, key, value);
+  }
+  redirect(`/c/${churchSlug}/treasury?${next.toString()}`);
+
   const status = pickSingle(filters.status);
   const q = pickSingle(filters.q);
 
