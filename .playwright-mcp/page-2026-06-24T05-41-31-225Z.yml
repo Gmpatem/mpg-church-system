@@ -1,0 +1,282 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - status [ref=e3]
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - link "Church Workspace ghrace comunity church" [ref=e7] [cursor=pointer]:
+            - /url: /c/grace-community-church
+            - img [ref=e9]
+            - generic [ref=e13]:
+              - generic [ref=e14]: Church Workspace
+              - generic [ref=e15]: ghrace comunity church
+          - generic [ref=e16]: Church Admin
+        - navigation "Church workspace" [ref=e17]:
+          - generic [ref=e18]:
+            - generic [ref=e19]:
+              - paragraph [ref=e20]: Overview
+              - link "Dashboard" [ref=e22] [cursor=pointer]:
+                - /url: /c/grace-community-church
+                - img [ref=e23]
+                - generic [ref=e28]: Dashboard
+            - generic [ref=e29]:
+              - paragraph [ref=e30]: People
+              - generic [ref=e31]:
+                - link "Members" [ref=e32] [cursor=pointer]:
+                  - /url: /c/grace-community-church/members
+                  - img [ref=e33]
+                  - generic [ref=e38]: Members
+                - link "Households" [ref=e39] [cursor=pointer]:
+                  - /url: /c/grace-community-church/households
+                  - img [ref=e40]
+                  - generic [ref=e43]: Households
+            - generic [ref=e44]:
+              - paragraph [ref=e45]: Ministries
+              - generic [ref=e46]:
+                - link "Departments" [ref=e47] [cursor=pointer]:
+                  - /url: /c/grace-community-church/departments
+                  - img [ref=e48]
+                  - generic [ref=e52]: Departments
+                - link "Leadership" [ref=e53] [cursor=pointer]:
+                  - /url: /c/grace-community-church/leadership
+                  - img [ref=e54]
+                  - generic [ref=e66]: Leadership
+                - link "Small Groups" [ref=e67] [cursor=pointer]:
+                  - /url: /c/grace-community-church/small-groups
+                  - img [ref=e68]
+                  - generic [ref=e72]: Small Groups
+                - link "Events" [ref=e73] [cursor=pointer]:
+                  - /url: /c/grace-community-church/events
+                  - img [ref=e74]
+                  - generic [ref=e76]: Events
+            - generic [ref=e77]:
+              - paragraph [ref=e78]: Treasury
+              - link "Treasury" [ref=e80] [cursor=pointer]:
+                - /url: /c/grace-community-church/treasury
+                - img [ref=e81]
+                - generic [ref=e84]: Treasury
+            - generic [ref=e85]:
+              - paragraph [ref=e86]: Operations
+              - generic [ref=e87]:
+                - link "Church Office" [ref=e88] [cursor=pointer]:
+                  - /url: /c/grace-community-church/office
+                  - img [ref=e89]
+                  - generic [ref=e93]: Church Office
+                - link "Announcements" [ref=e94] [cursor=pointer]:
+                  - /url: /c/grace-community-church/announcements
+                  - img [ref=e95]
+                  - generic [ref=e98]: Announcements
+                - link "Approvals" [ref=e99] [cursor=pointer]:
+                  - /url: /c/grace-community-church/approvals
+                  - img [ref=e100]
+                  - generic [ref=e104]: Approvals
+                - link "Reports" [ref=e105] [cursor=pointer]:
+                  - /url: /c/grace-community-church/reports
+                  - img [ref=e106]
+                  - generic [ref=e108]: Reports
+            - generic [ref=e109]:
+              - paragraph [ref=e110]: Administration
+              - generic [ref=e111]:
+                - link "Invites & Access" [ref=e112] [cursor=pointer]:
+                  - /url: /c/grace-community-church/access-control
+                  - img [ref=e113]
+                  - generic [ref=e115]: Invites & Access
+                - link "Settings" [ref=e116] [cursor=pointer]:
+                  - /url: /c/grace-community-church/settings
+                  - img [ref=e117]
+                  - generic [ref=e120]: Settings
+        - generic [ref=e122]:
+          - generic [ref=e123]:
+            - generic [ref=e125]: BD
+            - generic [ref=e126]:
+              - paragraph [ref=e127]: big dev
+              - paragraph [ref=e128]: bigdev830@gmail.com
+          - button "Logout" [ref=e129] [cursor=pointer]:
+            - img [ref=e130]
+            - text: Logout
+    - generic [ref=e133]:
+      - banner [ref=e134]:
+        - generic [ref=e135]:
+          - generic [ref=e137]:
+            - paragraph [ref=e138]: Invites & Access
+            - paragraph [ref=e139]: ghrace comunity church
+          - generic [ref=e140]:
+            - generic [ref=e142]:
+              - img [ref=e143]
+              - generic [ref=e147]: Online
+            - generic [ref=e148]: Church Admin
+            - generic [ref=e149]:
+              - button "Switch to English" [pressed] [ref=e150] [cursor=pointer]: EN
+              - button "Switch to Français" [ref=e151] [cursor=pointer]: FR
+            - button "Notifications" [ref=e152] [cursor=pointer]:
+              - img [ref=e153]
+            - button "Profile" [ref=e156] [cursor=pointer]:
+              - generic [ref=e158]: BD
+      - main [ref=e159]:
+        - generic [ref=e162]:
+          - generic [ref=e165]:
+            - generic [ref=e167]: Access Control
+            - heading "Manage access for ghrace comunity church" [level=1] [ref=e168]
+            - paragraph [ref=e169]: Control church roles and page permissions, manage secure invites, and review pending access requests from one workspace.
+          - generic [ref=e170]:
+            - link "Permissions" [ref=e171] [cursor=pointer]:
+              - /url: /c/grace-community-church/access-control?tab=permissions
+            - link "Invites" [ref=e172] [cursor=pointer]:
+              - /url: /c/grace-community-church/access-control?tab=invites
+            - link "Requests" [ref=e173] [cursor=pointer]:
+              - /url: /c/grace-community-church/access-control?tab=pending_access
+          - generic [ref=e174]:
+            - generic [ref=e175]:
+              - generic [ref=e178]:
+                - paragraph [ref=e179]: Church Users
+                - paragraph [ref=e180]: "2"
+                - paragraph [ref=e181]: Users in this church access workspace
+              - generic [ref=e184]:
+                - paragraph [ref=e185]: Active Roles
+                - paragraph [ref=e186]: "1"
+                - paragraph [ref=e187]: Currently active role assignments
+              - generic [ref=e190]:
+                - paragraph [ref=e191]: Active Permissions
+                - paragraph [ref=e192]: "0"
+                - paragraph [ref=e193]: Currently active permission grants
+              - generic [ref=e196]:
+                - paragraph [ref=e197]: Permission Types
+                - paragraph [ref=e198]: "8"
+                - paragraph [ref=e199]: Available permission definitions
+            - generic [ref=e200]:
+              - generic [ref=e201]:
+                - heading "Permissions Workspace" [level=2] [ref=e202]
+                - paragraph [ref=e203]: Search church users, update active roles, and grant or revoke module permissions using real RBAC assignments.
+              - generic [ref=e206]:
+                - generic [ref=e207]:
+                  - generic [ref=e208]:
+                    - paragraph [ref=e209]: Church Users
+                    - paragraph [ref=e210]: Search and select a user to edit role and access permissions.
+                    - searchbox "Search by name, email, role, or status" [ref=e211]
+                  - generic [ref=e213]:
+                    - button "big dev Active bigdev830@gmail.com Church Admin" [ref=e214] [cursor=pointer]:
+                      - generic [ref=e215]:
+                        - paragraph [ref=e216]: big dev
+                        - generic [ref=e217]: Active
+                      - paragraph [ref=e218]: bigdev830@gmail.com
+                      - paragraph [ref=e219]: Church Admin
+                    - button "fizer radaad Active fizer@gmail.com No active role" [ref=e220] [cursor=pointer]:
+                      - generic [ref=e221]:
+                        - paragraph [ref=e222]: fizer radaad
+                        - generic [ref=e223]: Active
+                      - paragraph [ref=e224]: fizer@gmail.com
+                      - paragraph [ref=e225]: No active role
+                - generic [ref=e226]:
+                  - generic [ref=e227]:
+                    - generic [ref=e228]:
+                      - generic [ref=e229]:
+                        - paragraph [ref=e230]: big dev
+                        - paragraph [ref=e231]: bigdev830@gmail.com
+                      - generic [ref=e232]: Active
+                    - generic [ref=e233]:
+                      - generic [ref=e234]:
+                        - paragraph [ref=e235]: Active roles
+                        - paragraph [ref=e236]: "1"
+                      - generic [ref=e237]:
+                        - paragraph [ref=e238]: Active permissions
+                        - paragraph [ref=e239]: "0"
+                      - generic [ref=e240]:
+                        - paragraph [ref=e241]: Last access update
+                        - paragraph [ref=e242]: 4/6/2026, 8:07:39 PM
+                  - generic [ref=e243]:
+                    - generic [ref=e244]:
+                      - generic [ref=e245]:
+                        - heading "Role Assignment" [level=3] [ref=e246]
+                        - paragraph [ref=e247]: Assign a new role or revoke active roles. Multiple active roles are supported by the current RBAC model.
+                      - generic [ref=e248]:
+                        - combobox [ref=e249]:
+                          - option "Church Admin" [selected]
+                          - option "Church Clerk"
+                          - option "Deacon"
+                          - option "Deaconess"
+                          - option "Elder"
+                          - option "Member"
+                          - option "Pastor"
+                          - option "Small Group Leader"
+                          - option "Treasurer"
+                        - button "Assign Role" [ref=e250] [cursor=pointer]
+                    - generic [ref=e252]:
+                      - generic [ref=e253]:
+                        - paragraph [ref=e254]: Church Admin
+                        - paragraph [ref=e255]: Church Admin
+                      - button "Revoke" [ref=e256] [cursor=pointer]
+                  - generic [ref=e257]:
+                    - generic [ref=e258]:
+                      - heading "Module / Area Permissions" [level=3] [ref=e259]
+                      - paragraph [ref=e260]: Grant or revoke real permission definitions persisted in church permission assignments.
+                    - generic [ref=e261]:
+                      - generic [ref=e262]:
+                        - paragraph [ref=e264]: Dashboard
+                        - generic [ref=e266]:
+                          - generic [ref=e267]:
+                            - paragraph [ref=e268]: Dashboard
+                            - paragraph [ref=e269]: dashboard
+                            - paragraph [ref=e270]: Access to the church dashboard
+                          - button "Grant" [ref=e271] [cursor=pointer]
+                      - generic [ref=e272]:
+                        - paragraph [ref=e274]: Members
+                        - generic [ref=e276]:
+                          - generic [ref=e277]:
+                            - paragraph [ref=e278]: Members
+                            - paragraph [ref=e279]: members
+                            - paragraph [ref=e280]: Access to the members module
+                          - button "Grant" [ref=e281] [cursor=pointer]
+                      - generic [ref=e282]:
+                        - paragraph [ref=e284]: Departments
+                        - generic [ref=e286]:
+                          - generic [ref=e287]:
+                            - paragraph [ref=e288]: Departments
+                            - paragraph [ref=e289]: departments
+                            - paragraph [ref=e290]: Access to the departments module
+                          - button "Grant" [ref=e291] [cursor=pointer]
+                      - generic [ref=e292]:
+                        - paragraph [ref=e294]: Events
+                        - generic [ref=e296]:
+                          - generic [ref=e297]:
+                            - paragraph [ref=e298]: Events
+                            - paragraph [ref=e299]: events
+                            - paragraph [ref=e300]: Access to the events module
+                          - button "Grant" [ref=e301] [cursor=pointer]
+                      - generic [ref=e302]:
+                        - paragraph [ref=e304]: Treasury
+                        - generic [ref=e306]:
+                          - generic [ref=e307]:
+                            - paragraph [ref=e308]: Treasury
+                            - paragraph [ref=e309]: treasury
+                            - paragraph [ref=e310]: Access to the treasury module
+                          - button "Grant" [ref=e311] [cursor=pointer]
+                      - generic [ref=e312]:
+                        - paragraph [ref=e314]: Reports
+                        - generic [ref=e316]:
+                          - generic [ref=e317]:
+                            - paragraph [ref=e318]: Reports
+                            - paragraph [ref=e319]: reports
+                            - paragraph [ref=e320]: Access to the reports module
+                          - button "Grant" [ref=e321] [cursor=pointer]
+                      - generic [ref=e322]:
+                        - paragraph [ref=e324]: Access Control
+                        - generic [ref=e326]:
+                          - generic [ref=e327]:
+                            - paragraph [ref=e328]: Access Control
+                            - paragraph [ref=e329]: access_control
+                            - paragraph [ref=e330]: Access to the access control module
+                          - button "Grant" [ref=e331] [cursor=pointer]
+                      - generic [ref=e332]:
+                        - paragraph [ref=e334]: Settings
+                        - generic [ref=e336]:
+                          - generic [ref=e337]:
+                            - paragraph [ref=e338]: Settings
+                            - paragraph [ref=e339]: settings
+                            - paragraph [ref=e340]: Access to church settings and setup
+                          - button "Grant" [ref=e341] [cursor=pointer]
+                    - paragraph [ref=e342]: Changes are church-scoped and written through server-side RBAC actions with access-control audit logging.
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e348] [cursor=pointer]:
+    - img [ref=e349]
+  - alert [ref=e352]

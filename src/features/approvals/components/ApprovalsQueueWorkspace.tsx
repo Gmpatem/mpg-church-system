@@ -5,10 +5,13 @@ import { useActionState, useEffect, useMemo, useState } from "react";
 import {
   WorkspaceControlRail,
   WorkspaceEmptyState,
-  WorkspaceHero,
   WorkspaceSectionCard,
-  WorkspaceStatCard,
 } from "@/components/workspace";
+import {
+  ChurchContentGrid,
+  ChurchSummaryStrip,
+  ChurchWorkspaceHeader,
+} from "@/components/church-workspace";
 import {
   getApprovalReviewLabel,
   getApprovalStageLabel,
@@ -75,7 +78,7 @@ function badgeClass(status: string) {
   if (status === "rejected") return "border-rose-200 bg-rose-50 text-rose-800";
   if (status === "changes_requested") return "border-amber-200 bg-amber-50 text-amber-800";
   if (status === "cancelled") return "border-zinc-200 bg-zinc-100 text-zinc-800";
-  return "border-blue-200 bg-blue-50 text-blue-800";
+  return "border-primary/20 bg-primary/10 text-primary";
 }
 
 function isReviewableEntityType(entityType: string) {
@@ -108,8 +111,8 @@ function buildFilterHref(
 
 function filterChipClass(active: boolean) {
   return active
-    ? "rounded-full border border-blue-200 bg-blue-50 px-3 py-1.5 text-sm font-medium text-blue-700"
-    : "rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 hover:bg-slate-50";
+    ? "rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
+    : "rounded-full border border-border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground hover:bg-muted hover:text-foreground";
 }
 
 export function ApprovalsQueueWorkspace({ churchSlug, data }: ApprovalsQueueWorkspaceProps) {
@@ -150,21 +153,22 @@ export function ApprovalsQueueWorkspace({ churchSlug, data }: ApprovalsQueueWork
 
   return (
     <div className="space-y-6">
-      <WorkspaceHero
-        size="compact"
+      <ChurchWorkspaceHeader
         eyebrow="Approvals Inbox"
         title="Unified Governance Queue"
         description="Review pending and completed approvals across events, announcements, access, and leadership."
       />
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
-        <WorkspaceStatCard label="Total" value={data.summary.total ?? 0} />
-        <WorkspaceStatCard label="Pending" value={data.summary.pending ?? 0} />
-        <WorkspaceStatCard label="Approved" value={data.summary.approved ?? 0} />
-        <WorkspaceStatCard label="Rejected" value={data.summary.rejected ?? 0} />
-        <WorkspaceStatCard label="Changes Requested" value={data.summary.changes_requested ?? 0} />
-        <WorkspaceStatCard label="Cancelled" value={data.summary.cancelled ?? 0} />
-      </div>
+      <ChurchSummaryStrip
+        items={[
+          { label: "Total", value: data.summary.total ?? 0 },
+          { label: "Pending", value: data.summary.pending ?? 0 },
+          { label: "Approved", value: data.summary.approved ?? 0 },
+          { label: "Rejected", value: data.summary.rejected ?? 0 },
+          { label: "Changes Requested", value: data.summary.changes_requested ?? 0 },
+          { label: "Cancelled", value: data.summary.cancelled ?? 0, muted: true },
+        ]}
+      />
 
       <WorkspaceControlRail
         title="Queue Filters"
@@ -210,7 +214,7 @@ export function ApprovalsQueueWorkspace({ churchSlug, data }: ApprovalsQueueWork
         </div>
       </WorkspaceControlRail>
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.9fr)_minmax(360px,1fr)]">
+      <ChurchContentGrid>
         <WorkspaceSectionCard
           title="Approvals Queue"
           description="Scan, select, and open approval sources from one table-first work surface."
@@ -238,7 +242,7 @@ export function ApprovalsQueueWorkspace({ churchSlug, data }: ApprovalsQueueWork
                 </thead>
                 <tbody className="divide-y divide-slate-200 bg-white">
                   {data.items.map((item) => (
-                    <tr key={item.id} className={item.id === selectedId ? "bg-slate-50" : ""}>
+                    <tr key={item.id} className={item.id === selectedId ? "bg-primary/5" : ""}>
                       <td className="px-4 py-3.5">
                         <button type="button" onClick={() => setSelectedId(item.id)} className="text-left">
                           <p className="text-sm font-medium text-slate-900">{item.displayTitle}</p>
@@ -323,7 +327,7 @@ export function ApprovalsQueueWorkspace({ churchSlug, data }: ApprovalsQueueWork
                       value={reviewNote}
                       onChange={(event) => setReviewNote(event.target.value)}
                       placeholder="Add context for this approval decision."
-                      className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                      className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
                     />
                   </div>
 
@@ -376,20 +380,20 @@ export function ApprovalsQueueWorkspace({ churchSlug, data }: ApprovalsQueueWork
               ) : null}
 
               <div className="flex flex-wrap gap-2">
-                <Link href={selectedItem.href} className="rounded-md bg-slate-900 px-3 py-2 text-sm font-medium text-white hover:bg-slate-800">
+                <Link href={selectedItem.href} className="rounded-md bg-primary px-3 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
                   {getApprovalReviewLabel(selectedItem.moduleKey)}
                 </Link>
-                <Link href={selectedItem.href} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                <Link href={selectedItem.href} className="rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-muted">
                   Open Source
                 </Link>
-                <Link href={`/c/${churchSlug}/office`} className="rounded-md border border-slate-300 bg-white px-3 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50">
+                <Link href={`/c/${churchSlug}/office`} className="rounded-md border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-muted">
                   Office
                 </Link>
               </div>
             </div>
           )}
         </WorkspaceSectionCard>
-      </div>
+      </ChurchContentGrid>
     </div>
   );
 }

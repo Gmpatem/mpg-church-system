@@ -77,7 +77,6 @@ function getModuleSubItems({
   if (pathname.startsWith(`${base}/events`) || pathname.startsWith(`${base}/calendar`)) {
     return [
       { label: "All Events", href: `${base}/events`, exact: true },
-      { label: t.navigation.calendar, href: `${base}/calendar` },
       { label: "Add Event", href: `${base}/events?tab=create_event` },
       ...(showAccessControl ? [{ label: t.navigation.approvals, href: `${base}/approvals` }] : []),
     ];

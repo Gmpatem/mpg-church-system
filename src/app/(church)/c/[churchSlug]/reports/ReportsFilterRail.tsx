@@ -39,7 +39,7 @@ export function ReportsFilterRail({
   dateTo?: string;
 }) {
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-slate-200 bg-white p-3 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 rounded-xl border border-border bg-background p-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
       {/* Tabs */}
       <div className="flex gap-1 overflow-x-auto pb-1 sm:pb-0">
         {TABS.map((tab) => {
@@ -50,8 +50,8 @@ export function ReportsFilterRail({
               href={buildTabHref({ churchSlug, tab: tab.key, dateFrom, dateTo })}
               className={
                 isActive
-                  ? "shrink-0 rounded-lg bg-slate-950 px-3 py-1.5 text-sm font-medium text-white"
-                  : "shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                  ? "shrink-0 rounded-lg border border-primary/20 bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary"
+                  : "shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
               }
             >
               {tab.label}
@@ -74,32 +74,32 @@ export function ReportsFilterRail({
             name="dateFrom"
             type="date"
             defaultValue={dateFrom ?? ""}
-            className="w-[130px] rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+            className="w-[130px] rounded-lg border border-input bg-background px-2.5 py-1.5 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
           />
-          <span className="text-sm text-slate-400">→</span>
+          <span className="text-sm text-muted-foreground">to</span>
           <input
             id="dateTo"
             name="dateTo"
             type="date"
             defaultValue={dateTo ?? ""}
-            className="w-[130px] rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm outline-none transition focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+            className="w-[130px] rounded-lg border border-input bg-background px-2.5 py-1.5 text-sm outline-none transition focus:border-ring focus:ring-2 focus:ring-ring/20"
           />
         </div>
 
         <div className="flex items-center gap-1.5">
           <button
             type="submit"
-            className="inline-flex items-center justify-center rounded-lg bg-slate-950 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-slate-800"
+            className="inline-flex items-center justify-center rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground transition hover:bg-primary/90"
           >
             Apply
           </button>
 
-          <a
+          <Link
             href={`/c/${churchSlug}/reports?tab=${activeTab}`}
-            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+            className="inline-flex items-center justify-center rounded-lg border border-border bg-background px-3 py-1.5 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
           >
             Reset
-          </a>
+          </Link>
         </div>
       </form>
     </div>

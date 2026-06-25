@@ -1,0 +1,48 @@
+[     714ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[     794ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=o1-qwFYn0Fr1w1F-uQTaa' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[    1802ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=o1-qwFYn0Fr1w1F-uQTaa' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[    2814ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=o1-qwFYn0Fr1w1F-uQTaa' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[    3825ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=o1-qwFYn0Fr1w1F-uQTaa' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[    4828ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=o1-qwFYn0Fr1w1F-uQTaa' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[    5847ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=o1-qwFYn0Fr1w1F-uQTaa' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[   10879ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=o1-qwFYn0Fr1w1F-uQTaa' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[   15902ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=o1-qwFYn0Fr1w1F-uQTaa' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[   20936ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=o1-qwFYn0Fr1w1F-uQTaa' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[   25964ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=o1-qwFYn0Fr1w1F-uQTaa' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[   31050ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=o1-qwFYn0Fr1w1F-uQTaa' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[   36147ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=o1-qwFYn0Fr1w1F-uQTaa' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[   41251ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=o1-qwFYn0Fr1w1F-uQTaa' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[   41449ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[   42015ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=7yaFuOLyWHCYdT2w0SarQ' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[   43448ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=7yaFuOLyWHCYdT2w0SarQ' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[   45415ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=7yaFuOLyWHCYdT2w0SarQ' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[   50362ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=7yaFuOLyWHCYdT2w0SarQ' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[   55652ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=7yaFuOLyWHCYdT2w0SarQ' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[   58565ms] [ERROR] WebSocket connection to 'ws://127.0.0.1:3000/_next/webpack-hmr?id=7yaFuOLyWHCYdT2w0SarQ' failed: Error during WebSocket handshake: net::ERR_INVALID_HTTP_RESPONSE @ http://127.0.0.1:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[   67262ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://127.0.0.1:3000/dashboard:0
+[   67409ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://127.0.0.1:3000/_next/static/chunks/node_modules_react-dom_0bruynb._.js:15305
+[   67483ms] Error: Failed to find Server Action. This request might be from an older or newer deployment.
+Read more: https://nextjs.org/docs/messages/failed-to-find-server-action
+    at <unknown> (file://E:\mpg-church-system\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.dev.js:63:2370)
+    at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+    at async handleAction (file://E:\mpg-church-system\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.dev.js:62:25378)
+    at async renderToHTMLOrFlightImpl (file://E:\mpg-church-system\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.dev.js:69:55630)
+    at async doRender (file://E:\mpg-church-system\.next\dev\server\chunks\ssr\node_modules_next_dist_0c.4b~y._.js:1366:28)
+    at async AppPageRouteModule.handleResponse (file://E:\mpg-church-system\node_modules\next\dist\compiled\next-server\app-page-turbo.runtime.dev.js:71:63567)
+    at async handleResponse (file://E:\mpg-church-system\.next\dev\server\chunks\ssr\node_modules_next_dist_0c.4b~y._.js:1641:32)
+    at async Module.handler (file://E:\mpg-church-system\.next\dev\server\chunks\ssr\node_modules_next_dist_0c.4b~y._.js:2044:20)
+    at async DevServer.renderToResponseWithComponentsImpl (file://E:\mpg-church-system\node_modules\next\dist\server\base-server.js:1454:9)
+    at async DevServer.renderPageComponent (file://E:\mpg-church-system\node_modules\next\dist\server\base-server.js:1506:24)
+    at async DevServer.renderToResponseImpl (file://E:\mpg-church-system\node_modules\next\dist\server\base-server.js:1556:32)
+    at async DevServer.pipeImpl (file://E:\mpg-church-system\node_modules\next\dist\server\base-server.js:1043:25)
+    at async NextNodeServer.handleCatchallRenderRequest (file://E:\mpg-church-system\node_modules\next\dist\server\next-server.js:338:17)
+    at async DevServer.handleRequestImpl (file://E:\mpg-church-system\node_modules\next\dist\server\base-server.js:934:17)
+    at async (file://E:\mpg-church-system\node_modules\next\dist\server\dev\next-dev-server.js:394:20)
+    at async Span.traceAsyncFn (file://E:\mpg-church-system\node_modules\next\dist\trace\trace.js:164:20)
+    at async DevServer.handleRequest (file://E:\mpg-church-system\node_modules\next\dist\server\dev\next-dev-server.js:390:24)
+    at async invokeRender (file://E:\mpg-church-system\node_modules\next\dist\server\lib\router-server.js:266:21)
+    at async handleRequest (file://E:\mpg-church-system\node_modules\next\dist\server\lib\router-server.js:465:24)
+    at async requestHandlerImpl (file://E:\mpg-church-system\node_modules\next\dist\server\lib\router-server.js:514:13)
+    at async Server.requestListener (file://E:\mpg-church-system\node_modules\next\dist\server\lib\start-server.js:225:13)
+[   67527ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://127.0.0.1:3000/favicon.ico:0
+[   67556ms] [ERROR] Failed to load resource: the server responded with a status of 403 (Forbidden) @ http://127.0.0.1:3000/__nextjs_original-stack-frames:0

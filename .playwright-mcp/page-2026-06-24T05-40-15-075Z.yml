@@ -1,0 +1,160 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - status [ref=e3]
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - link "Church Workspace ghrace comunity church" [ref=e7] [cursor=pointer]:
+            - /url: /c/grace-community-church
+            - img [ref=e9]
+            - generic [ref=e13]:
+              - generic [ref=e14]: Church Workspace
+              - generic [ref=e15]: ghrace comunity church
+          - generic [ref=e16]: Church Admin
+        - navigation "Church workspace" [ref=e17]:
+          - generic [ref=e18]:
+            - generic [ref=e19]:
+              - paragraph [ref=e20]: Overview
+              - link "Dashboard" [ref=e22] [cursor=pointer]:
+                - /url: /c/grace-community-church
+                - img [ref=e23]
+                - generic [ref=e28]: Dashboard
+            - generic [ref=e29]:
+              - paragraph [ref=e30]: People
+              - generic [ref=e31]:
+                - link "Members" [ref=e32] [cursor=pointer]:
+                  - /url: /c/grace-community-church/members
+                  - img [ref=e33]
+                  - generic [ref=e38]: Members
+                - link "Households" [ref=e39] [cursor=pointer]:
+                  - /url: /c/grace-community-church/households
+                  - img [ref=e40]
+                  - generic [ref=e43]: Households
+            - generic [ref=e44]:
+              - paragraph [ref=e45]: Ministries
+              - generic [ref=e46]:
+                - link "Departments" [ref=e47] [cursor=pointer]:
+                  - /url: /c/grace-community-church/departments
+                  - img [ref=e48]
+                  - generic [ref=e52]: Departments
+                - link "Leadership" [ref=e53] [cursor=pointer]:
+                  - /url: /c/grace-community-church/leadership
+                  - img [ref=e54]
+                  - generic [ref=e66]: Leadership
+                - link "Small Groups" [ref=e67] [cursor=pointer]:
+                  - /url: /c/grace-community-church/small-groups
+                  - img [ref=e68]
+                  - generic [ref=e72]: Small Groups
+                - link "Events" [ref=e73] [cursor=pointer]:
+                  - /url: /c/grace-community-church/events
+                  - img [ref=e74]
+                  - generic [ref=e76]: Events
+            - generic [ref=e77]:
+              - paragraph [ref=e78]: Treasury
+              - link "Treasury" [ref=e80] [cursor=pointer]:
+                - /url: /c/grace-community-church/treasury
+                - img [ref=e81]
+                - generic [ref=e84]: Treasury
+            - generic [ref=e85]:
+              - paragraph [ref=e86]: Operations
+              - generic [ref=e87]:
+                - link "Church Office" [ref=e88] [cursor=pointer]:
+                  - /url: /c/grace-community-church/office
+                  - img [ref=e89]
+                  - generic [ref=e93]: Church Office
+                - link "Announcements" [ref=e94] [cursor=pointer]:
+                  - /url: /c/grace-community-church/announcements
+                  - img [ref=e95]
+                  - generic [ref=e98]: Announcements
+                - link "Approvals" [ref=e99] [cursor=pointer]:
+                  - /url: /c/grace-community-church/approvals
+                  - img [ref=e100]
+                  - generic [ref=e104]: Approvals
+                - link "Reports" [ref=e105] [cursor=pointer]:
+                  - /url: /c/grace-community-church/reports
+                  - img [ref=e106]
+                  - generic [ref=e108]: Reports
+            - generic [ref=e109]:
+              - paragraph [ref=e110]: Administration
+              - generic [ref=e111]:
+                - link "Invites & Access" [ref=e112] [cursor=pointer]:
+                  - /url: /c/grace-community-church/access-control
+                  - img [ref=e113]
+                  - generic [ref=e115]: Invites & Access
+                - link "Settings" [ref=e116] [cursor=pointer]:
+                  - /url: /c/grace-community-church/settings
+                  - img [ref=e117]
+                  - generic [ref=e120]: Settings
+        - generic [ref=e122]:
+          - generic [ref=e123]:
+            - generic [ref=e125]: BD
+            - generic [ref=e126]:
+              - paragraph [ref=e127]: big dev
+              - paragraph [ref=e128]: bigdev830@gmail.com
+          - button "Logout" [ref=e129] [cursor=pointer]:
+            - img [ref=e130]
+            - text: Logout
+    - generic [ref=e133]:
+      - banner [ref=e134]:
+        - generic [ref=e135]:
+          - generic [ref=e137]:
+            - paragraph [ref=e138]: Announcements
+            - paragraph [ref=e139]: ghrace comunity church
+          - generic [ref=e140]:
+            - generic [ref=e142]:
+              - img [ref=e143]
+              - generic [ref=e147]: Online
+            - generic [ref=e148]: Church Admin
+            - generic [ref=e149]:
+              - button "Switch to English" [pressed] [ref=e150] [cursor=pointer]: EN
+              - button "Switch to Français" [ref=e151] [cursor=pointer]: FR
+            - button "Notifications" [ref=e152] [cursor=pointer]:
+              - img [ref=e153]
+            - button "Profile" [ref=e156] [cursor=pointer]:
+              - generic [ref=e158]: BD
+      - main [ref=e159]:
+        - generic [ref=e161]:
+          - generic [ref=e164]:
+            - generic [ref=e166]: Announcements
+            - heading "Announcements" [level=1] [ref=e167]
+            - paragraph [ref=e168]: Publish church-wide notices and keep members informed.
+          - generic [ref=e169]:
+            - generic [ref=e170]:
+              - heading "Create Announcement" [level=2] [ref=e171]
+              - paragraph [ref=e172]: Save as draft first, then submit for approval when ready.
+            - generic [ref=e174]:
+              - generic [ref=e175]:
+                - generic [ref=e176]: Title
+                - textbox "Title" [ref=e177]
+              - generic [ref=e178]:
+                - generic [ref=e179]: Audience
+                - combobox "Audience" [ref=e180]:
+                  - option "Church-wide" [selected]
+                  - option "Leaders only"
+                  - option "Members only"
+                  - option "Department members"
+              - generic [ref=e181]:
+                - generic [ref=e182]: Related Department
+                - combobox "Related Department" [ref=e183]:
+                  - option "No specific department" [selected]
+                  - option "media department"
+              - generic [ref=e184]:
+                - generic [ref=e185]: Expires At
+                - textbox "Expires At" [ref=e186]
+              - generic [ref=e187]:
+                - checkbox "Requires acknowledgement" [ref=e188]
+                - text: Requires acknowledgement
+              - generic [ref=e189]:
+                - generic [ref=e190]: Announcement Body
+                - textbox "Announcement Body" [ref=e191]
+              - button "Save Draft" [ref=e193] [cursor=pointer]
+          - generic [ref=e194]:
+            - generic [ref=e195]:
+              - heading "Announcements" [level=2] [ref=e196]
+              - paragraph [ref=e197]: Recent church and department notices.
+            - paragraph [ref=e199]: No announcements found yet.
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e205] [cursor=pointer]:
+    - img [ref=e206]
+  - alert [ref=e209]

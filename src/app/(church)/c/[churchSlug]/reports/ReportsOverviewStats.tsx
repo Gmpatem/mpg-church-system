@@ -1,5 +1,5 @@
 import { getReportsOverviewStrip } from "@/features/reports/queries";
-import { WorkspaceStatCard } from "@/components/workspace";
+import { ChurchSummaryStrip } from "@/components/church-workspace";
 
 interface ReportsOverviewStatsProps {
   churchSlug: string;
@@ -29,16 +29,12 @@ export async function ReportsOverviewStats({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-      {stats.map((stat) => (
-        <WorkspaceStatCard
-          key={stat.label}
-          label={stat.label}
-          value={stat.value}
-          hint={stat.hint}
-          valueClassName="text-xl sm:text-2xl"
-        />
-      ))}
-    </div>
+    <ChurchSummaryStrip
+      items={stats.map((stat) => ({
+        label: stat.label,
+        value: stat.value,
+        hint: stat.hint,
+      }))}
+    />
   );
 }

@@ -27,7 +27,7 @@ export function ChurchContentGrid({
   className?: string;
 }) {
   return (
-    <div className={cn("grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_340px]", className)}>
+    <div className={cn("church-content-grid grid min-w-0 gap-5", className)}>
       {children}
     </div>
   );
@@ -43,7 +43,7 @@ export function ChurchRightRail({
   return (
     <aside
       className={cn(
-        "min-w-0 rounded-xl border border-border bg-background shadow-sm",
+        "church-right-rail min-w-0 rounded-xl border border-border bg-background shadow-sm",
         className
       )}
     >

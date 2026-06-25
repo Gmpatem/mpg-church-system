@@ -1,32 +1,36 @@
-import Link from "next/link";
+import { notFound } from "next/navigation";
+import { getPublicRegistrationPageData } from "@/features/member-registration/public-queries";
+import { RegistrationWizard } from "./components/RegistrationWizard";
+import { RegistrationUnavailable } from "./components/RegistrationUnavailable";
 
 type PageProps = {
-  params: Promise<{
-    churchSlug: string;
-  }>;
+  params: Promise<{ churchSlug: string }>;
+  searchParams: Promise<{ k?: string | string[] }>;
 };
 
+function pickSingle(value: string | string[] | undefined): string | undefined {
+  if (Array.isArray(value)) return value[0];
+  return value;
+}
+
 export default async function MemberJoinPage(props: PageProps) {
-  await props.params;
+  const { churchSlug } = await props.params;
+  const searchParams = await props.searchParams;
+  const key = pickSingle(searchParams.k);
+
+  const data = await getPublicRegistrationPageData(churchSlug);
+
+  if (!data.church) {
+    notFound();
+  }
+
+  if (!data.settings.isEnabled || !key) {
+    return <RegistrationUnavailable church={data.church} hasKey={!!key} />;
+  }
 
   return (
-    <div className="mx-auto flex min-h-[70vh] max-w-3xl items-center px-4 py-10 sm:px-6">
-      <div className="w-full rounded-3xl border p-8">
-        <p className="text-sm font-medium text-muted-foreground">Legacy join route</p>
-        <h1 className="mt-2 text-2xl font-semibold">This join link is no longer active</h1>
-        <p className="mt-3 text-sm text-muted-foreground">
-          This church now uses secure invite links for onboarding. Ask your church admin to send you a fresh secure invite link.
-        </p>
-
-        <div className="mt-6 flex flex-wrap gap-3">
-          <Link
-            href="/login"
-            className="inline-flex h-11 items-center justify-center rounded-xl border px-4 text-sm font-medium transition hover:bg-accent"
-          >
-            Go to login
-          </Link>
-        </div>
-      </div>
-    </div>
+    <main className="min-h-screen bg-[#faf8f3]">
+      <RegistrationWizard church={data.church} settings={data.settings} departments={data.departments} registrationKey={key} />
+    </main>
   );
 }

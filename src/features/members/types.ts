@@ -1,3 +1,5 @@
+import type { ChurchGender } from "@/lib/domain/church-gender";
+
 export interface MemberListItem {
   id: string;
   church_id: string;
@@ -32,7 +34,7 @@ export interface CreateMemberInput {
   displayName?: string | null;
   email?: string | null;
   phone?: string | null;
-  gender?: "male" | "female" | "other" | null;
+  gender?: ChurchGender | null;
   membershipStatus?: "active" | "inactive" | "visitor" | "transferred";
   membershipType?: "regular" | "adherent" | "child" | "youth" | "senior" | null;
   memberCode?: string | null;

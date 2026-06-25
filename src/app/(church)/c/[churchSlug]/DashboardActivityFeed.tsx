@@ -71,7 +71,7 @@ export async function DashboardActivityFeed({ churchId, churchSlug }: DashboardA
       .limit(2),
     supabase
       .from("treasury_inflows")
-      .select("id, description, amount, created_at")
+      .select("id, note, amount, created_at")
       .eq("church_id", churchId)
       .order("created_at", { ascending: false })
       .limit(2),
@@ -105,7 +105,7 @@ export async function DashboardActivityFeed({ churchId, churchSlug }: DashboardA
       id: `treasury-${t.id}`,
       type: "treasury" as const,
       title: "Treasury entry recorded",
-      description: t.description || "Unnamed entry",
+      description: t.note || "No note recorded",
       timestamp: t.created_at,
       link: `/c/${churchSlug}/treasury`,
     })) ?? []),

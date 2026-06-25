@@ -6,6 +6,7 @@ import { completeRichInviteOnboardingAction } from "@/features/member-invite/act
 import type { RichSecureInvitePageData } from "@/features/member-invite/types";
 import { StepIndicator } from "@/components/ui/StepIndicator";
 import { FormSection } from "@/components/ui/FormSection";
+import { CHURCH_GENDER_OPTIONS } from "@/lib/domain/church-gender";
 
 type RichInviteOnboardingFormProps = {
   data: RichSecureInvitePageData;
@@ -123,9 +124,7 @@ export function RichInviteOnboardingForm({
                 name="gender"
                 options={[
                   { value: "", label: "Select gender" },
-                  { value: "male", label: "Male" },
-                  { value: "female", label: "Female" },
-                  { value: "other", label: "Other" },
+                  ...CHURCH_GENDER_OPTIONS,
                 ]}
               />
               <Field label="Address" name="address" />

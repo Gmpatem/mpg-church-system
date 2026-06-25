@@ -53,6 +53,41 @@ function revalidateEventPaths(churchSlug: string) {
   revalidatePath(`/c/${churchSlug}/calendar`);
 }
 
+function getEventActionErrorMessage(error: unknown) {
+  const message =
+    typeof error === "object" && error !== null && "message" in error
+      ? String((error as { message?: unknown }).message ?? "")
+      : String(error ?? "");
+  const normalized = message.toLowerCase();
+
+  if (
+    normalized.includes("row-level") ||
+    normalized.includes("policy") ||
+    normalized.includes("permission") ||
+    normalized.includes("not authorized")
+  ) {
+    return "You do not have permission to complete this event action.";
+  }
+
+  if (
+    normalized.includes("fetch failed") ||
+    normalized.includes("network") ||
+    normalized.includes("connection")
+  ) {
+    return "The event service could not be reached. Please refresh and try again.";
+  }
+
+  return "We could not complete the event action. Please review the form and try again.";
+}
+
+function getZodActionState(error: z.ZodError) {
+  return {
+    ok: false,
+    error: error.issues[0]?.message ?? "Invalid event data.",
+    fieldErrors: error.flatten().fieldErrors,
+  } satisfies ActionState;
+}
+
 async function ensureDepartmentsBelongToChurch(
   supabase: any,
   churchId: string,
@@ -71,6 +106,36 @@ async function ensureDepartmentsBelongToChurch(
   if (error) throw new Error(error.message);
 
   return (data ?? []).length === uniqueDepartmentIds.length;
+}
+
+async function getExistingEventDepartmentIds(
+  supabase: any,
+  churchId: string,
+  eventId: string
+) {
+  const [{ data: eventRow, error: eventError }, { data: linkRows, error: linksError }] = await Promise.all([
+    supabase
+      .from("church_events")
+      .select("department_id")
+      .eq("church_id", churchId)
+      .eq("id", eventId)
+      .maybeSingle(),
+    supabase
+      .from("church_event_departments")
+      .select("department_id")
+      .eq("church_id", churchId)
+      .eq("event_id", eventId),
+  ]);
+
+  if (eventError) throw new Error(eventError.message);
+  if (linksError) throw new Error(linksError.message);
+
+  return Array.from(
+    new Set([
+      eventRow?.department_id,
+      ...((linkRows ?? []) as Array<{ department_id: string }>).map((row) => row.department_id),
+    ].filter((value): value is string => typeof value === "string" && value.length > 0))
+  );
 }
 
 async function syncEventDepartments(
@@ -140,7 +205,7 @@ export async function createEventAction(
   });
 
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid event data." };
+    return getZodActionState(parsed.error);
   }
 
   const data = parsed.data;
@@ -169,6 +234,7 @@ export async function createEventAction(
   const compatibilityDepartmentId = data.department_ids[0] ?? null;
   const totalToCreate = data.is_recurring ? data.recurring_count : 1;
   const submittedAt = new Date().toISOString();
+  const createdEventIds: string[] = [];
 
   for (let i = 0; i < totalToCreate; i += 1) {
     const eventStart = addInterval(baseStart, data.recurring_frequency, i);
@@ -196,20 +262,19 @@ export async function createEventAction(
       .single();
 
     if (error) {
-      const message = error.message?.toLowerCase?.() || "";
-      if (message.includes("row-level security") || message.includes("policy")) {
-        return { 
-          ok: false, 
-          error: "Event creation blocked by security policy. Ensure you have event manager role." 
-        };
-      }
-      return { ok: false, error: error.message };
+      return { ok: false, error: getEventActionErrorMessage(error), createdEventIds };
     }
+
+    createdEventIds.push(insertedEvent.id);
 
     try {
       await syncEventDepartments(supabase, ctx.churchId, insertedEvent.id, data.department_ids);
-    } catch (syncError: any) {
-      return { ok: false, error: syncError.message ?? "Event created but department sync failed." };
+    } catch {
+      return {
+        ok: false,
+        error: "Event was saved, but department links could not be updated.",
+        createdEventIds,
+      };
     }
 
     try {
@@ -232,12 +297,11 @@ export async function createEventAction(
         },
         priority: "normal",
       });
-    } catch (approvalError: any) {
+    } catch {
       return {
         ok: false,
-        error:
-          approvalError?.message ??
-          "Event was saved, but approval workflow initialization failed.",
+        error: "Event was saved, but approval workflow initialization failed.",
+        createdEventIds,
       };
     }
   }
@@ -248,10 +312,17 @@ export async function createEventAction(
     return {
       ok: true,
       message: `${totalToCreate} recurring events created and submitted for approval.`,
+      createdEventIds,
+      workflowState: "pending_approval",
     };
   }
 
-  return { ok: true, message: "Event created and submitted for approval." };
+  return {
+    ok: true,
+    message: "Event created and submitted for approval.",
+    createdEventIds,
+    workflowState: "pending_approval",
+  };
 }
 
 export async function updateEventAction(
@@ -265,7 +336,11 @@ export async function updateEventAction(
 
   if (!eventId) return { ok: false, error: "Event ID is required." };
 
-  const departmentIds = getStringArray(formData, "department_ids");
+  const departmentIdsProvided = getBoolean(formData, "department_ids_provided");
+  const submittedDepartmentIds = getStringArray(formData, "department_ids");
+  const departmentIds = departmentIdsProvided
+    ? submittedDepartmentIds
+    : await getExistingEventDepartmentIds(supabase, ctx.churchId, eventId);
 
   const parsed = eventSchema.safeParse({
     title: getString(formData, "title"),
@@ -283,12 +358,18 @@ export async function updateEventAction(
   });
 
   if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid event data." };
+    return getZodActionState(parsed.error);
   }
 
   const data = parsed.data;
+  const startTime = new Date(data.start_datetime).getTime();
+  const endTime = new Date(data.end_datetime).getTime();
 
-  if (new Date(data.end_datetime).getTime() < new Date(data.start_datetime).getTime()) {
+  if (Number.isNaN(startTime) || Number.isNaN(endTime)) {
+    return { ok: false, error: "Invalid date/time values." };
+  }
+
+  if (endTime < startTime) {
     return { ok: false, error: "End date/time cannot be before start date/time." };
   }
 
@@ -321,24 +402,21 @@ export async function updateEventAction(
     .eq("id", eventId);
 
   if (error) {
-      const message = error.message?.toLowerCase?.() || "";
-      if (message.includes("row-level security") || message.includes("policy")) {
-        return { 
-          ok: false, 
-          error: "Event creation blocked by security policy. Ensure you have event manager role." 
-        };
-      }
-      return { ok: false, error: error.message };
-    }
+    return { ok: false, error: getEventActionErrorMessage(error) };
+  }
 
   try {
     await syncEventDepartments(supabase, ctx.churchId, eventId, data.department_ids);
-  } catch (syncError: any) {
-    return { ok: false, error: syncError.message ?? "Event updated but department sync failed." };
+  } catch {
+    return {
+      ok: false,
+      error: "Event was updated, but department links could not be updated.",
+      updatedEventId: eventId,
+    };
   }
 
   revalidateEventPaths(churchSlug);
-  return { ok: true, message: "Event updated successfully." };
+  return { ok: true, message: "Event updated successfully.", updatedEventId: eventId };
 }
 
 export async function deleteEventAction(
@@ -359,18 +437,11 @@ export async function deleteEventAction(
     .eq("id", eventId);
 
   if (error) {
-      const message = error.message?.toLowerCase?.() || "";
-      if (message.includes("row-level security") || message.includes("policy")) {
-        return { 
-          ok: false, 
-          error: "Event creation blocked by security policy. Ensure you have event manager role." 
-        };
-      }
-      return { ok: false, error: error.message };
-    }
+    return { ok: false, error: getEventActionErrorMessage(error) };
+  }
 
   revalidateEventPaths(churchSlug);
-  return { ok: true, message: "Event deleted successfully." };
+  return { ok: true, message: "Event deleted successfully.", deletedEventId: eventId };
 }
 
 export async function updateEventStatusAction(
@@ -395,16 +466,9 @@ export async function updateEventStatusAction(
     .eq("id", eventId);
 
   if (error) {
-      const message = error.message?.toLowerCase?.() || "";
-      if (message.includes("row-level security") || message.includes("policy")) {
-        return { 
-          ok: false, 
-          error: "Event creation blocked by security policy. Ensure you have event manager role." 
-        };
-      }
-      return { ok: false, error: error.message };
-    }
+    return { ok: false, error: getEventActionErrorMessage(error) };
+  }
 
   revalidateEventPaths(churchSlug);
-  return { ok: true, message: "Event status updated successfully." };
+  return { ok: true, message: "Event status updated successfully.", updatedEventId: eventId };
 }

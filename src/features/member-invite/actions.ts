@@ -4,6 +4,8 @@ import { randomBytes } from "crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { normalizeChurchGender } from "@/lib/domain/church-gender";
+import { normalizeDateOnly } from "@/lib/domain/date-only";
 import {
   canCurrentUserManageMemberInvites,
   getInviteDepartmentOptions,
@@ -663,13 +665,13 @@ export async function completeRichInviteOnboardingAction(
   const password = getString(formData, "password");
   const confirmPassword = getString(formData, "confirmPassword");
 
-  const dateOfBirth = getNullableString(formData, "dateOfBirth");
-  const gender = getNullableString(formData, "gender");
+  let dateOfBirth: string | null = null;
+  let gender: string | null = null;
   const address = getNullableString(formData, "address");
   const city = getNullableString(formData, "city");
   const country = getNullableString(formData, "country");
   const maritalStatus = getNullableString(formData, "maritalStatus");
-  const baptismDate = getNullableString(formData, "baptismDate");
+  let baptismDate: string | null = null;
   const membershipType = getNullableString(formData, "membershipType");
 
   const selectedRoleCode = getString(formData, "selectedRoleCode").toLowerCase();
@@ -691,6 +693,17 @@ export async function completeRichInviteOnboardingAction(
 
   if (password !== confirmPassword) {
     return { ok: false, error: "Passwords do not match." };
+  }
+
+  try {
+    dateOfBirth = normalizeDateOnly(getNullableString(formData, "dateOfBirth"), "Date of birth");
+    baptismDate = normalizeDateOnly(getNullableString(formData, "baptismDate"), "Baptism date");
+    gender = normalizeChurchGender(getNullableString(formData, "gender"));
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Please check the profile fields.",
+    };
   }
 
   if (!accessAcknowledged) {
@@ -972,5 +985,4 @@ export async function completeMemberInviteOnboardingAction(
 ): Promise<SecureInviteClaimResult | null> {
   return completeRichInviteOnboardingAction(prevState, formData);
 }
-
 

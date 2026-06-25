@@ -3,6 +3,7 @@ export * from "./feedback";
 export * from "./motion";
 export * from "./patterns/ChurchPageFrame";
 export * from "./patterns/ChurchPanels";
+export * from "./patterns/ChurchWorkspacePrimitives";
 export * from "./primitives/ChurchAvatar";
 export * from "./primitives/ChurchBadge";
 export * from "./primitives/ChurchButton";

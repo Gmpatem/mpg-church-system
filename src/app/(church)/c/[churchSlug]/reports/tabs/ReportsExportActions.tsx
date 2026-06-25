@@ -94,7 +94,7 @@ export function ReportsExportActions({ churchSlug, activeTab, dateFrom, dateTo }
         type="button"
         onClick={() => handleExport("pdf")}
         disabled={pending !== null}
-        className={`${baseClasses} bg-slate-950 text-white hover:bg-slate-800`}
+        className={`${baseClasses} bg-primary text-primary-foreground hover:bg-primary/90`}
       >
         {pending === "pdf" ? (
           <>
@@ -113,11 +113,11 @@ export function ReportsExportActions({ churchSlug, activeTab, dateFrom, dateTo }
         type="button"
         onClick={() => handleExport("excel")}
         disabled={pending !== null}
-        className={`${baseClasses} border border-slate-300 bg-white text-slate-700 hover:bg-slate-50`}
+        className={`${baseClasses} border border-border bg-background text-foreground hover:bg-muted`}
       >
         {pending === "excel" ? (
           <>
-            <span className="h-4 w-4 animate-spin rounded-full border-2 border-slate-300 border-t-slate-600" />
+            <span className="h-4 w-4 animate-spin rounded-full border-2 border-muted border-t-primary" />
             Exporting...
           </>
         ) : (
@@ -132,7 +132,7 @@ export function ReportsExportActions({ churchSlug, activeTab, dateFrom, dateTo }
         type="button"
         onClick={() => window.print()}
         disabled={pending !== null}
-        className={`${baseClasses} border border-slate-300 bg-white text-slate-700 hover:bg-slate-50`}
+        className={`${baseClasses} border border-border bg-background text-foreground hover:bg-muted`}
       >
         <Printer className="h-4 w-4" />
         Print Summary
@@ -143,15 +143,15 @@ export function ReportsExportActions({ churchSlug, activeTab, dateFrom, dateTo }
           <button
             type="button"
             disabled={pending !== null}
-            className={`${baseClasses} border border-slate-300 bg-white text-slate-700 hover:bg-slate-50`}
+            className={`${baseClasses} border border-border bg-background text-foreground hover:bg-muted`}
           >
             <SlidersHorizontal className="h-4 w-4" />
             Export Options
-            <ChevronDown className="h-4 w-4 text-slate-400" />
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-80 rounded-xl border border-slate-200 p-2">
-          <DropdownMenuLabel className="px-2 py-1.5 text-xs uppercase tracking-[0.16em] text-slate-500">
+        <DropdownMenuContent align="end" className="w-80 rounded-xl border border-border p-2">
+          <DropdownMenuLabel className="px-2 py-1.5 text-xs uppercase tracking-[0.16em] text-muted-foreground">
             Export Preset
           </DropdownMenuLabel>
           <DropdownMenuRadioGroup value={preset} onValueChange={(value) => setPreset(value as ExportPreset)}>
@@ -163,7 +163,7 @@ export function ReportsExportActions({ churchSlug, activeTab, dateFrom, dateTo }
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuLabel className="px-2 py-1.5 text-xs uppercase tracking-[0.16em] text-slate-500">
+          <DropdownMenuLabel className="px-2 py-1.5 text-xs uppercase tracking-[0.16em] text-muted-foreground">
             Report Scope
           </DropdownMenuLabel>
           <DropdownMenuRadioGroup value={scope} onValueChange={(value) => setScope(value as ExportScope)}>
@@ -177,7 +177,7 @@ export function ReportsExportActions({ churchSlug, activeTab, dateFrom, dateTo }
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuLabel className="px-2 py-1.5 text-xs uppercase tracking-[0.16em] text-slate-500">
+          <DropdownMenuLabel className="px-2 py-1.5 text-xs uppercase tracking-[0.16em] text-muted-foreground">
             Include Content
           </DropdownMenuLabel>
           <DropdownMenuCheckboxItem
@@ -210,8 +210,8 @@ export function ReportsExportActions({ churchSlug, activeTab, dateFrom, dateTo }
           </DropdownMenuCheckboxItem>
 
           <DropdownMenuSeparator />
-          <p className="px-2 pb-1 pt-1 text-xs text-slate-500">
-            Preset: <span className="font-medium text-slate-700">{PRESET_LABELS[preset]}</span>
+          <p className="px-2 pb-1 pt-1 text-xs text-muted-foreground">
+            Preset: <span className="font-medium text-foreground">{PRESET_LABELS[preset]}</span>
             {preset === "custom" && (dateFrom || dateTo) ? (
               <>
                 {" "}

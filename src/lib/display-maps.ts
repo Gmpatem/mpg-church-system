@@ -1,3 +1,5 @@
+import { CHURCH_GENDER_LABELS } from "@/lib/domain/church-gender";
+
 export const memberStatusLabels: Record<string, string> = {
   active: "Active",
   inactive: "Inactive",
@@ -112,11 +114,7 @@ export const allocationStatusLabels: Record<string, string> = {
   failed: "Failed",
 };
 
-export const genderLabels: Record<string, string> = {
-  male: "Male",
-  female: "Female",
-  other: "Other",
-};
+export const genderLabels: Record<string, string> = { ...CHURCH_GENDER_LABELS };
 
 export const maritalStatusLabels: Record<string, string> = {
   single: "Single",

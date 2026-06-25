@@ -1,5 +1,5 @@
 import { getOfficeWorkspaceData } from "@/features/office/queries";
-import { OfficeQueueWorkspace } from "@/features/office/components/OfficeQueueWorkspace";
+import { OfficeConsoleWorkspace } from "@/features/office/components/OfficeConsoleWorkspace";
 import { WorkspaceRouteStateBridge } from "@/components/workspace/WorkspaceRouteStateBridge";
 
 interface OfficePageProps {
@@ -21,7 +21,7 @@ export default async function OfficePage({ params }: OfficePageProps) {
           `/c/${churchSlug}/access-control`,
         ]}
       />
-      <OfficeQueueWorkspace
+      <OfficeConsoleWorkspace
         churchSlug={churchSlug}
         data={data}
       />

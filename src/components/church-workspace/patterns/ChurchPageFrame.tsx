@@ -7,7 +7,7 @@ interface ChurchPageFrameProps {
 
 export function ChurchPageFrame({ children, className }: ChurchPageFrameProps) {
   return (
-    <div className={cn("mx-auto w-full max-w-[1600px] min-w-0", className)}>
+    <div className={cn("church-page-container w-full min-w-0 max-w-none", className)}>
       {children}
     </div>
   );

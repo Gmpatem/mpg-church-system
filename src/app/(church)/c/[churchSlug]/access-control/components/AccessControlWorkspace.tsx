@@ -2,10 +2,10 @@ import Link from "next/link";
 
 import {
   WorkspaceEmptyState,
-  WorkspaceHero,
   WorkspaceSectionCard,
   WorkspaceStatCard,
 } from "@/components/workspace";
+import { ChurchWorkspaceHeader } from "@/components/church-workspace";
 import { MobileCompactStatsStrip } from "@/components/mobile/MobileCompactStatsStrip";
 import { MobilePageHeader } from "@/components/mobile/MobilePageHeader";
 import type {
@@ -45,8 +45,8 @@ function renderTabNav(churchSlug: string, activeTab: AccessControlTabKey) {
             href={buildTabHref(churchSlug, tab.key)}
             className={
               isActive
-                ? "mobile-touch-feedback inline-flex min-h-[44px] shrink-0 items-center rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition"
-                : "mobile-touch-feedback inline-flex min-h-[44px] shrink-0 items-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                ? "mobile-touch-feedback inline-flex min-h-[44px] shrink-0 items-center rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition"
+                : "mobile-touch-feedback inline-flex min-h-[44px] shrink-0 items-center rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
             }
           >
             {tab.label}
@@ -169,12 +169,11 @@ export function AccessControlWorkspace({
         subtitle="Manage roles, permissions, and requests"
       />
 
-      <WorkspaceHero
-        size="compact"
+      <ChurchWorkspaceHeader
+        className="hidden md:flex"
         eyebrow="Access Control"
         title={`Manage access for ${permissionsData.churchName ?? "this church"}`}
         description="Control church roles and page permissions, manage secure invites, and review pending access requests from one workspace."
-        className="hidden md:block"
       />
 
       {renderTabNav(permissionsData.churchSlug, activeTab)}

@@ -1,38 +1,29 @@
-import { getChurchCalendarData } from "@/features/calendar/queries";
-import { WorkspaceHero } from "@/components/workspace";
-import { CalendarView } from "@/components/shared/CalendarView";
+import { redirect } from "next/navigation";
 
 interface ChurchCalendarPageProps {
   params: Promise<{ churchSlug: string }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }
 
-export default async function ChurchCalendarPage({ params }: ChurchCalendarPageProps) {
+function pickSingle(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value ?? "";
+}
+
+export default async function ChurchCalendarPage({ params, searchParams }: ChurchCalendarPageProps) {
   const { churchSlug } = await params;
-  const data = await getChurchCalendarData(churchSlug);
+  const filters = (await searchParams) ?? {};
+  const paramsToKeep = new URLSearchParams();
+  paramsToKeep.set("tab", "calendar");
 
-  const events = data.events.map((event) => ({
-    id: event.id,
-    title: event.title,
-    start: event.start,
-    end: event.end,
-    event_type: event.eventType,
-    location: event.location ?? null,
-    is_all_day: event.allDay,
-  }));
+  const eventId = pickSingle(filters.eventId);
+  const date = pickSingle(filters.date);
+  const calendarDate = pickSingle(filters.calendarDate);
+  const view = pickSingle(filters.view);
+  const calendarView = pickSingle(filters.calendarView);
 
-  return (
-    <div className="space-y-6">
-      <WorkspaceHero
-        size="compact"
-        eyebrow="Calendar"
-        title="Calendar"
-        description="Upcoming approved events for the whole church."
-      />
-      <CalendarView
-        events={events}
-        showViewToggle={true}
-        emptyMessage="No published events found."
-      />
-    </div>
-  );
+  if (eventId) paramsToKeep.set("eventId", eventId);
+  if (calendarDate || date) paramsToKeep.set("calendarDate", calendarDate || date);
+  if (calendarView || view) paramsToKeep.set("calendarView", calendarView || view);
+
+  redirect(`/c/${churchSlug}/events?${paramsToKeep.toString()}`);
 }

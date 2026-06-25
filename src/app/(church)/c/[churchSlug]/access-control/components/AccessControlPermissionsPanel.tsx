@@ -267,7 +267,7 @@ export function AccessControlPermissionsPanel({
                       onClick={() => setSelectedUserId(user.userId)}
                       className={
                         isSelected
-                          ? "w-full rounded-xl border border-blue-200 bg-blue-50 px-3 py-3 text-left transition"
+                          ? "w-full rounded-xl border border-primary/20 bg-primary/10 px-3 py-3 text-left transition"
                           : "w-full rounded-xl border border-slate-200 bg-white px-3 py-3 text-left transition hover:bg-slate-50"
                       }
                     >
@@ -352,7 +352,7 @@ export function AccessControlPermissionsPanel({
                       type="button"
                       onClick={handleAssignRole}
                       disabled={!canManage || isPending || !selectedRoleId}
-                      className="inline-flex h-9 items-center justify-center rounded-lg bg-slate-900 px-3 text-xs font-medium text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="inline-flex h-9 items-center justify-center rounded-lg bg-primary px-3 text-xs font-medium text-primary-foreground transition hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isPending ? (
                         <span className="inline-flex items-center gap-2">

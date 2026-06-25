@@ -19,9 +19,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Church, User, Shield, Wallet } from "lucide-react";
-import { LanguageSwitcher } from "@/components/marketing/LanguageSwitcher";
 import { useI18n } from "@/features/i18n";
 import { useActionState } from "react";
+import { updateStaffSelfProfileAction } from "@/features/staff-profile/actions";
+import type { StaffSelfProfileData } from "@/features/staff-profile/queries";
+import { CHURCH_GENDER_OPTIONS } from "@/lib/domain/church-gender";
 import {
   updateTreasuryFinanceSettingsAction,
   getTreasuryFinanceSettingsAction,
@@ -423,6 +425,8 @@ function FinanceSettingsPanel({ churchSlug }: { churchSlug: string }) {
 
 type SettingsTab = "church" | "profile" | "security" | "finance";
 
+const EMPTY_GENDER_VALUE = "__none";
+
 type ChurchData = {
   name: string;
   slug: string;
@@ -453,9 +457,26 @@ const TIMEZONES = [
   "Pacific/Auckland",
 ];
 
-export function SettingsTabs({ church }: { church: ChurchData }) {
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null;
+  return <p className="text-xs text-red-600">{message}</p>;
+}
+
+export function SettingsTabs({
+  church,
+  staffProfile,
+}: {
+  church: ChurchData;
+  staffProfile: StaffSelfProfileData;
+}) {
   const { t } = useI18n();
   const [activeTab, setActiveTab] = useState<SettingsTab>("church");
+  const [profileState, profileFormAction, profilePending] = useActionState(
+    updateStaffSelfProfileAction,
+    null
+  );
+  const profileErrors = profileState?.ok === false ? profileState.fieldErrors ?? {} : {};
+  const memberProfile = staffProfile.member;
   
   const TABS: Array<{ key: SettingsTab; label: string }> = [
     { key: "church", label: t.pages.settings.tabs.church },
@@ -475,8 +496,8 @@ export function SettingsTabs({ church }: { church: ChurchData }) {
               onClick={() => setActiveTab(tab.key)}
               className={
                 activeTab === tab.key
-                  ? "mobile-touch-feedback shrink-0 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 md:w-full md:rounded-xl md:border-slate-200 md:bg-slate-100 md:px-3 md:text-slate-900"
-                  : "mobile-touch-feedback shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-50 md:w-full md:rounded-xl md:border-transparent md:bg-transparent md:px-3 md:text-slate-500 md:hover:bg-slate-50 md:hover:text-slate-700"
+                  ? "mobile-touch-feedback shrink-0 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-medium text-primary md:w-full md:rounded-xl md:px-3"
+                  : "mobile-touch-feedback shrink-0 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground md:w-full md:rounded-xl md:border-transparent md:bg-transparent md:px-3"
               }
             >
               {tab.label}
@@ -578,23 +599,233 @@ export function SettingsTabs({ church }: { church: ChurchData }) {
                 <User className="h-5 w-5 text-primary" />
                 <CardTitle>{t.pages.settings.userProfile}</CardTitle>
               </div>
-              <CardDescription>{t.navigation.profile}</CardDescription>
+              <CardDescription>{t.pages.settings.userProfileDesc}</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="space-y-3">
-                <Label>{t.pages.settings.preferredLanguage}</Label>
-                <div className="flex items-center gap-4 p-4 rounded-lg border border-slate-200 bg-slate-50">
-                  <div className="flex-1">
-                    <p className="text-sm text-slate-600">
-                      {t.pages.settings.languageDescription}
+            <CardContent>
+              <form action={profileFormAction} className="space-y-6">
+                <input type="hidden" name="churchSlug" value={church.slug} />
+
+                {profileState && !profileState.ok ? (
+                  <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {profileState.error}
+                  </div>
+                ) : null}
+
+                {profileState && profileState.ok ? (
+                  <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                    {profileState.message}
+                  </div>
+                ) : null}
+
+                <div className="rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+                  <p className="text-sm font-semibold text-slate-900">
+                    {t.pages.settings.profileSummary}
+                  </p>
+                  <p className="mt-1 text-sm text-slate-600">
+                    {memberProfile
+                      ? t.pages.settings.profileLinkedMember
+                      : t.pages.settings.profileNoLinkedMember}
+                  </p>
+                </div>
+
+                <section className="space-y-4">
+                  <div>
+                    <h4 className="text-sm font-semibold text-slate-900">
+                      {t.pages.settings.personalInformation}
+                    </h4>
+                    <p className="mt-1 text-sm text-slate-600">
+                      {t.pages.settings.personalInformationDesc}
                     </p>
                   </div>
-                  <LanguageSwitcher variant="buttons" syncWithProfile />
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <Label htmlFor="staff-full-name">{t.pages.settings.fullName}</Label>
+                      <Input
+                        id="staff-full-name"
+                        name="fullName"
+                        defaultValue={staffProfile.profile.fullName ?? ""}
+                      />
+                      <FieldError message={profileErrors.fullName} />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="staff-email">{t.common.email}</Label>
+                      <Input
+                        id="staff-email"
+                        value={staffProfile.profile.email ?? memberProfile?.email ?? ""}
+                        readOnly
+                        className="bg-slate-50 text-slate-500"
+                      />
+                      <p className="text-xs text-slate-500">
+                        {t.pages.settings.emailChangeNotice}
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="staff-phone">{t.common.phone}</Label>
+                      <Input
+                        id="staff-phone"
+                        name="phone"
+                        defaultValue={staffProfile.profile.phone ?? memberProfile?.phone ?? ""}
+                      />
+                      <FieldError message={profileErrors.phone} />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="staff-language">{t.pages.settings.preferredLanguage}</Label>
+                      <Select
+                        name="preferredLanguage"
+                        defaultValue={staffProfile.profile.preferredLanguage}
+                      >
+                        <SelectTrigger id="staff-language">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="en">English</SelectItem>
+                          <SelectItem value="fr">Français</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FieldError message={profileErrors.preferredLanguage} />
+                    </div>
+
+                    {memberProfile ? (
+                      <>
+                        <div className="space-y-2">
+                          <Label htmlFor="staff-display-name">
+                            {t.pages.settings.displayName}
+                          </Label>
+                          <Input
+                            id="staff-display-name"
+                            name="displayName"
+                            defaultValue={memberProfile.displayName ?? ""}
+                          />
+                          <FieldError message={profileErrors.displayName} />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="staff-date-of-birth">
+                            {t.pages.settings.dateOfBirth}
+                          </Label>
+                          <Input
+                            id="staff-date-of-birth"
+                            name="dateOfBirth"
+                            type="date"
+                            defaultValue={memberProfile.dateOfBirth ?? ""}
+                          />
+                          <FieldError message={profileErrors.dateOfBirth} />
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label htmlFor="staff-gender">{t.pages.settings.gender}</Label>
+                          <Select
+                            name="gender"
+                            defaultValue={memberProfile.gender ?? EMPTY_GENDER_VALUE}
+                          >
+                            <SelectTrigger id="staff-gender">
+                              <SelectValue placeholder={t.pages.settings.selectGender} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value={EMPTY_GENDER_VALUE}>
+                                {t.pages.settings.notSpecified}
+                              </SelectItem>
+                              {CHURCH_GENDER_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.value === "male"
+                                    ? t.pages.settings.genderMale
+                                    : t.pages.settings.genderFemale}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <FieldError message={profileErrors.gender} />
+                        </div>
+                      </>
+                    ) : null}
+                  </div>
+                </section>
+
+                {memberProfile ? (
+                  <>
+                    <section className="space-y-4">
+                      <div>
+                        <h4 className="text-sm font-semibold text-slate-900">
+                          {t.pages.settings.contactInformation}
+                        </h4>
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2 md:col-span-2">
+                          <Label htmlFor="staff-address">{t.common.address}</Label>
+                          <Input
+                            id="staff-address"
+                            name="address"
+                            defaultValue={memberProfile.address ?? ""}
+                          />
+                          <FieldError message={profileErrors.address} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="staff-city">{t.common.city}</Label>
+                          <Input
+                            id="staff-city"
+                            name="city"
+                            defaultValue={memberProfile.city ?? ""}
+                          />
+                          <FieldError message={profileErrors.city} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="staff-country">{t.common.country}</Label>
+                          <Input
+                            id="staff-country"
+                            name="country"
+                            defaultValue={memberProfile.country ?? ""}
+                          />
+                          <FieldError message={profileErrors.country} />
+                        </div>
+                      </div>
+                    </section>
+
+                    <section className="space-y-4">
+                      <div>
+                        <h4 className="text-sm font-semibold text-slate-900">
+                          {t.pages.settings.emergencyContact}
+                        </h4>
+                      </div>
+
+                      <div className="grid gap-4 md:grid-cols-2">
+                        <div className="space-y-2">
+                          <Label htmlFor="staff-emergency-name">
+                            {t.pages.settings.emergencyContactName}
+                          </Label>
+                          <Input
+                            id="staff-emergency-name"
+                            name="emergencyContactName"
+                            defaultValue={memberProfile.emergencyContactName ?? ""}
+                          />
+                          <FieldError message={profileErrors.emergencyContactName} />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="staff-emergency-phone">
+                            {t.pages.settings.emergencyContactPhone}
+                          </Label>
+                          <Input
+                            id="staff-emergency-phone"
+                            name="emergencyContactPhone"
+                            defaultValue={memberProfile.emergencyContactPhone ?? ""}
+                          />
+                          <FieldError message={profileErrors.emergencyContactPhone} />
+                        </div>
+                      </div>
+                    </section>
+                  </>
+                ) : null}
+
+                <div className="flex justify-end">
+                  <Button type="submit" disabled={profilePending}>
+                    {profilePending ? t.common.loading : t.common.save}
+                  </Button>
                 </div>
-              </div>
-              <div className="flex justify-end">
-                <Button>{t.common.save}</Button>
-              </div>
+              </form>
             </CardContent>
           </Card>
         ) : null}

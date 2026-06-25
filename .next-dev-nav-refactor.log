@@ -1,0 +1,16 @@
+
+> my-app@0.1.0 dev
+> next dev -p 3111
+
+▲ Next.js 16.2.2 (Turbopack)
+- Local:         http://localhost:3111
+- Network:       http://172.17.69.243:3111
+- Environments: .env.local
+✓ Ready in 994ms
+
+○ Compiling /c/[churchSlug] ...
+ GET /c/mpg 307 in 22.3s (next.js: 17.1s, proxy.ts: 3.2s, application-code: 1973ms)
+ GET /create-church 307 in 3.2s (next.js: 1438ms, proxy.ts: 6ms, application-code: 1792ms)
+ GET /c/mpg-church 200 in 2.4s (next.js: 25ms, proxy.ts: 6ms, application-code: 2.3s)
+○ Compiling / ...
+[?25h

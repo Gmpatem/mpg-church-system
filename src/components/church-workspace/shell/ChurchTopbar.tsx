@@ -174,7 +174,7 @@ export function ChurchTopbar({
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/90">
-      <div className="mx-auto flex h-16 w-full max-w-[1600px] items-center justify-between gap-4 px-4 sm:px-5 lg:px-6 xl:px-8">
+      <div className="flex h-16 w-full items-center justify-between gap-4 px-[clamp(1rem,2vw,2rem)]">
         <div className="flex min-w-0 items-center gap-3">
           <ChurchIconButton
             type="button"

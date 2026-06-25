@@ -1,9 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
-import { WorkspaceHero } from "@/components/workspace";
+import { ChurchWorkspaceHeader } from "@/components/church-workspace";
 import { SettingsTabs } from "./SettingsTabs";
 import { en } from "@/features/i18n/en";
 import { fr } from "@/features/i18n/fr";
 import { cookies } from "next/headers";
+import { getStaffSelfProfile } from "@/features/staff-profile/queries";
 
 interface SettingsPageProps {
   params: Promise<{ churchSlug: string }>;
@@ -30,15 +31,16 @@ export default async function SettingsPage({ params }: SettingsPageProps) {
     return null;
   }
 
+  const staffProfile = await getStaffSelfProfile(churchSlug);
+
   return (
     <div className="space-y-6">
-      <WorkspaceHero
-        size="compact"
+      <ChurchWorkspaceHeader
         eyebrow="Settings"
         title={t.pages.settings.title}
         description={t.pages.settings.description}
       />
-      <SettingsTabs church={church} />
+      <SettingsTabs church={church} staffProfile={staffProfile} />
     </div>
   );
 }

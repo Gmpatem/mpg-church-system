@@ -68,6 +68,44 @@ function buildEntityHref(churchSlug: string, moduleKey: string, entityType: stri
   return `/c/${churchSlug}/office`;
 }
 
+function canReviewApprovalFromInbox(
+  roles: string[],
+  isPlatformAdmin: boolean,
+  item: {
+    currentStage: string;
+    status: string;
+    currentAssigneeRoleCode: string | null;
+  }
+) {
+  if (item.status !== "pending") return false;
+  if (isPlatformAdmin) return true;
+
+  const roleSet = new Set(roles);
+  const hasGlobalReviewRole = roleSet.has("church_admin") || roleSet.has("pastor");
+
+  if (item.currentAssigneeRoleCode && roleSet.has(item.currentAssigneeRoleCode)) {
+    return true;
+  }
+
+  if (item.currentStage === "office_review") {
+    return hasGlobalReviewRole || roleSet.has("church_secretary") || roleSet.has("clerk");
+  }
+
+  if (item.currentStage === "leadership_review") {
+    return hasGlobalReviewRole || roleSet.has("elder");
+  }
+
+  if (item.currentStage === "treasury_review") {
+    return hasGlobalReviewRole || roleSet.has("treasurer");
+  }
+
+  if (item.currentStage === "submitted") {
+    return hasGlobalReviewRole || roleSet.has("church_secretary") || roleSet.has("clerk");
+  }
+
+  return hasGlobalReviewRole;
+}
+
 export async function getApprovalsInboxData(
   churchSlug: string,
   filters?: {
@@ -154,27 +192,81 @@ export async function getApprovalsInboxData(
     );
   }
 
-  const items = rows.map((row) => ({
-    id: row.id,
-    moduleKey: row.module_key,
-    moduleLabel: getApprovalModuleLabel(row.module_key),
-    entityType: row.entity_type,
-    entityId: row.entity_id,
-    requestType: row.request_type,
-    displayTitle: getRequestDisplayTitle(row.module_key, row.request_type, row.payload ?? {}),
-    currentStage: row.current_stage,
-    status: row.status,
-    priority: row.priority,
-    currentAssigneeRoleCode: row.current_assignee_role_code ?? null,
-    payload: row.payload ?? {},
-    submittedAt: row.submitted_at,
-    decidedAt: row.decided_at ?? null,
-    decidedByUserId: row.decided_by_user_id ?? null,
-    decisionNote: row.decision_note ?? null,
-    submittedByUserId: row.submitted_by_user_id ?? null,
-    submittedByName: row.submitted_by_user_id ? profileMap.get(row.submitted_by_user_id) ?? null : null,
-    href: buildEntityHref(churchSlug, row.module_key, row.entity_type, row.payload ?? {}),
-  }));
+  const items = rows.map((row) => {
+    const item = {
+      id: row.id,
+      moduleKey: row.module_key,
+      moduleLabel: getApprovalModuleLabel(row.module_key),
+      entityType: row.entity_type,
+      entityId: row.entity_id,
+      requestType: row.request_type,
+      displayTitle: getRequestDisplayTitle(row.module_key, row.request_type, row.payload ?? {}),
+      currentStage: row.current_stage,
+      status: row.status,
+      priority: row.priority,
+      currentAssigneeRoleCode: row.current_assignee_role_code ?? null,
+      payload: row.payload ?? {},
+      submittedAt: row.submitted_at,
+      decidedAt: row.decided_at ?? null,
+      decidedByUserId: row.decided_by_user_id ?? null,
+      decisionNote: row.decision_note ?? null,
+      submittedByUserId: row.submitted_by_user_id ?? null,
+      submittedByName: row.submitted_by_user_id ? profileMap.get(row.submitted_by_user_id) ?? null : null,
+      href: buildEntityHref(churchSlug, row.module_key, row.entity_type, row.payload ?? {}),
+    };
+
+    const canReview = canReviewApprovalFromInbox(ctx.roles, ctx.isPlatformAdmin, item);
+    return {
+      ...item,
+      canReview,
+      isInboxItem: canReview,
+    };
+  });
+
+  const [auditResult, policyResult] = await Promise.all([
+    supabase
+      .from("approval_audit_logs")
+      .select("id, approval_request_id, action_type, actor_user_id, payload, created_at")
+      .eq("church_id", ctx.churchId)
+      .order("created_at", { ascending: false })
+      .limit(80),
+    supabase
+      .from("approval_policies")
+      .select("id, module_key, request_type, requires_office_review, requires_leadership_review, requires_treasury_review, final_approver_role_code, is_active")
+      .eq("church_id", ctx.churchId)
+      .order("module_key", { ascending: true }),
+  ]);
+
+  if (auditResult.error) {
+    throw new Error(auditResult.error.message);
+  }
+
+  if (policyResult.error) {
+    throw new Error(policyResult.error.message);
+  }
+
+  const auditActorIds = Array.from(
+    new Set(((auditResult.data ?? []) as any[]).map((row) => row.actor_user_id).filter(Boolean))
+  );
+
+  let auditProfileMap = new Map<string, string>();
+  if (auditActorIds.length > 0) {
+    const { data: auditProfiles, error: auditProfileError } = await supabase
+      .from("profiles")
+      .select("id, full_name, email")
+      .in("id", auditActorIds);
+
+    if (auditProfileError) {
+      throw new Error(auditProfileError.message);
+    }
+
+    auditProfileMap = new Map(
+      (auditProfiles ?? []).map((profile: any) => [
+        profile.id,
+        profile.full_name || profile.email || "Unknown user",
+      ])
+    );
+  }
 
   const summary = items.reduce(
     (acc, item) => {
@@ -184,6 +276,7 @@ export async function getApprovalsInboxData(
     },
     {
       total: 0,
+      inbox: 0,
       pending: 0,
       approved: 0,
       rejected: 0,
@@ -191,6 +284,7 @@ export async function getApprovalsInboxData(
       cancelled: 0,
     } as Record<string, number>
   );
+  summary.inbox = items.filter((item) => item.isInboxItem).length;
 
   return {
     church: {
@@ -199,6 +293,26 @@ export async function getApprovalsInboxData(
       name: ctx.churchName ?? ctx.churchSlug,
     },
     items,
+    auditLogs: ((auditResult.data ?? []) as any[]).map((row) => ({
+      id: row.id,
+      approvalRequestId: row.approval_request_id,
+      actionType: row.action_type,
+      actorUserId: row.actor_user_id ?? null,
+      actorName: row.actor_user_id ? auditProfileMap.get(row.actor_user_id) ?? null : null,
+      payload: row.payload ?? {},
+      createdAt: row.created_at,
+    })),
+    policies: ((policyResult.data ?? []) as any[]).map((row) => ({
+      id: row.id,
+      moduleKey: row.module_key,
+      moduleLabel: getApprovalModuleLabel(row.module_key),
+      requestType: row.request_type,
+      requiresOfficeReview: Boolean(row.requires_office_review),
+      requiresLeadershipReview: Boolean(row.requires_leadership_review),
+      requiresTreasuryReview: Boolean(row.requires_treasury_review),
+      finalApproverRoleCode: row.final_approver_role_code ?? null,
+      isActive: Boolean(row.is_active),
+    })),
     summary,
     filters: {
       module: filters?.module ?? "",

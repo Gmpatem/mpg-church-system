@@ -76,6 +76,13 @@ export interface ChurchWorkspaceNotification {
   kind?: "db" | "office_signal";
 }
 
+export type ChurchNavigationGroupKey =
+  | "people"
+  | "ministries"
+  | "treasury"
+  | "operations"
+  | "administration";
+
 export interface ChurchNavigationItem {
   key: string;
   label: string;
@@ -83,11 +90,20 @@ export interface ChurchNavigationItem {
   icon: LucideIcon;
   exact?: boolean;
   badge?: number;
+  permission?: string;
+  allowedRoles?: string[];
   hidden?: boolean;
+  match?: (pathname: string) => boolean;
 }
 
 export interface ChurchNavigationGroup {
-  key: string;
+  key: ChurchNavigationGroupKey;
   label: string;
+  icon: LucideIcon;
   items: ChurchNavigationItem[];
+}
+
+export interface ChurchActiveNavigation {
+  activeGroupKey: ChurchNavigationGroupKey | null;
+  activeItemKey: string | null;
 }

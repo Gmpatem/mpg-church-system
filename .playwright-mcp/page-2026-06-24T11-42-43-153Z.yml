@@ -1,0 +1,295 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - status [ref=e3]
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - link "Church Workspace ghrace comunity church" [ref=e7] [cursor=pointer]:
+            - /url: /c/grace-community-church
+            - img [ref=e9]
+            - generic [ref=e13]:
+              - generic [ref=e14]: Church Workspace
+              - generic [ref=e15]: ghrace comunity church
+          - generic [ref=e16]: Church Admin
+        - navigation "Church workspace" [ref=e17]:
+          - generic [ref=e18]:
+            - generic [ref=e19]:
+              - paragraph [ref=e20]: Overview
+              - link "Dashboard" [ref=e22] [cursor=pointer]:
+                - /url: /c/grace-community-church
+                - img [ref=e23]
+                - generic [ref=e28]: Dashboard
+            - generic [ref=e29]:
+              - paragraph [ref=e30]: People
+              - generic [ref=e31]:
+                - link "Members" [ref=e32] [cursor=pointer]:
+                  - /url: /c/grace-community-church/members
+                  - img [ref=e33]
+                  - generic [ref=e38]: Members
+                - link "Households" [ref=e39] [cursor=pointer]:
+                  - /url: /c/grace-community-church/households
+                  - img [ref=e40]
+                  - generic [ref=e43]: Households
+            - generic [ref=e44]:
+              - paragraph [ref=e45]: Ministries
+              - generic [ref=e46]:
+                - link "Departments" [ref=e47] [cursor=pointer]:
+                  - /url: /c/grace-community-church/departments
+                  - img [ref=e48]
+                  - generic [ref=e52]: Departments
+                - link "Leadership" [ref=e53] [cursor=pointer]:
+                  - /url: /c/grace-community-church/leadership
+                  - img [ref=e54]
+                  - generic [ref=e66]: Leadership
+                - link "Small Groups" [ref=e67] [cursor=pointer]:
+                  - /url: /c/grace-community-church/small-groups
+                  - img [ref=e68]
+                  - generic [ref=e72]: Small Groups
+                - link "Events" [ref=e73] [cursor=pointer]:
+                  - /url: /c/grace-community-church/events
+                  - img [ref=e74]
+                  - generic [ref=e76]: Events
+            - generic [ref=e77]:
+              - paragraph [ref=e78]: Treasury
+              - link "Treasury" [ref=e80] [cursor=pointer]:
+                - /url: /c/grace-community-church/treasury
+                - img [ref=e81]
+                - generic [ref=e84]: Treasury
+            - generic [ref=e85]:
+              - paragraph [ref=e86]: Operations
+              - generic [ref=e87]:
+                - link "Church Office" [ref=e88] [cursor=pointer]:
+                  - /url: /c/grace-community-church/office
+                  - img [ref=e89]
+                  - generic [ref=e93]: Church Office
+                - link "Announcements" [ref=e94] [cursor=pointer]:
+                  - /url: /c/grace-community-church/announcements
+                  - img [ref=e95]
+                  - generic [ref=e98]: Announcements
+                - link "Approvals" [ref=e99] [cursor=pointer]:
+                  - /url: /c/grace-community-church/approvals
+                  - img [ref=e100]
+                  - generic [ref=e104]: Approvals
+                - link "Reports" [ref=e105] [cursor=pointer]:
+                  - /url: /c/grace-community-church/reports
+                  - img [ref=e106]
+                  - generic [ref=e108]: Reports
+            - generic [ref=e109]:
+              - paragraph [ref=e110]: Administration
+              - generic [ref=e111]:
+                - link "Invites & Access" [ref=e112] [cursor=pointer]:
+                  - /url: /c/grace-community-church/access-control
+                  - img [ref=e113]
+                  - generic [ref=e115]: Invites & Access
+                - link "Settings" [ref=e116] [cursor=pointer]:
+                  - /url: /c/grace-community-church/settings
+                  - img [ref=e117]
+                  - generic [ref=e120]: Settings
+        - generic [ref=e122]:
+          - generic [ref=e123]:
+            - generic [ref=e125]: BD
+            - generic [ref=e126]:
+              - paragraph [ref=e127]: big dev
+              - paragraph [ref=e128]: bigdev830@gmail.com
+          - button "Logout" [ref=e129] [cursor=pointer]:
+            - img [ref=e130]
+            - text: Logout
+    - generic [ref=e133]:
+      - banner [ref=e134]:
+        - generic [ref=e135]:
+          - generic [ref=e137]:
+            - paragraph [ref=e138]: Dashboard
+            - paragraph [ref=e139]: ghrace comunity church
+          - generic [ref=e140]:
+            - generic [ref=e142]:
+              - img [ref=e143]
+              - generic [ref=e147]: Loading…
+            - generic [ref=e148]: Church Admin
+            - generic [ref=e149]:
+              - generic [ref=e150]: EN
+              - generic [ref=e151]: FR
+            - button "Notifications" [ref=e152] [cursor=pointer]:
+              - img [ref=e153]
+            - button "Profile" [ref=e156] [cursor=pointer]:
+              - generic [ref=e158]: BD
+      - main [ref=e159]:
+        - generic [ref=e161]:
+          - generic [ref=e163]:
+            - generic [ref=e164]:
+              - generic [ref=e165]:
+                - generic [ref=e166]: Church Dashboard
+                - generic [ref=e167]: Live workspace
+                - generic [ref=e168]: Operations overview
+              - heading "ghrace comunity church" [level=1] [ref=e169]
+              - paragraph [ref=e170]: Executive operations view for members, ministry activity, events, and church follow-up work.
+            - generic [ref=e171]:
+              - link "Manage Members" [ref=e172] [cursor=pointer]:
+                - /url: /c/grace-community-church/members
+              - link "Open Events" [ref=e173] [cursor=pointer]:
+                - /url: /c/grace-community-church/events
+              - link "Open Reports" [ref=e174] [cursor=pointer]:
+                - /url: /c/grace-community-church/reports
+          - generic [ref=e175]:
+            - generic [ref=e176]:
+              - generic [ref=e177]:
+                - paragraph [ref=e178]: Dashboard Snapshot
+                - heading "Core Church Metrics" [level=2] [ref=e179]
+                - paragraph [ref=e180]: Live member, household, ministry, and pending-work indicators.
+              - link "Open Reports" [ref=e181] [cursor=pointer]:
+                - /url: /c/grace-community-church/reports
+            - generic [ref=e182]:
+              - link "Members 6 +1 this month" [ref=e183] [cursor=pointer]:
+                - /url: /c/grace-community-church/members
+                - generic [ref=e186]:
+                  - paragraph [ref=e187]: Members
+                  - paragraph [ref=e188]: "6"
+                  - paragraph [ref=e189]: +1 this month
+              - link "Households 1 Family grouping" [ref=e190] [cursor=pointer]:
+                - /url: /c/grace-community-church/households
+                - generic [ref=e193]:
+                  - paragraph [ref=e194]: Households
+                  - paragraph [ref=e195]: "1"
+                  - paragraph [ref=e196]: Family grouping
+              - link "Departments 1 Active ministries" [ref=e197] [cursor=pointer]:
+                - /url: /c/grace-community-church/departments
+                - generic [ref=e200]:
+                  - paragraph [ref=e201]: Departments
+                  - paragraph [ref=e202]: "1"
+                  - paragraph [ref=e203]: Active ministries
+              - link "Pending Work 0 Approvals + requests" [ref=e204] [cursor=pointer]:
+                - /url: /c/grace-community-church/approvals
+                - generic [ref=e207]:
+                  - paragraph [ref=e208]: Pending Work
+                  - paragraph [ref=e209]: "0"
+                  - paragraph [ref=e210]: Approvals + requests
+          - generic [ref=e211]:
+            - generic [ref=e212]:
+              - generic [ref=e213]:
+                - generic [ref=e214]:
+                  - heading "Recent Members" [level=2] [ref=e215]
+                  - paragraph [ref=e216]: Newest people added to the church workspace.
+                - generic [ref=e217]:
+                  - link "Open Members" [ref=e219] [cursor=pointer]:
+                    - /url: /c/grace-community-church/members
+                  - generic [ref=e220]:
+                    - link "KB krilin boy boy djsafdkasjk@gmail.com Jun 22" [ref=e221] [cursor=pointer]:
+                      - /url: /c/grace-community-church/members/aecb165a-2d5f-4830-8ae1-b3479faa99ae
+                      - generic [ref=e222]: KB
+                      - generic [ref=e223]:
+                        - paragraph [ref=e224]: krilin boy boy
+                        - generic [ref=e226]:
+                          - img [ref=e227]
+                          - generic [ref=e230]: djsafdkasjk@gmail.com
+                      - generic [ref=e231]: Jun 22
+                    - link "MP malcom patem bigdev830@gmail.com Apr 25" [ref=e232] [cursor=pointer]:
+                      - /url: /c/grace-community-church/members/bdb3e40e-af66-43d2-81eb-348959eb9276
+                      - generic [ref=e233]: MP
+                      - generic [ref=e234]:
+                        - paragraph [ref=e235]: malcom patem
+                        - generic [ref=e237]:
+                          - img [ref=e238]
+                          - generic [ref=e241]: bigdev830@gmail.com
+                      - generic [ref=e242]: Apr 25
+                    - link "FR fizer radaad fizer@gmail.com Apr 7" [ref=e243] [cursor=pointer]:
+                      - /url: /c/grace-community-church/members/ec17acdf-bab8-492e-a1a4-054dd52e6ed4
+                      - generic [ref=e244]: FR
+                      - generic [ref=e245]:
+                        - paragraph [ref=e246]: fizer radaad
+                        - generic [ref=e248]:
+                          - img [ref=e249]
+                          - generic [ref=e252]: fizer@gmail.com
+                      - generic [ref=e253]: Apr 7
+                    - link "MP malcom patem mulangogeraldinecho@gmail.com Apr 7" [ref=e254] [cursor=pointer]:
+                      - /url: /c/grace-community-church/members/5677a762-c127-4c31-80d4-3597a0378b5a
+                      - generic [ref=e255]: MP
+                      - generic [ref=e256]:
+                        - paragraph [ref=e257]: malcom patem
+                        - generic [ref=e259]:
+                          - img [ref=e260]
+                          - generic [ref=e263]: mulangogeraldinecho@gmail.com
+                      - generic [ref=e264]: Apr 7
+                    - link "MP malcom patem mulangogeraldinecho@gmail.com Apr 6" [ref=e265] [cursor=pointer]:
+                      - /url: /c/grace-community-church/members/226c3652-f02c-4c9b-8bbc-eca2b683845e
+                      - generic [ref=e266]: MP
+                      - generic [ref=e267]:
+                        - paragraph [ref=e268]: malcom patem
+                        - generic [ref=e270]:
+                          - img [ref=e271]
+                          - generic [ref=e274]: mulangogeraldinecho@gmail.com
+                      - generic [ref=e275]: Apr 6
+                    - link "MP malcom patem mulangogeraldinecho@gmail.com Apr 6" [ref=e276] [cursor=pointer]:
+                      - /url: /c/grace-community-church/members/242dc9c0-5fe7-42ed-99b0-749c761dbfb8
+                      - generic [ref=e277]: MP
+                      - generic [ref=e278]:
+                        - paragraph [ref=e279]: malcom patem
+                        - generic [ref=e281]:
+                          - img [ref=e282]
+                          - generic [ref=e285]: mulangogeraldinecho@gmail.com
+                      - generic [ref=e286]: Apr 6
+              - generic [ref=e287]:
+                - generic [ref=e288]:
+                  - heading "Upcoming Events" [level=2] [ref=e289]
+                  - paragraph [ref=e290]: Next scheduled activities and ministry calendar moments.
+                - generic [ref=e291]:
+                  - link "Open Events" [ref=e293] [cursor=pointer]:
+                    - /url: /c/grace-community-church/events
+                  - generic [ref=e294]:
+                    - img [ref=e296]
+                    - paragraph [ref=e298]: No upcoming events
+                    - paragraph [ref=e299]: Schedule events to see them here
+                    - link "Create Event" [ref=e300] [cursor=pointer]:
+                      - /url: /c/grace-community-church/events
+            - generic [ref=e301]:
+              - generic [ref=e302]:
+                - heading "Recent Activity" [level=2] [ref=e303]
+                - paragraph [ref=e304]: Latest updates across member, events, treasury, and departments.
+              - generic [ref=e305]:
+                - link "Open Office Queue" [ref=e307] [cursor=pointer]:
+                  - /url: /c/grace-community-church/office
+                - generic [ref=e309]:
+                  - 'link "Treasury entry recorded Payment Method: Cash 5h ago" [ref=e310] [cursor=pointer]':
+                    - /url: /c/grace-community-church/treasury
+                    - img [ref=e312]
+                    - generic [ref=e315]:
+                      - paragraph [ref=e316]: Treasury entry recorded
+                      - paragraph [ref=e317]: "Payment Method: Cash"
+                    - generic [ref=e318]: 5h ago
+                  - link "New member added krilin boy boy 2 days ago" [ref=e319] [cursor=pointer]:
+                    - /url: /c/grace-community-church/members/aecb165a-2d5f-4830-8ae1-b3479faa99ae
+                    - img [ref=e321]
+                    - generic [ref=e324]:
+                      - paragraph [ref=e325]: New member added
+                      - paragraph [ref=e326]: krilin boy boy
+                    - generic [ref=e327]: 2 days ago
+                  - 'link "Treasury entry recorded Payment Method: Cash Apr 28" [ref=e328] [cursor=pointer]':
+                    - /url: /c/grace-community-church/treasury
+                    - img [ref=e330]
+                    - generic [ref=e333]:
+                      - paragraph [ref=e334]: Treasury entry recorded
+                      - paragraph [ref=e335]: "Payment Method: Cash"
+                    - generic [ref=e336]: Apr 28
+                  - link "New member added malcom patem Apr 25" [ref=e337] [cursor=pointer]:
+                    - /url: /c/grace-community-church/members/bdb3e40e-af66-43d2-81eb-348959eb9276
+                    - img [ref=e339]
+                    - generic [ref=e342]:
+                      - paragraph [ref=e343]: New member added
+                      - paragraph [ref=e344]: malcom patem
+                    - generic [ref=e345]: Apr 25
+                  - link "Department created media department Apr 19" [ref=e346] [cursor=pointer]:
+                    - /url: /c/grace-community-church/departments
+                    - img [ref=e348]
+                    - generic [ref=e352]:
+                      - paragraph [ref=e353]: Department created
+                      - paragraph [ref=e354]: media department
+                    - generic [ref=e355]: Apr 19
+                  - link "New member added fizer radaad Apr 7" [ref=e356] [cursor=pointer]:
+                    - /url: /c/grace-community-church/members/ec17acdf-bab8-492e-a1a4-054dd52e6ed4
+                    - img [ref=e358]
+                    - generic [ref=e361]:
+                      - paragraph [ref=e362]: New member added
+                      - paragraph [ref=e363]: fizer radaad
+                    - generic [ref=e364]: Apr 7
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e370] [cursor=pointer]:
+    - img [ref=e371]

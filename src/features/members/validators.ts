@@ -1,18 +1,28 @@
 import { z } from "zod";
+import { CHURCH_GENDER_VALUES } from "@/lib/domain/church-gender";
+import { normalizeDateOnly } from "@/lib/domain/date-only";
 
 const optionalDate = z
   .string()
   .trim()
   .optional()
   .nullable()
-  .transform((value) => {
-    if (!value) return null;
-    const parsed = Date.parse(value);
-    if (Number.isNaN(parsed)) {
-      throw new Error("Invalid date value.");
+  .transform((value, ctx) => {
+    try {
+      return normalizeDateOnly(value);
+    } catch (error) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: error instanceof Error ? error.message : "Date must be valid.",
+      });
+      return z.NEVER;
     }
-    return value;
   });
+
+const optionalChurchGender = z
+  .union([z.literal(""), z.enum(CHURCH_GENDER_VALUES)])
+  .optional()
+  .transform((v) => v || null);
 
 export const memberDirectoryFiltersSchema = z.object({
   q: z.string().trim().optional().default(""),
@@ -30,7 +40,7 @@ export const createMemberSchema = z.object({
   displayName: z.string().trim().optional().transform(v => v || null),
   email: z.union([z.literal(""), z.string().trim().email("Invalid email address.")]).optional().transform(v => v || null),
   phone: z.string().trim().optional().transform(v => v || null),
-  gender: z.union([z.literal(""), z.enum(["male", "female", "other"])]).optional().transform(v => v || null),
+  gender: optionalChurchGender,
   membershipStatus: z.enum(["active", "inactive", "visitor", "transferred"]).default("active"),
   membershipType: z.union([z.literal(""), z.enum(["regular", "adherent", "child", "youth", "senior"])]).optional().transform(v => v || null),
   memberCode: z.string().trim().max(50).optional().transform(v => v || null),

@@ -16,6 +16,7 @@ import {
   MoreHorizontal,
   Plus,
   Search,
+  Share2,
   SlidersHorizontal,
   UserRound,
   Users,
@@ -57,6 +58,7 @@ import { MobileBottomSheet } from "@/components/mobile/MobileBottomSheet";
 import { MobileCompactStatsStrip } from "@/components/mobile/MobileCompactStatsStrip";
 import { MobilePageHeader } from "@/components/mobile/MobilePageHeader";
 import { AddMemberWizard } from "./AddMemberWizard";
+import { RegistrationShareDialog } from "./onboarding/RegistrationShareDialog";
 
 interface MembersWorkspaceUnifiedProps {
   churchSlug: string;
@@ -317,14 +319,41 @@ function MembersInlineStats({ stats }: { stats: Stats }) {
   );
 }
 
+function MembersViewTabs({ churchSlug, active }: { churchSlug: string; active: "registry" | "onboarding" }) {
+  const tabs = [
+    { href: `/c/${churchSlug}/members?view=registry`, label: "Registry", id: "registry" },
+    { href: `/c/${churchSlug}/members?view=onboarding`, label: "Onboarding", id: "onboarding" },
+  ];
+
+  return (
+    <div className="flex items-center gap-1 rounded-xl border border-border bg-background p-1 shadow-sm w-fit">
+      {tabs.map(tab => (
+        <Link
+          key={tab.id}
+          href={tab.href}
+          className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+            active === tab.id
+              ? "bg-primary text-primary-foreground"
+              : "text-muted-foreground hover:bg-muted hover:text-foreground"
+          }`}
+        >
+          {tab.label}
+        </Link>
+      ))}
+    </div>
+  );
+}
+
 function MembersWorkspaceHeader({
   churchSlug,
   stats,
   onNewMember,
+  onShare,
 }: {
   churchSlug: string;
   stats: Stats;
   onNewMember: () => void;
+  onShare: () => void;
 }) {
   const { t } = useI18n();
 
@@ -334,6 +363,15 @@ function MembersWorkspaceHeader({
         <MembersInlineStats stats={stats} />
 
         <div className="flex shrink-0 flex-wrap items-center gap-3">
+          <Button
+            type="button"
+            onClick={onShare}
+            variant="outline"
+            className="h-11 gap-2 rounded-lg bg-background px-5"
+          >
+            <Share2 className="size-4" aria-hidden="true" />
+            Share registration
+          </Button>
           <Button
             type="button"
             onClick={onNewMember}
@@ -1191,6 +1229,7 @@ export function MembersWorkspaceUnified({
   const searchParams = useSearchParams();
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(data.members[0]?.id ?? null);
   const [addMemberWizardOpen, setAddMemberWizardOpen] = useState(false);
+  const [shareDialogOpen, setShareDialogOpen] = useState(false);
   const [pendingCreatedMemberId, setPendingCreatedMemberId] = useState<string | null>(null);
   const [memberDetailOpen, setMemberDetailOpen] = useState(false);
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
@@ -1298,7 +1337,10 @@ export function MembersWorkspaceUnified({
           churchSlug={churchSlug}
           stats={data.stats}
           onNewMember={() => setAddMemberWizardOpen(true)}
+          onShare={() => setShareDialogOpen(true)}
         />
+
+        <MembersViewTabs churchSlug={churchSlug} active="registry" />
 
         <MembersToolbar
           churchSlug={churchSlug}
@@ -1412,6 +1454,12 @@ export function MembersWorkspaceUnified({
           selectedMember={selectedMember}
         />
       </MobileBottomSheet>
+
+      <RegistrationShareDialog
+        open={shareDialogOpen}
+        onOpenChange={setShareDialogOpen}
+        churchSlug={churchSlug}
+      />
     </div>
   );
 }

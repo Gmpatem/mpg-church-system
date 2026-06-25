@@ -1,8 +1,6 @@
 import Link from "next/link";
-import {
-  WorkspaceHero,
-  WorkspaceSectionCard,
-} from "@/components/workspace";
+import { WorkspaceSectionCard } from "@/components/workspace";
+import { ChurchWorkspaceHeader } from "@/components/church-workspace";
 import { LeadershipOverviewTab } from "./components/LeadershipOverviewTab";
 import { LeadershipRequestsTab } from "./components/LeadershipRequestsTab";
 import { ActiveDepartmentLeadersTab } from "./components/ActiveDepartmentLeadersTab";
@@ -40,8 +38,8 @@ function renderTabNav(churchSlug: string, activeTab: LeadershipTabKey) {
             href={buildTabHref(churchSlug, tab.key)}
             className={
               isActive
-                ? "mobile-touch-feedback shrink-0 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-sm font-medium text-blue-700 transition"
-                : "mobile-touch-feedback shrink-0 rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
+                ? "mobile-touch-feedback shrink-0 rounded-full border border-primary/20 bg-primary/10 px-4 py-2 text-sm font-medium text-primary transition"
+                : "mobile-touch-feedback shrink-0 rounded-full border border-border bg-background px-4 py-2 text-sm font-medium text-muted-foreground transition hover:bg-muted hover:text-foreground"
             }
           >
             {tab.label}
@@ -60,8 +58,7 @@ export function LeadershipWorkspace({
 }: LeadershipWorkspaceProps) {
   return (
     <div className="space-y-5 md:space-y-6">
-      <WorkspaceHero
-        size="compact"
+      <ChurchWorkspaceHeader
         eyebrow="Leadership"
         title={`Leadership for ${churchName ?? "this church"}`}
         description="Review department leadership requests, approve leaders, and manage the active leadership structure across church departments."

@@ -15,6 +15,7 @@ import { createMemberAction } from "@/features/members/actions";
 import { createMemberSchema } from "@/features/members/validators";
 import { saveMemberDraft } from "@/lib/offline/form-bridge";
 import { toast } from "@/hooks/use-toast";
+import { CHURCH_GENDER_OPTIONS } from "@/lib/domain/church-gender";
 import { cn } from "@/lib/utils/cn";
 import {
   AlertDialog,
@@ -641,11 +642,7 @@ export function AddMemberWizard({
         </div>
         {selectInput(
           "gender",
-          [
-            { value: "male", label: "Male" },
-            { value: "female", label: "Female" },
-            { value: "other", label: "Other" },
-          ],
+          [...CHURCH_GENDER_OPTIONS],
           "Select gender"
         )}
         {textInput("dateOfBirth", { type: "date" })}
@@ -812,11 +809,7 @@ export function AddMemberWizard({
       { value: "youth", label: "Youth" },
       { value: "senior", label: "Senior" },
     ]);
-    const gender = labelForOption(values.gender, [
-      { value: "male", label: "Male" },
-      { value: "female", label: "Female" },
-      { value: "other", label: "Other" },
-    ]);
+    const gender = labelForOption(values.gender, [...CHURCH_GENDER_OPTIONS]);
     const householdRole = labelForOption(values.householdRole, [
       { value: "head", label: "Head" },
       { value: "spouse", label: "Spouse" },

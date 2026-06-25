@@ -90,6 +90,32 @@
   }
 }
 
+@layer components {
+  .church-page-container {
+    container-type: inline-size;
+  }
+
+  .church-content-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .church-right-rail {
+    align-self: start;
+  }
+
+  @container (min-width: 1120px) {
+    .church-content-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(340px, 380px);
+    }
+  }
+
+  @container (min-width: 1440px) {
+    .church-content-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(360px, 400px);
+    }
+  }
+}
+
 @layer utilities {
   @keyframes mpg-fade-up {
     0% {

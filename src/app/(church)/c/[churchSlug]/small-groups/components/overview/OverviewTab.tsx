@@ -49,6 +49,8 @@ function KpiCard({
 }
 
 function AttendanceTrendPanel({ data }: { data: SmallGroupsWorkspaceData }) {
+  const hasTrend = data.attendanceTrend.length > 0;
+
   return (
     <section className="rounded-2xl border border-border bg-background p-5 shadow-sm">
       <div className="flex items-center justify-between gap-3">
@@ -59,32 +61,41 @@ function AttendanceTrendPanel({ data }: { data: SmallGroupsWorkspaceData }) {
         </div>
       </div>
       <div className="mt-5 h-[300px] min-w-0">
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={data.attendanceTrend} margin={{ top: 10, right: 8, bottom: 8, left: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
-            <XAxis
-              dataKey="label"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
-            />
-            <YAxis
-              width={34}
-              axisLine={false}
-              tickLine={false}
-              tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
-            />
-            <Line
-              type="monotone"
-              dataKey="value"
-              stroke="hsl(var(--primary))"
-              strokeWidth={2}
-              dot={{ r: 4, strokeWidth: 2, fill: "hsl(var(--background))" }}
-              activeDot={{ r: 5 }}
-              isAnimationActive={false}
-            />
-          </LineChart>
-        </ResponsiveContainer>
+        {hasTrend ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={data.attendanceTrend} margin={{ top: 10, right: 8, bottom: 8, left: 0 }}>
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--border))" />
+              <XAxis
+                dataKey="label"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+              />
+              <YAxis
+                width={34}
+                axisLine={false}
+                tickLine={false}
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+              />
+              <Line
+                type="monotone"
+                dataKey="value"
+                stroke="hsl(var(--primary))"
+                strokeWidth={2}
+                dot={{ r: 4, strokeWidth: 2, fill: "hsl(var(--background))" }}
+                activeDot={{ r: 5 }}
+                isAnimationActive={false}
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div className="flex h-full flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/40 px-6 text-center">
+            <p className="text-base font-semibold text-foreground">No attendance data yet</p>
+            <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
+              Attendance trends will appear after real small group meetings are recorded.
+            </p>
+          </div>
+        )}
       </div>
     </section>
   );
@@ -106,29 +117,38 @@ function UpcomingMeetingsPanel({
       </h2>
 
       <div className="mt-5 flex flex-col gap-3">
-        {meetings.map((meeting) => (
-          <button
-            key={meeting.id}
-            type="button"
-            onClick={() => onSelectMeeting(meeting.id)}
-            className="grid min-h-[70px] grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-lg bg-muted/55 px-4 py-3 text-left transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <span className="min-w-0">
-              <span className="block truncate text-base font-semibold text-foreground">
-                {meeting.groupName}
+        {meetings.length > 0 ? (
+          meetings.map((meeting) => (
+            <button
+              key={meeting.id}
+              type="button"
+              onClick={() => onSelectMeeting(meeting.id)}
+              className="grid min-h-[70px] grid-cols-[minmax(0,1fr)_auto] items-center gap-4 rounded-lg bg-muted/55 px-4 py-3 text-left transition hover:bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <span className="min-w-0">
+                <span className="block truncate text-base font-semibold text-foreground">
+                  {meeting.groupName}
+                </span>
+                <span className="mt-1 block truncate text-sm text-primary">{meeting.topic}</span>
               </span>
-              <span className="mt-1 block truncate text-sm text-primary">{meeting.topic}</span>
-            </span>
-            <span className="text-right">
-              <span className="block whitespace-nowrap text-sm font-medium text-foreground">
-                {formatDate(meeting.startsAt, { year: "numeric", month: "2-digit", day: "2-digit" })}
+              <span className="text-right">
+                <span className="block whitespace-nowrap text-sm font-medium text-foreground">
+                  {formatDate(meeting.startsAt, { year: "numeric", month: "2-digit", day: "2-digit" })}
+                </span>
+                <span className="mt-1 block truncate text-sm text-muted-foreground">
+                  {meeting.conductor?.name ?? "Unassigned"}
+                </span>
               </span>
-              <span className="mt-1 block truncate text-sm text-muted-foreground">
-                {meeting.conductor?.name ?? "Unassigned"}
-              </span>
-            </span>
-          </button>
-        ))}
+            </button>
+          ))
+        ) : (
+          <div className="flex min-h-[300px] flex-col items-center justify-center rounded-lg border border-dashed border-border bg-muted/40 px-6 text-center">
+            <p className="text-base font-semibold text-foreground">No upcoming meetings</p>
+            <p className="mt-2 max-w-sm text-sm leading-6 text-muted-foreground">
+              Scheduled small group meetings will appear here once real records exist.
+            </p>
+          </div>
+        )}
       </div>
     </section>
   );

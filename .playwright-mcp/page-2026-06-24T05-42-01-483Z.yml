@@ -1,0 +1,231 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - status [ref=e3]
+    - complementary [ref=e4]:
+      - generic [ref=e5]:
+        - generic [ref=e6]:
+          - link "Church Workspace ghrace comunity church" [ref=e7] [cursor=pointer]:
+            - /url: /c/grace-community-church
+            - img [ref=e9]
+            - generic [ref=e13]:
+              - generic [ref=e14]: Church Workspace
+              - generic [ref=e15]: ghrace comunity church
+          - generic [ref=e16]: Church Admin
+        - navigation "Church workspace" [ref=e17]:
+          - generic [ref=e18]:
+            - generic [ref=e19]:
+              - paragraph [ref=e20]: Overview
+              - link "Dashboard" [ref=e22] [cursor=pointer]:
+                - /url: /c/grace-community-church
+                - img [ref=e23]
+                - generic [ref=e28]: Dashboard
+            - generic [ref=e29]:
+              - paragraph [ref=e30]: People
+              - generic [ref=e31]:
+                - link "Members" [ref=e32] [cursor=pointer]:
+                  - /url: /c/grace-community-church/members
+                  - img [ref=e33]
+                  - generic [ref=e38]: Members
+                - link "Households" [ref=e39] [cursor=pointer]:
+                  - /url: /c/grace-community-church/households
+                  - img [ref=e40]
+                  - generic [ref=e43]: Households
+            - generic [ref=e44]:
+              - paragraph [ref=e45]: Ministries
+              - generic [ref=e46]:
+                - link "Departments" [ref=e47] [cursor=pointer]:
+                  - /url: /c/grace-community-church/departments
+                  - img [ref=e48]
+                  - generic [ref=e52]: Departments
+                - link "Leadership" [ref=e53] [cursor=pointer]:
+                  - /url: /c/grace-community-church/leadership
+                  - img [ref=e54]
+                  - generic [ref=e66]: Leadership
+                - link "Small Groups" [ref=e67] [cursor=pointer]:
+                  - /url: /c/grace-community-church/small-groups
+                  - img [ref=e68]
+                  - generic [ref=e72]: Small Groups
+                - link "Events" [ref=e73] [cursor=pointer]:
+                  - /url: /c/grace-community-church/events
+                  - img [ref=e74]
+                  - generic [ref=e76]: Events
+            - generic [ref=e77]:
+              - paragraph [ref=e78]: Treasury
+              - link "Treasury" [ref=e80] [cursor=pointer]:
+                - /url: /c/grace-community-church/treasury
+                - img [ref=e81]
+                - generic [ref=e84]: Treasury
+            - generic [ref=e85]:
+              - paragraph [ref=e86]: Operations
+              - generic [ref=e87]:
+                - link "Church Office" [ref=e88] [cursor=pointer]:
+                  - /url: /c/grace-community-church/office
+                  - img [ref=e89]
+                  - generic [ref=e93]: Church Office
+                - link "Announcements" [ref=e94] [cursor=pointer]:
+                  - /url: /c/grace-community-church/announcements
+                  - img [ref=e95]
+                  - generic [ref=e98]: Announcements
+                - link "Approvals" [ref=e99] [cursor=pointer]:
+                  - /url: /c/grace-community-church/approvals
+                  - img [ref=e100]
+                  - generic [ref=e104]: Approvals
+                - link "Reports" [ref=e105] [cursor=pointer]:
+                  - /url: /c/grace-community-church/reports
+                  - img [ref=e106]
+                  - generic [ref=e108]: Reports
+            - generic [ref=e109]:
+              - paragraph [ref=e110]: Administration
+              - generic [ref=e111]:
+                - link "Invites & Access" [ref=e112] [cursor=pointer]:
+                  - /url: /c/grace-community-church/access-control
+                  - img [ref=e113]
+                  - generic [ref=e115]: Invites & Access
+                - link "Settings" [ref=e116] [cursor=pointer]:
+                  - /url: /c/grace-community-church/settings
+                  - img [ref=e117]
+                  - generic [ref=e120]: Settings
+        - generic [ref=e122]:
+          - generic [ref=e123]:
+            - generic [ref=e125]: BD
+            - generic [ref=e126]:
+              - paragraph [ref=e127]: big dev
+              - paragraph [ref=e128]: bigdev830@gmail.com
+          - button "Logout" [ref=e129] [cursor=pointer]:
+            - img [ref=e130]
+            - text: Logout
+    - generic [ref=e133]:
+      - banner [ref=e134]:
+        - generic [ref=e135]:
+          - generic [ref=e137]:
+            - paragraph [ref=e138]: Reports
+            - paragraph [ref=e139]: ghrace comunity church
+          - generic [ref=e140]:
+            - generic [ref=e142]:
+              - img [ref=e143]
+              - generic [ref=e147]: Loading…
+            - generic [ref=e148]: Church Admin
+            - generic [ref=e149]:
+              - generic [ref=e150]: EN
+              - generic [ref=e151]: FR
+            - button "Notifications" [ref=e152] [cursor=pointer]:
+              - img [ref=e153]
+            - button "Profile" [ref=e156] [cursor=pointer]:
+              - generic [ref=e158]: BD
+      - main [ref=e159]:
+        - generic [ref=e161]:
+          - generic [ref=e163]:
+            - generic [ref=e164]:
+              - paragraph [ref=e165]: Church Reports
+              - heading "Church Reports" [level=1] [ref=e166]
+              - paragraph [ref=e167]: Unified reporting across treasury, members, departments, and events.
+            - generic [ref=e168]:
+              - button "Export PDF" [ref=e169] [cursor=pointer]:
+                - img [ref=e170]
+                - text: Export PDF
+              - button "Export Excel" [ref=e173] [cursor=pointer]:
+                - img [ref=e174]
+                - text: Export Excel
+              - button "Print Summary" [ref=e177] [cursor=pointer]:
+                - img [ref=e178]
+                - text: Print Summary
+              - button "Export Options" [ref=e182] [cursor=pointer]:
+                - img [ref=e183]
+                - text: Export Options
+                - img [ref=e184]
+          - generic [ref=e186]:
+            - generic [ref=e189]:
+              - paragraph [ref=e190]: Members
+              - paragraph [ref=e191]: "6"
+              - paragraph [ref=e192]: All-time records
+            - generic [ref=e195]:
+              - paragraph [ref=e196]: Active Members
+              - paragraph [ref=e197]: "5"
+              - paragraph [ref=e198]: Current status = active
+            - generic [ref=e201]:
+              - paragraph [ref=e202]: Departments
+              - paragraph [ref=e203]: "1"
+              - paragraph [ref=e204]: Active departments
+            - generic [ref=e207]:
+              - paragraph [ref=e208]: Events
+              - paragraph [ref=e209]: "0"
+              - paragraph [ref=e210]: All time to Jun 24, 2026
+            - generic [ref=e213]:
+              - paragraph [ref=e214]: Net Movement
+              - paragraph [ref=e215]: 127,999.98
+              - paragraph [ref=e216]: Inflow minus outflow
+          - generic [ref=e217]:
+            - generic [ref=e218]:
+              - link "Overview" [ref=e219] [cursor=pointer]:
+                - /url: /c/grace-community-church/reports?tab=overview
+              - link "Finance" [ref=e220] [cursor=pointer]:
+                - /url: /c/grace-community-church/reports?tab=finance
+              - link "Members" [ref=e221] [cursor=pointer]:
+                - /url: /c/grace-community-church/reports?tab=members
+              - link "Events" [ref=e222] [cursor=pointer]:
+                - /url: /c/grace-community-church/reports?tab=events
+            - generic [ref=e223]:
+              - generic [ref=e224]:
+                - textbox [ref=e225]
+                - generic [ref=e226]: →
+                - textbox [ref=e227]
+              - generic [ref=e228]:
+                - button "Apply" [ref=e229] [cursor=pointer]
+                - link "Reset" [ref=e230] [cursor=pointer]:
+                  - /url: /c/grace-community-church/reports?tab=overview
+          - generic [ref=e232]:
+            - generic [ref=e233]:
+              - generic [ref=e235]:
+                - heading "Treasury Trend" [level=2] [ref=e236]
+                - paragraph [ref=e237]: Main movement view for inflow and outflow across the selected reporting window.
+              - generic [ref=e241]:
+                - generic [ref=e242]:
+                  - heading "Operational Breakdown" [level=2] [ref=e243]
+                  - paragraph [ref=e244]: Current membership and event status mix for quick leadership scan.
+                - table [ref=e247]:
+                  - rowgroup [ref=e248]:
+                    - row "Domain Status Count" [ref=e249]:
+                      - columnheader "Domain" [ref=e250]
+                      - columnheader "Status" [ref=e251]
+                      - columnheader "Count" [ref=e252]
+                  - rowgroup [ref=e253]:
+                    - row "Membership active 5" [ref=e254]:
+                      - cell "Membership" [ref=e255]
+                      - cell "active" [ref=e256]
+                      - cell "5" [ref=e257]
+                    - row "Membership visitor 1" [ref=e258]:
+                      - cell "Membership" [ref=e259]
+                      - cell "visitor" [ref=e260]
+                      - cell "1" [ref=e261]
+            - generic [ref=e262]:
+              - generic [ref=e263]:
+                - generic [ref=e264]:
+                  - heading "Top Departments" [level=2] [ref=e265]
+                  - paragraph [ref=e266]: Strongest visible ministry footprint in the selected range.
+                - table [ref=e269]:
+                  - rowgroup [ref=e270]:
+                    - row "Department Value" [ref=e271]:
+                      - columnheader "Department" [ref=e272]
+                      - columnheader "Value" [ref=e273]
+                  - rowgroup [ref=e274]:
+                    - row "media department 1" [ref=e275]:
+                      - cell "media department" [ref=e276]
+                      - cell "1" [ref=e277]
+              - generic [ref=e278]:
+                - generic [ref=e279]:
+                  - heading "Insights" [level=2] [ref=e280]
+                  - paragraph [ref=e281]: Leadership summary notes generated for the same reporting period.
+                - generic [ref=e283]:
+                  - generic [ref=e284]:
+                    - paragraph [ref=e285]: Leadership snapshot
+                    - paragraph [ref=e286]: 5 active members, 1 active departments, and 0 events in the selected reporting window.
+                  - generic [ref=e287]:
+                    - paragraph [ref=e288]: Treasury posture
+                    - paragraph [ref=e289]: Inflow 134999.98 versus outflow 7000.00 for a net movement of 127,999.98.
+                  - generic [ref=e290]:
+                    - paragraph [ref=e291]: Top ministry footprint
+                    - paragraph [ref=e292]: media department currently leads the workspace mix with 1 assigned members in view.
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e298] [cursor=pointer]:
+    - img [ref=e299]

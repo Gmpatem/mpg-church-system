@@ -6,34 +6,13 @@ import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/features/access/types";
 import { CHURCH_MANAGEMENT_ROLE_CODES } from "@/lib/domain/church-access";
 import { getString } from "@/lib/domain/validation";
+import { createHouseholdRecord } from "./services/create-household-record";
+import { linkMemberToHousehold } from "./services/link-member-household";
+import { setHouseholdHead } from "./services/set-household-head";
 
 type CreateHouseholdActionState =
   | { ok: true; message?: string; householdId?: string; error?: undefined }
   | { ok: false; error: string; message?: undefined; householdId?: undefined };
-
-async function ensureHouseholdBelongsToChurch(supabase: any, churchId: string, householdId: string) {
-  const { data, error } = await supabase
-    .from("households")
-    .select("id")
-    .eq("church_id", churchId)
-    .eq("id", householdId)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-  return !!data;
-}
-
-async function ensureMemberBelongsToChurch(supabase: any, churchId: string, memberId: string) {
-  const { data, error } = await supabase
-    .from("members")
-    .select("id")
-    .eq("church_id", churchId)
-    .eq("id", memberId)
-    .maybeSingle();
-
-  if (error) throw new Error(error.message);
-  return !!data;
-}
 
 export async function createHouseholdAction(formData: FormData): Promise<void> {
   const result = await createHouseholdActionImpl(null, formData);
@@ -69,24 +48,20 @@ async function createHouseholdActionImpl(
 
   const supabase = await createClient();
 
-  const { data, error } = await supabase
-    .from("households")
-    .insert({
-      church_id: ctx.churchId,
-      household_name: householdName,
-      city: city || null,
-      country: country || null,
-      phone: phone || null,
-      email: email || null,
-      address: address || null,
-      notes: notes || null,
-      created_by_user_id: ctx.userId,
-    })
-    .select("id")
-    .single();
+  const result = await createHouseholdRecord(supabase, {
+    churchId: ctx.churchId,
+    actorUserId: ctx.userId,
+    householdName,
+    city,
+    country,
+    phone,
+    email,
+    address,
+    notes,
+  });
 
-  if (error) {
-    return { ok: false, error: error.message };
+  if (!result.ok) {
+    return { ok: false, error: result.error };
   }
 
   revalidatePath(`/c/${churchSlug}/households`);
@@ -95,7 +70,7 @@ async function createHouseholdActionImpl(
   return {
     ok: true,
     message: "Household created successfully.",
-    householdId: data?.id,
+    householdId: result.householdId,
   };
 }
 
@@ -181,28 +156,15 @@ async function assignMemberToHouseholdActionImpl(
     return { ok: false, error: "Household and member are required." };
   }
 
-  const validHousehold = await ensureHouseholdBelongsToChurch(supabase, ctx.churchId, householdId);
-  if (!validHousehold) {
-    return { ok: false, error: "Household does not belong to this church." };
-  }
+  const result = await linkMemberToHousehold(supabase, {
+    churchId: ctx.churchId,
+    householdId,
+    memberId,
+    householdRole,
+  });
 
-  const validMember = await ensureMemberBelongsToChurch(supabase, ctx.churchId, memberId);
-  if (!validMember) {
-    return { ok: false, error: "Member does not belong to this church." };
-  }
-
-  const { error } = await supabase
-    .from("members")
-    .update({
-      household_id: householdId,
-      household_role: householdRole,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("church_id", ctx.churchId)
-    .eq("id", memberId);
-
-  if (error) {
-    return { ok: false, error: error.message };
+  if (!result.ok) {
+    return { ok: false, error: result.error };
   }
 
   revalidatePath(`/c/${churchSlug}/households`);
@@ -235,54 +197,14 @@ async function setHouseholdHeadActionImpl(
     return { ok: false, error: "Household and member are required." };
   }
 
-  const validHousehold = await ensureHouseholdBelongsToChurch(supabase, ctx.churchId, householdId);
-  if (!validHousehold) {
-    return { ok: false, error: "Household does not belong to this church." };
-  }
+  const result = await setHouseholdHead(supabase, {
+    churchId: ctx.churchId,
+    householdId,
+    memberId,
+  });
 
-  const { data: member, error: memberError } = await supabase
-    .from("members")
-    .select("id, household_id")
-    .eq("church_id", ctx.churchId)
-    .eq("id", memberId)
-    .maybeSingle();
-
-  if (memberError) {
-    return { ok: false, error: memberError.message };
-  }
-
-  if (!member) {
-    return { ok: false, error: "Member not found." };
-  }
-
-  if (member.household_id !== householdId) {
-    return { ok: false, error: "Member must belong to the household before becoming head." };
-  }
-
-  const { error: householdError } = await supabase
-    .from("households")
-    .update({
-      head_of_household_id: memberId,
-      updated_at: new Date().toISOString(),
-    })
-    .eq("church_id", ctx.churchId)
-    .eq("id", householdId);
-
-  if (householdError) {
-    return { ok: false, error: householdError.message };
-  }
-
-  const { error: memberUpdateError } = await supabase
-    .from("members")
-    .update({
-      household_role: "head",
-      updated_at: new Date().toISOString(),
-    })
-    .eq("church_id", ctx.churchId)
-    .eq("id", memberId);
-
-  if (memberUpdateError) {
-    return { ok: false, error: memberUpdateError.message };
+  if (!result.ok) {
+    return { ok: false, error: result.error };
   }
 
   revalidatePath(`/c/${churchSlug}/households`);

@@ -5,12 +5,10 @@ import { createClient } from "@/lib/supabase/server";
 import { requireChurchRole } from "@/features/access/queries";
 import type { ActionState } from "@/features/access/types";
 import { CHURCH_MANAGEMENT_ROLE_CODES } from "@/lib/domain/church-access";
+import { normalizeDateOnly } from "@/lib/domain/date-only";
 import { getString } from "@/lib/domain/validation";
-import { parseCreateMemberInput, parseUpdateMemberInput } from "./validators";
-
-type CreateMemberState =
-  | { ok: true; message?: string; memberId: string; error?: undefined }
-  | { ok: false; error: string; message?: undefined; memberId?: undefined };
+import { parseUpdateMemberInput } from "./validators";
+import { createMemberRecord } from "./services/create-member-record";
 
 function buildMemberCode(churchSlug: string) {
   const prefix = churchSlug.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 6) || "CHURCH";
@@ -18,12 +16,12 @@ function buildMemberCode(churchSlug: string) {
   return prefix + "-" + suffix;
 }
 
+type CreateMemberState =
+  | { ok: true; message?: string; memberId: string; error?: undefined }
+  | { ok: false; error: string; message?: undefined; memberId?: undefined };
+
 async function ensureUniqueMemberCode(supabase: any, memberCode: string, excludeMemberId?: string) {
-  let query = supabase
-    .from("members")
-    .select("id")
-    .eq("member_code", memberCode)
-    .limit(1);
+  let query = supabase.from("members").select("id").eq("member_code", memberCode).limit(1);
 
   if (excludeMemberId) {
     query = query.neq("id", excludeMemberId);
@@ -72,8 +70,10 @@ export async function createMemberAction(
   const supabase = await createClient();
 
   try {
-    const parsed = parseCreateMemberInput({
+    const result = await createMemberRecord(supabase, {
       churchId: ctx.churchId,
+      churchSlug: ctx.churchSlug,
+      actorUserId: ctx.userId,
       firstName: getString(formData, "firstName"),
       lastName: getString(formData, "lastName"),
       displayName: getString(formData, "displayName"),
@@ -102,84 +102,8 @@ export async function createMemberAction(
       departmentId: getString(formData, "departmentId"),
     });
 
-    const memberCode = parsed.memberCode || buildMemberCode(ctx.churchSlug);
-
-    const unique = await ensureUniqueMemberCode(supabase, memberCode);
-    if (!unique) {
-      return { ok: false, error: "Member code is already in use." };
-    }
-
-    const validHousehold = await ensureHouseholdBelongsToChurch(supabase, ctx.churchId, parsed.householdId ?? null);
-    if (!validHousehold) {
-      return { ok: false, error: "Selected household does not belong to this church." };
-    }
-
-    const selectedDepartment = await ensureDepartmentBelongsToChurch(supabase, ctx.churchId, parsed.departmentId ?? null);
-    if (parsed.departmentId && !selectedDepartment) {
-      return { ok: false, error: "Selected department does not belong to this church." };
-    }
-
-    const displayName =
-      parsed.displayName ||
-      [parsed.firstName, parsed.lastName].filter(Boolean).join(" ");
-
-    const { data: createdMember, error } = await supabase
-      .from("members")
-      .insert({
-        church_id: ctx.churchId,
-        first_name: parsed.firstName,
-        last_name: parsed.lastName,
-        display_name: displayName,
-        email: parsed.email,
-        phone: parsed.phone,
-        gender: parsed.gender,
-        membership_status: parsed.membershipStatus,
-        membership_type: parsed.membershipType,
-        member_code: memberCode,
-        household_id: parsed.householdId,
-        household_role: parsed.householdRole,
-        date_joined: parsed.dateJoined,
-        date_of_birth: parsed.dateOfBirth,
-        baptism_date: parsed.baptismDate,
-        transfer_in_date: parsed.transferInDate,
-        transfer_out_date: parsed.transferOutDate,
-        previous_church: parsed.previousChurch,
-        city: parsed.city,
-        country: parsed.country,
-        address: parsed.address,
-        profession: parsed.profession,
-        marital_status: parsed.maritalStatus,
-        emergency_contact_name: parsed.emergencyContactName,
-        emergency_contact_phone: parsed.emergencyContactPhone,
-        notes: parsed.notes,
-        created_by_user_id: ctx.userId,
-      })
-      .select("id")
-      .single();
-
-    if (error) {
-      return { ok: false, error: error.message };
-    }
-
-    // Only insert member_departments if a valid department was selected and resolved
-    if (
-      createdMember?.id &&
-      selectedDepartment &&
-      selectedDepartment.id &&
-      selectedDepartment.department_name
-    ) {
-      const { error: deptError } = await supabase.from("member_departments").insert({
-        member_id: createdMember.id,
-        church_id: ctx.churchId,
-        department_id: selectedDepartment.id,
-        department_name: selectedDepartment.department_name,
-        joined_date: parsed.dateJoined,
-        is_active: true,
-      });
-
-      if (deptError) {
-        return { ok: false, error: deptError.message };
-      }
+    if (!result.ok) {
+      return { ok: false, error: result.error };
     }
 
     revalidatePath(`/c/${churchSlug}/members`);
@@ -187,7 +111,7 @@ export async function createMemberAction(
     revalidatePath(`/c/${churchSlug}/reports`);
     revalidatePath(`/c/${churchSlug}/households`);
 
-    return { ok: true, message: "Member created successfully.", memberId: createdMember.id };
+    return { ok: true, message: "Member created successfully.", memberId: result.memberId };
   } catch (error) {
     return {
       ok: false,
@@ -386,7 +310,7 @@ export async function processMemberTransferAction(
   const churchSlug = getString(formData, "churchSlug");
   const memberId = getString(formData, "memberId");
   const transferType = getString(formData, "transferType");
-  const transferDate = getString(formData, "transferDate");
+  const rawTransferDate = getString(formData, "transferDate");
   const previousChurch = getString(formData, "previousChurch");
   const reason = getString(formData, "reason");
 
@@ -401,8 +325,18 @@ export async function processMemberTransferAction(
     return { ok: false, error: "Transfer type must be in or out." };
   }
 
-  if (!transferDate) {
+  if (!rawTransferDate) {
     return { ok: false, error: "Transfer date is required." };
+  }
+
+  let transferDate: string;
+  try {
+    transferDate = normalizeDateOnly(rawTransferDate, "Transfer date") ?? "";
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Transfer date must be valid.",
+    };
   }
 
   if (!reason) {

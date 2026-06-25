@@ -62,7 +62,6 @@ export function ChurchMobileBottomNav({
 
   const secondaryItems = useMemo<SecondaryLink[]>(() => {
     const items: SecondaryLink[] = [
-      { label: t.navigation.calendar, href: `${base}/calendar`, icon: CalendarDays },
       { label: t.navigation.reports, href: `${base}/reports`, icon: BarChart3 },
       { label: t.navigation.approvals, href: `${base}/approvals`, icon: ClipboardCheck, badge: pendingApprovalCount },
       { label: t.navigation.settings, href: `${base}/settings`, icon: Settings },
