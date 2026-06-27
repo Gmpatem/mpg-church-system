@@ -2,6 +2,43 @@ import { z } from "zod";
 import { CHURCH_GENDER_VALUES } from "@/lib/domain/church-gender";
 import { normalizeDateOnly } from "@/lib/domain/date-only";
 
+const nullishToEmptyString = (value: unknown) => {
+  if (value === null || value === undefined) {
+    return "";
+  }
+
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  return value;
+};
+
+export const optionalFormStringSchema = z.preprocess(nullishToEmptyString, z.string());
+
+export const optionalEmailSchema = z.preprocess(
+  nullishToEmptyString,
+  z.union([z.literal(""), z.string().email("Invalid email address.")])
+);
+
+const membershipTypeEnum = z.enum(["regular", "adherent", "child", "youth", "senior"]);
+
+export const optionalMembershipTypeSchema = z.preprocess(
+  nullishToEmptyString,
+  z.union([z.literal(""), membershipTypeEnum])
+);
+
+const optionalNullableFormStringSchema = optionalFormStringSchema.transform((v) => v || null);
+const optionalNullableEmailSchema = optionalEmailSchema.transform((v) => v || null);
+const optionalNullableMembershipTypeSchema = optionalMembershipTypeSchema.transform((v) => v || null);
+
+const optionalHouseholdRoleSchema = z
+  .preprocess(
+    nullishToEmptyString,
+    z.union([z.literal(""), z.enum(["head", "spouse", "child", "relative", "guardian", "other"])])
+  )
+  .transform((v) => v || null);
+
 const optionalDate = z
   .string()
   .trim()
@@ -20,8 +57,7 @@ const optionalDate = z
   });
 
 const optionalChurchGender = z
-  .union([z.literal(""), z.enum(CHURCH_GENDER_VALUES)])
-  .optional()
+  .preprocess(nullishToEmptyString, z.union([z.literal(""), z.enum(CHURCH_GENDER_VALUES)]))
   .transform((v) => v || null);
 
 export const formBooleanSchema = z.preprocess((value) => {
@@ -70,9 +106,9 @@ export const registrationHouseholdMemberSchema = z.object({
   relationship: z.enum(["spouse", "child", "relative", "guardian", "other"]),
   dateOfBirth: optionalDate,
   gender: optionalChurchGender,
-  email: z.union([z.literal(""), z.string().trim().email("Invalid email address.")]).optional().transform(v => v || null),
-  phone: z.string().trim().optional().transform(v => v || null),
-  membershipStatusSuggestion: z.string().trim().optional().transform(v => v || null),
+  email: optionalNullableEmailSchema,
+  phone: optionalNullableFormStringSchema,
+  membershipStatusSuggestion: optionalNullableFormStringSchema,
 });
 
 export const publicRegistrationSchema = z.object({
@@ -80,46 +116,49 @@ export const publicRegistrationSchema = z.object({
   key: z.string().trim().min(1, "Registration key is required."),
   firstName: z.string().trim().min(1, "First name is required."),
   lastName: z.string().trim().min(1, "Last name is required."),
-  displayName: z.string().trim().optional().transform(v => v || null),
-  email: z.union([z.literal(""), z.string().trim().email("Invalid email address.")]).optional().transform(v => v || null),
-  phone: z.string().trim().optional().transform(v => v || null),
+  displayName: optionalNullableFormStringSchema,
+  email: optionalNullableEmailSchema,
+  phone: optionalNullableFormStringSchema,
   dateOfBirth: optionalDate,
   gender: optionalChurchGender,
-  maritalStatus: z.union([z.literal(""), z.enum(["single", "married", "widowed", "divorced", "separated"])]).optional().transform(v => v || null),
-  profession: z.string().trim().optional().transform(v => v || null),
-  address: z.string().trim().optional().transform(v => v || null),
-  city: z.string().trim().optional().transform(v => v || null),
-  country: z.string().trim().optional().transform(v => v || null),
-  preferredContactMethod: z.union([z.literal(""), z.enum(["email", "phone", "any"])]).optional().transform(v => v || null),
-  emergencyContactName: z.string().trim().optional().transform(v => v || null),
-  emergencyContactPhone: z.string().trim().optional().transform(v => v || null),
-  howHeardAboutChurch: z.string().trim().optional().transform(v => v || null),
-  christianStatus: z.string().trim().optional().transform(v => v || null),
+  maritalStatus: z.preprocess(nullishToEmptyString, z.union([z.literal(""), z.enum(["single", "married", "widowed", "divorced", "separated"])])).transform(v => v || null),
+  profession: optionalNullableFormStringSchema,
+  address: optionalNullableFormStringSchema,
+  city: optionalNullableFormStringSchema,
+  country: optionalNullableFormStringSchema,
+  preferredContactMethod: z.preprocess(nullishToEmptyString, z.union([z.literal(""), z.enum(["email", "phone", "any"])])).transform(v => v || null),
+  emergencyContactName: optionalNullableFormStringSchema,
+  emergencyContactPhone: optionalNullableFormStringSchema,
+  howHeardAboutChurch: optionalNullableFormStringSchema,
+  christianStatus: optionalNullableFormStringSchema,
   isBaptized: z.boolean().optional().default(false),
   baptismDate: optionalDate,
-  previousChurch: z.string().trim().optional().transform(v => v || null),
+  previousChurch: optionalNullableFormStringSchema,
   wantsMembership: z.boolean().optional().default(false),
-  requestedMembershipType: z.string().trim().optional().transform(v => v || null),
+  requestedMembershipType: optionalNullableMembershipTypeSchema,
   transferInDate: optionalDate,
   householdAction: householdActionSchema.default("self_only"),
-  suggestedHouseholdName: z.string().trim().optional().transform(v => v || null),
-  suggestedHouseholdHeadName: z.string().trim().optional().transform(v => v || null),
-  suggestedHouseholdHeadPhone: z.string().trim().optional().transform(v => v || null),
-  suggestedHouseholdRole: z.union([z.literal(""), z.enum(["head", "spouse", "child", "relative", "guardian", "other"])]).optional().transform(v => v || null),
-  suggestedHouseholdAddress: z.string().trim().optional().transform(v => v || null),
-  suggestedHouseholdCity: z.string().trim().optional().transform(v => v || null),
-  suggestedHouseholdCountry: z.string().trim().optional().transform(v => v || null),
-  suggestedHouseholdPhone: z.string().trim().optional().transform(v => v || null),
-  suggestedHouseholdEmail: z.string().trim().optional().transform(v => v || null),
-  householdNotes: z.string().trim().optional().transform(v => v || null),
+  suggestedHouseholdName: optionalNullableFormStringSchema,
+  suggestedHouseholdHeadName: optionalNullableFormStringSchema,
+  suggestedHouseholdHeadPhone: optionalNullableFormStringSchema,
+  suggestedHouseholdRole: optionalHouseholdRoleSchema,
+  suggestedHouseholdAddress: optionalNullableFormStringSchema,
+  suggestedHouseholdCity: optionalNullableFormStringSchema,
+  suggestedHouseholdCountry: optionalNullableFormStringSchema,
+  suggestedHouseholdPhone: optionalNullableFormStringSchema,
+  suggestedHouseholdEmail: optionalNullableEmailSchema,
+  householdNotes: optionalNullableFormStringSchema,
   departmentInterestIds: z.array(z.string().uuid()).default([]),
-  notes: z.string().trim().optional().transform(v => v || null),
+  notes: optionalNullableFormStringSchema,
   privacyConsent: z.boolean().refine(v => v === true, {
     message: "Privacy consent is required.",
   }),
   accountSetupRequested: formBooleanSchema.default(false),
   authUserId: z.string().uuid().optional().nullable(),
-  loginEmail: z.union([z.literal(""), z.string().trim().email("Invalid login email address.")]).optional().transform(v => v || null),
+  loginEmail: z.preprocess(
+    nullishToEmptyString,
+    z.union([z.literal(""), z.string().email("Invalid login email address.")])
+  ).transform(v => v || null),
   householdMembers: z.array(registrationHouseholdMemberSchema).default([]),
 });
 
@@ -134,17 +173,17 @@ export const registrationReviewDecisionSchema = z.object({
   membershipStatus: z.enum(["active", "inactive", "visitor", "transferred"]).default("visitor"),
   householdResolution: z.enum(["none", "existing", "new"]),
   householdId: z.string().uuid().optional().nullable(),
-  newHouseholdName: z.string().trim().optional().nullable(),
-  householdRole: z.union([z.literal(""), z.enum(["head", "spouse", "child", "relative", "guardian", "other"])]).optional().transform(v => v || null),
+  newHouseholdName: optionalNullableFormStringSchema,
+  householdRole: optionalHouseholdRoleSchema,
   setAsHead: formBooleanSchema.default(false),
   familyMemberResolutions: z.array(z.object({
     registrationHouseholdMemberId: z.string().uuid(),
     resolution: z.enum(["create", "link", "skip"]),
     memberId: z.string().uuid().optional().nullable(),
-    householdRole: z.union([z.literal(""), z.enum(["head", "spouse", "child", "relative", "guardian", "other"])]).optional().transform(v => v || null),
+    householdRole: optionalHouseholdRoleSchema,
   })).default([]),
   approvedDepartmentIds: z.array(z.string().uuid()).default([]),
-  reviewNote: z.string().trim().optional().nullable(),
+  reviewNote: optionalNullableFormStringSchema,
 });
 
 export type RegistrationReviewDecision = z.infer<typeof registrationReviewDecisionSchema>;

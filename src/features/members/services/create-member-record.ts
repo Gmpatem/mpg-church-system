@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { parseCreateMemberInput } from "../validators";
 
@@ -39,7 +40,96 @@ export type CreateMemberRecordInput = {
 
 export type CreateMemberRecordResult =
   | { ok: true; memberId: string; departmentId?: string | null }
-  | { ok: false; error: string };
+  | {
+      ok: false;
+      error: string;
+      code?: "VALIDATION_ERROR" | "CONVERSION_ERROR";
+      fieldErrors?: Record<string, string[]>;
+    };
+
+const memberFieldLabels: Record<string, string> = {
+  firstName: "First name",
+  lastName: "Last name",
+  displayName: "Display name",
+  email: "Email",
+  phone: "Phone",
+  gender: "Gender",
+  membershipStatus: "Membership status",
+  membershipType: "Membership type",
+  memberCode: "Member code",
+  householdId: "Household",
+  householdRole: "Household role",
+  dateJoined: "Date joined",
+  dateOfBirth: "Date of birth",
+  baptismDate: "Baptism date",
+  transferInDate: "Transfer-in date",
+  transferOutDate: "Transfer-out date",
+  previousChurch: "Previous church",
+  city: "City",
+  country: "Country",
+  address: "Address",
+  profession: "Profession",
+  maritalStatus: "Marital status",
+  emergencyContactName: "Emergency contact name",
+  emergencyContactPhone: "Emergency contact phone",
+  notes: "Notes",
+  departmentId: "Department",
+};
+
+function optionalText(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function requiredText(value: unknown) {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function optionalStatus(value: unknown) {
+  const normalized = optionalText(value);
+  return normalized || "active";
+}
+
+function validationMessageForIssue(issue: z.ZodIssue) {
+  const key = String(issue.path.at(-1) ?? "");
+
+  if (key === "email") {
+    return "Enter a valid email address or leave it blank.";
+  }
+
+  if (key === "membershipType") {
+    return "Select a supported membership type or leave it blank.";
+  }
+
+  if (issue.message === "Invalid input") {
+    return "Invalid value.";
+  }
+
+  return issue.message;
+}
+
+function formatMemberValidationIssues(issues: z.ZodIssue[]) {
+  const details = issues
+    .slice(0, 5)
+    .map((issue) => {
+      const key = String(issue.path.at(-1) ?? "");
+      const label = memberFieldLabels[key] ?? "Member information";
+      return `${label}: ${validationMessageForIssue(issue)}`;
+    })
+    .join("; ");
+
+  return details
+    ? `Some registration fields could not be processed. ${details}`
+    : "Some registration fields could not be processed. Review the applicant information and try again.";
+}
+
+function getFieldErrors(issues: z.ZodIssue[]) {
+  return issues.reduce<Record<string, string[]>>((acc, issue) => {
+    const key = String(issue.path.at(-1) ?? "_form");
+    acc[key] = acc[key] ?? [];
+    acc[key].push(validationMessageForIssue(issue));
+    return acc;
+  }, {});
+}
 
 function buildMemberCode(churchSlug: string) {
   const prefix = churchSlug.replace(/[^a-zA-Z0-9]/g, "").toUpperCase().slice(0, 6) || "CHURCH";
@@ -104,35 +194,37 @@ export async function createMemberRecord(
   input: CreateMemberRecordInput
 ): Promise<CreateMemberRecordResult> {
   try {
-    const parsed = parseCreateMemberInput({
+    const normalizedMemberInput = {
       churchId: input.churchId,
-      firstName: input.firstName,
-      lastName: input.lastName,
-      displayName: input.displayName,
-      email: input.email,
-      phone: input.phone,
-      gender: input.gender,
-      membershipStatus: input.membershipStatus || "active",
-      membershipType: input.membershipType,
-      memberCode: input.memberCode,
-      householdId: input.householdId,
-      householdRole: input.householdRole,
+      firstName: requiredText(input.firstName),
+      lastName: requiredText(input.lastName),
+      displayName: optionalText(input.displayName),
+      email: optionalText(input.email),
+      phone: optionalText(input.phone),
+      gender: optionalText(input.gender),
+      membershipStatus: optionalStatus(input.membershipStatus),
+      membershipType: optionalText(input.membershipType),
+      memberCode: optionalText(input.memberCode),
+      householdId: optionalText(input.householdId),
+      householdRole: optionalText(input.householdRole),
       dateJoined: input.dateJoined,
       dateOfBirth: input.dateOfBirth,
       baptismDate: input.baptismDate,
       transferInDate: input.transferInDate,
       transferOutDate: input.transferOutDate,
-      previousChurch: input.previousChurch,
-      city: input.city,
-      country: input.country,
-      address: input.address,
-      profession: input.profession,
-      maritalStatus: input.maritalStatus,
-      emergencyContactName: input.emergencyContactName,
-      emergencyContactPhone: input.emergencyContactPhone,
-      notes: input.notes,
-      departmentId: input.departmentId,
-    });
+      previousChurch: optionalText(input.previousChurch),
+      city: optionalText(input.city),
+      country: optionalText(input.country),
+      address: optionalText(input.address),
+      profession: optionalText(input.profession),
+      maritalStatus: optionalText(input.maritalStatus),
+      emergencyContactName: optionalText(input.emergencyContactName),
+      emergencyContactPhone: optionalText(input.emergencyContactPhone),
+      notes: optionalText(input.notes),
+      departmentId: optionalText(input.departmentId),
+    };
+
+    const parsed = parseCreateMemberInput(normalizedMemberInput);
 
     const memberCode = parsed.memberCode || buildMemberCode(input.churchSlug);
 
@@ -224,8 +316,18 @@ export async function createMemberRecord(
 
     return { ok: true, memberId: createdMember.id };
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      return {
+        ok: false,
+        code: "VALIDATION_ERROR",
+        error: formatMemberValidationIssues(error.issues),
+        fieldErrors: getFieldErrors(error.issues),
+      };
+    }
+
     return {
       ok: false,
+      code: "CONVERSION_ERROR",
       error: error instanceof Error ? error.message : "Failed to create member.",
     };
   }

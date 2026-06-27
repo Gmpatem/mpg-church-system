@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
 import { publicRegistrationSchema } from "./schemas";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -9,6 +10,37 @@ import {
   type AccountSetupStatus,
 } from "./account-linking";
 import type { PublicRegistrationResult } from "./types";
+
+const publicRegistrationFieldLabels: Record<string, string> = {
+  firstName: "First name",
+  lastName: "Last name",
+  email: "Email",
+  phone: "Phone",
+  requestedMembershipType: "Membership type",
+  previousChurch: "Previous church",
+  city: "City",
+  country: "Country",
+  address: "Address",
+  profession: "Profession",
+  emergencyContactName: "Emergency contact name",
+  emergencyContactPhone: "Emergency contact phone",
+  notes: "Notes",
+  loginEmail: "Login email",
+  privacyConsent: "Privacy consent",
+};
+
+function formatPublicRegistrationIssues(issues: z.ZodIssue[]) {
+  const details = issues
+    .slice(0, 5)
+    .map((issue) => {
+      const key = String(issue.path.at(-1) ?? "");
+      const label = publicRegistrationFieldLabels[key] ?? "Registration information";
+      return `${label}: ${issue.message === "Invalid input" ? "Invalid value." : issue.message}`;
+    })
+    .join("; ");
+
+  return details ? `Please check the form. ${details}` : "Please check the form and try again.";
+}
 
 function toPublicRegistrationError(error: unknown) {
   const message = error instanceof Error ? error.message : String(error ?? "");
@@ -214,9 +246,8 @@ export async function submitPublicRegistrationAction(
 
     return { ok: false, error: "Unexpected response from registration service." };
   } catch (error) {
-    if (error && typeof error === "object" && "errors" in error) {
-      const zodError = error as { errors?: { message: string }[] };
-      return { ok: false, error: zodError.errors?.[0]?.message || "Validation failed." };
+    if (error instanceof z.ZodError) {
+      return { ok: false, error: formatPublicRegistrationIssues(error.issues) };
     }
     return {
       ok: false,

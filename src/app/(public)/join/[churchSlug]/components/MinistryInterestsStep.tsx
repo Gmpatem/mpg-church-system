@@ -38,7 +38,7 @@ export function MinistryInterestsStep({ departments, selectedIds, onToggle, sett
               key={dept.id}
               type="button"
               onClick={() => onToggle(dept.id)}
-              className={`flex items-center justify-between rounded-xl border p-4 text-left transition ${
+              className={`flex min-h-14 items-center justify-between gap-3 rounded-xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 ${
                 selected
                   ? "border-emerald-300 bg-emerald-50/50"
                   : "border-stone-200 bg-white hover:border-emerald-200"

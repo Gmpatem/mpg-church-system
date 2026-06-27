@@ -32,7 +32,8 @@ export function MembershipInformationStep({ data, onChange, settings }: Membersh
           value={data.howHeardAboutChurch}
           onChange={e => onChange("howHeardAboutChurch", e.target.value)}
           placeholder="e.g. Friend invitation, online search"
-          className="h-12 rounded-xl"
+          enterKeyHint="next"
+          className="h-12 rounded-xl text-base sm:text-sm"
         />
       </div>
 
@@ -42,7 +43,7 @@ export function MembershipInformationStep({ data, onChange, settings }: Membersh
           value={data.christianStatus}
           onValueChange={value => onChange("christianStatus", value)}
         >
-          <SelectTrigger id="christianStatus" className="h-12 rounded-xl">
+          <SelectTrigger id="christianStatus" className="h-12 rounded-xl text-base sm:text-sm">
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
           <SelectContent>
@@ -73,7 +74,7 @@ export function MembershipInformationStep({ data, onChange, settings }: Membersh
             type="date"
             value={data.baptismDate}
             onChange={e => onChange("baptismDate", e.target.value)}
-            className="h-12 rounded-xl"
+            className="h-12 rounded-xl text-base sm:text-sm"
           />
         </div>
       )}
@@ -85,7 +86,8 @@ export function MembershipInformationStep({ data, onChange, settings }: Membersh
           value={data.previousChurch}
           onChange={e => onChange("previousChurch", e.target.value)}
           placeholder="Name of previous church"
-          className="h-12 rounded-xl"
+          enterKeyHint="next"
+          className="h-12 rounded-xl text-base sm:text-sm"
         />
       </div>
 
@@ -107,7 +109,7 @@ export function MembershipInformationStep({ data, onChange, settings }: Membersh
             value={data.requestedMembershipType}
             onValueChange={value => onChange("requestedMembershipType", value)}
           >
-            <SelectTrigger id="requestedMembershipType" className="h-12 rounded-xl">
+            <SelectTrigger id="requestedMembershipType" className="h-12 rounded-xl text-base sm:text-sm">
               <SelectValue placeholder="Select type" />
             </SelectTrigger>
             <SelectContent>
@@ -128,7 +130,7 @@ export function MembershipInformationStep({ data, onChange, settings }: Membersh
           type="date"
           value={data.transferInDate}
           onChange={e => onChange("transferInDate", e.target.value)}
-          className="h-12 rounded-xl"
+          className="h-12 rounded-xl text-base sm:text-sm"
         />
       </div>
 
@@ -139,7 +141,8 @@ export function MembershipInformationStep({ data, onChange, settings }: Membersh
           value={data.notes}
           onChange={e => onChange("notes", e.target.value)}
           placeholder="Optional notes"
-          className="h-12 rounded-xl"
+          enterKeyHint="done"
+          className="h-12 rounded-xl text-base sm:text-sm"
         />
       </div>
     </div>

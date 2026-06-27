@@ -47,8 +47,8 @@ export function HouseholdFamilyStep({ data, onChange, settings }: HouseholdFamil
             <button
               key={option.value}
               type="button"
-              onClick={() => onChange("householdAction", option.value as WizardData["householdAction"])}
-              className={`flex w-full cursor-pointer items-center justify-between rounded-xl border p-4 text-left transition ${
+            onClick={() => onChange("householdAction", option.value as WizardData["householdAction"])}
+              className={`flex min-h-14 w-full cursor-pointer items-center justify-between gap-3 rounded-xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 ${
                 selected
                   ? "border-emerald-300 bg-emerald-50/50"
                   : "border-stone-200 hover:border-emerald-200 hover:bg-emerald-50/30"
@@ -72,7 +72,9 @@ export function HouseholdFamilyStep({ data, onChange, settings }: HouseholdFamil
               value={data.suggestedHouseholdName}
               onChange={e => onChange("suggestedHouseholdName", e.target.value)}
               placeholder="e.g. The Smith Family"
-              className="h-12 rounded-xl"
+              autoComplete="organization"
+              enterKeyHint="next"
+              className="h-12 rounded-xl text-base sm:text-sm"
             />
           </div>
 
@@ -81,20 +83,30 @@ export function HouseholdFamilyStep({ data, onChange, settings }: HouseholdFamil
               <Label htmlFor="suggestedHouseholdPhone">Household phone</Label>
               <Input
                 id="suggestedHouseholdPhone"
+                type="tel"
+                inputMode="tel"
                 value={data.suggestedHouseholdPhone}
                 onChange={e => onChange("suggestedHouseholdPhone", e.target.value)}
                 placeholder="Household phone"
-                className="h-12 rounded-xl"
+                autoComplete="tel"
+                enterKeyHint="next"
+                className="h-12 rounded-xl text-base sm:text-sm"
               />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="suggestedHouseholdEmail">Household email</Label>
               <Input
                 id="suggestedHouseholdEmail"
+                type="email"
+                inputMode="email"
                 value={data.suggestedHouseholdEmail}
                 onChange={e => onChange("suggestedHouseholdEmail", e.target.value)}
                 placeholder="Household email"
-                className="h-12 rounded-xl"
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                enterKeyHint="next"
+                className="h-12 rounded-xl text-base sm:text-sm"
               />
             </div>
           </div>
@@ -106,7 +118,9 @@ export function HouseholdFamilyStep({ data, onChange, settings }: HouseholdFamil
               value={data.suggestedHouseholdAddress}
               onChange={e => onChange("suggestedHouseholdAddress", e.target.value)}
               placeholder="Street address"
-              className="h-12 rounded-xl"
+              autoComplete="street-address"
+              enterKeyHint="next"
+              className="h-12 rounded-xl text-base sm:text-sm"
             />
           </div>
 
@@ -118,7 +132,9 @@ export function HouseholdFamilyStep({ data, onChange, settings }: HouseholdFamil
                 value={data.suggestedHouseholdCity}
                 onChange={e => onChange("suggestedHouseholdCity", e.target.value)}
                 placeholder="City"
-                className="h-12 rounded-xl"
+                autoComplete="address-level2"
+                enterKeyHint="next"
+                className="h-12 rounded-xl text-base sm:text-sm"
               />
             </div>
             <div className="space-y-1.5">
@@ -128,7 +144,9 @@ export function HouseholdFamilyStep({ data, onChange, settings }: HouseholdFamil
                 value={data.suggestedHouseholdCountry}
                 onChange={e => onChange("suggestedHouseholdCountry", e.target.value)}
                 placeholder="Country"
-                className="h-12 rounded-xl"
+                autoComplete="country-name"
+                enterKeyHint="next"
+                className="h-12 rounded-xl text-base sm:text-sm"
               />
             </div>
           </div>
@@ -139,7 +157,7 @@ export function HouseholdFamilyStep({ data, onChange, settings }: HouseholdFamil
               value={data.suggestedHouseholdRole}
               onValueChange={value => onChange("suggestedHouseholdRole", value)}
             >
-              <SelectTrigger id="suggestedHouseholdRole" className="h-12 rounded-xl">
+              <SelectTrigger id="suggestedHouseholdRole" className="h-12 rounded-xl text-base sm:text-sm">
                 <SelectValue placeholder="Select role" />
               </SelectTrigger>
               <SelectContent>
@@ -165,17 +183,23 @@ export function HouseholdFamilyStep({ data, onChange, settings }: HouseholdFamil
               value={data.suggestedHouseholdHeadName}
               onChange={e => onChange("suggestedHouseholdHeadName", e.target.value)}
               placeholder="e.g. Robert Smith"
-              className="h-12 rounded-xl"
+              autoComplete="name"
+              enterKeyHint="next"
+              className="h-12 rounded-xl text-base sm:text-sm"
             />
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="suggestedHouseholdHeadPhone">Head of household phone</Label>
             <Input
               id="suggestedHouseholdHeadPhone"
+              type="tel"
+              inputMode="tel"
               value={data.suggestedHouseholdHeadPhone}
               onChange={e => onChange("suggestedHouseholdHeadPhone", e.target.value)}
               placeholder="Phone number"
-              className="h-12 rounded-xl"
+              autoComplete="tel"
+              enterKeyHint="done"
+              className="h-12 rounded-xl text-base sm:text-sm"
             />
           </div>
         </div>
@@ -188,7 +212,8 @@ export function HouseholdFamilyStep({ data, onChange, settings }: HouseholdFamil
           value={data.householdNotes}
           onChange={e => onChange("householdNotes", e.target.value)}
           placeholder="Anything else about your household"
-          className="h-12 rounded-xl"
+          enterKeyHint="done"
+          className="h-12 rounded-xl text-base sm:text-sm"
         />
       </div>
     </div>

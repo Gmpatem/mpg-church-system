@@ -30,12 +30,19 @@ export function ContactAddressStep({ data, onChange, errors, settings }: Contact
         <Input
           id="email"
           type="email"
+          inputMode="email"
           value={data.email}
           onChange={e => onChange("email", e.target.value)}
           placeholder="e.g. john@example.com"
-          className="h-12 rounded-xl"
+          autoComplete="email"
+          autoCapitalize="none"
+          spellCheck={false}
+          enterKeyHint="next"
+          aria-invalid={Boolean(errors.email)}
+          aria-describedby={errors.email ? "email-error" : undefined}
+          className="h-12 rounded-xl text-base sm:text-sm"
         />
-        {errors.email && <p className="text-xs text-red-600">{errors.email}</p>}
+        {errors.email && <p id="email-error" className="text-xs text-red-600">{errors.email}</p>}
       </div>
 
       <div className="space-y-1.5">
@@ -43,10 +50,13 @@ export function ContactAddressStep({ data, onChange, errors, settings }: Contact
         <Input
           id="phone"
           type="tel"
+          inputMode="tel"
           value={data.phone}
           onChange={e => onChange("phone", e.target.value)}
           placeholder="e.g. +1 555 123 4567"
-          className="h-12 rounded-xl"
+          autoComplete="tel"
+          enterKeyHint="next"
+          className="h-12 rounded-xl text-base sm:text-sm"
         />
       </div>
 
@@ -56,7 +66,7 @@ export function ContactAddressStep({ data, onChange, errors, settings }: Contact
           value={data.preferredContactMethod}
           onValueChange={value => onChange("preferredContactMethod", value)}
         >
-          <SelectTrigger id="preferredContactMethod" className="h-12 rounded-xl">
+          <SelectTrigger id="preferredContactMethod" className="h-12 rounded-xl text-base sm:text-sm">
             <SelectValue placeholder="Select preference" />
           </SelectTrigger>
           <SelectContent>
@@ -74,7 +84,9 @@ export function ContactAddressStep({ data, onChange, errors, settings }: Contact
           value={data.address}
           onChange={e => onChange("address", e.target.value)}
           placeholder="Street address"
-          className="h-12 rounded-xl"
+          autoComplete="street-address"
+          enterKeyHint="next"
+          className="h-12 rounded-xl text-base sm:text-sm"
         />
       </div>
 
@@ -86,7 +98,9 @@ export function ContactAddressStep({ data, onChange, errors, settings }: Contact
             value={data.city}
             onChange={e => onChange("city", e.target.value)}
             placeholder="City"
-            className="h-12 rounded-xl"
+            autoComplete="address-level2"
+            enterKeyHint="next"
+            className="h-12 rounded-xl text-base sm:text-sm"
           />
         </div>
 
@@ -97,7 +111,9 @@ export function ContactAddressStep({ data, onChange, errors, settings }: Contact
             value={data.country}
             onChange={e => onChange("country", e.target.value)}
             placeholder="Country"
-            className="h-12 rounded-xl"
+            autoComplete="country-name"
+            enterKeyHint="next"
+            className="h-12 rounded-xl text-base sm:text-sm"
           />
         </div>
       </div>
@@ -113,17 +129,23 @@ export function ContactAddressStep({ data, onChange, errors, settings }: Contact
                 value={data.emergencyContactName}
                 onChange={e => onChange("emergencyContactName", e.target.value)}
                 placeholder="Contact name"
-                className="h-12 rounded-xl"
+                autoComplete="name"
+                enterKeyHint="next"
+                className="h-12 rounded-xl text-base sm:text-sm"
               />
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="emergencyContactPhone">Phone</Label>
               <Input
                 id="emergencyContactPhone"
+                type="tel"
+                inputMode="tel"
                 value={data.emergencyContactPhone}
                 onChange={e => onChange("emergencyContactPhone", e.target.value)}
                 placeholder="Contact phone"
-                className="h-12 rounded-xl"
+                autoComplete="tel"
+                enterKeyHint="done"
+                className="h-12 rounded-xl text-base sm:text-sm"
               />
             </div>
           </div>

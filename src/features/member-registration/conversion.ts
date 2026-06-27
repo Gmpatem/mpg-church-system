@@ -1,5 +1,6 @@
 "use server";
 
+import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
@@ -24,6 +25,111 @@ type RegistrationAccountRow = ChurchMemberRegistration & {
   account_setup_requested?: boolean | null;
   account_setup_status?: AccountSetupStatus | null;
 };
+
+const approvalFieldLabels: Record<string, string> = {
+  registrationId: "Registration",
+  churchSlug: "Church",
+  memberResolution: "Member resolution",
+  memberId: "Member",
+  membershipStatus: "Membership status",
+  householdResolution: "Household resolution",
+  householdId: "Household",
+  newHouseholdName: "New household name",
+  householdRole: "Household role",
+  setAsHead: "Set as household head",
+  registrationHouseholdMemberId: "Family member",
+  resolution: "Family resolution",
+  approvedDepartmentIds: "Departments",
+  reviewNote: "Review note",
+  email: "Email",
+  phone: "Phone",
+  membershipType: "Membership type",
+  previousChurch: "Previous church",
+  city: "City",
+  country: "Country",
+  address: "Address",
+  profession: "Profession",
+  emergencyContactName: "Emergency contact name",
+  emergencyContactPhone: "Emergency contact phone",
+  notes: "Notes",
+};
+
+function validationMessageForIssue(issue: z.ZodIssue) {
+  const key = String(issue.path.at(-1) ?? "");
+
+  if (key === "email") {
+    return "Enter a valid email address or leave it blank.";
+  }
+
+  if (key === "membershipType") {
+    return "Select a supported membership type or leave it blank.";
+  }
+
+  if (issue.message === "Invalid input") {
+    return "Invalid value.";
+  }
+
+  return issue.message;
+}
+
+function formatValidationIssues(issues: z.ZodIssue[]) {
+  const details = issues
+    .slice(0, 5)
+    .map((issue) => {
+      const key = String(issue.path.at(-1) ?? "");
+      const label = approvalFieldLabels[key] ?? "Registration information";
+      return `${label}: ${validationMessageForIssue(issue)}`;
+    })
+    .join("; ");
+
+  return details
+    ? `Some registration fields could not be processed. ${details}`
+    : "Some registration fields could not be processed. Review the applicant information and try again.";
+}
+
+function getFieldErrors(issues: z.ZodIssue[]) {
+  return issues.reduce<Record<string, string[]>>((acc, issue) => {
+    const key = String(issue.path.at(-1) ?? "_form");
+    acc[key] = acc[key] ?? [];
+    acc[key].push(validationMessageForIssue(issue));
+    return acc;
+  }, {});
+}
+
+function validationFailure(
+  issues: z.ZodIssue[],
+  registrationId?: string
+): ConversionResult {
+  const fieldErrors = getFieldErrors(issues);
+
+  console.warn("Registration approval validation failed", {
+    registrationId,
+    fieldErrors,
+  });
+
+  return {
+    ok: false,
+    code: "VALIDATION_ERROR",
+    error: formatValidationIssues(issues),
+    fieldErrors,
+  };
+}
+
+function accountLinkFailure(error: string): ConversionResult {
+  return {
+    ok: false,
+    code: "AUTH_LINK_ERROR",
+    error,
+  };
+}
+
+function conversionFailure(error: string): ConversionResult {
+  return {
+    ok: false,
+    code: "CONVERSION_ERROR",
+    error,
+  };
+}
 
 async function markRegistrationAccountStatus(
   registration: RegistrationAccountRow,
@@ -85,14 +191,46 @@ async function activateVerifiedPortalAccount(params: {
   churchId: string;
   primaryMemberId: string;
 }) {
+  const accountRequested = Boolean(
+    params.registration.account_setup_requested ||
+      params.registration.auth_user_id ||
+      params.registration.login_email
+  );
+
+  if (!accountRequested) {
+    return { ok: true as const, accountLinked: false as const, emailConfirmed: false };
+  }
+
   const authUserId = params.registration.auth_user_id;
   if (!authUserId) {
-    return { ok: true as const, accountLinked: false as const, emailConfirmed: false };
+    await markRegistrationAccountStatus(params.registration, "link_failed");
+    return {
+      ok: false as const,
+      error: "Portal account setup is incomplete. Ask the applicant to finish account setup before approval.",
+    };
   }
 
   const loginEmail = normalizeLoginEmail(
     params.registration.login_email ?? params.registration.email ?? ""
   );
+
+  if (!loginEmail) {
+    await markRegistrationAccountStatus(params.registration, "link_failed");
+    return {
+      ok: false as const,
+      error: "Portal account setup is missing a valid login email.",
+    };
+  }
+
+  const setupStatus = params.registration.account_setup_status ?? "not_requested";
+  if (!["pending_email_confirmation", "pending_approval", "active"].includes(setupStatus)) {
+    await markRegistrationAccountStatus(params.registration, "link_failed");
+    return {
+      ok: false as const,
+      error: "Portal account setup is not ready for approval.",
+    };
+  }
+
   const verified = await verifyRegistrationAuthUser({ authUserId, loginEmail });
 
   if (!verified.ok) {
@@ -224,11 +362,11 @@ export async function convertRegistrationAction(
       .maybeSingle();
 
     if (regError) {
-      return { ok: false, error: regError.message };
+      return conversionFailure("Registration could not be loaded. Please try again.");
     }
 
     if (!registration) {
-      return { ok: false, error: "Registration not found." };
+      return conversionFailure("Registration not found.");
     }
 
     if (registration.status === "converted" || registration.status === "merged") {
@@ -241,7 +379,7 @@ export async function convertRegistrationAction(
     }
 
     if (registration.status === "rejected") {
-      return { ok: false, error: "This registration has already been rejected." };
+      return conversionFailure("This registration has already been rejected.");
     }
 
     const { data: familyRows, error: famError } = await supabase
@@ -251,7 +389,7 @@ export async function convertRegistrationAction(
       .eq("church_id", ctx.churchId);
 
     if (famError) {
-      return { ok: false, error: famError.message };
+      return conversionFailure("Registration family members could not be loaded. Please try again.");
     }
 
     const familyMembers = familyRows ?? [];
@@ -288,7 +426,21 @@ export async function convertRegistrationAction(
       });
 
       if (!memberResult.ok) {
-        return { ok: false, error: memberResult.error };
+        if (memberResult.code === "VALIDATION_ERROR") {
+          console.warn("Registration approval member validation failed", {
+            registrationId: decision.registrationId,
+            fieldErrors: memberResult.fieldErrors,
+          });
+
+          return {
+            ok: false,
+            code: "VALIDATION_ERROR",
+            error: memberResult.error,
+            fieldErrors: memberResult.fieldErrors,
+          };
+        }
+
+        return conversionFailure("Member could not be created. Please review the registration and try again.");
       }
       primaryMemberId = memberResult.memberId;
     }
@@ -311,7 +463,7 @@ export async function convertRegistrationAction(
       });
 
       if (!householdResult.ok) {
-        return { ok: false, error: householdResult.error };
+        return conversionFailure("Household could not be created. Please review the household details and try again.");
       }
       householdId = householdResult.householdId;
     }
@@ -325,7 +477,7 @@ export async function convertRegistrationAction(
         householdRole: decision.householdRole,
       });
       if (!linkResult.ok) {
-        return { ok: false, error: linkResult.error };
+        return conversionFailure("Member could not be linked to the selected household.");
       }
     }
 
@@ -361,7 +513,22 @@ export async function convertRegistrationAction(
         });
 
         if (!createResult.ok) {
-          return { ok: false, error: createResult.error };
+          if (createResult.code === "VALIDATION_ERROR") {
+            console.warn("Registration approval family member validation failed", {
+              registrationId: decision.registrationId,
+              familyRegistrationMemberId: familyRow.id,
+              fieldErrors: createResult.fieldErrors,
+            });
+
+            return {
+              ok: false,
+              code: "VALIDATION_ERROR",
+              error: createResult.error,
+              fieldErrors: createResult.fieldErrors,
+            };
+          }
+
+          return conversionFailure("Family member could not be created. Please review the registration and try again.");
         }
         familyMemberId = createResult.memberId;
       }
@@ -376,7 +543,7 @@ export async function convertRegistrationAction(
           householdRole: familyResolution.householdRole,
         });
         if (!familyLinkResult.ok) {
-          return { ok: false, error: familyLinkResult.error };
+          return conversionFailure("Family member could not be linked to the selected household.");
         }
       }
 
@@ -398,7 +565,7 @@ export async function convertRegistrationAction(
         memberId: primaryMemberId,
       });
       if (!headResult.ok) {
-        return { ok: false, error: headResult.error };
+        return conversionFailure("The household head could not be updated.");
       }
     }
 
@@ -438,7 +605,7 @@ export async function convertRegistrationAction(
     });
 
     if (!accountActivation.ok) {
-      return { ok: false, error: accountActivation.error };
+      return accountLinkFailure(accountActivation.error);
     }
 
     const accountSuccessMessage = accountActivation.accountLinked
@@ -467,7 +634,7 @@ export async function convertRegistrationAction(
       .eq("church_id", ctx.churchId);
 
     if (updateError) {
-      return { ok: false, error: updateError.message };
+      return conversionFailure("Registration was converted, but its review status could not be updated.");
     }
 
     revalidatePath(`/c/${churchSlug}/members`);
@@ -485,13 +652,13 @@ export async function convertRegistrationAction(
       message: accountSuccessMessage,
     };
   } catch (error) {
-    if (error && typeof error === "object" && "errors" in error) {
-      const zodError = error as { errors?: { message: string }[] };
-      return { ok: false, error: zodError.errors?.[0]?.message || "Validation failed." };
+    if (error instanceof z.ZodError) {
+      return validationFailure(error.issues, getString(formData, "registrationId") || undefined);
     }
     return {
       ok: false,
-      error: error instanceof Error ? error.message : "Failed to convert registration.",
+      code: "UNKNOWN_ERROR",
+      error: "Registration approval could not be completed. Please try again.",
     };
   }
 }

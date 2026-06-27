@@ -2,6 +2,7 @@ import "server-only";
 import { cache } from "react";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { ChurchAccessContext, RoleCode } from "./types";
 
 type ProfileRow = {
@@ -82,6 +83,18 @@ const OPERATIONAL_ROLE_CODES = [
   "church_secretary",
   "treasurer",
 ] as const;
+const PENDING_REGISTRATION_STATUSES = [
+  "pending",
+  "needs_member_duplicate_review",
+  "needs_household_duplicate_review",
+  "needs_review",
+  "approved",
+] as const;
+const PENDING_ACCOUNT_SETUP_STATUSES = [
+  "pending_email_confirmation",
+  "pending_approval",
+  "link_failed",
+] as const;
 
 function unauthorized(path: string = "/login"): never {
   redirect(path);
@@ -110,6 +123,40 @@ function pickPrimaryChurch(entries: UserChurchAccessEntry[]): UserChurchAccessEn
   if (memberLinked) return memberLinked;
 
   return entries[0] ?? null;
+}
+
+async function hasPendingRegistrationForUser(params: {
+  userId: string;
+  churchId?: string;
+}) {
+  let admin: ReturnType<typeof createAdminClient>;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return false;
+  }
+
+  let query = admin
+    .from("church_member_registrations")
+    .select("id")
+    .eq("auth_user_id", params.userId)
+    .in("status", [...PENDING_REGISTRATION_STATUSES])
+    .in("account_setup_status", [...PENDING_ACCOUNT_SETUP_STATUSES]);
+
+  if (params.churchId) {
+    query = query.eq("church_id", params.churchId);
+  }
+
+  const { data, error } = await query
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    return false;
+  }
+
+  return Boolean(data?.id);
 }
 
 function normalizeProfile(
@@ -302,6 +349,10 @@ export async function resolvePostAuthDestination(userId?: string): Promise<strin
   const primaryChurch = pickPrimaryChurch(state.churches);
 
   if (!primaryChurch) {
+    if (await hasPendingRegistrationForUser({ userId: state.userId })) {
+      return "/registration-pending";
+    }
+
     return "/create-church";
   }
 
@@ -347,6 +398,10 @@ async function getChurchRouteAccessContext(
   const isPlatformAdmin = state.platformRoles.some(isPlatformRole);
 
   if (!isPlatformAdmin && !churchEntry?.hasMembership) {
+    if (await hasPendingRegistrationForUser({ churchId: church.id, userId: user.id })) {
+      unauthorized("/registration-pending");
+    }
+
     unauthorized("/create-church");
   }
 

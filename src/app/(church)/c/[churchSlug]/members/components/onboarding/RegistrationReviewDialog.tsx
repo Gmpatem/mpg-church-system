@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useActionState, useEffect } from "react";
+import { startTransition, useState, useActionState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { InlineAlert } from "@/components/ui/InlineAlert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -120,7 +121,9 @@ export function RegistrationReviewDialog({
       if (res.householdRole) formData.append(`familyMemberResolutions[${i}].householdRole`, res.householdRole);
     });
 
-    convertAction(formData);
+    startTransition(() => {
+      convertAction(formData);
+    });
   };
 
   const submitReject = () => {
@@ -129,7 +132,9 @@ export function RegistrationReviewDialog({
     formData.append("churchSlug", churchSlug);
     formData.append("registrationId", registration.id);
     formData.append("reviewNote", reviewNote);
-    rejectAction(formData);
+    startTransition(() => {
+      rejectAction(formData);
+    });
   };
 
   const householdRoleOptions = [
@@ -149,11 +154,12 @@ export function RegistrationReviewDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] max-w-3xl overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>Review registration: {formatRegistrationName(registration)}</DialogTitle>
+      <DialogContent className="flex max-h-[calc(100dvh-24px)] w-[calc(100vw-24px)] max-w-3xl flex-col overflow-hidden p-0 sm:max-h-[90vh]">
+        <DialogHeader className="border-b border-border px-4 py-4 pr-12 text-left sm:px-6">
+          <DialogTitle className="leading-snug">Review registration: {formatRegistrationName(registration)}</DialogTitle>
         </DialogHeader>
 
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-4 py-4 sm:px-6">
         {accountRequested && (
           <div className="rounded-lg border bg-muted/30 p-3 text-sm">
             <p className="font-medium text-foreground">Portal account requested</p>
@@ -165,13 +171,13 @@ export function RegistrationReviewDialog({
           </div>
         )}
 
-        <div className="flex items-center gap-1 rounded-lg border p-1">
+        <div className="grid grid-cols-3 items-center gap-1 rounded-lg border p-1">
           {tabs.map(tab => (
             <button
               key={tab.id}
               type="button"
               onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 rounded-md px-3 py-2 text-sm font-medium transition ${
+              className={`min-w-0 rounded-md px-2 py-2 text-sm font-medium transition ${
                 activeTab === tab.id ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
               }`}
             >
@@ -383,29 +389,46 @@ export function RegistrationReviewDialog({
             value={reviewNote}
             onChange={e => setReviewNote(e.target.value)}
             placeholder="Optional note about this decision"
+            className="h-11 text-base sm:text-sm"
           />
         </div>
 
         {(conversionState && !conversionState.ok) && (
-          <p className="text-sm text-red-600">{conversionState.error}</p>
+          <InlineAlert
+            variant="error"
+            title="Approval could not be completed"
+            message={conversionState.error}
+            className="max-h-32 overflow-y-auto break-words rounded-lg"
+          />
         )}
         {successMessage && (
           <p className="text-sm text-emerald-700">{successMessage}</p>
         )}
         {(rejectState && !rejectState.ok) && (
-          <p className="text-sm text-red-600">{rejectState.error}</p>
+          <InlineAlert
+            variant="error"
+            title="Rejection could not be completed"
+            message={rejectState.error}
+            className="max-h-32 overflow-y-auto break-words rounded-lg"
+          />
         )}
+        </div>
 
-        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+        <div
+          className="border-t border-border bg-background/95 px-4 py-3 backdrop-blur sm:px-6"
+          style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+        >
+          <div className="grid gap-2 sm:flex sm:justify-end">
+          <Button variant="outline" onClick={() => onOpenChange(false)} className="h-11 w-full sm:w-auto">
             Cancel
           </Button>
-          <Button variant="destructive" onClick={submitReject} disabled={rejecting}>
+          <Button variant="destructive" onClick={submitReject} disabled={rejecting} className="h-11 w-full sm:w-auto">
             {rejecting ? "Rejecting..." : "Reject"}
           </Button>
-          <Button onClick={submitConversion} disabled={converting}>
+          <Button onClick={submitConversion} disabled={converting} className="h-11 w-full sm:w-auto">
             {converting ? "Converting..." : "Approve & convert"}
           </Button>
+          </div>
         </div>
       </DialogContent>
     </Dialog>

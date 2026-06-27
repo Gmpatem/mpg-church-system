@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useActionState, useEffect, useCallback, useTransition } from "react";
+import { Loader2 } from "lucide-react";
 import { useI18n } from "@/features/i18n";
 import { submitPublicRegistrationAction } from "@/features/member-registration/public-actions";
 import { validateRegistrationKeyAction } from "@/features/member-registration/public-queries";
@@ -21,6 +22,26 @@ import { RegistrationSuccess } from "./RegistrationSuccess";
 import type { RegistrationHouseholdMemberInput } from "@/features/member-registration/schemas";
 
 const TOTAL_STEPS = 8;
+const STEP_TITLES = [
+  "Welcome",
+  "Personal information",
+  "Contact details",
+  "Membership background",
+  "Household",
+  "Family members",
+  "Ministry interests",
+  "Review & account",
+] as const;
+
+const ERROR_FIELD_IDS: Record<string, string> = {
+  firstName: "firstName",
+  lastName: "lastName",
+  email: "email",
+  privacyConsent: "privacyConsent",
+  loginEmail: "loginEmail",
+  password: "portalPassword",
+  confirmPassword: "portalConfirmPassword",
+};
 
 export type WizardData = {
   firstName: string;
@@ -106,7 +127,7 @@ const emptyData: WizardData = {
   departmentInterestIds: [],
   notes: "",
   privacyConsent: false,
-  accountSetupRequested: false,
+  accountSetupRequested: true,
   loginEmail: "",
   password: "",
   confirmPassword: "",
@@ -128,20 +149,39 @@ export function RegistrationWizard({ church, settings, departments, registration
   const [clientError, setClientError] = useState<string | null>(null);
   const [existingAccountNotice, setExistingAccountNotice] = useState(false);
   const [isClientSubmitting, setIsClientSubmitting] = useState(false);
+  const [createdAccountLink, setCreatedAccountLink] = useState<{ authUserId: string; loginEmail: string } | null>(null);
   const [isDispatchPending, startSubmitTransition] = useTransition();
 
   const [state, formAction, isPending] = useActionState(submitPublicRegistrationAction, null);
   const submitting = isPending || isClientSubmitting || isDispatchPending;
+  const currentStepTitle = STEP_TITLES[step - 1] ?? STEP_TITLES[0];
 
   useEffect(() => {
     if (state?.ok) {
       setData(prev => ({ ...prev, password: "", confirmPassword: "" }));
+      setCreatedAccountLink(null);
       setStep(9);
     }
   }, [state]);
 
   const updateField = useCallback(<K extends keyof WizardData>(field: K, value: WizardData[K]) => {
     setData(prev => ({ ...prev, [field]: value }));
+  }, []);
+
+  const focusFirstInvalidField = useCallback((field: string) => {
+    const id = ERROR_FIELD_IDS[field] ?? field;
+
+    requestAnimationFrame(() => {
+      const target = document.getElementById(id);
+      if (!target) return;
+
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      target.focus({ preventScroll: true });
+      target.scrollIntoView({
+        behavior: prefersReducedMotion ? "auto" : "smooth",
+        block: "center",
+      });
+    });
   }, []);
 
   const validateStep = useCallback((currentStep: number): boolean => {
@@ -162,7 +202,7 @@ export function RegistrationWizard({ church, settings, departments, registration
       nextErrors.privacyConsent = "Privacy consent is required.";
     }
 
-    if (currentStep === 8 && data.accountSetupRequested) {
+    if (currentStep === 8) {
       const loginEmail = (data.loginEmail || data.email).trim();
 
       if (!loginEmail) {
@@ -171,22 +211,30 @@ export function RegistrationWizard({ church, settings, departments, registration
         nextErrors.loginEmail = "Invalid email address.";
       }
 
-      if (!data.password) {
-        nextErrors.password = "Password is required.";
-      } else if (data.password.length < 6) {
-        nextErrors.password = "Password must be at least 6 characters long.";
-      }
+      if (!createdAccountLink) {
+        if (!data.password) {
+          nextErrors.password = "Password is required.";
+        } else if (data.password.length < 6) {
+          nextErrors.password = "Password must be at least 6 characters long.";
+        }
 
-      if (!data.confirmPassword) {
-        nextErrors.confirmPassword = "Please confirm your password.";
-      } else if (data.password !== data.confirmPassword) {
-        nextErrors.confirmPassword = "Passwords do not match.";
+        if (!data.confirmPassword) {
+          nextErrors.confirmPassword = "Please confirm your password.";
+        } else if (data.password !== data.confirmPassword) {
+          nextErrors.confirmPassword = "Passwords do not match.";
+        }
       }
     }
 
     setErrors(nextErrors);
-    return Object.keys(nextErrors).length === 0;
-  }, [data, t]);
+    const firstInvalidField = Object.keys(nextErrors)[0];
+    if (firstInvalidField) {
+      focusFirstInvalidField(firstInvalidField);
+      return false;
+    }
+
+    return true;
+  }, [createdAccountLink, data, focusFirstInvalidField, t]);
 
   const handleNext = useCallback(() => {
     setTouchedSteps(prev => new Set(prev).add(step));
@@ -324,7 +372,7 @@ export function RegistrationWizard({ church, settings, departments, registration
     setIsClientSubmitting(true);
 
     try {
-      let accountLink: { authUserId: string; loginEmail: string } | null = null;
+      let accountLink = createdAccountLink;
 
       if (data.accountSetupRequested) {
         const keyCheck = await validateRegistrationKeyAction(church.slug, registrationKey);
@@ -333,17 +381,20 @@ export function RegistrationWizard({ church, settings, departments, registration
           return;
         }
 
-        const account = await createPortalAccount();
-        if (!account.ok) {
-          setExistingAccountNotice(account.existingAccount);
-          setClientError(account.error);
-          return;
-        }
+        if (!accountLink) {
+          const account = await createPortalAccount();
+          if (!account.ok) {
+            setExistingAccountNotice(account.existingAccount);
+            setClientError(account.error);
+            return;
+          }
 
-        accountLink = {
-          authUserId: account.authUserId,
-          loginEmail: account.loginEmail,
-        };
+          accountLink = {
+            authUserId: account.authUserId,
+            loginEmail: account.loginEmail,
+          };
+          setCreatedAccountLink(accountLink);
+        }
       }
 
       const formData = new FormData(form);
@@ -362,6 +413,7 @@ export function RegistrationWizard({ church, settings, departments, registration
   }, [
     church.slug,
     createPortalAccount,
+    createdAccountLink,
     data.accountSetupRequested,
     formAction,
     registrationKey,
@@ -370,7 +422,7 @@ export function RegistrationWizard({ church, settings, departments, registration
 
   if (state?.ok) {
     return (
-      <div className="mx-auto min-h-screen max-w-2xl px-4 py-8 sm:px-6">
+      <div className="mx-auto min-h-dvh max-w-2xl px-0 py-4 sm:px-2 sm:py-8">
         <RegistrationSuccess
           church={church}
           settings={settings}
@@ -383,11 +435,11 @@ export function RegistrationWizard({ church, settings, departments, registration
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-2xl px-4 py-6 sm:px-6">
-      <RegistrationHeader church={church} />
+    <div className="mx-auto min-h-dvh max-w-2xl">
+      <RegistrationHeader church={church} currentStep={currentStepTitle} />
 
-      <div className="mt-6 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm sm:p-8">
-        <RegistrationProgress current={step} total={TOTAL_STEPS} />
+      <div className="mt-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:mt-6 sm:p-6 md:p-8">
+        <RegistrationProgress current={step} total={TOTAL_STEPS} label={currentStepTitle} />
 
         <div className="mt-6">
           {step === 1 && (
@@ -462,13 +514,18 @@ export function RegistrationWizard({ church, settings, departments, registration
 
           {(clientError || (state && !state.ok)) && (
             <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {createdAccountLink && !existingAccountNotice && (
+                <p className="mb-2 font-medium">
+                  Your portal account was created, but we could not finish submitting the registration. Try submitting again.
+                </p>
+              )}
               <p>{clientError || (state && !state.ok ? state.error : "")}</p>
               {existingAccountNotice && (
-                <div className="mt-2 flex flex-wrap gap-3 text-xs font-medium">
-                  <a className="text-red-800 underline" href="/login">
+                <div className="mt-3 grid gap-2 sm:flex sm:flex-wrap">
+                  <a className="inline-flex h-10 items-center justify-center rounded-lg bg-white px-3 text-sm font-semibold text-red-800 ring-1 ring-red-200" href="/login">
                     Sign in
                   </a>
-                  <a className="text-red-800 underline" href="/login?forgot=1">
+                  <a className="inline-flex h-10 items-center justify-center rounded-lg bg-white px-3 text-sm font-semibold text-red-800 ring-1 ring-red-200" href="/login?forgot=1">
                     Forgot password
                   </a>
                 </div>
@@ -478,13 +535,16 @@ export function RegistrationWizard({ church, settings, departments, registration
         </div>
 
         {step > 1 && step < 9 && (
-          <div className="sticky bottom-0 z-10 mt-8 -mx-5 -mb-5 border-t border-stone-100 bg-white px-5 py-4 sm:-mx-8 sm:-mb-8 sm:px-8 sm:py-5">
-            <div className="flex items-center justify-between gap-3">
+          <div
+            className="sticky bottom-0 z-20 mt-8 -mx-4 -mb-4 border-t border-stone-100 bg-white/95 px-4 py-3 shadow-[0_-8px_24px_rgba(41,37,36,0.06)] backdrop-blur sm:-mx-6 sm:-mb-6 sm:px-6 md:-mx-8 md:-mb-8 md:px-8"
+            style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}
+          >
+            <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-3">
               <button
                 type="button"
                 onClick={handleBack}
                 disabled={submitting}
-                className="inline-flex h-12 items-center justify-center rounded-xl border border-stone-200 bg-white px-5 text-sm font-medium text-stone-700 transition hover:bg-stone-50 disabled:opacity-50"
+                className="inline-flex h-12 min-w-20 items-center justify-center rounded-xl border border-stone-200 bg-white px-4 text-base font-medium text-stone-700 transition hover:bg-stone-50 disabled:opacity-50 sm:px-5 sm:text-sm"
               >
                 {t.common?.back || "Back"}
               </button>
@@ -548,9 +608,17 @@ export function RegistrationWizard({ church, settings, departments, registration
                   <button
                     type="submit"
                     disabled={submitting}
-                    className="inline-flex h-12 flex-1 items-center justify-center rounded-xl bg-emerald-800 px-6 text-sm font-semibold text-white transition hover:bg-emerald-900 disabled:opacity-60"
+                    className="inline-flex h-12 min-w-0 items-center justify-center rounded-xl bg-emerald-800 px-4 text-base font-semibold text-white transition hover:bg-emerald-900 disabled:opacity-60 sm:px-6 sm:text-sm"
+                    aria-live="polite"
                   >
-                    {submitting ? (t.common?.saving || "Submitting...") : (t.common?.submit || "Submit")}
+                    {submitting ? (
+                      <>
+                        <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
+                        Creating account...
+                      </>
+                    ) : (
+                      "Create account & submit"
+                    )}
                   </button>
                 </form>
               ) : (
@@ -558,7 +626,7 @@ export function RegistrationWizard({ church, settings, departments, registration
                   type="button"
                   onClick={handleNext}
                   disabled={submitting}
-                  className="inline-flex h-12 flex-1 items-center justify-center rounded-xl bg-emerald-800 px-6 text-sm font-semibold text-white transition hover:bg-emerald-900"
+                  className="inline-flex h-12 min-w-0 items-center justify-center rounded-xl bg-emerald-800 px-4 text-base font-semibold text-white transition hover:bg-emerald-900 disabled:opacity-60 sm:px-6 sm:text-sm"
                 >
                   {t.common?.continue || "Continue"}
                 </button>

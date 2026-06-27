@@ -1,5 +1,44 @@
 import "server-only";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
+
+const PENDING_REGISTRATION_STATUSES = [
+  "pending",
+  "needs_member_duplicate_review",
+  "needs_household_duplicate_review",
+  "needs_review",
+  "approved",
+] as const;
+const PENDING_ACCOUNT_SETUP_STATUSES = [
+  "pending_email_confirmation",
+  "pending_approval",
+  "link_failed",
+] as const;
+
+async function hasPendingRegistrationForUser(userId: string) {
+  let admin: ReturnType<typeof createAdminClient>;
+  try {
+    admin = createAdminClient();
+  } catch {
+    return false;
+  }
+
+  const { data, error } = await admin
+    .from("church_member_registrations")
+    .select("id")
+    .eq("auth_user_id", userId)
+    .in("status", [...PENDING_REGISTRATION_STATUSES])
+    .in("account_setup_status", [...PENDING_ACCOUNT_SETUP_STATUSES])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    return false;
+  }
+
+  return Boolean(data?.id);
+}
 
 export async function getCurrentUser() {
   const supabase = await createClient();
@@ -69,6 +108,10 @@ export async function getPostLoginDestination(userId: string): Promise<string> {
 
   // Priority 4: No church membership - go create one
   if (!firstChurch?.churches?.slug) {
+    if (await hasPendingRegistrationForUser(userId)) {
+      return "/registration-pending";
+    }
+
     return "/create-church";
   }
 

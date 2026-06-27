@@ -34,9 +34,13 @@ export function PersonalInformationStep({ data, onChange, errors, settings }: Pe
             value={data.firstName}
             onChange={e => onChange("firstName", e.target.value)}
             placeholder="e.g. John"
-            className="h-12 rounded-xl"
+            autoComplete="given-name"
+            enterKeyHint="next"
+            aria-invalid={Boolean(errors.firstName)}
+            aria-describedby={errors.firstName ? "firstName-error" : undefined}
+            className="h-12 rounded-xl text-base sm:text-sm"
           />
-          {errors.firstName && <p className="text-xs text-red-600">{errors.firstName}</p>}
+          {errors.firstName && <p id="firstName-error" className="text-xs text-red-600">{errors.firstName}</p>}
         </div>
 
         <div className="space-y-1.5">
@@ -46,9 +50,13 @@ export function PersonalInformationStep({ data, onChange, errors, settings }: Pe
             value={data.lastName}
             onChange={e => onChange("lastName", e.target.value)}
             placeholder="e.g. Smith"
-            className="h-12 rounded-xl"
+            autoComplete="family-name"
+            enterKeyHint="next"
+            aria-invalid={Boolean(errors.lastName)}
+            aria-describedby={errors.lastName ? "lastName-error" : undefined}
+            className="h-12 rounded-xl text-base sm:text-sm"
           />
-          {errors.lastName && <p className="text-xs text-red-600">{errors.lastName}</p>}
+          {errors.lastName && <p id="lastName-error" className="text-xs text-red-600">{errors.lastName}</p>}
         </div>
       </div>
 
@@ -59,7 +67,9 @@ export function PersonalInformationStep({ data, onChange, errors, settings }: Pe
           value={data.displayName}
           onChange={e => onChange("displayName", e.target.value)}
           placeholder="e.g. Johnny"
-          className="h-12 rounded-xl"
+          autoComplete="name"
+          enterKeyHint="next"
+          className="h-12 rounded-xl text-base sm:text-sm"
         />
       </div>
 
@@ -72,14 +82,14 @@ export function PersonalInformationStep({ data, onChange, errors, settings }: Pe
               type="date"
               value={data.dateOfBirth}
               onChange={e => onChange("dateOfBirth", e.target.value)}
-              className="h-12 rounded-xl"
+              className="h-12 rounded-xl text-base sm:text-sm"
             />
           </div>
 
           <div className="space-y-1.5">
             <Label htmlFor="gender">Gender</Label>
             <Select value={data.gender} onValueChange={value => onChange("gender", value)}>
-              <SelectTrigger id="gender" className="h-12 rounded-xl">
+              <SelectTrigger id="gender" className="h-12 rounded-xl text-base sm:text-sm">
                 <SelectValue placeholder="Select gender" />
               </SelectTrigger>
               <SelectContent>
@@ -98,7 +108,7 @@ export function PersonalInformationStep({ data, onChange, errors, settings }: Pe
         <div className="space-y-1.5">
           <Label htmlFor="maritalStatus">Marital status</Label>
           <Select value={data.maritalStatus} onValueChange={value => onChange("maritalStatus", value)}>
-            <SelectTrigger id="maritalStatus" className="h-12 rounded-xl">
+            <SelectTrigger id="maritalStatus" className="h-12 rounded-xl text-base sm:text-sm">
               <SelectValue placeholder="Select status" />
             </SelectTrigger>
             <SelectContent>
@@ -118,7 +128,9 @@ export function PersonalInformationStep({ data, onChange, errors, settings }: Pe
             value={data.profession}
             onChange={e => onChange("profession", e.target.value)}
             placeholder="e.g. Teacher"
-            className="h-12 rounded-xl"
+            autoComplete="organization-title"
+            enterKeyHint="done"
+            className="h-12 rounded-xl text-base sm:text-sm"
           />
         </div>
       </div>

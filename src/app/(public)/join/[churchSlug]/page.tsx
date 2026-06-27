@@ -42,15 +42,25 @@ export default async function MemberJoinPage(props: PageProps) {
 
   if (!data.ok || !data.church) {
     return (
-      <main className="min-h-screen bg-[#faf8f3]">
-        <RegistrationUnavailable church={data.church} reason={data.reason ?? "configuration_error"} />
+      <main className="min-h-dvh bg-[#faf8f3]">
+        <div
+          className="mx-auto w-full max-w-3xl px-4 py-4 sm:px-6 sm:py-8"
+          style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+        >
+          <RegistrationUnavailable church={data.church} reason={data.reason ?? "configuration_error"} />
+        </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-[#faf8f3]">
-      <RegistrationWizard church={data.church} settings={data.settings} departments={data.departments} registrationKey={key} />
+    <main className="min-h-dvh bg-[#faf8f3]">
+      <div
+        className="mx-auto w-full max-w-3xl px-4 py-4 sm:px-6 sm:py-8"
+        style={{ paddingBottom: "max(1rem, env(safe-area-inset-bottom))" }}
+      >
+        <RegistrationWizard church={data.church} settings={data.settings} departments={data.departments} registrationKey={key} />
+      </div>
     </main>
   );
 }

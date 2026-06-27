@@ -57,6 +57,8 @@ export type ConversionResult = {
 } | {
   ok: false;
   error: string;
+  code?: "VALIDATION_ERROR" | "AUTH_LINK_ERROR" | "CONVERSION_ERROR" | "UNKNOWN_ERROR";
+  fieldErrors?: Record<string, string[]>;
 };
 
 export type DuplicateCandidate = {
