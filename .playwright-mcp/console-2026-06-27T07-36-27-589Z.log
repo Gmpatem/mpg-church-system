@@ -731,3 +731,21 @@
 [ 6023618ms] [LOG] [Fast Refresh] done in 323ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
 [ 6082539ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
 [ 6082547ms] [LOG] [Fast Refresh] done in 113ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[15734237ms] [ERROR] WebSocket connection to 'ws://localhost:3000/_next/webpack-hmr?id=8Pax-gNLR2mM9unImGwr0' failed: WebSocket opening handshake timed out @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_client_0fhqo1d._.js:13299
+[15736628ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[18109687ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[19819689ms] [LOG] [HMR] connected @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[19819993ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[19820012ms] [LOG] [Fast Refresh] done in 125ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[27583415ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[27583895ms] [LOG] [Fast Refresh] done in 582ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[27584392ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[27585550ms] [LOG] [Fast Refresh] done in 1264ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[27588994ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[27589761ms] [LOG] [Fast Refresh] done in 870ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[27589999ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[27590034ms] [LOG] [Fast Refresh] done in 149ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[27592739ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[27593332ms] [LOG] [Fast Refresh] done in 699ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[27593490ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
+[27593566ms] [LOG] [Fast Refresh] done in 177ms @ http://localhost:3000/_next/static/chunks/node_modules_next_dist_115brz8._.js:2431
