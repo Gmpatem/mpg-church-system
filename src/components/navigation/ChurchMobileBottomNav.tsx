@@ -36,7 +36,7 @@ type SecondaryLink = {
 };
 
 function isPathActive(pathname: string, href: string, exact = false) {
-  if (exact) return pathname === href;
+  if (exact) return pathname === href || pathname === href.replace(/\/dashboard$/, "");
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -54,7 +54,7 @@ export function ChurchMobileBottomNav({
   const canOpenOffice = roleLabel ? OFFICE_ALLOWED_ROLES.has(roleLabel) : false;
 
   const primaryItems = [
-    { key: "dashboard", label: t.navigation.dashboard, href: base, icon: LayoutDashboard, exact: true },
+    { key: "dashboard", label: t.navigation.dashboard, href: `${base}/dashboard`, icon: LayoutDashboard, exact: true },
     { key: "members", label: t.navigation.members, href: `${base}/members`, icon: Users },
     { key: "events", label: t.navigation.events, href: `${base}/events`, icon: CalendarDays },
     { key: "treasury", label: t.navigation.treasury, href: `${base}/treasury`, icon: Wallet },

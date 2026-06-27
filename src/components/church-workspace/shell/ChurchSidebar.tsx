@@ -5,11 +5,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import {
   ChevronDown,
-  ChevronsLeft,
-  ChevronsRight,
   Church,
   Home,
   LogOut,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -50,7 +50,7 @@ interface ChurchSidebarProps {
   onNavigate?: () => void;
   className?: string;
   collapsed?: boolean;
-  onCollapsedChange?: (collapsed: boolean) => void;
+  onToggleCollapsed?: () => void;
   mobile?: boolean;
 }
 
@@ -71,7 +71,7 @@ export function ChurchSidebar({
   onNavigate,
   className,
   collapsed = false,
-  onCollapsedChange,
+  onToggleCollapsed,
   mobile = false,
 }: ChurchSidebarProps) {
   const pathname = usePathname();
@@ -347,7 +347,46 @@ export function ChurchSidebar({
           </div>
         </nav>
 
-        <div className={cn("w-full border-t border-white/10", collapsed && !mobile ? "p-3" : "p-4")}>
+        {!mobile ? (
+          <div
+            className={cn(
+              "w-full border-t border-white/10",
+              collapsed ? "flex justify-center px-3 py-3" : "px-4 py-3"
+            )}
+          >
+            {collapsed ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <ChurchIconButton
+                    type="button"
+                    variant="ghost"
+                    className="size-11 text-white/75 hover:bg-white/10 hover:text-white focus-visible:ring-white/70 focus-visible:ring-offset-0"
+                    onClick={onToggleCollapsed}
+                    aria-label="Expand sidebar"
+                    title="Expand sidebar"
+                  >
+                    <PanelLeftOpen className="size-4" aria-hidden="true" />
+                  </ChurchIconButton>
+                </TooltipTrigger>
+                <TooltipContent side="right">Expand sidebar</TooltipContent>
+              </Tooltip>
+            ) : (
+              <ChurchButton
+                type="button"
+                variant="ghost"
+                className="min-h-10 w-full justify-start gap-2 bg-white/5 px-3 text-white/75 hover:bg-white/10 hover:text-white focus-visible:ring-white/70 focus-visible:ring-offset-0"
+                onClick={onToggleCollapsed}
+                aria-label="Collapse sidebar"
+                title="Collapse sidebar"
+              >
+                <PanelLeftClose className="size-4 shrink-0" aria-hidden="true" />
+                <span className="min-w-0 truncate">Collapse sidebar</span>
+              </ChurchButton>
+            )}
+          </div>
+        ) : null}
+
+        <div className={cn("w-full", collapsed && !mobile ? "px-3 pb-3" : "px-4 pb-4")}>
           <div
             className={cn(
               "rounded-xl border border-white/10 bg-white/5",
@@ -400,28 +439,6 @@ export function ChurchSidebar({
               </Tooltip>
             )}
           </div>
-
-          {!mobile ? (
-            <ChurchIconButton
-              type="button"
-              variant="ghost"
-              className={cn(
-                "mt-3 w-full text-white/70 hover:bg-white/10 hover:text-white",
-                collapsed && "w-10"
-              )}
-              onClick={() => onCollapsedChange?.(!collapsed)}
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-              {collapsed ? (
-                <ChevronsRight className="size-4" aria-hidden="true" />
-              ) : (
-                <>
-                  <ChevronsLeft className="mr-2 size-4" aria-hidden="true" />
-                  <span>Collapse</span>
-                </>
-              )}
-            </ChurchIconButton>
-          ) : null}
         </div>
       </div>
     </TooltipProvider>

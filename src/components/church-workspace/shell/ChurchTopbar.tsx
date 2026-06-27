@@ -299,7 +299,7 @@ export function ChurchTopbar({
 
               <DropdownMenuSeparator />
 
-              <DropdownMenuItem onClick={() => router.push(`/c/${church.slug}`)}>
+              <DropdownMenuItem onClick={() => router.push(`/c/${church.slug}/dashboard`)}>
                 <User className="mr-2 size-4" aria-hidden="true" />
                 {t.navigation.dashboard}
               </DropdownMenuItem>

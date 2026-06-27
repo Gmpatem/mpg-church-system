@@ -1,5 +1,5 @@
-import { ChurchWorkspaceSkeleton } from "@/components/church-workspace";
+import { DashboardLoadingSkeleton } from "@/features/dashboard/components/DashboardPanelSkeleton";
 
-export default function Loading() {
-  return <ChurchWorkspaceSkeleton variant="dashboard" />;
+export default function DashboardLoading() {
+  return <DashboardLoadingSkeleton />;
 }

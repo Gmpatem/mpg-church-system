@@ -1,9 +1,2377 @@
-⚠ Port 3000 is in use by process 5332, using available port 3001 instead.
-⨯ Another next dev server is already running.
-
-- Local:        http://localhost:3000
-- PID:          5332
-- Dir:          E:\mpg-church-system
-- Log:          .next\dev\logs\next-development.log
-
-Run taskkill /PID 5332 /F to stop it.
+Error [AuthApiError]: Invalid Refresh Token: Refresh Token Not Found
+    at ignore-listed frames {
+  __isAuthError: true,
+  status: 400,
+  code: 'refresh_token_not_found'
+}
+Error [AuthApiError]: Invalid Refresh Token: Refresh Token Not Found
+    at ignore-listed frames {
+  __isAuthError: true,
+  status: 400,
+  code: 'refresh_token_not_found'
+}
+Error [AuthApiError]: Invalid Refresh Token: Refresh Token Not Found
+    at ignore-listed frames {
+  __isAuthError: true,
+  status: 400,
+  code: 'refresh_token_not_found'
+}
+Error [AuthApiError]: Invalid Refresh Token: Refresh Token Not Found
+    at ignore-listed frames {
+  __isAuthError: true,
+  status: 400,
+  code: 'refresh_token_not_found'
+}
+[browser] An async function with useActionState was called outside of a transition. This is likely not what you intended (for example, isPending will not update correctly). Either call the returned function inside startTransition, or pass it to an `action` or `formAction` prop. 
+    at submitReject (src/app/(church)/c/[churchSlug]/members/components/onboarding/RegistrationReviewDialog.tsx:102:5)
+  100 |     formData.append("registrationId", registration.id);
+  101 |     formData.append("reviewNote", reviewNote);
+> 102 |     rejectAction(formData);
+      |     ^
+  103 |   };
+  104 |
+  105 |   const householdRoleOptions = [ (src/app/(church)
+⨯ Error: TypeError: fetch failed
+    at <unknown> (src\features\dashboard\queries.ts:332:11)
+    at async DashboardPage (src\app\(church)\c\[churchSlug]\dashboard\page.tsx:23:33)
+  330 |
+  331 |   if (churchError) {
+> 332 |     throw new Error(churchError.message);
+      |           ^
+  333 |   }
+  334 |
+  335 |   const church = churchResult ?? { {
+  digest: '2317486738'
+}
+⨯ Error: TypeError: fetch failed
+    at <unknown> (src\features\dashboard\queries.ts:332:11)
+    at async DashboardPage (src\app\(church)\c\[churchSlug]\dashboard\page.tsx:23:33)
+  330 |
+  331 |   if (churchError) {
+> 332 |     throw new Error(churchError.message);
+      |           ^
+  333 |   }
+  334 |
+  335 |   const church = churchResult ?? { {
+  digest: '1561551827'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'addMember')
+    at DashboardHeader (src\features\dashboard\components\DashboardHeader.tsx:47:25)
+  45 |     data.capabilities.canManageMembers
+  46 |       ? {
+> 47 |           label: labels.addMember,
+     |                         ^
+  48 |           href: `${base}/members/new`,
+  49 |           icon: UserPlus,
+  50 |         } {
+  digest: '3934605174'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'members')
+    at DashboardPulseStrip (src\features\dashboard\components\DashboardPulseStrip.tsx:22:21)
+  20 |   const metrics = [
+  21 |     {
+> 22 |       label: labels.members,
+     |                     ^
+  23 |       value: data.pulse.memberCount,
+  24 |       hint: withCount(labels.membersThisMonth, data.pulse.membersAddedThisMonth),
+  25 |       href: data.routes.members, {
+  digest: '3498822786'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'today')
+    at DashboardAgendaPanel (src\features\dashboard\components\DashboardAgendaPanel.tsx:62:35)
+  60 | }) {
+  61 |   const groups = [
+> 62 |     { key: "today", label: labels.today },
+     |                                   ^
+  63 |     { key: "tomorrow", label: labels.tomorrow },
+  64 |     { key: "later", label: labels.laterThisWeek },
+  65 |   ] as const; {
+  digest: '3883032862'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'peopleMinistry')
+    at DashboardPeopleMinistryPanel (src\features\dashboard\components\DashboardPeopleMinistryPanel.tsx:80:21)
+  78 |   return (
+  79 |     <DashboardPanel
+> 80 |       title={labels.peopleMinistry}
+     |                     ^
+  81 |       icon={UsersRound}
+  82 |       className="h-full"
+  83 |       contentClassName="grid gap-4" {
+  digest: '2075952300'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'actionCenter')
+    at DashboardActionCenter (src\features\dashboard\components\DashboardActionCenter.tsx:76:35)
+  74 |
+  75 |   return (
+> 76 |     <DashboardPanel title={labels.actionCenter} icon={ShieldCheck} className="h-full">
+     |                                   ^
+  77 |       {!hasAttention ? (
+  78 |         <CompactEmptyState icon={ShieldCheck} title={labels.allCaughtUp} message={labels.n...
+  79 |       ) : ( {
+  digest: '1151716922'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'latestUpdates')
+    at DashboardUpdatesPanel (src\features\dashboard\components\DashboardUpdatesPanel.tsx:93:21)
+  91 |   return (
+  92 |     <DashboardPanel
+> 93 |       title={labels.latestUpdates}
+     |                     ^
+  94 |       icon={Activity}
+  95 |       action={
+  96 |         data.routes.auditTrail ? ( {
+  digest: '3168515595'
+}
+⨯ TypeError: Cannot read properties of undefined (reading 'ministrySnapshot')
+    at DashboardMinistrySnapshot (src\features\dashboard\components\DashboardMinistrySnapshot.tsx:19:35)
+  17 | }) {
+  18 |   return (
+> 19 |     <DashboardPanel title={labels.ministrySnapshot} className="h-full" contentClassName="p...
+     |                                   ^
+  20 |       {data.ministries.length === 0 ? (
+  21 |         <CompactEmptyState
+  22 |           icon={Building2} {
+  digest: '653473307'
+}
+⨯ Error: TypeError: fetch failed
+    at <unknown> (src\features\access\queries.ts:162:11)
+    at async (src\features\access\queries.ts:215:5)
+  160 |
+  161 |   if (error) {
+> 162 |     throw new Error(error.message);
+      |           ^
+  163 |   }
+  164 |
+  165 |   return ( {
+  digest: '872425145'
+}
+⨯ Error: TypeError: fetch failed
+    at <unknown> (src\features\access\queries.ts:162:11)
+    at async (src\features\access\queries.ts:215:5)
+  160 |
+  161 |   if (error) {
+> 162 |     throw new Error(error.message);
+      |           ^
+  163 |   }
+  164 |
+  165 |   return ( {
+  digest: '872425145'
+}
+[browser] Uncaught Error: TypeError: fetch failed
+    at <anonymous> (src\features\access\queries.ts:162:11)
+    at <anonymous> (src\features\access\queries.ts:215:5)
+  160 |
+  161 |   if (error) {
+> 162 |     throw new Error(error.message);
+      |           ^
+  163 |   }
+  164 |
+  165 |   return (
+⚠ Fast Refresh had to perform a full reload when ./src/features/i18n/en.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload when ./src/features/i18n/en.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload when ./src/features/i18n/en.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload when ./src/features/i18n/en.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload when ./src/features/i18n/fr.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload when ./src/features/i18n/fr.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload when ./src/features/i18n/fr.ts changed. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⨯ Error: useI18n must be used within an I18nProvider
+    at useI18n (src\features\i18n\I18nProvider.tsx:104:11)
+    at ChurchSidebar (src\components\church-workspace\shell\ChurchSidebar.tsx:80:24)
+  102 |   const context = useContext(I18nContext);
+  103 |   if (context === undefined) {
+> 104 |     throw new Error("useI18n must be used within an I18nProvider");
+      |           ^
+  105 |   }
+  106 |   return context;
+  107 | } {
+  digest: '2944063204'
+}
+⨯ Error: useI18n must be used within an I18nProvider
+    at useI18n (src\features\i18n\I18nProvider.tsx:104:11)
+    at ChurchSidebar (src\components\church-workspace\shell\ChurchSidebar.tsx:80:24)
+  102 |   const context = useContext(I18nContext);
+  103 |   if (context === undefined) {
+> 104 |     throw new Error("useI18n must be used within an I18nProvider");
+      |           ^
+  105 |   }
+  106 |   return context;
+  107 | } {
+  digest: '2944063204'
+}
+TypeError: fetch failed
+    at ignore-listed frames {
+  [cause]: Error [ConnectTimeoutError]: Connect Timeout Error (attempted addresses: 104.18.38.10:443, 172.64.149.246:443, 198.41.0.4:443, timeout: 10000ms)
+      at ignore-listed frames {
+    code: 'UND_ERR_CONNECT_TIMEOUT'
+  }
+}
+TypeError: fetch failed
+    at ignore-listed frames {
+  [cause]: Error [ConnectTimeoutError]: Connect Timeout Error (attempted addresses: 104.18.38.10:443, 172.64.149.246:443, 198.41.0.4:443, timeout: 10000ms)
+      at ignore-listed frames {
+    code: 'UND_ERR_CONNECT_TIMEOUT'
+  }
+}
+TypeError: fetch failed
+    at ignore-listed frames {
+  [cause]: Error [ConnectTimeoutError]: Connect Timeout Error (attempted addresses: 104.18.38.10:443, 172.64.149.246:443, 198.41.0.4:443, timeout: 10000ms)
+      at ignore-listed frames {
+    code: 'UND_ERR_CONNECT_TIMEOUT'
+  }
+}
+TypeError: fetch failed
+    at ignore-listed frames {
+  [cause]: Error [ConnectTimeoutError]: Connect Timeout Error (attempted addresses: 104.18.38.10:443, 172.64.149.246:443, 198.41.0.4:443, timeout: 10000ms)
+      at ignore-listed frames {
+    code: 'UND_ERR_CONNECT_TIMEOUT'
+  }
+}
+TypeError: fetch failed
+    at ignore-listed frames {
+  [cause]: Error [ConnectTimeoutError]: Connect Timeout Error (attempted addresses: 104.18.38.10:443, 172.64.149.246:443, 198.41.0.4:443, timeout: 10000ms)
+      at ignore-listed frames {
+    code: 'UND_ERR_CONNECT_TIMEOUT'
+  }
+}
+TypeError: fetch failed
+    at ignore-listed frames {
+  [cause]: Error [ConnectTimeoutError]: Connect Timeout Error (attempted addresses: 104.18.38.10:443, 172.64.149.246:443, 198.41.0.4:443, timeout: 10000ms)
+      at ignore-listed frames {
+    code: 'UND_ERR_CONNECT_TIMEOUT'
+  }
+}
+TypeError: fetch failed
+    at ignore-listed frames {
+  [cause]: Error [ConnectTimeoutError]: Connect Timeout Error (attempted addresses: 104.18.38.10:443, 172.64.149.246:443, 198.41.0.4:443, timeout: 10000ms)
+      at ignore-listed frames {
+    code: 'UND_ERR_CONNECT_TIMEOUT'
+  }
+}
+⨯ Error: TypeError: fetch failed
+    at <unknown> (src\features\access\queries.ts:196:11)
+    at async (src\features\access\queries.ts:215:5)
+    at async getChurchRouteAccessContext (src\features\access\queries.ts:341:17)
+    at async getMembersWorkspaceData (src\features\members\queries.ts:503:15)
+    at async MembersPage (src\app\(church)\c\[churchSlug]\members\page.tsx:38:7)
+  194 |       return [];
+  195 |     }
+> 196 |     throw new Error(error.message);
+      |           ^
+  197 |   }
+  198 |
+  199 |   return (data ?? []).map((row: any) => row.role_code).filter(Boolean); {
+  digest: '999628887'
+}
+[browser] Error: TypeError: fetch failed
+    at <anonymous> (src\features\access\queries.ts:196:11)
+    at <anonymous> (src\features\access\queries.ts:215:5)
+    at  getChurchRouteAccessContext (src\features\access\queries.ts:341:17)
+    at  getMembersWorkspaceData (src\features\members\queries.ts:503:15)
+    at  MembersPage (src\app\(church)\c\[churchSlug]\members\page.tsx:38:7)
+  194 |       return [];
+  195 |     }
+> 196 |     throw new Error(error.message);
+      |           ^
+  197 |   }
+  198 |
+  199 |   return (data ?? []).map((row: any) => row.role_code).filter(Boolean); (src/app/(church)
+[browser] Error: TypeError: fetch failed
+    at <anonymous> (src\features\access\queries.ts:196:11)
+    at <anonymous> (src\features\access\queries.ts:215:5)
+    at  getChurchRouteAccessContext (src\features\access\queries.ts:341:17)
+    at  getMembersWorkspaceData (src\features\members\queries.ts:503:15)
+    at  MembersPage (src\app\(church)\c\[churchSlug]\members\page.tsx:38:7)
+  194 |       return [];
+  195 |     }
+> 196 |     throw new Error(error.message);
+      |           ^
+  197 |   }
+  198 |
+  199 |   return (data ?? []).map((row: any) => row.role_code).filter(Boolean); (src/app/(church)
+⨯ Error: TypeError: fetch failed
+    at getMembersWorkspaceData (src\features\members\queries.ts:533:32)
+    at async MembersPage (src\app\(church)\c\[churchSlug]\members\page.tsx:38:7)
+  531 |       .in("member_id", memberIds);
+  532 |
+> 533 |     if (assignmentError) throw new Error(assignmentError.message);
+      |                                ^
+  534 |     assignments = assignmentRows ?? [];
+  535 |   }
+  536 | {
+  digest: '2064771492'
+}
+⨯ Error: TypeError: fetch failed
+    at getChurchRouteAccessContext (src\features\access\queries.ts:334:11)
+    at async requireChurchWorkspaceAccess (src\features\access\queries.ts:375:15)
+    at async ChurchLayout (src\app\(church)\c\[churchSlug]\layout.tsx:36:15)
+  332 |
+  333 |   if (churchError) {
+> 334 |     throw new Error(churchError.message);
+      |           ^
+  335 |   }
+  336 |
+  337 |   if (!church) { {
+  digest: '2300597276'
+}
+⨯ Error: TypeError: fetch failed
+    at getChurchRouteAccessContext (src\features\access\queries.ts:334:11)
+    at async getMembersWorkspaceData (src\features\members\queries.ts:503:15)
+    at async MembersPage (src\app\(church)\c\[churchSlug]\members\page.tsx:38:7)
+  332 |
+  333 |   if (churchError) {
+> 334 |     throw new Error(churchError.message);
+      |           ^
+  335 |   }
+  336 |
+  337 |   if (!church) { {
+  digest: '701571505'
+}
+[browser] Uncaught Error: TypeError: fetch failed
+    at getChurchRouteAccessContext (src\features\access\queries.ts:334:11)
+    at  requireChurchWorkspaceAccess (src\features\access\queries.ts:375:15)
+    at  ChurchLayout (src\app\(church)\c\[churchSlug]\layout.tsx:36:15)
+  332 |
+  333 |   if (churchError) {
+> 334 |     throw new Error(churchError.message);
+      |           ^
+  335 |   }
+  336 |
+  337 |   if (!church) {
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.
+[browser] The width(0) and height(0) of chart should be greater than 0,
+       please check the style of container, or the props width(100%) and height(100%),
+       or add a minWidth(0) or minHeight(undefined) or use aspect(undefined) to control the
+       height and width.

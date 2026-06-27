@@ -42,7 +42,7 @@ function exactOrPrefix(pathname: string, href: string, exact?: boolean) {
   const path = normalizePath(pathname);
   const target = normalizePath(href);
 
-  if (exact) return path === target || path === `${target}/dashboard`;
+  if (exact) return path === target;
   return path === target || path.startsWith(`${target}/`);
 }
 
@@ -54,16 +54,17 @@ function routeMatcher(base: string, segments: string[], options?: { exact?: bool
 
 export function getDashboardNavigationItem(churchSlug: string, t: any): ChurchNavigationItem {
   const base = `/c/${churchSlug}`;
+  const dashboard = `${base}/dashboard`;
 
   return {
     key: "dashboard",
     label: t.navigation.dashboard,
-    href: base,
+    href: dashboard,
     icon: LayoutDashboard,
     exact: true,
     match: (pathname) => {
       const path = normalizePath(pathname);
-      return path === base || path === `${base}/dashboard`;
+      return path === base || path === dashboard;
     },
   };
 }

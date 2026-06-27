@@ -55,14 +55,18 @@ export function ChurchAppShell({
     }
   }, []);
 
-  function updateSidebarCollapsed(nextValue: boolean) {
-    setSidebarCollapsed(nextValue);
+  function toggleSidebar() {
+    setSidebarCollapsed((current) => {
+      const nextValue = !current;
 
-    try {
-      window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(nextValue));
-    } catch {
-      // The layout state remains usable even when storage is unavailable.
-    }
+      try {
+        window.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(nextValue));
+      } catch {
+        // The layout state remains usable even when storage is unavailable.
+      }
+
+      return nextValue;
+    });
   }
 
   const shellStyle: ChurchShellStyle = {
@@ -84,7 +88,7 @@ export function ChurchAppShell({
             showAccessControl={showAccessControl}
             pendingApprovalCount={pendingApprovalCount}
             collapsed={sidebarCollapsed}
-            onCollapsedChange={updateSidebarCollapsed}
+            onToggleCollapsed={toggleSidebar}
           />
         </aside>
 
