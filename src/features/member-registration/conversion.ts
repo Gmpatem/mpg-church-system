@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireChurchRole } from "@/features/access/queries";
 import { CHURCH_MANAGEMENT_ROLE_CODES } from "@/lib/domain/church-access";
 import { createMemberRecord } from "@/features/members/services/create-member-record";
@@ -9,8 +10,171 @@ import { createHouseholdRecord } from "@/features/households/services/create-hou
 import { linkMemberToHousehold } from "@/features/households/services/link-member-household";
 import { setHouseholdHead } from "@/features/households/services/set-household-head";
 import { registrationReviewDecisionSchema } from "./schemas";
+import {
+  normalizeLoginEmail,
+  verifyRegistrationAuthUser,
+  type AccountSetupStatus,
+} from "./account-linking";
 import { getString } from "@/lib/domain/validation";
-import type { ConversionResult } from "./types";
+import type { ChurchMemberRegistration, ConversionResult } from "./types";
+
+type RegistrationAccountRow = ChurchMemberRegistration & {
+  auth_user_id?: string | null;
+  login_email?: string | null;
+  account_setup_requested?: boolean | null;
+  account_setup_status?: AccountSetupStatus | null;
+};
+
+async function markRegistrationAccountStatus(
+  registration: RegistrationAccountRow,
+  status: AccountSetupStatus
+) {
+  const admin = createAdminClient();
+  await admin
+    .from("church_member_registrations")
+    .update({
+      account_setup_status: status,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", registration.id)
+    .eq("church_id", registration.church_id);
+}
+
+async function ensureChurchUserActive(params: {
+  churchId: string;
+  authUserId: string;
+}) {
+  const admin = createAdminClient();
+
+  const { data: existing, error: lookupError } = await admin
+    .from("church_users")
+    .select("id")
+    .eq("church_id", params.churchId)
+    .eq("user_id", params.authUserId)
+    .maybeSingle();
+
+  if (lookupError) {
+    throw new Error(lookupError.message);
+  }
+
+  if (existing) {
+    const { error } = await admin
+      .from("church_users")
+      .update({
+        status: "active",
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", existing.id);
+
+    if (error) throw new Error(error.message);
+    return;
+  }
+
+  const { error } = await admin.from("church_users").insert({
+    church_id: params.churchId,
+    user_id: params.authUserId,
+    status: "active",
+    is_primary: false,
+  });
+
+  if (error) throw new Error(error.message);
+}
+
+async function activateVerifiedPortalAccount(params: {
+  registration: RegistrationAccountRow;
+  churchId: string;
+  primaryMemberId: string;
+}) {
+  const authUserId = params.registration.auth_user_id;
+  if (!authUserId) {
+    return { ok: true as const, accountLinked: false as const, emailConfirmed: false };
+  }
+
+  const loginEmail = normalizeLoginEmail(
+    params.registration.login_email ?? params.registration.email ?? ""
+  );
+  const verified = await verifyRegistrationAuthUser({ authUserId, loginEmail });
+
+  if (!verified.ok) {
+    await markRegistrationAccountStatus(params.registration, "link_failed");
+    return { ok: false as const, error: verified.error };
+  }
+
+  const admin = createAdminClient();
+  const { data: existingMember, error: existingMemberError } = await admin
+    .from("members")
+    .select("id")
+    .eq("church_id", params.churchId)
+    .eq("profile_id", verified.authUserId)
+    .neq("id", params.primaryMemberId)
+    .maybeSingle();
+
+  if (existingMemberError) {
+    await markRegistrationAccountStatus(params.registration, "link_failed");
+    return { ok: false as const, error: existingMemberError.message };
+  }
+
+  if (existingMember) {
+    await markRegistrationAccountStatus(params.registration, "link_failed");
+    return {
+      ok: false as const,
+      error: "This portal account is already linked to another member.",
+    };
+  }
+
+  const fullName = [params.registration.first_name, params.registration.last_name]
+    .filter(Boolean)
+    .join(" ");
+
+  const { error: profileError } = await admin.from("profiles").upsert(
+    {
+      id: verified.authUserId,
+      full_name: fullName || null,
+      email: verified.loginEmail,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: "id" }
+  );
+
+  if (profileError) {
+    await markRegistrationAccountStatus(params.registration, "link_failed");
+    return { ok: false as const, error: profileError.message };
+  }
+
+  const { error: memberError } = await admin
+    .from("members")
+    .update({
+      profile_id: verified.authUserId,
+      email: params.registration.email ?? verified.loginEmail,
+      updated_at: new Date().toISOString(),
+    })
+    .eq("church_id", params.churchId)
+    .eq("id", params.primaryMemberId);
+
+  if (memberError) {
+    await markRegistrationAccountStatus(params.registration, "link_failed");
+    return { ok: false as const, error: memberError.message };
+  }
+
+  try {
+    await ensureChurchUserActive({
+      churchId: params.churchId,
+      authUserId: verified.authUserId,
+    });
+  } catch (error) {
+    await markRegistrationAccountStatus(params.registration, "link_failed");
+    return {
+      ok: false as const,
+      error: error instanceof Error ? error.message : "Failed to activate portal access.",
+    };
+  }
+
+  return {
+    ok: true as const,
+    accountLinked: true as const,
+    emailConfirmed: verified.emailConfirmed,
+  };
+}
 
 export async function convertRegistrationAction(
   _prevState: ConversionResult | null,
@@ -267,6 +431,22 @@ export async function convertRegistrationAction(
       }
     }
 
+    const accountActivation = await activateVerifiedPortalAccount({
+      registration: registration as RegistrationAccountRow,
+      churchId: ctx.churchId,
+      primaryMemberId,
+    });
+
+    if (!accountActivation.ok) {
+      return { ok: false, error: accountActivation.error };
+    }
+
+    const accountSuccessMessage = accountActivation.accountLinked
+      ? accountActivation.emailConfirmed
+        ? "Registration approved. The member can sign in using the account created during registration."
+        : "Registration approved. Portal access will be available after email confirmation."
+      : undefined;
+
     // Mark registration converted
     const { error: updateError } = await supabase
       .from("church_member_registrations")
@@ -275,6 +455,9 @@ export async function convertRegistrationAction(
         matched_member_id: decision.memberResolution === "merge" ? primaryMemberId : null,
         created_member_id: decision.memberResolution === "create" ? primaryMemberId : null,
         created_household_id: householdId,
+        account_setup_status: accountActivation.accountLinked
+          ? "active"
+          : (registration as RegistrationAccountRow).account_setup_status ?? "not_requested",
         reviewed_by_user_id: ctx.userId,
         reviewed_at: new Date().toISOString(),
         review_note: decision.reviewNote,
@@ -299,6 +482,7 @@ export async function convertRegistrationAction(
       memberId: primaryMemberId,
       householdId,
       familyMemberIds,
+      message: accountSuccessMessage,
     };
   } catch (error) {
     if (error && typeof error === "object" && "errors" in error) {

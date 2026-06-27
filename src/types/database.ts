@@ -1844,6 +1844,11 @@ export interface Database {
           created_at: string;
           updated_at: string;
           metadata: Json;
+          auth_user_id: string | null;
+          login_email: string | null;
+          account_setup_requested: boolean;
+          account_setup_status: string;
+          account_setup_verified_at: string | null;
         };
         Insert: {
           id?: string;
@@ -1899,6 +1904,11 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
           metadata?: Json;
+          auth_user_id?: string | null;
+          login_email?: string | null;
+          account_setup_requested?: boolean;
+          account_setup_status?: string;
+          account_setup_verified_at?: string | null;
         };
         Update: {
           id?: string;
@@ -1954,6 +1964,11 @@ export interface Database {
           created_at?: string;
           updated_at?: string;
           metadata?: Json;
+          auth_user_id?: string | null;
+          login_email?: string | null;
+          account_setup_requested?: boolean;
+          account_setup_status?: string;
+          account_setup_verified_at?: string | null;
         };
       };
       church_member_registration_household_members: {

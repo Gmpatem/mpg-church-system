@@ -1,8 +1,11 @@
 "use client";
 
-import { useState, useActionState, useEffect, useCallback } from "react";
+import { useState, useActionState, useEffect, useCallback, useTransition } from "react";
 import { useI18n } from "@/features/i18n";
 import { submitPublicRegistrationAction } from "@/features/member-registration/public-actions";
+import { validateRegistrationKeyAction } from "@/features/member-registration/public-queries";
+import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
+import { getPublicSiteUrl } from "@/lib/site-url";
 import type { PublicRegistrationPageData } from "@/features/member-registration/public-queries";
 import { RegistrationHeader } from "./RegistrationHeader";
 import { RegistrationProgress } from "./RegistrationProgress";
@@ -58,6 +61,10 @@ export type WizardData = {
   departmentInterestIds: string[];
   notes: string;
   privacyConsent: boolean;
+  accountSetupRequested: boolean;
+  loginEmail: string;
+  password: string;
+  confirmPassword: string;
 };
 
 const emptyData: WizardData = {
@@ -99,6 +106,10 @@ const emptyData: WizardData = {
   departmentInterestIds: [],
   notes: "",
   privacyConsent: false,
+  accountSetupRequested: false,
+  loginEmail: "",
+  password: "",
+  confirmPassword: "",
 };
 
 type RegistrationWizardProps = {
@@ -114,11 +125,17 @@ export function RegistrationWizard({ church, settings, departments, registration
   const [data, setData] = useState<WizardData>(emptyData);
   const [touchedSteps, setTouchedSteps] = useState<Set<number>>(new Set());
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [clientError, setClientError] = useState<string | null>(null);
+  const [existingAccountNotice, setExistingAccountNotice] = useState(false);
+  const [isClientSubmitting, setIsClientSubmitting] = useState(false);
+  const [isDispatchPending, startSubmitTransition] = useTransition();
 
   const [state, formAction, isPending] = useActionState(submitPublicRegistrationAction, null);
+  const submitting = isPending || isClientSubmitting || isDispatchPending;
 
   useEffect(() => {
     if (state?.ok) {
+      setData(prev => ({ ...prev, password: "", confirmPassword: "" }));
       setStep(9);
     }
   }, [state]);
@@ -143,6 +160,28 @@ export function RegistrationWizard({ church, settings, departments, registration
 
     if (currentStep === 8 && !data.privacyConsent) {
       nextErrors.privacyConsent = "Privacy consent is required.";
+    }
+
+    if (currentStep === 8 && data.accountSetupRequested) {
+      const loginEmail = (data.loginEmail || data.email).trim();
+
+      if (!loginEmail) {
+        nextErrors.loginEmail = "Email address is required.";
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail)) {
+        nextErrors.loginEmail = "Invalid email address.";
+      }
+
+      if (!data.password) {
+        nextErrors.password = "Password is required.";
+      } else if (data.password.length < 6) {
+        nextErrors.password = "Password must be at least 6 characters long.";
+      }
+
+      if (!data.confirmPassword) {
+        nextErrors.confirmPassword = "Please confirm your password.";
+      } else if (data.password !== data.confirmPassword) {
+        nextErrors.confirmPassword = "Passwords do not match.";
+      }
     }
 
     setErrors(nextErrors);
@@ -203,10 +242,142 @@ export function RegistrationWizard({ church, settings, departments, registration
     }));
   }, []);
 
+  const createPortalAccount = useCallback(async () => {
+    const loginEmail = (data.loginEmail || data.email).trim().toLowerCase();
+    const supabase = createBrowserSupabaseClient();
+    const { data: currentUserData } = await supabase.auth.getUser();
+    const currentUser = currentUserData.user;
+
+    if (currentUser) {
+      const currentEmail = (currentUser.email ?? "").trim().toLowerCase();
+      if (currentEmail !== loginEmail) {
+        return {
+          ok: false as const,
+          existingAccount: false,
+          error: "Sign out before linking this registration to a different account.",
+        };
+      }
+
+      return {
+        ok: true as const,
+        authUserId: currentUser.id,
+        loginEmail,
+      };
+    }
+
+    const publicSiteUrl = getPublicSiteUrl();
+    const { data: signUpData, error } = await supabase.auth.signUp({
+      email: loginEmail,
+      password: data.password,
+      options: {
+        emailRedirectTo: `${publicSiteUrl}/auth/callback?next=registration-pending`,
+        data: {
+          registration_source: "public_church_registration",
+          church_slug: church.slug,
+        },
+      },
+    });
+
+    if (error) {
+      const message = error.message.toLowerCase();
+      const existingAccount =
+        message.includes("already") ||
+        message.includes("registered") ||
+        message.includes("exists");
+
+      return {
+        ok: false as const,
+        existingAccount,
+        error: existingAccount
+          ? "An account may already exist for this email. Sign in or reset your password to continue."
+          : "Portal account could not be created. Please check the email and password and try again.",
+      };
+    }
+
+    if (!signUpData.user?.id) {
+      return {
+        ok: false as const,
+        existingAccount: false,
+        error: "Portal account could not be created. Please try again.",
+      };
+    }
+
+    setData(prev => ({ ...prev, password: "", confirmPassword: "" }));
+
+    return {
+      ok: true as const,
+      authUserId: signUpData.user.id,
+      loginEmail,
+    };
+  }, [church.slug, data.email, data.loginEmail, data.password]);
+
+  const submitFinalRegistration = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    const form = event.currentTarget;
+    setTouchedSteps(prev => new Set(prev).add(TOTAL_STEPS));
+    setClientError(null);
+    setExistingAccountNotice(false);
+
+    if (!validateStep(TOTAL_STEPS)) return;
+
+    setIsClientSubmitting(true);
+
+    try {
+      let accountLink: { authUserId: string; loginEmail: string } | null = null;
+
+      if (data.accountSetupRequested) {
+        const keyCheck = await validateRegistrationKeyAction(church.slug, registrationKey);
+        if (!keyCheck.ok) {
+          setClientError("Registration could not be validated. Please refresh the link and try again.");
+          return;
+        }
+
+        const account = await createPortalAccount();
+        if (!account.ok) {
+          setExistingAccountNotice(account.existingAccount);
+          setClientError(account.error);
+          return;
+        }
+
+        accountLink = {
+          authUserId: account.authUserId,
+          loginEmail: account.loginEmail,
+        };
+      }
+
+      const formData = new FormData(form);
+      formData.set("accountSetupRequested", String(data.accountSetupRequested));
+      if (accountLink) {
+        formData.set("authUserId", accountLink.authUserId);
+        formData.set("loginEmail", accountLink.loginEmail);
+      }
+
+      startSubmitTransition(() => {
+        formAction(formData);
+      });
+    } finally {
+      setIsClientSubmitting(false);
+    }
+  }, [
+    church.slug,
+    createPortalAccount,
+    data.accountSetupRequested,
+    formAction,
+    registrationKey,
+    validateStep,
+  ]);
+
   if (state?.ok) {
     return (
       <div className="mx-auto min-h-screen max-w-2xl px-4 py-8 sm:px-6">
-        <RegistrationSuccess church={church} settings={settings} />
+        <RegistrationSuccess
+          church={church}
+          settings={settings}
+          accountSetupRequested={state.accountSetupRequested}
+          accountSetupStatus={state.accountSetupStatus}
+          loginEmail={state.loginEmail}
+        />
       </div>
     );
   }
@@ -289,9 +460,19 @@ export function RegistrationWizard({ church, settings, departments, registration
             />
           )}
 
-          {state && !state.ok && (
+          {(clientError || (state && !state.ok)) && (
             <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {state.error}
+              <p>{clientError || (state && !state.ok ? state.error : "")}</p>
+              {existingAccountNotice && (
+                <div className="mt-2 flex flex-wrap gap-3 text-xs font-medium">
+                  <a className="text-red-800 underline" href="/login">
+                    Sign in
+                  </a>
+                  <a className="text-red-800 underline" href="/login?forgot=1">
+                    Forgot password
+                  </a>
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -302,14 +483,14 @@ export function RegistrationWizard({ church, settings, departments, registration
               <button
                 type="button"
                 onClick={handleBack}
-                disabled={isPending}
+                disabled={submitting}
                 className="inline-flex h-12 items-center justify-center rounded-xl border border-stone-200 bg-white px-5 text-sm font-medium text-stone-700 transition hover:bg-stone-50 disabled:opacity-50"
               >
                 {t.common?.back || "Back"}
               </button>
 
               {step === TOTAL_STEPS ? (
-                <form action={formAction} className="contents">
+                <form onSubmit={submitFinalRegistration} className="contents">
                   <input type="hidden" name="churchSlug" value={church.slug} />
                   <input type="hidden" name="key" value={registrationKey} />
                   <input type="hidden" name="firstName" value={data.firstName} />
@@ -348,6 +529,7 @@ export function RegistrationWizard({ church, settings, departments, registration
                   <input type="hidden" name="householdNotes" value={data.householdNotes} />
                   <input type="hidden" name="notes" value={data.notes} />
                   <input type="hidden" name="privacyConsent" value={String(data.privacyConsent)} />
+                  <input type="hidden" name="accountSetupRequested" value={String(data.accountSetupRequested)} />
                   {data.departmentInterestIds.map((id, i) => (
                     <input key={id} type="hidden" name={`departmentInterestIds[${i}]`} value={id} />
                   ))}
@@ -365,16 +547,17 @@ export function RegistrationWizard({ church, settings, departments, registration
                   ))}
                   <button
                     type="submit"
-                    disabled={isPending}
+                    disabled={submitting}
                     className="inline-flex h-12 flex-1 items-center justify-center rounded-xl bg-emerald-800 px-6 text-sm font-semibold text-white transition hover:bg-emerald-900 disabled:opacity-60"
                   >
-                    {isPending ? (t.common?.saving || "Submitting...") : (t.common?.submit || "Submit")}
+                    {submitting ? (t.common?.saving || "Submitting...") : (t.common?.submit || "Submit")}
                   </button>
                 </form>
               ) : (
                 <button
                   type="button"
                   onClick={handleNext}
+                  disabled={submitting}
                   className="inline-flex h-12 flex-1 items-center justify-center rounded-xl bg-emerald-800 px-6 text-sm font-semibold text-white transition hover:bg-emerald-900"
                 >
                   {t.common?.continue || "Continue"}

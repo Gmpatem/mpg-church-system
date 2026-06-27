@@ -30,6 +30,24 @@ type RegistrationReviewDialogProps = {
 
 type TabId = "member" | "household" | "family";
 
+function formatAccountSetupStatus(status: string | null | undefined) {
+  switch (status) {
+    case "pending_email_confirmation":
+      return "Pending email confirmation";
+    case "pending_approval":
+      return "Pending approval";
+    case "active":
+      return "Active";
+    case "rejected":
+      return "Rejected";
+    case "link_failed":
+      return "Link failed";
+    case "not_requested":
+    default:
+      return "Not requested";
+  }
+}
+
 export function RegistrationReviewDialog({
   open,
   onOpenChange,
@@ -52,14 +70,24 @@ export function RegistrationReviewDialog({
     Record<string, { resolution: "create" | "link" | "skip"; memberId: string; householdRole: string }>
   >({});
   const [reviewNote, setReviewNote] = useState("");
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const [conversionState, convertAction, converting] = useActionState(convertRegistrationAction, null);
   const [rejectState, rejectAction, rejecting] = useActionState(rejectRegistrationAction, null);
+  const accountRequested = Boolean(
+    registration.account_setup_requested ||
+      registration.auth_user_id ||
+      registration.login_email
+  );
 
   useEffect(() => {
     if (conversionState?.ok) {
-      onOpenChange(false);
       router.refresh();
+      if (conversionState.message) {
+        setSuccessMessage(conversionState.message);
+      } else {
+        onOpenChange(false);
+      }
     }
   }, [conversionState, onOpenChange, router]);
 
@@ -71,6 +99,7 @@ export function RegistrationReviewDialog({
   }, [rejectState, onOpenChange, router]);
 
   const submitConversion = () => {
+    setSuccessMessage(null);
     const formData = new FormData();
     formData.append("churchSlug", churchSlug);
     formData.append("registrationId", registration.id);
@@ -95,6 +124,7 @@ export function RegistrationReviewDialog({
   };
 
   const submitReject = () => {
+    setSuccessMessage(null);
     const formData = new FormData();
     formData.append("churchSlug", churchSlug);
     formData.append("registrationId", registration.id);
@@ -123,6 +153,17 @@ export function RegistrationReviewDialog({
         <DialogHeader>
           <DialogTitle>Review registration: {formatRegistrationName(registration)}</DialogTitle>
         </DialogHeader>
+
+        {accountRequested && (
+          <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+            <p className="font-medium text-foreground">Portal account requested</p>
+            <div className="mt-2 grid gap-1 text-muted-foreground sm:grid-cols-2">
+              <span>Login email: {registration.login_email || registration.email || "Not provided"}</span>
+              <span>Auth account linked: {registration.auth_user_id ? "Yes" : "No"}</span>
+              <span>Account setup status: {formatAccountSetupStatus(registration.account_setup_status)}</span>
+            </div>
+          </div>
+        )}
 
         <div className="flex items-center gap-1 rounded-lg border p-1">
           {tabs.map(tab => (
@@ -347,6 +388,9 @@ export function RegistrationReviewDialog({
 
         {(conversionState && !conversionState.ok) && (
           <p className="text-sm text-red-600">{conversionState.error}</p>
+        )}
+        {successMessage && (
+          <p className="text-sm text-emerald-700">{successMessage}</p>
         )}
         {(rejectState && !rejectState.ok) && (
           <p className="text-sm text-red-600">{rejectState.error}</p>

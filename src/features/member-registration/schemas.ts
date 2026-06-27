@@ -24,11 +24,44 @@ const optionalChurchGender = z
   .optional()
   .transform((v) => v || null);
 
+export const formBooleanSchema = z.preprocess((value) => {
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  if (typeof value === "string") {
+    const normalized = value.trim().toLowerCase();
+
+    if (["true", "1", "on", "yes"].includes(normalized)) {
+      return true;
+    }
+
+    if (["false", "0", "off", "no", ""].includes(normalized)) {
+      return false;
+    }
+  }
+
+  if (value === null || value === undefined) {
+    return false;
+  }
+
+  return value;
+}, z.boolean());
+
 export const householdActionSchema = z.enum([
   "self_only",
   "existing_household",
   "new_household",
   "not_sure",
+]);
+
+export const accountSetupStatusSchema = z.enum([
+  "not_requested",
+  "pending_email_confirmation",
+  "pending_approval",
+  "active",
+  "rejected",
+  "link_failed",
 ]);
 
 export const registrationHouseholdMemberSchema = z.object({
@@ -84,6 +117,9 @@ export const publicRegistrationSchema = z.object({
   privacyConsent: z.boolean().refine(v => v === true, {
     message: "Privacy consent is required.",
   }),
+  accountSetupRequested: formBooleanSchema.default(false),
+  authUserId: z.string().uuid().optional().nullable(),
+  loginEmail: z.union([z.literal(""), z.string().trim().email("Invalid login email address.")]).optional().transform(v => v || null),
   householdMembers: z.array(registrationHouseholdMemberSchema).default([]),
 });
 
@@ -100,7 +136,7 @@ export const registrationReviewDecisionSchema = z.object({
   householdId: z.string().uuid().optional().nullable(),
   newHouseholdName: z.string().trim().optional().nullable(),
   householdRole: z.union([z.literal(""), z.enum(["head", "spouse", "child", "relative", "guardian", "other"])]).optional().transform(v => v || null),
-  setAsHead: z.boolean().default(false),
+  setAsHead: formBooleanSchema.default(false),
   familyMemberResolutions: z.array(z.object({
     registrationHouseholdMemberId: z.string().uuid(),
     resolution: z.enum(["create", "link", "skip"]),

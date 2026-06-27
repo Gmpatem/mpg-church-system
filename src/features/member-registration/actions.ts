@@ -23,15 +23,32 @@ export async function rejectRegistrationAction(
       return { ok: false, error: "Registration ID is required." };
     }
 
+    const { data: registration, error: registrationError } = await supabase
+      .from("church_member_registrations")
+      .select("account_setup_requested")
+      .eq("id", registrationId)
+      .eq("church_id", ctx.churchId)
+      .maybeSingle();
+
+    if (registrationError) {
+      return { ok: false, error: registrationError.message };
+    }
+
+    const updatePayload: Record<string, unknown> = {
+      status: "rejected",
+      reviewed_by_user_id: ctx.userId,
+      reviewed_at: new Date().toISOString(),
+      review_note: reviewNote || null,
+      updated_at: new Date().toISOString(),
+    };
+
+    if (registration?.account_setup_requested) {
+      updatePayload.account_setup_status = "rejected";
+    }
+
     const { error } = await supabase
       .from("church_member_registrations")
-      .update({
-        status: "rejected",
-        reviewed_by_user_id: ctx.userId,
-        reviewed_at: new Date().toISOString(),
-        review_note: reviewNote || null,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updatePayload)
       .eq("id", registrationId)
       .eq("church_id", ctx.churchId);
 

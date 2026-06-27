@@ -2,6 +2,12 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { publicRegistrationSchema } from "./schemas";
+import { createAdminClient } from "@/lib/supabase/admin";
+import {
+  normalizeLoginEmail,
+  verifyRegistrationAuthUser,
+  type AccountSetupStatus,
+} from "./account-linking";
 import type { PublicRegistrationResult } from "./types";
 
 function toPublicRegistrationError(error: unknown) {
@@ -61,6 +67,55 @@ export async function submitPublicRegistrationAction(
       departmentInterestIds,
       householdMembers: householdMembers.filter(Boolean),
     });
+
+    const accountSetupRequested = parsed.accountSetupRequested === true;
+    const verifiedAccount = accountSetupRequested
+      ? await verifyRegistrationAuthUser({
+          authUserId: parsed.authUserId ?? "",
+          loginEmail: normalizeLoginEmail(parsed.loginEmail ?? parsed.email ?? ""),
+        })
+      : null;
+
+    if (verifiedAccount && !verifiedAccount.ok) {
+      return { ok: false, error: verifiedAccount.error };
+    }
+
+    let admin: AdminClient | null = null;
+    if (accountSetupRequested) {
+      try {
+        admin = createAdminClient();
+      } catch {
+        return { ok: false, error: "Portal account details could not be verified." };
+      }
+    }
+
+    const churchId = admin ? await resolveChurchId(admin, parsed.churchSlug) : null;
+
+    if (accountSetupRequested && (!verifiedAccount || !verifiedAccount.ok || !admin || !churchId)) {
+      return { ok: false, error: "Portal account details could not be verified." };
+    }
+
+    if (accountSetupRequested && verifiedAccount?.ok && admin && churchId) {
+      const existing = await findExistingAccountRegistration(admin, {
+        churchId,
+        authUserId: verifiedAccount.authUserId,
+        loginEmail: verifiedAccount.loginEmail,
+      });
+
+      if (existing.error) {
+        return { ok: false, error: existing.error };
+      }
+
+      if (existing.registration) {
+        return {
+          ok: true,
+          registrationId: existing.registration.id,
+          accountSetupRequested: true,
+          accountSetupStatus: existing.registration.account_setup_status,
+          loginEmail: existing.registration.login_email,
+        };
+      }
+    }
 
     const payload = {
       firstName: parsed.firstName,
@@ -131,6 +186,29 @@ export async function submitPublicRegistrationAction(
       if (!result.registration_id) {
         return { ok: false, error: "Submission did not return a registration ID." };
       }
+
+      if (accountSetupRequested && verifiedAccount?.ok && admin && churchId) {
+        const linkStatus = await linkVerifiedAccountToRegistration(admin, {
+          registrationId: result.registration_id,
+          churchId,
+          authUserId: verifiedAccount.authUserId,
+          loginEmail: verifiedAccount.loginEmail,
+          accountSetupStatus: verifiedAccount.pendingStatus,
+        });
+
+        if (!linkStatus.ok) {
+          return { ok: false, error: linkStatus.error };
+        }
+
+        return {
+          ok: true,
+          registrationId: result.registration_id,
+          accountSetupRequested: true,
+          accountSetupStatus: verifiedAccount.pendingStatus,
+          loginEmail: verifiedAccount.loginEmail,
+        };
+      }
+
       return { ok: true, registrationId: result.registration_id };
     }
 
@@ -145,4 +223,122 @@ export async function submitPublicRegistrationAction(
       error: toPublicRegistrationError(error) || "Failed to submit registration.",
     };
   }
+}
+
+type AdminClient = ReturnType<typeof createAdminClient>;
+
+async function resolveChurchId(admin: AdminClient, churchSlug: string) {
+  const { data, error } = await admin
+    .from("churches")
+    .select("id")
+    .eq("slug", churchSlug)
+    .eq("is_active", true)
+    .maybeSingle();
+
+  if (error || !data?.id) {
+    return null;
+  }
+
+  return data.id as string;
+}
+
+async function findExistingAccountRegistration(
+  admin: AdminClient,
+  params: { churchId: string; authUserId: string; loginEmail: string }
+): Promise<{
+  registration?: {
+    id: string;
+    church_id: string;
+    login_email: string | null;
+    account_setup_status: AccountSetupStatus;
+  } | null;
+  error?: string;
+}> {
+  const { data: authRegistration, error: authError } = await admin
+    .from("church_member_registrations")
+    .select("id, church_id, login_email, account_setup_status")
+    .eq("auth_user_id", params.authUserId)
+    .maybeSingle();
+
+  if (authError) {
+    return { error: "Portal account linkage could not be checked." };
+  }
+
+  if (authRegistration) {
+    if (authRegistration.church_id !== params.churchId) {
+      return { error: "This portal account is already linked to another registration." };
+    }
+
+    return {
+      registration: {
+        id: authRegistration.id,
+        church_id: authRegistration.church_id,
+        login_email: authRegistration.login_email,
+        account_setup_status: authRegistration.account_setup_status as AccountSetupStatus,
+      },
+    };
+  }
+
+  const { data: emailRegistration, error: emailError } = await admin
+    .from("church_member_registrations")
+    .select("id, church_id, login_email, account_setup_status")
+    .eq("church_id", params.churchId)
+    .eq("login_email", params.loginEmail)
+    .in("account_setup_status", [
+      "pending_email_confirmation",
+      "pending_approval",
+      "active",
+    ])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (emailError) {
+    return { error: "Portal account linkage could not be checked." };
+  }
+
+  return {
+    registration: emailRegistration
+      ? {
+          id: emailRegistration.id,
+          church_id: emailRegistration.church_id,
+          login_email: emailRegistration.login_email,
+          account_setup_status: emailRegistration.account_setup_status as AccountSetupStatus,
+        }
+      : null,
+  };
+}
+
+async function linkVerifiedAccountToRegistration(
+  admin: AdminClient,
+  params: {
+    registrationId: string;
+    churchId: string;
+    authUserId: string;
+    loginEmail: string;
+    accountSetupStatus: AccountSetupStatus;
+  }
+) {
+  const { error } = await admin
+    .from("church_member_registrations")
+    .update({
+      auth_user_id: params.authUserId,
+      login_email: params.loginEmail,
+      account_setup_requested: true,
+      account_setup_status: params.accountSetupStatus,
+      account_setup_verified_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq("id", params.registrationId)
+    .eq("church_id", params.churchId);
+
+  if (error) {
+    return {
+      ok: false as const,
+      error:
+        "Registration was submitted, but the portal account could not be linked. Please contact the church office.",
+    };
+  }
+
+  return { ok: true as const };
 }

@@ -1,0 +1,11 @@
+- generic [active] [ref=e1]:
+  - main [ref=e2]:
+    - generic [ref=e3]:
+      - heading "Registration awaiting review" [level=1] [ref=e4]
+      - paragraph [ref=e5]: The church is reviewing your submission. You can use the email and password you created, but Member Portal access will become available only after approval.
+      - link "Sign in" [ref=e6] [cursor=pointer]:
+        - /url: /login
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e12] [cursor=pointer]:
+    - img [ref=e13]

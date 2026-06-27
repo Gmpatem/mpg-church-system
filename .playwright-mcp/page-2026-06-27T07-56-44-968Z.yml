@@ -1,0 +1,8 @@
+- generic [active] [ref=e1]:
+  - status [ref=e3]:
+    - img [ref=e4]
+    - generic [ref=e7]: Loading
+  - region "Notifications (F8)":
+    - list
+  - button "Open Next.js Dev Tools" [ref=e13] [cursor=pointer]:
+    - img [ref=e14]

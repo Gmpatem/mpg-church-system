@@ -40,6 +40,9 @@ export type RegistrationListItem = ChurchMemberRegistration & {
 export type PublicRegistrationResult = {
   ok: true;
   registrationId: string;
+  accountSetupRequested?: boolean;
+  accountSetupStatus?: string;
+  loginEmail?: string | null;
 } | {
   ok: false;
   error: string;
@@ -50,6 +53,7 @@ export type ConversionResult = {
   memberId: string;
   householdId?: string | null;
   familyMemberIds: string[];
+  message?: string;
 } | {
   ok: false;
   error: string;

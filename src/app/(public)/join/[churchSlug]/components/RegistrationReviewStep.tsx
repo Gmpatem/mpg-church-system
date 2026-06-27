@@ -1,4 +1,5 @@
 import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { WizardData } from "./RegistrationWizard";
 import type { PublicRegistrationPageData } from "@/features/member-registration/public-queries";
@@ -71,6 +72,76 @@ export function RegistrationReviewStep({ data, departments, errors, onChange }: 
         </Label>
       </div>
       {errors.privacyConsent && <p className="text-xs text-red-600">{errors.privacyConsent}</p>}
+
+      <div className="rounded-xl border border-stone-100 bg-white p-4">
+        <div className="flex items-start gap-3">
+          <Checkbox
+            id="accountSetupRequested"
+            checked={data.accountSetupRequested}
+            onCheckedChange={checked => {
+              const requested = checked === true;
+              onChange("accountSetupRequested", requested);
+              if (requested && !data.loginEmail) {
+                onChange("loginEmail", data.email);
+              }
+            }}
+            className="mt-0.5"
+          />
+          <div className="min-w-0 flex-1">
+            <Label htmlFor="accountSetupRequested" className="font-medium text-stone-900">
+              Create your Member Portal account
+            </Label>
+            <p className="mt-1 text-sm text-stone-600">
+              Use this email and password to sign in after your registration is approved.
+            </p>
+          </div>
+        </div>
+
+        {data.accountSetupRequested && (
+          <div className="mt-4 grid gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="loginEmail">Email address</Label>
+              <Input
+                id="loginEmail"
+                type="email"
+                value={data.loginEmail}
+                onChange={event => onChange("loginEmail", event.target.value)}
+                aria-invalid={Boolean(errors.loginEmail)}
+                autoComplete="email"
+              />
+              {errors.loginEmail && <p className="text-xs text-red-600">{errors.loginEmail}</p>}
+            </div>
+
+            <div className="grid gap-1.5 sm:grid-cols-2 sm:gap-3">
+              <div className="grid gap-1.5">
+                <Label htmlFor="portalPassword">Password</Label>
+                <Input
+                  id="portalPassword"
+                  type="password"
+                  value={data.password}
+                  onChange={event => onChange("password", event.target.value)}
+                  aria-invalid={Boolean(errors.password)}
+                  autoComplete="new-password"
+                />
+                {errors.password && <p className="text-xs text-red-600">{errors.password}</p>}
+              </div>
+
+              <div className="grid gap-1.5">
+                <Label htmlFor="portalConfirmPassword">Confirm password</Label>
+                <Input
+                  id="portalConfirmPassword"
+                  type="password"
+                  value={data.confirmPassword}
+                  onChange={event => onChange("confirmPassword", event.target.value)}
+                  aria-invalid={Boolean(errors.confirmPassword)}
+                  autoComplete="new-password"
+                />
+                {errors.confirmPassword && <p className="text-xs text-red-600">{errors.confirmPassword}</p>}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
