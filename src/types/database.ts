@@ -1845,7 +1845,10 @@ export interface Database {
           updated_at: string;
           metadata: Json;
           auth_user_id: string | null;
+          login_identifier_type: string | null;
           login_email: string | null;
+          login_phone: string | null;
+          recovery_email: string | null;
           account_setup_requested: boolean;
           account_setup_status: string;
           account_setup_verified_at: string | null;
@@ -1905,7 +1908,10 @@ export interface Database {
           updated_at?: string;
           metadata?: Json;
           auth_user_id?: string | null;
+          login_identifier_type?: string | null;
           login_email?: string | null;
+          login_phone?: string | null;
+          recovery_email?: string | null;
           account_setup_requested?: boolean;
           account_setup_status?: string;
           account_setup_verified_at?: string | null;
@@ -1965,7 +1971,10 @@ export interface Database {
           updated_at?: string;
           metadata?: Json;
           auth_user_id?: string | null;
+          login_identifier_type?: string | null;
           login_email?: string | null;
+          login_phone?: string | null;
+          recovery_email?: string | null;
           account_setup_requested?: boolean;
           account_setup_status?: string;
           account_setup_verified_at?: string | null;

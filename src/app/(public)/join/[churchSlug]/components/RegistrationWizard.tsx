@@ -7,6 +7,12 @@ import { submitPublicRegistrationAction } from "@/features/member-registration/p
 import { validateRegistrationKeyAction } from "@/features/member-registration/public-queries";
 import { createClient as createBrowserSupabaseClient } from "@/lib/supabase/client";
 import { getPublicSiteUrl } from "@/lib/site-url";
+import {
+  DEFAULT_LOGIN_COUNTRY,
+  normalizeLoginIdentifier,
+  normalizeRecoveryEmail,
+  type LoginCountryCode,
+} from "@/lib/auth/login-identifier";
 import type { PublicRegistrationPageData } from "@/features/member-registration/public-queries";
 import { RegistrationHeader } from "./RegistrationHeader";
 import { RegistrationProgress } from "./RegistrationProgress";
@@ -39,8 +45,11 @@ const ERROR_FIELD_IDS: Record<string, string> = {
   email: "email",
   privacyConsent: "privacyConsent",
   loginEmail: "loginEmail",
+  loginPhone: "loginPhone",
+  recoveryEmail: "recoveryEmail",
   password: "portalPassword",
   confirmPassword: "portalConfirmPassword",
+  phoneOtp: "portalPhoneOtp",
 };
 
 export type WizardData = {
@@ -83,7 +92,11 @@ export type WizardData = {
   notes: string;
   privacyConsent: boolean;
   accountSetupRequested: boolean;
+  loginIdentifierType: "email" | "phone";
   loginEmail: string;
+  loginPhone: string;
+  loginCountry: LoginCountryCode;
+  recoveryEmail: string;
   password: string;
   confirmPassword: string;
 };
@@ -128,9 +141,30 @@ const emptyData: WizardData = {
   notes: "",
   privacyConsent: false,
   accountSetupRequested: true,
+  loginIdentifierType: "email",
   loginEmail: "",
+  loginPhone: "",
+  loginCountry: DEFAULT_LOGIN_COUNTRY,
+  recoveryEmail: "",
   password: "",
   confirmPassword: "",
+};
+
+type CreatedAccountLink = {
+  authUserId: string;
+  loginIdentifierType: "email" | "phone";
+  loginEmail: string | null;
+  loginPhone: string | null;
+  recoveryEmail: string | null;
+};
+
+export type PhoneVerificationState = {
+  required: boolean;
+  phone: string;
+  code: string;
+  verified: boolean;
+  message: string | null;
+  error: string | null;
 };
 
 type RegistrationWizardProps = {
@@ -149,7 +183,15 @@ export function RegistrationWizard({ church, settings, departments, registration
   const [clientError, setClientError] = useState<string | null>(null);
   const [existingAccountNotice, setExistingAccountNotice] = useState(false);
   const [isClientSubmitting, setIsClientSubmitting] = useState(false);
-  const [createdAccountLink, setCreatedAccountLink] = useState<{ authUserId: string; loginEmail: string } | null>(null);
+  const [createdAccountLink, setCreatedAccountLink] = useState<CreatedAccountLink | null>(null);
+  const [phoneVerification, setPhoneVerification] = useState<PhoneVerificationState>({
+    required: false,
+    phone: "",
+    code: "",
+    verified: false,
+    message: null,
+    error: null,
+  });
   const [isDispatchPending, startSubmitTransition] = useTransition();
 
   const [state, formAction, isPending] = useActionState(submitPublicRegistrationAction, null);
@@ -160,12 +202,32 @@ export function RegistrationWizard({ church, settings, departments, registration
     if (state?.ok) {
       setData(prev => ({ ...prev, password: "", confirmPassword: "" }));
       setCreatedAccountLink(null);
+      setPhoneVerification({
+        required: false,
+        phone: "",
+        code: "",
+        verified: false,
+        message: null,
+        error: null,
+      });
       setStep(9);
     }
   }, [state]);
 
   const updateField = useCallback(<K extends keyof WizardData>(field: K, value: WizardData[K]) => {
     setData(prev => ({ ...prev, [field]: value }));
+
+    if (["loginIdentifierType", "loginEmail", "loginPhone", "loginCountry"].includes(String(field))) {
+      setCreatedAccountLink(null);
+      setPhoneVerification({
+        required: false,
+        phone: "",
+        code: "",
+        verified: false,
+        message: null,
+        error: null,
+      });
+    }
   }, []);
 
   const focusFirstInvalidField = useCallback((field: string) => {
@@ -203,12 +265,34 @@ export function RegistrationWizard({ church, settings, departments, registration
     }
 
     if (currentStep === 8) {
-      const loginEmail = (data.loginEmail || data.email).trim();
+      const loginValue = data.loginIdentifierType === "phone"
+        ? data.loginPhone
+        : data.loginEmail || data.email;
+      const loginIdentifier = normalizeLoginIdentifier({
+        value: loginValue,
+        defaultCountry: data.loginCountry,
+      });
 
-      if (!loginEmail) {
-        nextErrors.loginEmail = "Email address is required.";
-      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(loginEmail)) {
-        nextErrors.loginEmail = "Invalid email address.";
+      if (!loginIdentifier.ok) {
+        if (data.loginIdentifierType === "phone") {
+          nextErrors.loginPhone = loginIdentifier.error;
+        } else {
+          nextErrors.loginEmail = loginIdentifier.error;
+        }
+      } else if (loginIdentifier.identifier.type !== data.loginIdentifierType) {
+        if (data.loginIdentifierType === "phone") {
+          nextErrors.loginPhone = "Enter a valid mobile number.";
+        } else {
+          nextErrors.loginEmail = "Enter a valid email address.";
+        }
+      }
+
+      if (
+        data.loginIdentifierType === "phone" &&
+        data.recoveryEmail &&
+        !normalizeRecoveryEmail(data.recoveryEmail)
+      ) {
+        nextErrors.recoveryEmail = "Enter a valid recovery email address.";
       }
 
       if (!createdAccountLink) {
@@ -291,14 +375,34 @@ export function RegistrationWizard({ church, settings, departments, registration
   }, []);
 
   const createPortalAccount = useCallback(async () => {
-    const loginEmail = (data.loginEmail || data.email).trim().toLowerCase();
+    const loginIdentifier = normalizeLoginIdentifier({
+      value: data.loginIdentifierType === "phone" ? data.loginPhone : data.loginEmail || data.email,
+      defaultCountry: data.loginCountry,
+    });
+
+    if (!loginIdentifier.ok || loginIdentifier.identifier.type !== data.loginIdentifierType) {
+      return {
+        ok: false as const,
+        existingAccount: false,
+        error: loginIdentifier.ok
+          ? "Choose the matching login method for this identifier."
+          : loginIdentifier.error,
+      };
+    }
+
+    const identity = loginIdentifier.identifier;
+    const recoveryEmail = identity.type === "phone" ? normalizeRecoveryEmail(data.recoveryEmail) : null;
     const supabase = createBrowserSupabaseClient();
     const { data: currentUserData } = await supabase.auth.getUser();
     const currentUser = currentUserData.user;
 
     if (currentUser) {
-      const currentEmail = (currentUser.email ?? "").trim().toLowerCase();
-      if (currentEmail !== loginEmail) {
+      const currentIdentifier = identity.type === "email"
+        ? (currentUser.email ?? "").trim().toLowerCase()
+        : (currentUser.phone ?? "").trim();
+      const expectedIdentifier = identity.type === "email" ? identity.email : identity.phone;
+
+      if (currentIdentifier !== expectedIdentifier) {
         return {
           ok: false as const,
           existingAccount: false,
@@ -309,22 +413,43 @@ export function RegistrationWizard({ church, settings, departments, registration
       return {
         ok: true as const,
         authUserId: currentUser.id,
-        loginEmail,
+        loginIdentifierType: identity.type,
+        loginEmail: identity.type === "email" ? identity.email : null,
+        loginPhone: identity.type === "phone" ? identity.phone : null,
+        recoveryEmail,
+        requiresPhoneVerification: false,
       };
     }
 
     const publicSiteUrl = getPublicSiteUrl();
-    const { data: signUpData, error } = await supabase.auth.signUp({
-      email: loginEmail,
-      password: data.password,
-      options: {
-        emailRedirectTo: `${publicSiteUrl}/auth/callback?next=registration-pending`,
-        data: {
-          registration_source: "public_church_registration",
-          church_slug: church.slug,
-        },
-      },
-    });
+    const signUpPayload = identity.type === "email"
+      ? {
+          email: identity.email,
+          password: data.password,
+          options: {
+            emailRedirectTo: `${publicSiteUrl}/auth/callback?next=registration-pending`,
+            data: {
+              registration_source: "public_church_registration",
+              church_slug: church.slug,
+              login_identifier_type: "email",
+            },
+          },
+        }
+      : {
+          phone: identity.phone,
+          password: data.password,
+          options: {
+            channel: "sms" as const,
+            data: {
+              registration_source: "public_church_registration",
+              church_slug: church.slug,
+              login_identifier_type: "phone",
+              recovery_email: recoveryEmail,
+            },
+          },
+        };
+
+    const { data: signUpData, error } = await supabase.auth.signUp(signUpPayload);
 
     if (error) {
       const message = error.message.toLowerCase();
@@ -337,8 +462,8 @@ export function RegistrationWizard({ church, settings, departments, registration
         ok: false as const,
         existingAccount,
         error: existingAccount
-          ? "An account may already exist for this email. Sign in or reset your password to continue."
-          : "Portal account could not be created. Please check the email and password and try again.",
+          ? "An account may already exist for this login. Sign in or reset your password to continue."
+          : "Portal account could not be created. Please check the login and password and try again.",
       };
     }
 
@@ -355,9 +480,76 @@ export function RegistrationWizard({ church, settings, departments, registration
     return {
       ok: true as const,
       authUserId: signUpData.user.id,
-      loginEmail,
+      loginIdentifierType: identity.type,
+      loginEmail: identity.type === "email" ? identity.email : null,
+      loginPhone: identity.type === "phone" ? identity.phone : null,
+      recoveryEmail,
+      requiresPhoneVerification: identity.type === "phone",
     };
-  }, [church.slug, data.email, data.loginEmail, data.password]);
+  }, [
+    church.slug,
+    data.email,
+    data.loginCountry,
+    data.loginEmail,
+    data.loginIdentifierType,
+    data.loginPhone,
+    data.password,
+    data.recoveryEmail,
+  ]);
+
+  const verifyPhoneOtp = useCallback(async () => {
+    if (!phoneVerification.required || !phoneVerification.phone) {
+      return { ok: true as const, authUserId: createdAccountLink?.authUserId ?? "" };
+    }
+
+    if (!phoneVerification.code.trim()) {
+      setPhoneVerification(prev => ({
+        ...prev,
+        error: "Enter the SMS verification code.",
+      }));
+      return { ok: false as const };
+    }
+
+    const supabase = createBrowserSupabaseClient();
+    const { data: verifiedData, error } = await supabase.auth.verifyOtp({
+      phone: phoneVerification.phone,
+      token: phoneVerification.code.trim(),
+      type: "sms",
+    });
+
+    if (error || !verifiedData.user?.id) {
+      setPhoneVerification(prev => ({
+        ...prev,
+        error: "The SMS verification code could not be confirmed.",
+      }));
+      return { ok: false as const };
+    }
+
+    setPhoneVerification(prev => ({
+      ...prev,
+      verified: true,
+      error: null,
+      message: "Mobile number verified.",
+    }));
+
+    return { ok: true as const, authUserId: verifiedData.user.id };
+  }, [createdAccountLink?.authUserId, phoneVerification]);
+
+  const resendPhoneOtp = useCallback(async () => {
+    if (!phoneVerification.phone) return;
+
+    const supabase = createBrowserSupabaseClient();
+    const { error } = await supabase.auth.signInWithOtp({
+      phone: phoneVerification.phone,
+      options: { channel: "sms" },
+    });
+
+    setPhoneVerification(prev => ({
+      ...prev,
+      error: error ? "Verification code could not be resent." : null,
+      message: error ? prev.message : "A new verification code was sent.",
+    }));
+  }, [phoneVerification.phone]);
 
   const submitFinalRegistration = useCallback(async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -391,7 +583,38 @@ export function RegistrationWizard({ church, settings, departments, registration
 
           accountLink = {
             authUserId: account.authUserId,
+            loginIdentifierType: account.loginIdentifierType,
             loginEmail: account.loginEmail,
+            loginPhone: account.loginPhone,
+            recoveryEmail: account.recoveryEmail,
+          };
+          setCreatedAccountLink(accountLink);
+
+          if (account.requiresPhoneVerification && account.loginPhone) {
+            setPhoneVerification({
+              required: true,
+              phone: account.loginPhone,
+              code: "",
+              verified: false,
+              message: "Enter the SMS code sent to your mobile number, then submit again.",
+              error: null,
+            });
+            setClientError("Verify your mobile number before submitting the registration.");
+            return;
+          }
+        }
+
+        if (
+          accountLink.loginIdentifierType === "phone" &&
+          phoneVerification.required &&
+          !phoneVerification.verified
+        ) {
+          const phoneOtp = await verifyPhoneOtp();
+          if (!phoneOtp.ok) return;
+
+          accountLink = {
+            ...accountLink,
+            authUserId: phoneOtp.authUserId,
           };
           setCreatedAccountLink(accountLink);
         }
@@ -401,7 +624,10 @@ export function RegistrationWizard({ church, settings, departments, registration
       formData.set("accountSetupRequested", String(data.accountSetupRequested));
       if (accountLink) {
         formData.set("authUserId", accountLink.authUserId);
-        formData.set("loginEmail", accountLink.loginEmail);
+        formData.set("loginIdentifierType", accountLink.loginIdentifierType);
+        formData.set("loginEmail", accountLink.loginEmail ?? "");
+        formData.set("loginPhone", accountLink.loginPhone ?? "");
+        formData.set("recoveryEmail", accountLink.recoveryEmail ?? "");
       }
 
       startSubmitTransition(() => {
@@ -416,8 +642,11 @@ export function RegistrationWizard({ church, settings, departments, registration
     createdAccountLink,
     data.accountSetupRequested,
     formAction,
+    phoneVerification.required,
+    phoneVerification.verified,
     registrationKey,
     validateStep,
+    verifyPhoneOtp,
   ]);
 
   if (state?.ok) {
@@ -428,7 +657,9 @@ export function RegistrationWizard({ church, settings, departments, registration
           settings={settings}
           accountSetupRequested={state.accountSetupRequested}
           accountSetupStatus={state.accountSetupStatus}
+          loginIdentifierType={state.loginIdentifierType}
           loginEmail={state.loginEmail}
+          loginPhone={state.loginPhone}
         />
       </div>
     );
@@ -509,6 +740,10 @@ export function RegistrationWizard({ church, settings, departments, registration
               departments={departments}
               errors={touchedSteps.has(8) ? errors : {}}
               onChange={updateField}
+              accountCreated={Boolean(createdAccountLink)}
+              phoneVerification={phoneVerification}
+              onPhoneVerificationCodeChange={code => setPhoneVerification(prev => ({ ...prev, code, error: null }))}
+              onResendPhoneCode={resendPhoneOtp}
             />
           )}
 
@@ -614,8 +849,14 @@ export function RegistrationWizard({ church, settings, departments, registration
                     {submitting ? (
                       <>
                         <Loader2 className="mr-2 size-4 animate-spin" aria-hidden="true" />
-                        Creating account...
+                        {phoneVerification.required && !phoneVerification.verified
+                          ? "Verifying..."
+                          : "Creating account..."}
                       </>
+                    ) : phoneVerification.required && !phoneVerification.verified ? (
+                      "Verify & submit"
+                    ) : createdAccountLink ? (
+                      "Submit registration"
                     ) : (
                       "Create account & submit"
                     )}

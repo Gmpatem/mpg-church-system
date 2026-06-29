@@ -5,19 +5,40 @@ import { CheckCircle2, Eye, EyeOff, LockKeyhole } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { cn } from "@/lib/utils/cn";
-import type { WizardData } from "./RegistrationWizard";
+import type { PhoneVerificationState, WizardData } from "./RegistrationWizard";
 import type { PublicRegistrationPageData } from "@/features/member-registration/public-queries";
 import { formatHouseholdAction, formatRelationship } from "@/features/member-registration/presentation";
+import { LOGIN_COUNTRY_OPTIONS, type LoginCountryCode } from "@/lib/auth/login-identifier";
 
 type RegistrationReviewStepProps = {
   data: WizardData;
   departments: PublicRegistrationPageData["departments"];
   errors: Record<string, string>;
   onChange: <K extends keyof WizardData>(field: K, value: WizardData[K]) => void;
+  accountCreated: boolean;
+  phoneVerification: PhoneVerificationState;
+  onPhoneVerificationCodeChange: (code: string) => void;
+  onResendPhoneCode: () => void;
 };
 
-export function RegistrationReviewStep({ data, departments, errors, onChange }: RegistrationReviewStepProps) {
+export function RegistrationReviewStep({
+  data,
+  departments,
+  errors,
+  onChange,
+  accountCreated,
+  phoneVerification,
+  onPhoneVerificationCodeChange,
+  onResendPhoneCode,
+}: RegistrationReviewStepProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const selectedDepartments = departments.filter(d => data.departmentInterestIds.includes(d.id));
@@ -30,10 +51,22 @@ export function RegistrationReviewStep({ data, departments, errors, onChange }: 
       onChange("accountSetupRequested", true);
     }
 
-    if (!data.loginEmail && data.email) {
+    if (data.loginIdentifierType === "email" && !data.loginEmail && data.email) {
       onChange("loginEmail", data.email);
     }
-  }, [data.accountSetupRequested, data.email, data.loginEmail, onChange]);
+
+    if (data.loginIdentifierType === "phone" && !data.loginPhone && data.phone) {
+      onChange("loginPhone", data.phone);
+    }
+  }, [
+    data.accountSetupRequested,
+    data.email,
+    data.loginEmail,
+    data.loginIdentifierType,
+    data.loginPhone,
+    data.phone,
+    onChange,
+  ]);
 
   return (
     <div className="space-y-5">
@@ -95,64 +128,202 @@ export function RegistrationReviewStep({ data, departments, errors, onChange }: 
 
         <div className="mt-4 grid gap-4">
           <div className="grid gap-1.5">
-            <Label htmlFor="loginEmail">Login email</Label>
-            <Input
-              id="loginEmail"
-              type="email"
-              inputMode="email"
-              value={data.loginEmail}
-              onChange={event => onChange("loginEmail", event.target.value)}
-              aria-invalid={Boolean(errors.loginEmail)}
-              aria-describedby={errors.loginEmail ? "loginEmail-error" : "loginEmail-help"}
-              autoComplete="email"
-              autoCapitalize="none"
-              spellCheck={false}
-              enterKeyHint="next"
-              className="h-12 rounded-xl bg-white text-base sm:text-sm"
-            />
-            {errors.loginEmail ? (
-              <p id="loginEmail-error" className="text-xs text-red-600">{errors.loginEmail}</p>
-            ) : (
-              <p id="loginEmail-help" className="text-xs text-stone-500">
-                This may differ from your contact email if needed.
-              </p>
-            )}
+            <Label htmlFor="loginIdentifierType">Login method</Label>
+            <Select
+              value={data.loginIdentifierType}
+              onValueChange={value => onChange("loginIdentifierType", value as WizardData["loginIdentifierType"])}
+              disabled={accountCreated}
+            >
+              <SelectTrigger id="loginIdentifierType" className="h-12 rounded-xl bg-white text-base sm:text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="email">Email address</SelectItem>
+                <SelectItem value="phone">Mobile number</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <PasswordField
-              id="portalPassword"
-              label="Password"
-              value={data.password}
-              onChange={value => onChange("password", value)}
-              show={showPassword}
-              onToggle={() => setShowPassword(value => !value)}
-              error={errors.password}
-              autoComplete="new-password"
-              enterKeyHint="next"
-            />
+          {data.loginIdentifierType === "email" ? (
+            <div className="grid gap-1.5">
+              <Label htmlFor="loginEmail">Login email</Label>
+              <Input
+                id="loginEmail"
+                type="email"
+                inputMode="email"
+                value={data.loginEmail}
+                onChange={event => onChange("loginEmail", event.target.value)}
+                aria-invalid={Boolean(errors.loginEmail)}
+                aria-describedby={errors.loginEmail ? "loginEmail-error" : "loginEmail-help"}
+                autoComplete="email"
+                autoCapitalize="none"
+                spellCheck={false}
+                enterKeyHint="next"
+                disabled={accountCreated}
+                className="h-12 rounded-xl bg-white text-base sm:text-sm"
+              />
+              {errors.loginEmail ? (
+                <p id="loginEmail-error" className="text-xs text-red-600">{errors.loginEmail}</p>
+              ) : (
+                <p id="loginEmail-help" className="text-xs text-stone-500">
+                  This may differ from your contact email if needed.
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="grid gap-4">
+              <div className="grid gap-4 sm:grid-cols-[10rem_minmax(0,1fr)]">
+                <div className="grid gap-1.5">
+                  <Label htmlFor="loginCountry">Country</Label>
+                  <Select
+                    value={data.loginCountry}
+                    onValueChange={value => onChange("loginCountry", value as LoginCountryCode)}
+                    disabled={accountCreated}
+                  >
+                    <SelectTrigger id="loginCountry" className="h-12 rounded-xl bg-white text-base sm:text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {LOGIN_COUNTRY_OPTIONS.map(country => (
+                        <SelectItem key={country.code} value={country.code}>
+                          {country.callingCode} {country.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <PasswordField
-              id="portalConfirmPassword"
-              label="Confirm password"
-              value={data.confirmPassword}
-              onChange={value => onChange("confirmPassword", value)}
-              show={showConfirmPassword}
-              onToggle={() => setShowConfirmPassword(value => !value)}
-              error={errors.confirmPassword}
-              autoComplete="new-password"
-              enterKeyHint="done"
-            />
-          </div>
+                <div className="grid gap-1.5">
+                  <Label htmlFor="loginPhone">Login mobile number</Label>
+                  <Input
+                    id="loginPhone"
+                    type="tel"
+                    inputMode="tel"
+                    value={data.loginPhone}
+                    onChange={event => onChange("loginPhone", event.target.value)}
+                    aria-invalid={Boolean(errors.loginPhone)}
+                    aria-describedby={errors.loginPhone ? "loginPhone-error" : "loginPhone-help"}
+                    autoComplete="tel"
+                    disabled={accountCreated}
+                    className="h-12 rounded-xl bg-white text-base sm:text-sm"
+                  />
+                  {errors.loginPhone ? (
+                    <p id="loginPhone-error" className="text-xs text-red-600">{errors.loginPhone}</p>
+                  ) : (
+                    <p id="loginPhone-help" className="text-xs text-stone-500">
+                      We will format this number securely before creating your account.
+                    </p>
+                  )}
+                </div>
+              </div>
 
-          <div className="grid gap-2 text-sm">
-            <PasswordRequirement met={passwordMeetsPolicy}>
-              At least 6 characters
-            </PasswordRequirement>
-            <PasswordRequirement met={passwordsMatch} muted={!hasConfirmPassword}>
-              Passwords match
-            </PasswordRequirement>
-          </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="recoveryEmail">Recovery email</Label>
+                <Input
+                  id="recoveryEmail"
+                  type="email"
+                  inputMode="email"
+                  value={data.recoveryEmail}
+                  onChange={event => onChange("recoveryEmail", event.target.value)}
+                  aria-invalid={Boolean(errors.recoveryEmail)}
+                  aria-describedby={errors.recoveryEmail ? "recoveryEmail-error" : "recoveryEmail-help"}
+                  autoComplete="email"
+                  disabled={accountCreated}
+                  className="h-12 rounded-xl bg-white text-base sm:text-sm"
+                />
+                {errors.recoveryEmail ? (
+                  <p id="recoveryEmail-error" className="text-xs text-red-600">{errors.recoveryEmail}</p>
+                ) : (
+                  <p id="recoveryEmail-help" className="text-xs text-stone-500">
+                    Optional, but helpful if you ever lose access to your mobile number.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {accountCreated ? (
+            <div className="rounded-xl border border-emerald-100 bg-white p-3 text-sm text-emerald-800">
+              Portal account created. Finish any verification step shown here, then submit the registration.
+            </div>
+          ) : (
+            <>
+              <div className="grid gap-4 md:grid-cols-2">
+                <PasswordField
+                  id="portalPassword"
+                  label="Password"
+                  value={data.password}
+                  onChange={value => onChange("password", value)}
+                  show={showPassword}
+                  onToggle={() => setShowPassword(value => !value)}
+                  error={errors.password}
+                  autoComplete="new-password"
+                  enterKeyHint="next"
+                />
+
+                <PasswordField
+                  id="portalConfirmPassword"
+                  label="Confirm password"
+                  value={data.confirmPassword}
+                  onChange={value => onChange("confirmPassword", value)}
+                  show={showConfirmPassword}
+                  onToggle={() => setShowConfirmPassword(value => !value)}
+                  error={errors.confirmPassword}
+                  autoComplete="new-password"
+                  enterKeyHint="done"
+                />
+              </div>
+
+              <div className="grid gap-2 text-sm">
+                <PasswordRequirement met={passwordMeetsPolicy}>
+                  At least 6 characters
+                </PasswordRequirement>
+                <PasswordRequirement met={passwordsMatch} muted={!hasConfirmPassword}>
+                  Passwords match
+                </PasswordRequirement>
+              </div>
+            </>
+          )}
+
+          {phoneVerification.required && (
+            <div className="grid gap-3 rounded-xl border border-emerald-100 bg-white p-3">
+              <div className="grid gap-1.5">
+                <Label htmlFor="portalPhoneOtp">SMS verification code</Label>
+                <Input
+                  id="portalPhoneOtp"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                  value={phoneVerification.code}
+                  onChange={event => onPhoneVerificationCodeChange(event.target.value)}
+                  aria-invalid={Boolean(phoneVerification.error)}
+                  aria-describedby={phoneVerification.error ? "portalPhoneOtp-error" : "portalPhoneOtp-help"}
+                  disabled={phoneVerification.verified}
+                  className="h-12 rounded-xl bg-stone-50 text-base tracking-[0.25em] sm:text-sm"
+                />
+                {phoneVerification.error ? (
+                  <p id="portalPhoneOtp-error" className="text-xs text-red-600">{phoneVerification.error}</p>
+                ) : (
+                  <p id="portalPhoneOtp-help" className="text-xs text-stone-500">
+                    {phoneVerification.message || "Enter the code sent by SMS."}
+                  </p>
+                )}
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={onResendPhoneCode}
+                  disabled={phoneVerification.verified}
+                  className="inline-flex h-10 items-center justify-center rounded-lg border border-stone-200 bg-white px-3 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 disabled:opacity-50"
+                >
+                  Resend code
+                </button>
+                {phoneVerification.verified && (
+                  <span className="text-sm font-medium text-emerald-800">Mobile number verified.</span>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

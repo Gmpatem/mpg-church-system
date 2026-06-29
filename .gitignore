@@ -25,6 +25,14 @@ pnpm-debug.log*
 !.env.*.example
 .env*.local
 
+# local tool/account state
+/.codex/
+/.mcp.json
+/.supabase/
+/supabase/.branches/
+/supabase/.temp/
+/config/supabase.projects.local.json
+
 # generated output and caches
 /dist
 /coverage

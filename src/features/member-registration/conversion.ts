@@ -13,15 +13,20 @@ import { setHouseholdHead } from "@/features/households/services/set-household-h
 import { registrationReviewDecisionSchema } from "./schemas";
 import {
   normalizeLoginEmail,
+  normalizeLoginPhone,
   verifyRegistrationAuthUser,
   type AccountSetupStatus,
+  type RegistrationLoginIdentity,
 } from "./account-linking";
 import { getString } from "@/lib/domain/validation";
 import type { ChurchMemberRegistration, ConversionResult } from "./types";
 
 type RegistrationAccountRow = ChurchMemberRegistration & {
   auth_user_id?: string | null;
+  login_identifier_type?: string | null;
   login_email?: string | null;
+  login_phone?: string | null;
+  recovery_email?: string | null;
   account_setup_requested?: boolean | null;
   account_setup_status?: AccountSetupStatus | null;
 };
@@ -186,6 +191,27 @@ async function ensureChurchUserActive(params: {
   if (error) throw new Error(error.message);
 }
 
+function resolveRegistrationLoginIdentity(
+  registration: RegistrationAccountRow
+): RegistrationLoginIdentity | null {
+  const identityType =
+    registration.login_identifier_type === "phone" || registration.login_phone ? "phone" : "email";
+
+  if (identityType === "phone") {
+    const phone = normalizeLoginPhone(registration.login_phone ?? "");
+    if (!phone) return null;
+
+    return {
+      type: "phone",
+      phone,
+      recoveryEmail: registration.recovery_email ?? registration.email ?? null,
+    };
+  }
+
+  const email = normalizeLoginEmail(registration.login_email ?? registration.email ?? "");
+  return email ? { type: "email", email } : null;
+}
+
 async function activateVerifiedPortalAccount(params: {
   registration: RegistrationAccountRow;
   churchId: string;
@@ -194,11 +220,12 @@ async function activateVerifiedPortalAccount(params: {
   const accountRequested = Boolean(
     params.registration.account_setup_requested ||
       params.registration.auth_user_id ||
-      params.registration.login_email
+      params.registration.login_email ||
+      params.registration.login_phone
   );
 
   if (!accountRequested) {
-    return { ok: true as const, accountLinked: false as const, emailConfirmed: false };
+    return { ok: true as const, accountLinked: false as const, identityConfirmed: false };
   }
 
   const authUserId = params.registration.auth_user_id;
@@ -210,20 +237,18 @@ async function activateVerifiedPortalAccount(params: {
     };
   }
 
-  const loginEmail = normalizeLoginEmail(
-    params.registration.login_email ?? params.registration.email ?? ""
-  );
+  const loginIdentity = resolveRegistrationLoginIdentity(params.registration);
 
-  if (!loginEmail) {
+  if (!loginIdentity) {
     await markRegistrationAccountStatus(params.registration, "link_failed");
     return {
       ok: false as const,
-      error: "Portal account setup is missing a valid login email.",
+      error: "Portal account setup is missing a valid login identifier.",
     };
   }
 
   const setupStatus = params.registration.account_setup_status ?? "not_requested";
-  if (!["pending_email_confirmation", "pending_approval", "active"].includes(setupStatus)) {
+  if (!["pending_email_confirmation", "pending_phone_verification", "pending_approval", "active"].includes(setupStatus)) {
     await markRegistrationAccountStatus(params.registration, "link_failed");
     return {
       ok: false as const,
@@ -231,11 +256,19 @@ async function activateVerifiedPortalAccount(params: {
     };
   }
 
-  const verified = await verifyRegistrationAuthUser({ authUserId, loginEmail });
+  const verified = await verifyRegistrationAuthUser({ authUserId, identity: loginIdentity });
 
   if (!verified.ok) {
     await markRegistrationAccountStatus(params.registration, "link_failed");
     return { ok: false as const, error: verified.error };
+  }
+
+  if (verified.loginIdentifierType === "phone" && !verified.phoneConfirmed) {
+    await markRegistrationAccountStatus(params.registration, "pending_phone_verification");
+    return {
+      ok: false as const,
+      error: "Portal account setup is waiting for mobile number verification.",
+    };
   }
 
   const admin = createAdminClient();
@@ -263,12 +296,14 @@ async function activateVerifiedPortalAccount(params: {
   const fullName = [params.registration.first_name, params.registration.last_name]
     .filter(Boolean)
     .join(" ");
+  const profileEmail =
+    verified.loginEmail ?? params.registration.recovery_email ?? params.registration.email ?? null;
 
   const { error: profileError } = await admin.from("profiles").upsert(
     {
       id: verified.authUserId,
       full_name: fullName || null,
-      email: verified.loginEmail,
+      email: profileEmail,
       updated_at: new Date().toISOString(),
     },
     { onConflict: "id" }
@@ -283,7 +318,7 @@ async function activateVerifiedPortalAccount(params: {
     .from("members")
     .update({
       profile_id: verified.authUserId,
-      email: params.registration.email ?? verified.loginEmail,
+      email: params.registration.email ?? profileEmail,
       updated_at: new Date().toISOString(),
     })
     .eq("church_id", params.churchId)
@@ -310,7 +345,10 @@ async function activateVerifiedPortalAccount(params: {
   return {
     ok: true as const,
     accountLinked: true as const,
-    emailConfirmed: verified.emailConfirmed,
+    identityConfirmed: verified.loginIdentifierType === "phone"
+      ? verified.phoneConfirmed
+      : verified.emailConfirmed,
+    loginIdentifierType: verified.loginIdentifierType,
   };
 }
 
@@ -609,9 +647,11 @@ export async function convertRegistrationAction(
     }
 
     const accountSuccessMessage = accountActivation.accountLinked
-      ? accountActivation.emailConfirmed
+      ? accountActivation.identityConfirmed
         ? "Registration approved. The member can sign in using the account created during registration."
-        : "Registration approved. Portal access will be available after email confirmation."
+        : accountActivation.loginIdentifierType === "phone"
+          ? "Registration approved. Portal access will be available after mobile number verification."
+          : "Registration approved. Portal access will be available after email confirmation."
       : undefined;
 
     // Mark registration converted

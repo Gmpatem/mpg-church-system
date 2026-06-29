@@ -1,0 +1,17 @@
+{
+  "active": "mpg-church",
+  "profiles": {
+    "mpg-church": {
+      "projectRef": "wnitkyyodymmjedlttex",
+      "name": "MPG Technologies_Church Systems",
+      "organizationSlug": "pcqsqldksncfuffmgqbc",
+      "region": "ap-south-1"
+    },
+    "tenpesorun": {
+      "projectRef": "ilbhsfmjbnpkpufnvppq",
+      "name": "Tenpesorun",
+      "organizationSlug": "pcqsqldksncfuffmgqbc",
+      "region": "ap-south-1"
+    }
+  }
+}

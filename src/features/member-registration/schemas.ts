@@ -28,9 +28,16 @@ export const optionalMembershipTypeSchema = z.preprocess(
   z.union([z.literal(""), membershipTypeEnum])
 );
 
+const e164PhoneSchema = z.string().regex(/^\+[1-9]\d{7,14}$/, "Invalid mobile number.");
 const optionalNullableFormStringSchema = optionalFormStringSchema.transform((v) => v || null);
 const optionalNullableEmailSchema = optionalEmailSchema.transform((v) => v || null);
 const optionalNullableMembershipTypeSchema = optionalMembershipTypeSchema.transform((v) => v || null);
+const optionalNullableE164PhoneSchema = z
+  .preprocess(nullishToEmptyString, z.union([z.literal(""), e164PhoneSchema]))
+  .transform((v) => v || null);
+const loginIdentifierTypeSchema = z
+  .preprocess(nullishToEmptyString, z.union([z.literal(""), z.enum(["email", "phone"])]))
+  .transform((v) => v || null);
 
 const optionalHouseholdRoleSchema = z
   .preprocess(
@@ -94,6 +101,7 @@ export const householdActionSchema = z.enum([
 export const accountSetupStatusSchema = z.enum([
   "not_requested",
   "pending_email_confirmation",
+  "pending_phone_verification",
   "pending_approval",
   "active",
   "rejected",
@@ -155,10 +163,13 @@ export const publicRegistrationSchema = z.object({
   }),
   accountSetupRequested: formBooleanSchema.default(false),
   authUserId: z.string().uuid().optional().nullable(),
+  loginIdentifierType: loginIdentifierTypeSchema,
   loginEmail: z.preprocess(
     nullishToEmptyString,
     z.union([z.literal(""), z.string().email("Invalid login email address.")])
   ).transform(v => v || null),
+  loginPhone: optionalNullableE164PhoneSchema,
+  recoveryEmail: optionalNullableEmailSchema,
   householdMembers: z.array(registrationHouseholdMemberSchema).default([]),
 });
 

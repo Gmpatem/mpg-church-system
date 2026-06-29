@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint src --ext .ts,.tsx"
+    "lint": "eslint src --ext .ts,.tsx",
+    "supabase:target": "node scripts/supabase-target.mjs current",
+    "supabase:target:list": "node scripts/supabase-target.mjs list",
+    "supabase:target:set": "node scripts/supabase-target.mjs set",
+    "supabase:target:add": "node scripts/supabase-target.mjs add",
+    "supabase:mcp:write": "node scripts/supabase-target.mjs write"
   },
   "dependencies": {
     "@fullcalendar/daygrid": "^6.1.20",
@@ -36,6 +41,7 @@
     "cmdk": "^1.1.1",
     "date-fns": "^3.6.0",
     "dexie": "^4.4.2",
+    "libphonenumber-js": "^1.13.7",
     "lucide-react": "^0.436.0",
     "next": "^16.2.2",
     "react": "^19.2.4",

@@ -1390,3 +1390,13 @@
  GET /registration-pending 200 in 1423ms (next.js: 9ms, proxy.ts: 6ms, application-code: 1408ms)
  GET /registration-pending 200 in 837ms (next.js: 9ms, proxy.ts: 7ms, application-code: 821ms)
  GET /registration-pending 200 in 771ms (next.js: 9ms, proxy.ts: 7ms, application-code: 755ms)
+ GET / 200 in 2.3s (next.js: 334ms, proxy.ts: 1377ms, application-code: 577ms)
+ GET /dashboard 200 in 4.6s (next.js: 1018ms, proxy.ts: 25ms, application-code: 3.5s)
+ GET /dashboard 200 in 3.3s (next.js: 9ms, proxy.ts: 13ms, application-code: 3.3s)
+ GET /c/grace-community-church 200 in 2.6s (next.js: 34ms, proxy.ts: 25ms, application-code: 2.5s)
+ GET /c/grace-community-church 200 in 3.8s (next.js: 652ms, proxy.ts: 15ms, application-code: 3.1s)
+ GET /c/grace-community-church/dashboard 200 in 12.6s (next.js: 23ms, proxy.ts: 17ms, application-code: 12.5s)
+ GET /c/grace-community-church/dashboard 200 in 13.4s (next.js: 457ms, proxy.ts: 31ms, application-code: 12.9s)
+ GET /c/grace-community-church/members 200 in 3.5s (next.js: 475ms, proxy.ts: 6ms, application-code: 3.0s)
+✓ Finished filesystem cache database compaction in 14.8s
+✓ Finished filesystem cache database compaction in 19.8s

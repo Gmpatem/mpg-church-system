@@ -11,6 +11,7 @@ const PENDING_REGISTRATION_STATUSES = [
 ] as const;
 const PENDING_ACCOUNT_SETUP_STATUSES = [
   "pending_email_confirmation",
+  "pending_phone_verification",
   "pending_approval",
   "link_failed",
 ] as const;

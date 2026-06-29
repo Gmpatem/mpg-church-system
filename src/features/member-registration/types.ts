@@ -42,7 +42,9 @@ export type PublicRegistrationResult = {
   registrationId: string;
   accountSetupRequested?: boolean;
   accountSetupStatus?: string;
+  loginIdentifierType?: string | null;
   loginEmail?: string | null;
+  loginPhone?: string | null;
 } | {
   ok: false;
   error: string;

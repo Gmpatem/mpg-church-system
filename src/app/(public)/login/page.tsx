@@ -13,6 +13,8 @@ function LoginPageContent() {
   const searchParams = useSearchParams();
   const registered = searchParams.get("registered") === "1";
   const checkEmail = searchParams.get("check_email") === "1";
+  const forgot = searchParams.get("forgot") === "1";
+  const passwordUpdated = searchParams.get("password_updated") === "1";
   const redirect = searchParams.get("redirect") ?? "";
 
   const isFr = language === "fr";
@@ -20,9 +22,11 @@ function LoginPageContent() {
   const labels = {
     backToHome: isFr ? "Retour à l'accueil" : "Back to home",
     signInTitle: isFr ? "Connectez-vous à votre espace" : "Sign in to your church workspace",
-    signInSubtitle: isFr ? "Entrez vos identifiants pour continuer" : "Enter your email and password to continue",
+    signInSubtitle: isFr ? "Entrez votre email ou mobile et votre mot de passe" : "Enter your email or mobile number and password",
     registrationSuccess: isFr ? "Inscription réussie" : "Registration successful",
     checkEmail: isFr ? "Vérifiez votre email avant de vous connecter." : "Check your email before signing in if confirmation is required.",
+    passwordUpdated: isFr ? "Mot de passe mis à jour" : "Password updated",
+    passwordUpdatedCopy: isFr ? "Vous pouvez maintenant vous connecter avec votre nouveau mot de passe." : "You can now sign in with your new password.",
     noAccount: isFr ? "Vous n'avez pas de compte ?" : "Don't have an account?",
     createAccount: isFr ? "Créer un compte" : "Create one",
   };
@@ -83,8 +87,15 @@ function LoginPageContent() {
               </div>
             )}
 
+            {passwordUpdated && (
+              <div className="mb-6 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3.5 text-sm text-emerald-800">
+                <p className="font-medium">{labels.passwordUpdated}</p>
+                <p className="mt-1 text-emerald-700">{labels.passwordUpdatedCopy}</p>
+              </div>
+            )}
+
             {/* Login Form */}
-            <LoginForm redirect={redirect} />
+            <LoginForm redirect={redirect} forgot={forgot} />
 
             {/* Register link */}
             <div className="mt-6 border-t border-slate-200 pt-4 text-center">

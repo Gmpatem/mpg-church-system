@@ -6,7 +6,9 @@ type RegistrationSuccessProps = {
   settings: PublicRegistrationPageData["settings"];
   accountSetupRequested?: boolean;
   accountSetupStatus?: string;
+  loginIdentifierType?: string | null;
   loginEmail?: string | null;
+  loginPhone?: string | null;
 };
 
 export function RegistrationSuccess({
@@ -14,9 +16,13 @@ export function RegistrationSuccess({
   settings,
   accountSetupRequested,
   accountSetupStatus,
+  loginIdentifierType,
   loginEmail,
+  loginPhone,
 }: RegistrationSuccessProps) {
   const needsEmailConfirmation = accountSetupStatus === "pending_email_confirmation";
+  const needsPhoneVerification = accountSetupStatus === "pending_phone_verification";
+  const loginIdentifier = loginIdentifierType === "phone" ? loginPhone : loginEmail;
 
   return (
     <div className="flex min-h-[70dvh] flex-col items-center justify-center px-2 py-8 text-center sm:px-4 sm:py-10">
@@ -31,11 +37,13 @@ export function RegistrationSuccess({
           <p className="mt-2 max-w-md text-sm leading-6 text-stone-600">
             {needsEmailConfirmation
               ? "Please confirm your email address. Your Member Portal will become available after the church approves your registration."
-              : `${church.name} is reviewing your submission. You can use the email and password you created, but Member Portal access will become available only after approval.`}
+              : needsPhoneVerification
+                ? "Please verify your mobile number. Your Member Portal will become available after the church approves your registration."
+                : `${church.name} is reviewing your submission. You can use the credentials you created, but Member Portal access will become available only after approval.`}
           </p>
-          {loginEmail && (
+          {loginIdentifier && (
             <p className="mt-4 break-all rounded-xl bg-stone-50 px-3 py-2 text-xs text-stone-600">
-              Portal account requested for {loginEmail}.
+              Portal account requested for {loginIdentifier}.
             </p>
           )}
         </>

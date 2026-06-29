@@ -35,6 +35,8 @@ function formatAccountSetupStatus(status: string | null | undefined) {
   switch (status) {
     case "pending_email_confirmation":
       return "Pending email confirmation";
+    case "pending_phone_verification":
+      return "Pending mobile verification";
     case "pending_approval":
       return "Pending approval";
     case "active":
@@ -78,8 +80,12 @@ export function RegistrationReviewDialog({
   const accountRequested = Boolean(
     registration.account_setup_requested ||
       registration.auth_user_id ||
-      registration.login_email
+      registration.login_email ||
+      registration.login_phone
   );
+  const loginMethod = registration.login_identifier_type === "phone" || registration.login_phone
+    ? "Mobile number"
+    : "Email";
 
   useEffect(() => {
     if (conversionState?.ok) {
@@ -164,7 +170,15 @@ export function RegistrationReviewDialog({
           <div className="rounded-lg border bg-muted/30 p-3 text-sm">
             <p className="font-medium text-foreground">Portal account requested</p>
             <div className="mt-2 grid gap-1 text-muted-foreground sm:grid-cols-2">
-              <span>Login email: {registration.login_email || registration.email || "Not provided"}</span>
+              <span>Login method: {loginMethod}</span>
+              {loginMethod === "Mobile number" ? (
+                <>
+                  <span>Login mobile: {registration.login_phone || registration.phone || "Not provided"}</span>
+                  <span>Recovery email: {registration.recovery_email || registration.email || "Not provided"}</span>
+                </>
+              ) : (
+                <span>Login email: {registration.login_email || registration.email || "Not provided"}</span>
+              )}
               <span>Auth account linked: {registration.auth_user_id ? "Yes" : "No"}</span>
               <span>Account setup status: {formatAccountSetupStatus(registration.account_setup_status)}</span>
             </div>
