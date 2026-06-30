@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { requireChurchRole } from "@/features/access/queries";
 import type { ActionState } from "@/features/access/types";
 import { CHURCH_MANAGEMENT_ROLE_CODES } from "@/lib/domain/church-access";
@@ -19,6 +20,8 @@ function buildMemberCode(churchSlug: string) {
 type CreateMemberState =
   | { ok: true; message?: string; memberId: string; error?: undefined }
   | { ok: false; error: string; message?: undefined; memberId?: undefined };
+
+const MEMBER_DELETE_ROLE_CODES = ["church_admin"] as const;
 
 async function ensureUniqueMemberCode(supabase: any, memberCode: string, excludeMemberId?: string) {
   let query = supabase.from("members").select("id").eq("member_code", memberCode).limit(1);
@@ -58,6 +61,47 @@ async function ensureDepartmentBelongsToChurch(supabase: any, churchId: string, 
 
   if (error) throw new Error(error.message);
   return data ?? null;
+}
+
+function getDeletedMemberLabel(member: {
+  display_name: string | null;
+  first_name: string | null;
+  last_name: string | null;
+  member_code: string | null;
+}) {
+  return (
+    member.display_name ||
+    [member.first_name, member.last_name].filter(Boolean).join(" ") ||
+    member.member_code ||
+    "Member"
+  );
+}
+
+async function clearMemberReference(params: {
+  supabase: ReturnType<typeof createAdminClient>;
+  tableName: string;
+  columnName: string;
+  churchId: string;
+  memberId: string;
+  updatedAt?: string;
+}) {
+  const payload: Record<string, string | null> = {
+    [params.columnName]: null,
+  };
+
+  if (params.updatedAt) {
+    payload.updated_at = params.updatedAt;
+  }
+
+  const { error } = await params.supabase
+    .from(params.tableName)
+    .update(payload)
+    .eq("church_id", params.churchId)
+    .eq(params.columnName, params.memberId);
+
+  if (error) {
+    throw new Error(error.message);
+  }
 }
 
 export async function createMemberAction(
@@ -116,6 +160,107 @@ export async function createMemberAction(
     return {
       ok: false,
       error: error instanceof Error ? error.message : "Failed to create member.",
+    };
+  }
+}
+
+export async function deleteMemberAction(
+  _prevState: ActionState | null,
+  formData: FormData
+): Promise<ActionState> {
+  const churchSlug = getString(formData, "churchSlug");
+  const memberId = getString(formData, "memberId");
+  const ctx = await requireChurchRole(churchSlug, [...MEMBER_DELETE_ROLE_CODES]);
+
+  if (!memberId) {
+    return { ok: false, error: "Member ID is required." };
+  }
+
+  try {
+    const admin = createAdminClient();
+
+    const { data: member, error: memberError } = await admin
+      .from("members")
+      .select("id, display_name, first_name, last_name, member_code")
+      .eq("church_id", ctx.churchId)
+      .eq("id", memberId)
+      .maybeSingle();
+
+    if (memberError) {
+      return { ok: false, error: memberError.message };
+    }
+
+    if (!member) {
+      return { ok: false, error: "Member not found." };
+    }
+
+    const now = new Date().toISOString();
+    const registrationColumns = [
+      "possible_duplicate_member_id",
+      "matched_member_id",
+      "created_member_id",
+    ];
+    const registrationHouseholdMemberColumns = [
+      "possible_member_match_id",
+      "matched_member_id",
+      "resulting_member_id",
+    ];
+
+    await clearMemberReference({
+      supabase: admin,
+      tableName: "households",
+      columnName: "head_of_household_id",
+      churchId: ctx.churchId,
+      memberId,
+      updatedAt: now,
+    });
+
+    for (const columnName of registrationColumns) {
+      await clearMemberReference({
+        supabase: admin,
+        tableName: "church_member_registrations",
+        columnName,
+        churchId: ctx.churchId,
+        memberId,
+        updatedAt: now,
+      });
+    }
+
+    for (const columnName of registrationHouseholdMemberColumns) {
+      await clearMemberReference({
+        supabase: admin,
+        tableName: "church_member_registration_household_members",
+        columnName,
+        churchId: ctx.churchId,
+        memberId,
+        updatedAt: now,
+      });
+    }
+
+    const { error: deleteError } = await admin
+      .from("members")
+      .delete()
+      .eq("church_id", ctx.churchId)
+      .eq("id", memberId);
+
+    if (deleteError) {
+      return { ok: false, error: deleteError.message };
+    }
+
+    revalidatePath(`/c/${churchSlug}/members`);
+    revalidatePath(`/c/${churchSlug}/members/${memberId}`);
+    revalidatePath(`/c/${churchSlug}/dashboard`);
+    revalidatePath(`/c/${churchSlug}/reports`);
+    revalidatePath(`/c/${churchSlug}/households`);
+    revalidatePath(`/c/${churchSlug}/departments`);
+    revalidatePath(`/c/${churchSlug}/small-groups`);
+    revalidatePath(`/c/${churchSlug}/treasury`);
+
+    return { ok: true, message: `${getDeletedMemberLabel(member)} deleted.` };
+  } catch (error) {
+    return {
+      ok: false,
+      error: error instanceof Error ? error.message : "Failed to delete member.",
     };
   }
 }

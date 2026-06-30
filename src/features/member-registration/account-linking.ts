@@ -15,6 +15,10 @@ export const ACCOUNT_SETUP_STATUSES = [
 
 export type AccountSetupStatus = (typeof ACCOUNT_SETUP_STATUSES)[number];
 
+const PORTAL_ACCOUNT_DETAILS_UNVERIFIED = "Portal account details could not be verified.";
+const PORTAL_ACCOUNT_SIGN_IN_REQUIRED =
+  "This portal login could not be verified. If you already created or already have a portal account, sign in or reset your password, then submit the registration again.";
+
 export function normalizeLoginEmail(email: string) {
   return email.trim().toLowerCase();
 }
@@ -42,6 +46,60 @@ function isEmailConfirmed(user: SupabaseAuthUser) {
 
 function isPhoneConfirmed(user: SupabaseAuthUser) {
   return Boolean(user.phone_confirmed_at || user.confirmed_at);
+}
+
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function isAuthUserNotFoundError(error: unknown) {
+  const candidate = error as { code?: string; message?: string; status?: number } | null;
+  const message = candidate?.message?.toLowerCase() ?? "";
+
+  return (
+    candidate?.status === 404 ||
+    candidate?.code === "user_not_found" ||
+    message.includes("user not found")
+  );
+}
+
+function isRetryableAuthLookupError(error: unknown) {
+  const candidate = error as { code?: string; status?: number } | null;
+
+  return (
+    !candidate ||
+    candidate.status === 404 ||
+    (typeof candidate.status === "number" && candidate.status >= 500) ||
+    candidate.code === "request_timeout" ||
+    candidate.code === "unexpected_failure" ||
+    candidate.code === "user_not_found"
+  );
+}
+
+async function getAuthUserByIdWithRetry(
+  admin: ReturnType<typeof createAdminClient>,
+  authUserId: string
+) {
+  const delays = [0, 150, 400];
+  let lastError: unknown = null;
+
+  for (const delay of delays) {
+    if (delay > 0) {
+      await sleep(delay);
+    }
+
+    const { data, error } = await admin.auth.admin.getUserById(authUserId);
+    if (data.user) {
+      return { user: data.user as SupabaseAuthUser, error: null };
+    }
+
+    lastError = error;
+    if (!isRetryableAuthLookupError(error)) {
+      break;
+    }
+  }
+
+  return { user: null, error: lastError };
 }
 
 function resolveIdentity(
@@ -79,31 +137,36 @@ export async function verifyRegistrationAuthUser(
   const identity = resolveIdentity(params);
 
   if (!authUserId || !identity) {
-    return { ok: false, error: "Portal account details could not be verified." };
+    return { ok: false, error: PORTAL_ACCOUNT_DETAILS_UNVERIFIED };
   }
 
   let admin: ReturnType<typeof createAdminClient>;
   try {
     admin = createAdminClient();
   } catch {
-    return { ok: false, error: "Portal account details could not be verified." };
+    return { ok: false, error: PORTAL_ACCOUNT_DETAILS_UNVERIFIED };
   }
 
-  const { data, error } = await admin.auth.admin.getUserById(authUserId);
+  const { user, error } = await getAuthUserByIdWithRetry(admin, authUserId);
 
-  if (error || !data.user) {
-    return { ok: false, error: "Portal account details could not be verified." };
+  if (!user) {
+    return {
+      ok: false,
+      error: isAuthUserNotFoundError(error)
+        ? PORTAL_ACCOUNT_SIGN_IN_REQUIRED
+        : PORTAL_ACCOUNT_DETAILS_UNVERIFIED,
+    };
   }
 
   if (identity.type === "email") {
     const loginEmail = normalizeLoginEmail(identity.email);
-    const verifiedEmail = normalizeLoginEmail(data.user.email ?? "");
+    const verifiedEmail = normalizeLoginEmail(user.email ?? "");
 
     if (!verifiedEmail || verifiedEmail !== loginEmail) {
       return { ok: false, error: "Portal account email does not match this registration." };
     }
 
-    const emailConfirmed = isEmailConfirmed(data.user);
+    const emailConfirmed = isEmailConfirmed(user);
 
     return {
       ok: true,
@@ -119,13 +182,13 @@ export async function verifyRegistrationAuthUser(
   }
 
   const loginPhone = normalizeLoginPhone(identity.phone);
-  const verifiedPhone = normalizeLoginPhone(data.user.phone ?? "");
+  const verifiedPhone = normalizeLoginPhone(user.phone ?? "");
 
   if (!verifiedPhone || verifiedPhone !== loginPhone) {
     return { ok: false, error: "Portal account mobile number does not match this registration." };
   }
 
-  const phoneConfirmed = isPhoneConfirmed(data.user);
+  const phoneConfirmed = isPhoneConfirmed(user);
 
   return {
     ok: true,

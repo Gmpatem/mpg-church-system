@@ -52,6 +52,12 @@ const ERROR_FIELD_IDS: Record<string, string> = {
   phoneOtp: "portalPhoneOtp",
 };
 
+function isPortalAccountRecoveryError(message: string | null | undefined) {
+  const normalized = message?.toLowerCase() ?? "";
+
+  return normalized.includes("sign in") && normalized.includes("reset your password");
+}
+
 export type WizardData = {
   firstName: string;
   lastName: string;
@@ -167,6 +173,15 @@ export type PhoneVerificationState = {
   error: string | null;
 };
 
+const initialPhoneVerification: PhoneVerificationState = {
+  required: false,
+  phone: "",
+  code: "",
+  verified: false,
+  message: null,
+  error: null,
+};
+
 type RegistrationWizardProps = {
   church: NonNullable<PublicRegistrationPageData["church"]>;
   settings: PublicRegistrationPageData["settings"];
@@ -184,33 +199,29 @@ export function RegistrationWizard({ church, settings, departments, registration
   const [existingAccountNotice, setExistingAccountNotice] = useState(false);
   const [isClientSubmitting, setIsClientSubmitting] = useState(false);
   const [createdAccountLink, setCreatedAccountLink] = useState<CreatedAccountLink | null>(null);
-  const [phoneVerification, setPhoneVerification] = useState<PhoneVerificationState>({
-    required: false,
-    phone: "",
-    code: "",
-    verified: false,
-    message: null,
-    error: null,
-  });
+  const [phoneVerification, setPhoneVerification] = useState<PhoneVerificationState>(initialPhoneVerification);
   const [isDispatchPending, startSubmitTransition] = useTransition();
 
   const [state, formAction, isPending] = useActionState(submitPublicRegistrationAction, null);
   const submitting = isPending || isClientSubmitting || isDispatchPending;
   const currentStepTitle = STEP_TITLES[step - 1] ?? STEP_TITLES[0];
+  const stateError = state && !state.ok ? state.error : null;
+  const accountRecoveryRequired = existingAccountNotice || isPortalAccountRecoveryError(stateError);
 
   useEffect(() => {
     if (state?.ok) {
       setData(prev => ({ ...prev, password: "", confirmPassword: "" }));
       setCreatedAccountLink(null);
-      setPhoneVerification({
-        required: false,
-        phone: "",
-        code: "",
-        verified: false,
-        message: null,
-        error: null,
-      });
+      setPhoneVerification(initialPhoneVerification);
       setStep(9);
+    }
+  }, [state]);
+
+  useEffect(() => {
+    if (state && !state.ok && isPortalAccountRecoveryError(state.error)) {
+      setExistingAccountNotice(true);
+      setCreatedAccountLink(null);
+      setPhoneVerification(initialPhoneVerification);
     }
   }, [state]);
 
@@ -219,14 +230,7 @@ export function RegistrationWizard({ church, settings, departments, registration
 
     if (["loginIdentifierType", "loginEmail", "loginPhone", "loginCountry"].includes(String(field))) {
       setCreatedAccountLink(null);
-      setPhoneVerification({
-        required: false,
-        phone: "",
-        code: "",
-        verified: false,
-        message: null,
-        error: null,
-      });
+      setPhoneVerification(initialPhoneVerification);
     }
   }, []);
 
@@ -749,13 +753,13 @@ export function RegistrationWizard({ church, settings, departments, registration
 
           {(clientError || (state && !state.ok)) && (
             <div className="mt-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {createdAccountLink && !existingAccountNotice && (
+              {createdAccountLink && !accountRecoveryRequired && (
                 <p className="mb-2 font-medium">
                   Your portal account was created, but we could not finish submitting the registration. Try submitting again.
                 </p>
               )}
-              <p>{clientError || (state && !state.ok ? state.error : "")}</p>
-              {existingAccountNotice && (
+              <p>{clientError || stateError || ""}</p>
+              {accountRecoveryRequired && (
                 <div className="mt-3 grid gap-2 sm:flex sm:flex-wrap">
                   <a className="inline-flex h-10 items-center justify-center rounded-lg bg-white px-3 text-sm font-semibold text-red-800 ring-1 ring-red-200" href="/login">
                     Sign in

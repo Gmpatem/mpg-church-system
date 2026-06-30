@@ -1,7 +1,7 @@
 "use client";
 
 import type { KeyboardEvent, ReactNode } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
@@ -18,14 +18,17 @@ import {
   Search,
   Share2,
   SlidersHorizontal,
+  Trash2,
   UserRound,
   Users,
   X,
 } from "lucide-react";
 import { createMemberInviteAction } from "@/features/member-invite/actions";
+import { deleteMemberAction } from "@/features/members/actions";
 import { toast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
@@ -1008,67 +1011,121 @@ function MemberInspectorActions({
   member: Member;
 }) {
   const { t } = useI18n();
+  const router = useRouter();
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [isDeleting, startDeleteTransition] = useTransition();
   const memberProfileHref = `/c/${churchSlug}/members/${member.id}`;
   const memberEditHref = `/c/${churchSlug}/members/${member.id}/edit`;
+  const memberLabel = getMemberLabel(member);
+
+  function handleDeleteMember() {
+    const formData = new FormData();
+    formData.set("churchSlug", churchSlug);
+    formData.set("memberId", member.id);
+
+    startDeleteTransition(async () => {
+      const result = await deleteMemberAction(null, formData);
+
+      if (result.ok) {
+        toast({
+          title: "Member deleted",
+          description: result.message ?? `${memberLabel} was removed from members management.`,
+        });
+        setDeleteDialogOpen(false);
+        router.refresh();
+        return;
+      }
+
+      toast({
+        variant: "destructive",
+        title: "Could not delete member",
+        description: result.error,
+      });
+    });
+  }
 
   return (
-    <div className="space-y-2 px-4 pb-5 pt-4">
-      <Button asChild className="h-11 w-full gap-2 rounded-lg px-3 font-semibold shadow-sm">
-        <Link href={memberEditHref}>
-          <Edit3 className="size-4" aria-hidden="true" />
-          Edit member
-        </Link>
-      </Button>
+    <>
+      <div className="space-y-2 px-4 pb-5 pt-4">
+        <Button asChild className="h-11 w-full gap-2 rounded-lg px-3 font-semibold shadow-sm">
+          <Link href={memberEditHref}>
+            <Edit3 className="size-4" aria-hidden="true" />
+            Edit member
+          </Link>
+        </Button>
 
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            className="h-10 w-full justify-between rounded-lg bg-background px-3"
-          >
-            <span className="inline-flex items-center gap-2">
-              <MoreHorizontal className="size-4" aria-hidden="true" />
-              More actions
-            </span>
-            <ChevronDown className="size-4" aria-hidden="true" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" sideOffset={6} className="w-60 rounded-lg p-1">
-          <DropdownMenuGroup>
-            <MemberInviteMenuItem churchSlug={churchSlug} member={member} />
-            <DropdownMenuItem asChild className="h-10 gap-2">
-              <Link href={memberEditHref}>
-                <Edit3 className="size-4" aria-hidden="true" />
-                View or edit notes
-              </Link>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              type="button"
+              variant="outline"
+              className="h-10 w-full justify-between rounded-lg bg-background px-3"
+            >
+              <span className="inline-flex items-center gap-2">
+                <MoreHorizontal className="size-4" aria-hidden="true" />
+                More actions
+              </span>
+              <ChevronDown className="size-4" aria-hidden="true" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" sideOffset={6} className="w-60 rounded-lg p-1">
+            <DropdownMenuGroup>
+              <MemberInviteMenuItem churchSlug={churchSlug} member={member} />
+              <DropdownMenuItem asChild className="h-10 gap-2">
+                <Link href={memberEditHref}>
+                  <Edit3 className="size-4" aria-hidden="true" />
+                  View or edit notes
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup>
+              <DropdownMenuItem asChild className="h-10 gap-2">
+                <Link href={memberProfileHref}>
+                  <House className="size-4" aria-hidden="true" />
+                  Assign to household
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="h-10 gap-2">
+                <Link href={memberProfileHref}>
+                  <Users className="size-4" aria-hidden="true" />
+                  Manage departments
+                </Link>
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onSelect={(event) => {
+                event.preventDefault();
+                setDeleteDialogOpen(true);
+              }}
+              className="h-10 gap-2 text-destructive focus:bg-destructive/10 focus:text-destructive"
+            >
+              <Trash2 className="size-4" aria-hidden="true" />
+              Delete member
             </DropdownMenuItem>
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuGroup>
             <DropdownMenuItem asChild className="h-10 gap-2">
               <Link href={memberProfileHref}>
-                <House className="size-4" aria-hidden="true" />
-                Assign to household
+                <UserRound className="size-4" aria-hidden="true" />
+                {t.pages.membersWorkspace.directory.viewMember}
               </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem asChild className="h-10 gap-2">
-              <Link href={memberProfileHref}>
-                <Users className="size-4" aria-hidden="true" />
-                Manage departments
-              </Link>
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem asChild>
-            <Link href={memberProfileHref}>
-              <UserRound className="mr-2 size-4" aria-hidden="true" />
-              {t.pages.membersWorkspace.directory.viewMember}
-            </Link>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </div>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <ConfirmDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title={`Delete ${memberLabel}?`}
+        description="This removes the member record from this church and clears links that would block deletion. Portal login accounts and profiles are not deleted."
+        confirmLabel="Delete member"
+        cancelLabel="Keep member"
+        variant="danger"
+        loading={isDeleting}
+        onConfirm={handleDeleteMember}
+      />
+    </>
   );
 }
 
