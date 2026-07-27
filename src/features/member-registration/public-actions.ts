@@ -108,62 +108,12 @@ export async function submitPublicRegistrationAction(
 
     const accountSetupRequested = parsed.accountSetupRequested === true;
 
-    let admin: AdminClient | null = null;
-    if (accountSetupRequested) {
-      try {
-        admin = createAdminClient();
-      } catch {
-        return { ok: false, error: "Portal account details could not be verified." };
-      }
-    }
-
-    const loginIdentity = accountSetupRequested && admin
-      ? await resolveRegistrationLoginIdentity(parsed, admin)
+    const loginIdentity = accountSetupRequested
+      ? resolveSubmittedRegistrationLoginIdentity(parsed)
       : null;
 
-    const verifiedAccount = accountSetupRequested && loginIdentity
-      ? await verifyRegistrationAuthUser({
-          authUserId: parsed.authUserId ?? "",
-          identity: loginIdentity,
-        })
-      : null;
-
-    if (accountSetupRequested && !loginIdentity) {
+    if (accountSetupRequested && !parsed.authUserId) {
       return { ok: false, error: "Portal account details could not be verified." };
-    }
-
-    if (verifiedAccount && !verifiedAccount.ok) {
-      return { ok: false, error: verifiedAccount.error };
-    }
-
-    const churchId = admin ? await resolveChurchId(admin, parsed.churchSlug) : null;
-
-    if (accountSetupRequested && (!verifiedAccount || !verifiedAccount.ok || !admin || !churchId)) {
-      return { ok: false, error: "Portal account details could not be verified." };
-    }
-
-    if (accountSetupRequested && verifiedAccount?.ok && admin && churchId) {
-      const existing = await findExistingAccountRegistration(admin, {
-        churchId,
-        authUserId: verifiedAccount.authUserId,
-        identity: loginIdentity!,
-      });
-
-      if (existing.error) {
-        return { ok: false, error: existing.error };
-      }
-
-      if (existing.registration) {
-        return {
-          ok: true,
-          registrationId: existing.registration.id,
-          accountSetupRequested: true,
-          accountSetupStatus: existing.registration.account_setup_status,
-          loginIdentifierType: existing.registration.login_identifier_type,
-          loginEmail: existing.registration.login_email,
-          loginPhone: existing.registration.login_phone,
-        };
-      }
     }
 
     const payload = {
@@ -217,58 +167,108 @@ export async function submitPublicRegistrationAction(
     };
 
     const supabase = await createClient();
-    const { data, error } = await supabase.rpc("submit_member_registration", {
-      p_church_slug: parsed.churchSlug,
-      p_key: parsed.key,
-      p_payload: payload,
-    });
 
-    if (error) {
-      return { ok: false, error: toPublicRegistrationError(error) };
-    }
+    if (accountSetupRequested) {
+      const sessionSubmission = loginIdentity
+        ? await submitRegistrationWithAccountSession(supabase, {
+            parsed,
+            payload,
+            identity: loginIdentity,
+          })
+        : null;
 
-    if (data && typeof data === "object" && "ok" in data) {
-      const result = data as { ok: boolean; error?: string; registration_id?: string };
-      if (!result.ok) {
-        return { ok: false, error: toPublicRegistrationError(result.error) };
-      }
-      if (!result.registration_id) {
-        return { ok: false, error: "Submission did not return a registration ID." };
+      if (sessionSubmission?.ok) {
+        return sessionSubmission.result;
       }
 
-      if (accountSetupRequested && verifiedAccount?.ok && admin && churchId) {
-        const linkStatus = await linkVerifiedAccountToRegistration(admin, {
-          registrationId: result.registration_id,
-          churchId,
-          authUserId: verifiedAccount.authUserId,
-          identity: {
-            type: verifiedAccount.loginIdentifierType,
-            email: verifiedAccount.loginEmail ?? "",
-            phone: verifiedAccount.loginPhone ?? "",
-            recoveryEmail: verifiedAccount.recoveryEmail,
-          } as RegistrationLoginIdentity,
-          accountSetupStatus: verifiedAccount.pendingStatus,
-        });
-
-        if (!linkStatus.ok) {
-          return { ok: false, error: linkStatus.error };
-        }
-
+      let admin: AdminClient;
+      try {
+        admin = createAdminClient();
+      } catch {
         return {
-          ok: true,
-          registrationId: result.registration_id,
-          accountSetupRequested: true,
-          accountSetupStatus: verifiedAccount.pendingStatus,
-          loginIdentifierType: verifiedAccount.loginIdentifierType,
-          loginEmail: verifiedAccount.loginEmail,
-          loginPhone: verifiedAccount.loginPhone,
+          ok: false,
+          error: sessionSubmission?.error ?? "Portal account details could not be verified.",
         };
       }
 
-      return { ok: true, registrationId: result.registration_id };
+      const adminLoginIdentity = loginIdentity ?? await resolveRegistrationLoginIdentity(parsed, admin);
+
+      if (!adminLoginIdentity) {
+        return { ok: false, error: "Portal account details could not be verified." };
+      }
+
+      const verifiedAccount = await verifyRegistrationAuthUser({
+        authUserId: parsed.authUserId ?? "",
+        identity: adminLoginIdentity,
+      });
+
+      if (!verifiedAccount.ok) {
+        return { ok: false, error: verifiedAccount.error };
+      }
+
+      const churchId = await resolveChurchId(admin, parsed.churchSlug);
+
+      if (!churchId) {
+        return { ok: false, error: "Portal account details could not be verified." };
+      }
+
+      const existing = await findExistingAccountRegistration(admin, {
+        churchId,
+        authUserId: verifiedAccount.authUserId,
+        identity: adminLoginIdentity,
+      });
+
+      if (existing.error) {
+        return { ok: false, error: existing.error };
+      }
+
+      if (existing.registration) {
+        return {
+          ok: true,
+          registrationId: existing.registration.id,
+          accountSetupRequested: true,
+          accountSetupStatus: existing.registration.account_setup_status,
+          loginIdentifierType: existing.registration.login_identifier_type,
+          loginEmail: existing.registration.login_email,
+          loginPhone: existing.registration.login_phone,
+        };
+      }
+
+      const submission = await submitRegistrationOnly(supabase, parsed, payload);
+
+      if (!submission.ok) {
+        return submission;
+      }
+
+      const linkStatus = await linkVerifiedAccountToRegistration(admin, {
+        registrationId: submission.registrationId,
+        churchId,
+        authUserId: verifiedAccount.authUserId,
+        identity: {
+          type: verifiedAccount.loginIdentifierType,
+          email: verifiedAccount.loginEmail ?? "",
+          phone: verifiedAccount.loginPhone ?? "",
+          recoveryEmail: verifiedAccount.recoveryEmail,
+        } as RegistrationLoginIdentity,
+        accountSetupStatus: verifiedAccount.pendingStatus,
+      });
+
+      if (!linkStatus.ok) {
+        return { ok: false, error: linkStatus.error };
+      }
+
+      return {
+        ok: true,
+        registrationId: submission.registrationId,
+        accountSetupRequested: true,
+        accountSetupStatus: verifiedAccount.pendingStatus,
+        loginIdentifierType: verifiedAccount.loginIdentifierType,
+        loginEmail: verifiedAccount.loginEmail,
+        loginPhone: verifiedAccount.loginPhone,
+      };
     }
 
-    return { ok: false, error: "Unexpected response from registration service." };
+    return submitRegistrationOnly(supabase, parsed, payload);
   } catch (error) {
     if (error instanceof z.ZodError) {
       return { ok: false, error: formatPublicRegistrationIssues(error.issues) };
@@ -281,6 +281,105 @@ export async function submitPublicRegistrationAction(
 }
 
 type AdminClient = ReturnType<typeof createAdminClient>;
+type ServerSupabaseClient = Awaited<ReturnType<typeof createClient>>;
+type RegistrationSubmissionPayload = Record<string, unknown>;
+
+type AccountRegistrationRpcResult = {
+  ok: boolean;
+  error?: string;
+  registration_id?: string;
+  account_setup_status?: AccountSetupStatus;
+  login_identifier_type?: "email" | "phone" | null;
+  login_email?: string | null;
+  login_phone?: string | null;
+};
+
+async function submitRegistrationOnly(
+  supabase: ServerSupabaseClient,
+  parsed: PublicRegistrationInput,
+  payload: RegistrationSubmissionPayload
+): Promise<PublicRegistrationResult> {
+  const { data, error } = await supabase.rpc("submit_member_registration", {
+    p_church_slug: parsed.churchSlug,
+    p_key: parsed.key,
+    p_payload: payload,
+  });
+
+  if (error) {
+    return { ok: false, error: toPublicRegistrationError(error) };
+  }
+
+  if (data && typeof data === "object" && "ok" in data) {
+    const result = data as { ok: boolean; error?: string; registration_id?: string };
+    if (!result.ok) {
+      return { ok: false, error: toPublicRegistrationError(result.error) };
+    }
+    if (!result.registration_id) {
+      return { ok: false, error: "Submission did not return a registration ID." };
+    }
+
+    return { ok: true, registrationId: result.registration_id };
+  }
+
+  return { ok: false, error: "Unexpected response from registration service." };
+}
+
+async function submitRegistrationWithAccountSession(
+  supabase: ServerSupabaseClient,
+  params: {
+    parsed: PublicRegistrationInput;
+    payload: RegistrationSubmissionPayload;
+    identity: RegistrationLoginIdentity;
+  }
+): Promise<
+  | { ok: true; result: PublicRegistrationResult }
+  | { ok: false; error: string }
+> {
+  const { data, error } = await supabase.rpc("submit_member_registration_with_account", {
+    p_church_slug: params.parsed.churchSlug,
+    p_key: params.parsed.key,
+    p_payload: params.payload,
+    p_auth_user_id: params.parsed.authUserId,
+    p_login_identifier_type: params.identity.type,
+    p_login_email: params.identity.type === "email" ? params.identity.email : null,
+    p_login_phone: params.identity.type === "phone" ? params.identity.phone : null,
+    p_recovery_email: params.identity.type === "phone" ? params.identity.recoveryEmail ?? null : null,
+  });
+
+  if (error) {
+    return { ok: false, error: toPublicRegistrationError(error) };
+  }
+
+  if (!data || typeof data !== "object" || !("ok" in data)) {
+    return { ok: false, error: "Unexpected response from registration service." };
+  }
+
+  const result = data as AccountRegistrationRpcResult;
+
+  if (!result.ok) {
+    return { ok: false, error: toPublicRegistrationError(result.error) };
+  }
+
+  if (!result.registration_id) {
+    return { ok: false, error: "Submission did not return a registration ID." };
+  }
+
+  return {
+    ok: true,
+    result: {
+      ok: true,
+      registrationId: result.registration_id,
+      accountSetupRequested: true,
+      accountSetupStatus:
+        result.account_setup_status ??
+        (params.identity.type === "email" ? "pending_email_confirmation" : "pending_phone_verification"),
+      loginIdentifierType: result.login_identifier_type ?? params.identity.type,
+      loginEmail: result.login_email ?? (params.identity.type === "email" ? params.identity.email : null),
+      loginPhone: result.login_phone ?? (params.identity.type === "phone" ? params.identity.phone : null),
+    },
+  };
+}
+
 
 async function resolveRegistrationLoginIdentity(
   parsed: PublicRegistrationInput,
