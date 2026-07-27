@@ -249,6 +249,52 @@
     animation-duration: 2.4s;
   }
 
+  .attendance-qr-poster-export-source {
+    position: fixed;
+    top: 0;
+    left: -12000px;
+    width: 794px;
+    pointer-events: none;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 0;
+  }
+
+  @media print {
+    .no-print {
+      display: none !important;
+    }
+
+    body.printing-attendance-poster * {
+      visibility: hidden !important;
+    }
+
+    body.printing-attendance-poster .attendance-qr-poster-export-source,
+    body.printing-attendance-poster .attendance-qr-poster-export-source * {
+      visibility: visible !important;
+    }
+
+    body.printing-attendance-poster .attendance-qr-poster-export-source {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 210mm !important;
+      height: 297mm !important;
+      pointer-events: auto !important;
+    }
+
+    body.printing-attendance-poster .attendance-qr-poster {
+      width: 210mm !important;
+      max-width: none !important;
+      height: 297mm !important;
+      min-height: 297mm !important;
+      border: 0 !important;
+      border-radius: 0 !important;
+      box-shadow: none !important;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     .mobile-fade-up,
     .mobile-route-frame.mobile-route-forward,

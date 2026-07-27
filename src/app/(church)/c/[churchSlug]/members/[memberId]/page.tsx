@@ -4,6 +4,8 @@ import { WorkspaceHero } from "@/components/workspace";
 import { getLabel, memberStatusLabels } from "@/lib/display-maps";
 import { getMemberById } from "@/features/members/queries";
 import { getMemberFinancialProfile } from "@/features/treasury/queries";
+import { AttendanceSummaryCard } from "@/features/attendance/components/AttendanceSummaryCard";
+import { getMemberAttendanceSummary } from "@/features/attendance/queries";
 import { MemberDepartmentsPanel } from "@/features/departments/components/MemberDepartmentsPanel";
 import {
   getMemberDepartmentAssignments,
@@ -41,9 +43,10 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
   const { churchSlug, memberId } = await params;
   const t = await getTranslations();
 
-  const [member, finance, memberDepartmentAssignments, memberDepartmentOptions] = await Promise.all([
+  const [member, finance, attendanceSummary, memberDepartmentAssignments, memberDepartmentOptions] = await Promise.all([
     getMemberById(churchSlug, memberId),
     getMemberFinancialProfile(churchSlug, memberId),
+    getMemberAttendanceSummary(churchSlug, memberId),
     getMemberDepartmentAssignments(churchSlug, memberId),
     getMemberDepartmentOptions(churchSlug, memberId),
   ]);
@@ -144,6 +147,12 @@ export default async function MemberDetailPage({ params }: MemberDetailPageProps
           </div>
         </div>
       </div>
+
+      <AttendanceSummaryCard
+        title="Attendance"
+        description="Recent Sabbath attendance for this member."
+        summary={attendanceSummary}
+      />
 
       <MemberDepartmentsPanel
         churchSlug={churchSlug}

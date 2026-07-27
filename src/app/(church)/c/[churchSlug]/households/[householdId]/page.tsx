@@ -3,6 +3,8 @@ import { notFound } from "next/navigation";
 import { Breadcrumb } from "@/components/navigation/Breadcrumb";
 import { WorkspaceHero, WorkspaceStatCard } from "@/components/workspace";
 import { getLabel, memberStatusLabels } from "@/lib/display-maps";
+import { AttendanceSummaryCard } from "@/features/attendance/components/AttendanceSummaryCard";
+import { getHouseholdAttendanceSummary } from "@/features/attendance/queries";
 import {
   assignMemberToHouseholdAction,
   setHouseholdHeadAction,
@@ -30,7 +32,10 @@ export default async function HouseholdDetailPage({ params }: HouseholdDetailPag
   const { churchSlug, householdId } = await params;
 
   const ctx = await requireChurchAccess(churchSlug);
-  const detail = await getChurchHouseholdById(churchSlug, householdId);
+  const [detail, attendanceSummary] = await Promise.all([
+    getChurchHouseholdById(churchSlug, householdId),
+    getHouseholdAttendanceSummary(churchSlug, householdId),
+  ]);
 
   if (!detail) {
     notFound();
@@ -144,6 +149,12 @@ export default async function HouseholdDetailPage({ params }: HouseholdDetailPag
               </div>
             </div>
           </div>
+
+          <AttendanceSummaryCard
+            title="Attendance"
+            description="Recent attendance connected to this household."
+            summary={attendanceSummary}
+          />
 
           {canManage ? (
             <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
