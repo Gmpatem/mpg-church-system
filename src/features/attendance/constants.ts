@@ -26,7 +26,7 @@ export const ATTENDANCE_WELCOME_MESSAGES = [
 export const ATTENDANCE_METHOD_LABELS: Record<AttendanceCheckInMethod, string> = {
   qr_self: "QR self check-in",
   recognized_device: "Remembered device",
-  household: "Household check-in",
+  household: "Family attendance",
   kiosk: "Kiosk check-in",
   manual_admin: "Manual entry",
   visitor: "Visitor welcome",

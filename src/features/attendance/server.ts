@@ -268,7 +268,7 @@ export async function recordMemberAttendance(
 
   if (memberError) ensureAttendanceError(memberError, "Member could not be checked.");
   if (!member) throw new Error("This member could not be found for this church.");
-  if (member.membership_status === "transferred") throw new Error("Transferred members cannot be checked in.");
+  if (member.membership_status === "transferred") throw new Error("Transferred members cannot be marked present.");
 
   const { data: existing, error: existingError } = await (db as any)
     .from("attendance_records")
@@ -508,7 +508,7 @@ export async function recordVisitorAttendance(
         visitor_contact_id: visitor.id,
         item_type: itemType,
         title: params.interestedInMembership ? "Visitor asked about membership" : "Visitor asked for follow-up",
-        description: `${fullName} checked in as a visitor today.`,
+        description: `${fullName} marked present as a visitor today.`,
       });
   }
 
@@ -547,3 +547,4 @@ export async function logAttendanceAudit(
       metadata: params.metadata ?? {},
     });
 }
+

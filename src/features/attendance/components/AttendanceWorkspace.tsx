@@ -340,7 +340,7 @@ function OverviewTab({ data, churchSlug }: { data: AttendanceWorkspaceData; chur
           <div className="mt-4 space-y-3">
             <MiniMetric label="Members present" value={data.stats.presentMembers} />
             <MiniMetric label="Visitors welcomed" value={data.stats.visitors} />
-            <MiniMetric label="Household check-ins" value={data.stats.householdCheckIns} />
+            <MiniMetric label="Family attendance" value={data.stats.householdCheckIns} />
             <MiniMetric label="Needs review" value={data.stats.pendingReview} />
           </div>
         </section>

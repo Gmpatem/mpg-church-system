@@ -97,7 +97,7 @@ export async function markKioskAttendanceAction(first: ActionInput, second?: For
     });
 
     revalidatePath(`/c/${churchSlug}/attendance`);
-    return success(result.duplicate ? "Already checked in for today." : "Checked in from kiosk mode.", result.duplicate);
+    return success(result.duplicate ? "Already marked present for today." : "Checked in from kiosk mode.", result.duplicate);
   } catch (error) {
     return failure(error);
   }
@@ -162,8 +162,8 @@ export async function confirmPublicMemberAttendanceAction(
 
     return success(
       result.duplicate
-        ? "You are already checked in for today. Happy Sabbath."
-        : "You are checked in. Happy Sabbath, and God bless you.",
+        ? "You are already marked present for today. Happy Sabbath."
+        : "You are marked present. Happy Sabbath, and God bless you.",
       result.duplicate
     );
   } catch (error) {
@@ -203,7 +203,7 @@ export async function recordPublicVisitorAttendanceAction(
 
     return success(
       result.duplicate
-        ? "You are already checked in for today. We are still glad you are here."
+        ? "You are already marked present for today. We are still glad you are here."
         : `Welcome, ${fullName}. We are grateful to worship with you today.`,
       result.duplicate
     );
@@ -229,7 +229,7 @@ export async function recordPublicHouseholdAttendanceAction(
     const recognized = await import("./server").then((mod) => mod.findRecognizedMember(db, church.id));
 
     if (!recognized?.member?.household_id) {
-      throw new Error("Household check-in needs a remembered member device. Please check in your own name first.");
+      throw new Error("Family attendance needs a remembered member device. Please mark yourself present first.");
     }
 
     const { data: allowedMembers, error: allowedError } = await db
@@ -262,11 +262,12 @@ export async function recordPublicHouseholdAttendanceAction(
 
     return success(
       saved > 0
-        ? `${saved} household member${saved === 1 ? "" : "s"} checked in. God bless your family today.`
-        : "Everyone selected was already checked in for today.",
+        ? `${saved} household member${saved === 1 ? "" : "s"} marked present. God bless your family today.`
+        : "Everyone selected was already marked present for today.",
       saved === 0 && duplicates > 0
     );
   } catch (error) {
     return failure(error);
   }
 }
+
