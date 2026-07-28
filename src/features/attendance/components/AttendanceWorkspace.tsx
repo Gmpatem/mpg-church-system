@@ -33,8 +33,11 @@ import { cn } from "@/lib/utils/cn";
 import { AttendanceQrExportActions } from "./AttendanceQrExportActions";
 import { AttendanceQrPoster, type AttendanceQrPosterProps } from "./AttendanceQrPoster";
 import {
+  createTemporaryActivityQrAction,
   createUniversalSabbathQrAction,
   markKioskAttendanceAction,
+  markVisitorFollowUpAction,
+  removeAttendanceRecordAction,
   regenerateUniversalSabbathQrAction,
   resolveAttendanceReviewItemAction,
 } from "../actions";
@@ -264,7 +267,7 @@ function AttendanceModuleHeader({ data }: { data: AttendanceWorkspaceData }) {
       <div className="min-w-0">
         <h1 className="text-xl font-semibold text-slate-950">Attendance</h1>
         <p className="mt-1 text-sm text-slate-600">
-          Sabbath check-in, visitor welcome, household attendance, and review.
+          Sabbath attendance, visitor welcome, family attendance, and review.
         </p>
       </div>
       <Badge variant={data.qrCode ? "secondary" : "outline"} className="w-fit">
@@ -278,7 +281,7 @@ function AttendanceRecordTable({ records }: { records: AttendanceRecordRow[] }) 
   if (records.length === 0) {
     return (
       <div className="rounded-xl border border-dashed border-slate-200 px-5 py-8 text-sm text-slate-600">
-        No one has checked in for this occurrence yet.
+        No one has been marked present for this occurrence yet.
       </div>
     );
   }
@@ -290,7 +293,7 @@ function AttendanceRecordTable({ records }: { records: AttendanceRecordRow[] }) 
           <TableHead>Name</TableHead>
           <TableHead>Type</TableHead>
           <TableHead>Method</TableHead>
-          <TableHead>Household</TableHead>
+          <TableHead>Family</TableHead>
           <TableHead>Time</TableHead>
           <TableHead>Status</TableHead>
         </TableRow>
@@ -387,10 +390,10 @@ function KioskTab({ data, churchSlug }: { data: AttendanceWorkspaceData; churchS
         <div>
           <div className="flex items-center gap-2">
             <MonitorCheck className="size-5 text-slate-700" aria-hidden="true" />
-            <h2 className="text-lg font-semibold text-slate-950">Kiosk mode</h2>
+            <h2 className="text-lg font-semibold text-slate-950">Attendance support</h2>
           </div>
           <p className="mt-1 text-sm text-slate-600">
-            For deacons and ushers helping members check in from a shared device.
+            For deacons and ushers helping members who could not scan themselves.
           </p>
         </div>
         <div className="relative w-full lg:w-80">
@@ -411,7 +414,7 @@ function KioskTab({ data, churchSlug }: { data: AttendanceWorkspaceData; churchS
           <TableHeader>
             <TableRow>
               <TableHead>Member</TableHead>
-              <TableHead>Household</TableHead>
+              <TableHead>Family</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Action</TableHead>
             </TableRow>
@@ -443,7 +446,7 @@ function KioskTab({ data, churchSlug }: { data: AttendanceWorkspaceData; churchS
                       disabled={member.presentToday}
                       icon={<UserCheck className="size-4" aria-hidden="true" />}
                     >
-                      {member.presentToday ? "Checked in" : "Mark present"}
+                      {member.presentToday ? "Marked present" : "Mark present"}
                     </SubmitButton>
                   </form>
                 </TableCell>
@@ -456,7 +459,22 @@ function KioskTab({ data, churchSlug }: { data: AttendanceWorkspaceData; churchS
   );
 }
 
-function VisitorsTab({ visitors }: { visitors: VisitorContactRow[] }) {
+
+function VisitorFollowUpMiniForm({ visitor, churchSlug }: { visitor: VisitorContactRow; churchSlug: string }) {
+  const [state, action] = useActionState(markVisitorFollowUpAction, initialActionState);
+
+  return (
+    <form action={action} className="flex flex-col gap-2 sm:flex-row sm:items-center">
+      <input type="hidden" name="churchSlug" value={churchSlug} />
+      <input type="hidden" name="visitorContactId" value={visitor.id} />
+      <input type="hidden" name="status" value={visitor.interestedInMembership ? "needs_membership_review" : "contacted"} />
+      <Input name="notes" placeholder="Follow-up note" className="h-9 text-xs" />
+      <SubmitButton size="sm" variant="outline" icon={<CheckCircle2 className="size-4" aria-hidden="true" />}>Update</SubmitButton>
+      <ActionMessage state={state} />
+    </form>
+  );
+}
+function VisitorsTab({ visitors, churchSlug }: { visitors: VisitorContactRow[]; churchSlug: string }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center gap-2">
@@ -475,13 +493,14 @@ function VisitorsTab({ visitors }: { visitors: VisitorContactRow[] }) {
               <TableHead>Visits</TableHead>
               <TableHead>Interest</TableHead>
               <TableHead>Last seen</TableHead>
+              <TableHead>Follow-up</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {visitors.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={5} className="py-8 text-center text-slate-600">
-                  No visitors have checked in yet.
+                <TableCell colSpan={6} className="py-8 text-center text-slate-600">
+                  No visitors have Marked present yet.
                 </TableCell>
               </TableRow>
             ) : (
@@ -500,6 +519,7 @@ function VisitorsTab({ visitors }: { visitors: VisitorContactRow[] }) {
                     )}
                   </TableCell>
                   <TableCell className="text-slate-600">{formatTime(visitor.lastSeenAt)}</TableCell>
+                  <TableCell><VisitorFollowUpMiniForm visitor={visitor} churchSlug={churchSlug} /></TableCell>
                 </TableRow>
               ))
             )}
@@ -598,13 +618,50 @@ function ReportsTab({ data }: { data: AttendanceWorkspaceData }) {
   );
 }
 
-function SettingsTab() {
+
+function TemporaryActivityQrPanel({ churchSlug }: { churchSlug: string }) {
+  const [state, action] = useActionState(createTemporaryActivityQrAction, initialActionState);
+
+  return (
+    <section className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-5 shadow-sm">
+      <div className="flex items-center gap-2">
+        <QrCode className="size-5 text-emerald-800" aria-hidden="true" />
+        <h2 className="text-lg font-semibold text-slate-950">Temporary activity QR</h2>
+      </div>
+      <p className="mt-1 text-sm text-slate-600">
+        Create a short-term QR for department programs, youth meetings, small groups, or special events.
+      </p>
+      <form action={action} className="mt-4 grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <input type="hidden" name="churchSlug" value={churchSlug} />
+        <Input name="title" placeholder="Activity title, e.g. Youth Sabbath School" required />
+        <Input name="description" placeholder="Short description, optional" />
+        <Input name="startsAt" type="datetime-local" />
+        <Input name="expiresAt" type="datetime-local" />
+        <div className="lg:col-span-2">
+          <SubmitButton icon={<QrCode className="size-4" aria-hidden="true" />}>Create temporary QR</SubmitButton>
+        </div>
+      </form>
+      <div className="mt-3">
+        <ActionMessage state={state} />
+        {state.scanUrl ? (
+          <div className="mt-3 rounded-xl border border-emerald-200 bg-white p-3 text-sm">
+            <p className="font-medium text-emerald-950">Temporary QR link</p>
+            <Input value={state.scanUrl} readOnly className="mt-2 font-mono text-xs" />
+            <p className="mt-2 text-xs text-slate-500">Open this link in the poster preview/export system to print an activity poster.</p>
+          </div>
+        ) : null}
+      </div>
+    </section>
+  );
+}
+function SettingsTab({ churchSlug }: { churchSlug: string }) {
   return (
     <section className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="flex items-center gap-2">
         <Settings className="size-5 text-slate-700" aria-hidden="true" />
         <h2 className="text-lg font-semibold text-slate-950">Attendance settings</h2>
       </div>
+      <TemporaryActivityQrPanel churchSlug={churchSlug} />
       <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
         <div className="rounded-xl border border-slate-200 p-4">
           <h3 className="font-semibold text-slate-950">Member recognition</h3>
@@ -640,7 +697,7 @@ export function AttendanceWorkspace({ data, churchSlug }: { data: AttendanceWork
         <StatTile label="Present" value={data.stats.presentMembers} icon={<UserCheck className="size-4" aria-hidden="true" />} />
         <StatTile label="Visitors" value={data.stats.visitors} icon={<UserPlus className="size-4" aria-hidden="true" />} />
         <StatTile label="Expected" value={data.stats.expectedMembers} icon={<Users className="size-4" aria-hidden="true" />} />
-        <StatTile label="Household" value={data.stats.householdCheckIns} icon={<Users className="size-4" aria-hidden="true" />} />
+        <StatTile label="Family" value={data.stats.householdCheckIns} icon={<Users className="size-4" aria-hidden="true" />} />
         <StatTile label="Review" value={data.stats.pendingReview} icon={<ClipboardList className="size-4" aria-hidden="true" />} />
         <StatTile label="Total" value={data.stats.totalToday} icon={<CalendarCheck className="size-4" aria-hidden="true" />} />
       </div>
@@ -660,10 +717,11 @@ export function AttendanceWorkspace({ data, churchSlug }: { data: AttendanceWork
         </section>
       ) : null}
       {activeTab === "kiosk" ? <KioskTab data={data} churchSlug={churchSlug} /> : null}
-      {activeTab === "visitors" ? <VisitorsTab visitors={data.visitors} /> : null}
+      {activeTab === "visitors" ? <VisitorsTab visitors={data.visitors} churchSlug={churchSlug} /> : null}
       {activeTab === "review" ? <ReviewTab data={data} churchSlug={churchSlug} /> : null}
       {activeTab === "reports" ? <ReportsTab data={data} /> : null}
-      {activeTab === "settings" ? <SettingsTab /> : null}
+      {activeTab === "settings" ? <SettingsTab churchSlug={churchSlug} /> : null}
     </div>
   );
 }
+

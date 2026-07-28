@@ -58,7 +58,7 @@ export function AttendanceSummaryCard({ title, description, summary }: Attendanc
             <CalendarCheck className="size-3.5" aria-hidden="true" />
             This month
           </div>
-          <p className="mt-2 text-sm font-semibold text-slate-900">{summary.currentMonthPresent} check-ins</p>
+          <p className="mt-2 text-sm font-semibold text-slate-900">{summary.currentMonthPresent} attendance records</p>
         </div>
         <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
           <div className="text-xs font-semibold uppercase tracking-wide text-slate-500">Last method</div>
@@ -72,7 +72,7 @@ export function AttendanceSummaryCard({ title, description, summary }: Attendanc
         <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Recent attendance</p>
         {summary.recentRecords.length === 0 ? (
           <p className="mt-3 rounded-xl border border-dashed border-slate-200 px-4 py-5 text-sm text-slate-600">
-            Attendance history will appear here after the first Sabbath check-in.
+            Attendance history will appear here after the first Sabbath attendance.
           </p>
         ) : (
           <div className="mt-3 divide-y divide-slate-100 rounded-xl border border-slate-200">

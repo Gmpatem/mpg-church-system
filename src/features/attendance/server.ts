@@ -7,6 +7,7 @@ import {
   getAttendanceDeviceToken,
   hashAttendanceDeviceToken,
   setAttendanceDeviceToken,
+  clearAttendanceDeviceToken,
 } from "./device-token";
 import { createAttendancePublicCode } from "./qr";
 import {
@@ -137,7 +138,7 @@ export async function ensureUniversalQrForChurch(db: DbClient, ctx: ChurchAccess
         public_code: createAttendancePublicCode(),
         qr_type: "sabbath_universal",
         title: "Sabbath attendance",
-        description: "Universal Sabbath check-in link for members and visitors.",
+        description: "Universal Sabbath attendance link for members and visitors.",
         is_permanent: true,
         is_active: true,
         created_by_user_id: ctx.userId,
@@ -317,7 +318,7 @@ export async function recordMemberAttendance(
     churchId: params.churchId,
     actorUserId: params.actorUserId ?? null,
     actorMemberId: params.actorMemberId ?? null,
-    action: "member_checked_in",
+    action: "member_marked_present",
     entityType: "attendance_records",
     entityId: data.id,
     metadata: { method: params.method, member_id: params.memberId },
@@ -350,7 +351,7 @@ export async function rememberMemberDevice(db: DbClient, params: { churchId: str
         church_id: params.churchId,
         member_id: params.memberId,
         device_token_hash: tokenHash,
-        label: "Confirmed Sabbath check-in device",
+        label: "Confirmed Sabbath attendance device",
         last_seen_at: now,
         confirmed_at: now,
         revoked_at: null,
@@ -514,7 +515,7 @@ export async function recordVisitorAttendance(
 
   await logAttendanceAudit(db, {
     churchId: params.churchId,
-    action: "visitor_checked_in",
+    action: "visitor_attendance_recorded",
     entityType: "attendance_records",
     entityId: record.id,
     metadata: { visitor_id: visitor.id },
@@ -548,3 +549,262 @@ export async function logAttendanceAudit(
     });
 }
 
+
+const ATTENDANCE_SERVER_MANAGE_ROLES = [
+  "platform_owner",
+  "platform_admin",
+  "platform_support",
+  "church_admin",
+  "pastor",
+  "elder",
+  "clerk",
+  "church_secretary",
+  "tech_team",
+] as const;
+
+function normalizeLookupText(value: string) {
+  return value.trim().toLowerCase();
+}
+
+function digitsOnly(value: string | null | undefined) {
+  return String(value ?? "").replace(/\D/g, "");
+}
+
+function maskPhone(value: string | null | undefined) {
+  const digits = digitsOnly(value);
+  if (!digits) return null;
+  return digits.length <= 4 ? `•••• ${digits}` : `•••• ${digits.slice(-4)}`;
+}
+
+function maskEmail(value: string | null | undefined) {
+  const email = String(value ?? "").trim().toLowerCase();
+  if (!email.includes("@")) return null;
+  const [name, domain] = email.split("@");
+  return `${name.slice(0, 2)}•••@${domain}`;
+}
+
+function isAttendanceManagerRole(role: string) {
+  return ATTENDANCE_SERVER_MANAGE_ROLES.includes(role as (typeof ATTENDANCE_SERVER_MANAGE_ROLES)[number]);
+}
+
+export function assertAttendanceManager(ctx: ChurchAccessContext) {
+  if (ctx.isPlatformAdmin || ctx.roles.some(isAttendanceManagerRole)) return;
+  throw new Error("You do not have permission to manage attendance.");
+}
+
+export async function lookupPublicMembers(
+  db: DbClient,
+  params: { churchId: string; lookupValue: string }
+) {
+  const raw = params.lookupValue.trim();
+  const normalized = normalizeLookupText(raw);
+  const rawDigits = digitsOnly(raw);
+
+  if (normalized.length < 3 && rawDigits.length < 4) {
+    throw new Error("Enter a phone number, email, or member code to find your member record.");
+  }
+
+  const { data: members, error } = await (db as any)
+    .from("members")
+    .select("id, first_name, last_name, display_name, member_code, household_id, phone, email, membership_status")
+    .eq("church_id", params.churchId)
+    .eq("membership_status", "active")
+    .limit(750);
+
+  if (error) ensureAttendanceError(error, "Member lookup could not be completed.");
+
+  const matches = (members ?? []).filter((member: any) => {
+    const memberCode = normalizeLookupText(member.member_code ?? "");
+    const email = normalizeLookupText(member.email ?? "");
+    const phoneDigits = digitsOnly(member.phone);
+
+    return (
+      (memberCode && memberCode === normalized) ||
+      (email && email === normalized) ||
+      (rawDigits.length >= 4 && phoneDigits.endsWith(rawDigits.slice(-4))) ||
+      (rawDigits.length >= 7 && phoneDigits.includes(rawDigits))
+    );
+  }).slice(0, 5);
+
+  const householdIds = Array.from(new Set(matches.map((member: any) => member.household_id).filter(Boolean)));
+  let householdMap = new Map<string, string>();
+
+  if (householdIds.length > 0) {
+    const { data: households, error: householdError } = await (db as any)
+      .from("households")
+      .select("id, household_name")
+      .in("id", householdIds);
+
+    if (householdError) ensureAttendanceError(householdError, "Household context could not be loaded.");
+    householdMap = new Map((households ?? []).map((row: any) => [row.id, row.household_name]));
+  }
+
+  return matches.map((member: any) => ({
+    id: member.id,
+    displayName: getAttendanceDisplayName(member),
+    householdName: member.household_id ? householdMap.get(member.household_id) ?? null : null,
+    memberCode: member.member_code ?? null,
+    maskedPhone: maskPhone(member.phone),
+    maskedEmail: maskEmail(member.email),
+  }));
+}
+
+export async function verifyPublicMemberLookup(
+  db: DbClient,
+  params: { churchId: string; memberId: string; lookupValue: string }
+) {
+  const matches = await lookupPublicMembers(db, {
+    churchId: params.churchId,
+    lookupValue: params.lookupValue,
+  });
+
+  if (!matches.some((match: { id: string }) => match.id === params.memberId)) {
+    throw new Error("We could not confirm that member record with the phone, email, or member code you entered.");
+  }
+
+  return true;
+}
+
+export async function forgetRecognizedAttendanceDevice(db: DbClient, churchId: string) {
+  const token = await getAttendanceDeviceToken();
+  if (!token) {
+    await clearAttendanceDeviceToken();
+    return { reset: true };
+  }
+
+  const tokenHash = hashAttendanceDeviceToken(token);
+  await (db as any)
+    .from("attendance_member_devices")
+    .update({ revoked_at: new Date().toISOString(), updated_at: new Date().toISOString() })
+    .eq("church_id", churchId)
+    .eq("device_token_hash", tokenHash);
+
+  await clearAttendanceDeviceToken();
+  return { reset: true };
+}
+
+export async function createTemporaryActivityQrForChurch(
+  db: DbClient,
+  ctx: ChurchAccessContext,
+  params: { title: string; description?: string | null; startsAt?: string | null; expiresAt?: string | null }
+) {
+  assertAttendanceManager(ctx);
+
+  const title = params.title.trim();
+  if (title.length < 3) throw new Error("Activity title is required.");
+
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    const { data, error } = await (db as any)
+      .from("attendance_qr_codes")
+      .insert({
+        church_id: ctx.churchId,
+        public_code: createAttendancePublicCode(),
+        qr_type: "temporary_activity",
+        title,
+        description: params.description?.trim() || "Temporary activity attendance link.",
+        is_permanent: false,
+        is_active: true,
+        starts_at: params.startsAt || null,
+        expires_at: params.expiresAt || null,
+        created_by_user_id: ctx.userId,
+      })
+      .select("id, church_id, public_code, qr_type, title, description, is_permanent, is_active, starts_at, expires_at, created_at, updated_at")
+      .single();
+
+    if (!error && data) {
+      await logAttendanceAudit(db, {
+        churchId: ctx.churchId,
+        actorUserId: ctx.userId,
+        action: "temporary_attendance_qr_created",
+        entityType: "attendance_qr_codes",
+        entityId: data.id,
+        metadata: { title },
+      });
+      return data;
+    }
+
+    if (!String(error?.message ?? "").toLowerCase().includes("duplicate")) {
+      ensureAttendanceError(error, "Temporary attendance QR could not be created.");
+    }
+  }
+
+  throw new Error("Temporary attendance QR could not be created after several attempts.");
+}
+
+export async function removeAttendanceRecordForChurch(
+  db: DbClient,
+  params: { churchId: string; recordId: string; actorUserId: string; reason?: string | null }
+) {
+  const { data: record, error: loadError } = await (db as any)
+    .from("attendance_records")
+    .select("id, notes")
+    .eq("church_id", params.churchId)
+    .eq("id", params.recordId)
+    .maybeSingle();
+
+  if (loadError) ensureAttendanceError(loadError, "Attendance record could not be loaded.");
+  if (!record) throw new Error("Attendance record was not found.");
+
+  const reason = params.reason?.trim() || "Corrected by attendance team.";
+  const note = `${record.notes ? `${record.notes}\n` : ""}Correction: ${reason}`;
+
+  const { error } = await (db as any)
+    .from("attendance_records")
+    .update({ status: "removed", notes: note, updated_at: new Date().toISOString() })
+    .eq("church_id", params.churchId)
+    .eq("id", params.recordId);
+
+  if (error) ensureAttendanceError(error, "Attendance record could not be corrected.");
+
+  await logAttendanceAudit(db, {
+    churchId: params.churchId,
+    actorUserId: params.actorUserId,
+    action: "attendance_record_removed",
+    entityType: "attendance_records",
+    entityId: params.recordId,
+    metadata: { reason },
+  });
+}
+
+export async function markVisitorContactFollowUp(
+  db: DbClient,
+  params: { churchId: string; visitorContactId: string; actorUserId: string; status: string; notes?: string | null }
+) {
+  const status = params.status || "contacted";
+  const now = new Date().toISOString();
+
+  const { error } = await (db as any)
+    .from("visitor_contacts")
+    .update({
+      follow_up_status: status,
+      follow_up_notes: params.notes?.trim() || null,
+      contacted_at: status === "contacted" ? now : null,
+      contacted_by_user_id: params.actorUserId,
+      updated_at: now,
+    })
+    .eq("church_id", params.churchId)
+    .eq("id", params.visitorContactId);
+
+  if (error) ensureAttendanceError(error, "Visitor follow-up could not be updated. Make sure the attendance MVP hardening migration has been applied.");
+
+  if (status === "needs_membership_review") {
+    await (db as any)
+      .from("attendance_review_items")
+      .insert({
+        church_id: params.churchId,
+        visitor_contact_id: params.visitorContactId,
+        item_type: "membership_interest",
+        title: "Visitor membership interest",
+        description: params.notes?.trim() || "Visitor needs membership follow-up.",
+      });
+  }
+
+  await logAttendanceAudit(db, {
+    churchId: params.churchId,
+    actorUserId: params.actorUserId,
+    action: "visitor_follow_up_updated",
+    entityType: "visitor_contacts",
+    entityId: params.visitorContactId,
+    metadata: { status },
+  });
+}

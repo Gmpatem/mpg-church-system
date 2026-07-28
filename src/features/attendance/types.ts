@@ -85,6 +85,8 @@ export interface AttendanceRecordRow {
   checkInMethod: AttendanceCheckInMethod;
   checkedInAt: string;
   checkedInByMemberId: string | null;
+  checkedInByUserId?: string | null;
+  markedByName?: string | null;
   notes: string | null;
   contact: string | null;
 }
@@ -100,6 +102,9 @@ export interface VisitorContactRow {
   visitCount: number;
   firstSeenAt: string;
   lastSeenAt: string;
+  followUpStatus?: "not_contacted" | "contacted" | "needs_membership_review" | "no_follow_up_needed" | null;
+  followUpNotes?: string | null;
+  contactedAt?: string | null;
 }
 
 export interface AttendanceReviewItemRow {
@@ -149,6 +154,15 @@ export interface PublicAttendanceHouseholdMember extends PublicAttendanceMember 
   presentToday: boolean;
 }
 
+
+export interface PublicMemberLookupResult {
+  id: string;
+  displayName: string;
+  householdName: string | null;
+  memberCode: string | null;
+  maskedPhone: string | null;
+  maskedEmail: string | null;
+}
 export interface PublicAttendanceInitialData {
   publicCode: string;
   church: AttendanceChurch | null;
@@ -169,6 +183,11 @@ export interface AttendanceActionState {
   message?: string;
   error?: string;
   duplicate?: boolean;
+  matches?: PublicMemberLookupResult[];
+  lookupValue?: string;
+  publicCode?: string;
+  scanUrl?: string;
+  resetDevice?: boolean;
 }
 
 export interface AttendanceSummaryRecord {
@@ -187,3 +206,4 @@ export interface AttendanceSummary {
   currentMonthPresent: number;
   recentRecords: AttendanceSummaryRecord[];
 }
+

@@ -28,3 +28,14 @@ export async function setAttendanceDeviceToken(token: string) {
     maxAge: ATTENDANCE_DEVICE_COOKIE_MAX_AGE,
   });
 }
+
+export async function clearAttendanceDeviceToken() {
+  const cookieStore = await cookies();
+  cookieStore.set(ATTENDANCE_DEVICE_COOKIE, "", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 0,
+  });
+}

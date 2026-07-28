@@ -3,19 +3,27 @@
 import { revalidatePath } from "next/cache";
 import { requireChurchWorkspaceAccess } from "@/features/access/queries";
 import {
+  assertAttendanceManager,
+  createTemporaryActivityQrForChurch,
   ensureTodayOccurrence,
+  forgetRecognizedAttendanceDevice,
   getAttendanceAdminClient,
   getUniversalQrAndOccurrenceForChurch,
   isQrAvailable,
   logAttendanceAudit,
+  lookupPublicMembers,
+  markVisitorContactFollowUp,
   recordMemberAttendance,
   recordVisitorAttendance,
   rememberMemberDevice,
+  removeAttendanceRecordForChurch,
   replaceUniversalQrForChurch,
   resolveQrByPublicCode,
+  verifyPublicMemberLookup,
 } from "./server";
 import { normalizeAttendancePublicCode } from "./qr";
 import {
+  buildPublicAttendanceScanUrl,
   getBooleanFromForm,
   getStringFromForm,
 } from "./utils";
@@ -27,8 +35,8 @@ function resolveFormData(first: ActionInput, second?: FormData) {
   return second ?? (first instanceof FormData ? first : new FormData());
 }
 
-function success(message: string, duplicate = false): AttendanceActionState {
-  return { ok: true, message, duplicate };
+function success(message: string, extra: Partial<AttendanceActionState> = {}): AttendanceActionState {
+  return { ok: true, message, ...extra };
 }
 
 function failure(error: unknown): AttendanceActionState {
@@ -55,6 +63,7 @@ export async function createUniversalSabbathQrAction(first: ActionInput, second?
     const formData = resolveFormData(first, second);
     const churchSlug = getStringFromForm(formData, "churchSlug");
     const ctx = await requireChurchWorkspaceAccess(churchSlug);
+    assertAttendanceManager(ctx);
     const db = getAttendanceAdminClient() as any;
     const qrCode = await getUniversalQrAndOccurrenceForChurch(db, ctx);
 
@@ -70,11 +79,41 @@ export async function regenerateUniversalSabbathQrAction(first: ActionInput, sec
     const formData = resolveFormData(first, second);
     const churchSlug = getStringFromForm(formData, "churchSlug");
     const ctx = await requireChurchWorkspaceAccess(churchSlug);
+    assertAttendanceManager(ctx);
     const db = getAttendanceAdminClient() as any;
     await replaceUniversalQrForChurch(db, ctx);
 
     revalidatePath(`/c/${churchSlug}/attendance`);
     return success("A fresh Sabbath QR link has been created. Print or share the new code.");
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function createTemporaryActivityQrAction(first: ActionInput, second?: FormData): Promise<AttendanceActionState> {
+  try {
+    const formData = resolveFormData(first, second);
+    const churchSlug = getStringFromForm(formData, "churchSlug");
+    const title = getStringFromForm(formData, "title");
+    const description = getStringFromForm(formData, "description");
+    const startsAt = getStringFromForm(formData, "startsAt");
+    const expiresAt = getStringFromForm(formData, "expiresAt");
+    const ctx = await requireChurchWorkspaceAccess(churchSlug);
+    assertAttendanceManager(ctx);
+    const db = getAttendanceAdminClient() as any;
+    const qrCode = await createTemporaryActivityQrForChurch(db, ctx, {
+      title,
+      description,
+      startsAt: startsAt ? new Date(startsAt).toISOString() : null,
+      expiresAt: expiresAt ? new Date(expiresAt).toISOString() : null,
+    });
+    const scanUrl = await buildPublicAttendanceScanUrl(qrCode.public_code);
+
+    revalidatePath(`/c/${churchSlug}/attendance`);
+    return success("Temporary activity QR created. Use the link below for this program.", {
+      publicCode: qrCode.public_code,
+      scanUrl,
+    });
   } catch (error) {
     return failure(error);
   }
@@ -86,6 +125,7 @@ export async function markKioskAttendanceAction(first: ActionInput, second?: For
     const churchSlug = getStringFromForm(formData, "churchSlug");
     const memberId = getStringFromForm(formData, "memberId");
     const ctx = await requireChurchWorkspaceAccess(churchSlug);
+    assertAttendanceManager(ctx);
     const db = getAttendanceAdminClient() as any;
     const { occurrence } = await getUniversalQrAndOccurrenceForChurch(db, ctx);
     const result = await recordMemberAttendance(db, {
@@ -97,7 +137,55 @@ export async function markKioskAttendanceAction(first: ActionInput, second?: For
     });
 
     revalidatePath(`/c/${churchSlug}/attendance`);
-    return success(result.duplicate ? "Already marked present for today." : "Checked in from kiosk mode.", result.duplicate);
+    return success(result.duplicate ? "Already marked present for today." : "Marked present by attendance support.", result.duplicate ? { duplicate: true } : {});
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function removeAttendanceRecordAction(first: ActionInput, second?: FormData): Promise<AttendanceActionState> {
+  try {
+    const formData = resolveFormData(first, second);
+    const churchSlug = getStringFromForm(formData, "churchSlug");
+    const recordId = getStringFromForm(formData, "recordId");
+    const reason = getStringFromForm(formData, "reason");
+    const ctx = await requireChurchWorkspaceAccess(churchSlug);
+    assertAttendanceManager(ctx);
+    const db = getAttendanceAdminClient() as any;
+    await removeAttendanceRecordForChurch(db, {
+      churchId: ctx.churchId,
+      recordId,
+      actorUserId: ctx.userId,
+      reason,
+    });
+
+    revalidatePath(`/c/${churchSlug}/attendance`);
+    return success("Attendance record corrected and removed from today’s present list.");
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function markVisitorFollowUpAction(first: ActionInput, second?: FormData): Promise<AttendanceActionState> {
+  try {
+    const formData = resolveFormData(first, second);
+    const churchSlug = getStringFromForm(formData, "churchSlug");
+    const visitorContactId = getStringFromForm(formData, "visitorContactId");
+    const status = getStringFromForm(formData, "status") || "contacted";
+    const notes = getStringFromForm(formData, "notes");
+    const ctx = await requireChurchWorkspaceAccess(churchSlug);
+    assertAttendanceManager(ctx);
+    const db = getAttendanceAdminClient() as any;
+    await markVisitorContactFollowUp(db, {
+      churchId: ctx.churchId,
+      visitorContactId,
+      actorUserId: ctx.userId,
+      status,
+      notes,
+    });
+
+    revalidatePath(`/c/${churchSlug}/attendance`);
+    return success("Visitor follow-up updated.");
   } catch (error) {
     return failure(error);
   }
@@ -110,6 +198,7 @@ export async function resolveAttendanceReviewItemAction(first: ActionInput, seco
     const reviewItemId = getStringFromForm(formData, "reviewItemId");
     const nextStatus = getStringFromForm(formData, "status") || "resolved";
     const ctx = await requireChurchWorkspaceAccess(churchSlug);
+    assertAttendanceManager(ctx);
     const db = getAttendanceAdminClient() as any;
 
     const { error } = await db
@@ -140,6 +229,25 @@ export async function resolveAttendanceReviewItemAction(first: ActionInput, seco
   }
 }
 
+export async function lookupPublicMemberAction(first: ActionInput, second?: FormData): Promise<AttendanceActionState> {
+  try {
+    const formData = resolveFormData(first, second);
+    const publicCode = getStringFromForm(formData, "publicCode");
+    const lookupValue = getStringFromForm(formData, "lookupValue");
+    const { db, church } = await getPublicScanContext(publicCode);
+    const matches = await lookupPublicMembers(db, { churchId: church.id, lookupValue });
+
+    return success(
+      matches.length === 0
+        ? "No matching active member record was found. Check your phone, email, or member code, or ask an usher for help."
+        : "Please confirm the matching member record below.",
+      { matches, lookupValue }
+    );
+  } catch (error) {
+    return failure(error);
+  }
+}
+
 export async function confirmPublicMemberAttendanceAction(
   first: ActionInput,
   second?: FormData
@@ -148,8 +256,11 @@ export async function confirmPublicMemberAttendanceAction(
     const formData = resolveFormData(first, second);
     const publicCode = getStringFromForm(formData, "publicCode");
     const memberId = getStringFromForm(formData, "memberId");
+    const lookupValue = getStringFromForm(formData, "lookupValue");
     const rememberDevice = getBooleanFromForm(formData, "rememberDevice");
     const { db, church, occurrence } = await getPublicScanContext(publicCode);
+
+    await verifyPublicMemberLookup(db, { churchId: church.id, memberId, lookupValue });
     const tokenHash = rememberDevice ? await rememberMemberDevice(db, { churchId: church.id, memberId }) : null;
 
     const result = await recordMemberAttendance(db, {
@@ -163,9 +274,24 @@ export async function confirmPublicMemberAttendanceAction(
     return success(
       result.duplicate
         ? "You are already marked present for today. Happy Sabbath."
-        : "You are marked present. Happy Sabbath, and God bless you.",
-      result.duplicate
+        : "Your attendance has been recorded. Happy Sabbath, and God bless you.",
+      result.duplicate ? { duplicate: true } : {}
     );
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function forgetPublicAttendanceDeviceAction(
+  first: ActionInput,
+  second?: FormData
+): Promise<AttendanceActionState> {
+  try {
+    const formData = resolveFormData(first, second);
+    const publicCode = getStringFromForm(formData, "publicCode");
+    const { db, church } = await getPublicScanContext(publicCode);
+    await forgetRecognizedAttendanceDevice(db, church.id);
+    return success("This device has been reset. Please choose how to record attendance.", { resetDevice: true });
   } catch (error) {
     return failure(error);
   }
@@ -203,9 +329,9 @@ export async function recordPublicVisitorAttendanceAction(
 
     return success(
       result.duplicate
-        ? "You are already marked present for today. We are still glad you are here."
-        : `Welcome, ${fullName}. We are grateful to worship with you today.`,
-      result.duplicate
+        ? "Your visit has already been recorded for today. We are still glad you are here."
+        : `Welcome, ${fullName}. Your visit has been recorded. Happy Sabbath.`,
+      result.duplicate ? { duplicate: true } : {}
     );
   } catch (error) {
     return failure(error);
@@ -223,7 +349,7 @@ export async function recordPublicHouseholdAttendanceAction(
       .getAll("memberIds")
       .filter((value): value is string => typeof value === "string" && value.length > 0);
 
-    if (selectedMemberIds.length === 0) throw new Error("Please choose at least one household member.");
+    if (selectedMemberIds.length === 0) throw new Error("Please choose at least one family member.");
 
     const { db, church, occurrence } = await getPublicScanContext(publicCode);
     const recognized = await import("./server").then((mod) => mod.findRecognizedMember(db, church.id));
@@ -242,7 +368,7 @@ export async function recordPublicHouseholdAttendanceAction(
     if (allowedError) throw new Error(allowedError.message);
 
     const allowedIds = new Set((allowedMembers ?? []).map((row: any) => row.id));
-    if (allowedIds.size === 0) throw new Error("Those household members could not be verified.");
+    if (allowedIds.size === 0) throw new Error("Those family members could not be verified.");
 
     let saved = 0;
     let duplicates = 0;
@@ -262,12 +388,11 @@ export async function recordPublicHouseholdAttendanceAction(
 
     return success(
       saved > 0
-        ? `${saved} household member${saved === 1 ? "" : "s"} marked present. God bless your family today.`
+        ? `${saved} family member${saved === 1 ? "" : "s"} marked present. God bless your family today.`
         : "Everyone selected was already marked present for today.",
-      saved === 0 && duplicates > 0
+      saved === 0 && duplicates > 0 ? { duplicate: true } : {}
     );
   } catch (error) {
     return failure(error);
   }
 }
-

@@ -12,7 +12,6 @@ export const ATTENDANCE_MANAGE_ROLES = [
   "elder",
   "clerk",
   "church_secretary",
-  "treasurer",
 ] as const;
 
 export const ATTENDANCE_WELCOME_MESSAGES = [
@@ -24,11 +23,11 @@ export const ATTENDANCE_WELCOME_MESSAGES = [
 ];
 
 export const ATTENDANCE_METHOD_LABELS: Record<AttendanceCheckInMethod, string> = {
-  qr_self: "QR self check-in",
+  qr_self: "Self QR",
   recognized_device: "Remembered device",
   household: "Family attendance",
-  kiosk: "Kiosk check-in",
-  manual_admin: "Manual entry",
+  kiosk: "Attendance support",
+  manual_admin: "Secretary correction",
   visitor: "Visitor welcome",
 };
 
@@ -45,3 +44,4 @@ export const ATTENDANCE_REVIEW_TYPE_LABELS: Record<AttendanceReviewType, string>
   duplicate_scan: "Duplicate scan",
   manual_review: "Manual review",
 };
+

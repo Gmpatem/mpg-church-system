@@ -56,6 +56,9 @@ function mapVisitor(row: any): VisitorContactRow {
     visitCount: Number(row.visit_count ?? 0),
     firstSeenAt: row.first_seen_at,
     lastSeenAt: row.last_seen_at,
+    followUpStatus: row.follow_up_status ?? null,
+    followUpNotes: row.follow_up_notes ?? null,
+    contactedAt: row.contacted_at ?? null,
   };
 }
 
@@ -76,6 +79,8 @@ function mapRecord(row: any, memberMap: Map<string, any>, visitorMap: Map<string
     checkInMethod: row.check_in_method,
     checkedInAt: row.checked_in_at,
     checkedInByMemberId: row.checked_in_by_member_id ?? null,
+    checkedInByUserId: row.checked_in_by_user_id ?? null,
+    markedByName: row.checked_in_by_member_id ? "Family member" : row.checked_in_by_user_id ? "Attendance team" : null,
     notes: row.notes ?? null,
     contact: member?.phone ?? member?.email ?? visitor?.phone ?? visitor?.email ?? null,
   };
@@ -148,7 +153,7 @@ export async function getAttendanceWorkspaceData(churchSlug: string): Promise<At
     occurrenceRow
       ? db
           .from("attendance_records")
-          .select("id, member_id, visitor_contact_id, status, check_in_method, checked_in_at, checked_in_by_member_id, household_id, notes")
+          .select("id, member_id, visitor_contact_id, status, check_in_method, checked_in_at, checked_in_by_user_id, checked_in_by_member_id, household_id, notes")
           .eq("church_id", ctx.churchId)
           .eq("occurrence_id", occurrenceRow.id)
           .neq("status", "removed")
@@ -157,7 +162,7 @@ export async function getAttendanceWorkspaceData(churchSlug: string): Promise<At
       : Promise.resolve({ data: [], error: null }),
     db
       .from("visitor_contacts")
-      .select("id, full_name, phone, email, household_name, wants_follow_up, interested_in_membership, visit_count, first_seen_at, last_seen_at")
+      .select("id, full_name, phone, email, household_name, wants_follow_up, interested_in_membership, visit_count, first_seen_at, last_seen_at, follow_up_status, follow_up_notes, contacted_at")
       .eq("church_id", ctx.churchId)
       .order("last_seen_at", { ascending: false })
       .limit(50),
@@ -197,7 +202,7 @@ export async function getAttendanceWorkspaceData(churchSlug: string): Promise<At
   const missingMemberIds = toIdList(reviewRows.map((row: any) => row.member_id)).filter((id) => !memberMap.has(id));
 
   const [extraVisitors, extraMembers] = await Promise.all([
-    getRowsById(db, "visitor_contacts", "id, full_name, phone, email, household_name, wants_follow_up, interested_in_membership, visit_count, first_seen_at, last_seen_at", missingVisitorIds),
+    getRowsById(db, "visitor_contacts", "id, full_name, phone, email, household_name, wants_follow_up, interested_in_membership, visit_count, first_seen_at, last_seen_at, follow_up_status, follow_up_notes, contacted_at", missingVisitorIds),
     getRowsById(db, "members", "id, first_name, last_name, display_name, member_code, membership_status, household_id, household_role, phone, email", missingMemberIds),
   ]);
 
@@ -353,7 +358,7 @@ export async function getPublicAttendanceScanData(publicCode: string): Promise<P
   }
 
   const occurrence = await ensureTodayOccurrence(db, qrCode, church, null);
-  const memberOptions = await getPublicMemberOptions(db, church.id);
+  const memberOptions: PublicAttendanceMember[] = [];
   const recognized = await findRecognizedMember(db, church.id);
   let recognizedMember: PublicAttendanceMember | null = null;
   let recognizedDuplicate = false;
@@ -489,3 +494,4 @@ export async function getHouseholdAttendanceSummary(churchSlug: string, househol
 
   return loadAttendanceSummaryRows(db, ctx.churchId, { householdId });
 }
+
