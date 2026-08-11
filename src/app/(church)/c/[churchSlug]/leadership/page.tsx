@@ -49,6 +49,7 @@ export default async function LeadershipPage(props: PageProps) {
       <LeadershipWorkspace
         churchSlug={overview.churchSlug}
         churchName={overview.churchName}
+        overview={overview}
         activeTab={activeTab}
         tabData={tabData}
       />

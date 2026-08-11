@@ -1,6 +1,18 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { Button } from "@/components/ui/button";
+import { ButtonSpinner } from "@/components/ui/ButtonSpinner";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Textarea } from "@/components/ui/textarea";
+import { ChurchEmptyState, ChurchStatusPill } from "@/components/church-workspace";
 import {
   approveDepartmentLeadershipRequestAction,
   rejectDepartmentLeadershipRequestAction,
@@ -23,7 +35,7 @@ function formatDate(value: string | null) {
   return date.toLocaleString();
 }
 
-function SummaryCard({
+function SummaryItem({
   label,
   value,
 }: {
@@ -31,12 +43,14 @@ function SummaryCard({
   value: number;
 }) {
   return (
-    <div className="rounded-2xl border p-4">
-      <p className="text-sm text-muted-foreground">{label}</p>
-      <p className="mt-2 text-2xl font-semibold">{value}</p>
+    <div className="min-w-[120px] rounded-lg border border-border bg-muted/30 px-3 py-2">
+      <p className="text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">{label}</p>
+      <p className="mt-2 text-lg font-semibold tabular-nums text-foreground">{value}</p>
     </div>
   );
 }
+
+type Notice = { ok: true; message: string } | { ok: false; error: string } | null;
 
 export function LeadershipRequestsTab({
   churchSlug,
@@ -47,6 +61,7 @@ export function LeadershipRequestsTab({
 }) {
   const [isPending, startTransition] = useTransition();
   const [noteMap, setNoteMap] = useState<Record<string, string>>({});
+  const [notice, setNotice] = useState<Notice>(null);
 
   const requests = useMemo(() => data.requests, [data.requests]);
 
@@ -58,6 +73,7 @@ export function LeadershipRequestsTab({
   }
 
   function handleApprove(requestId: string) {
+    setNotice(null);
     startTransition(async () => {
       const result = await approveDepartmentLeadershipRequestAction(
         churchSlug,
@@ -65,13 +81,12 @@ export function LeadershipRequestsTab({
         noteMap[requestId]
       );
 
-      if (!result.ok) {
-        window.alert(result.error);
-      }
+      setNotice(result.ok ? { ok: true, message: result.message ?? "Leadership request approved." } : { ok: false, error: result.error });
     });
   }
 
   function handleReject(requestId: string) {
+    setNotice(null);
     startTransition(async () => {
       const result = await rejectDepartmentLeadershipRequestAction(
         churchSlug,
@@ -79,121 +94,136 @@ export function LeadershipRequestsTab({
         noteMap[requestId]
       );
 
-      if (!result.ok) {
-        window.alert(result.error);
-      }
+      setNotice(result.ok ? { ok: true, message: result.message ?? "Leadership request rejected." } : { ok: false, error: result.error });
     });
   }
 
   return (
-    <div className="space-y-6">
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-        <SummaryCard label="Total" value={data.summary.total} />
-        <SummaryCard label="Pending" value={data.summary.pending} />
-        <SummaryCard label="Approved" value={data.summary.approved} />
-        <SummaryCard label="Rejected" value={data.summary.rejected} />
-        <SummaryCard label="Cancelled" value={data.summary.cancelled} />
+    <div className="flex min-w-0 flex-col gap-5">
+      <div className="flex min-w-0 gap-3 overflow-x-auto pb-1">
+        <SummaryItem label="Total" value={data.summary.total} />
+        <SummaryItem label="Pending" value={data.summary.pending} />
+        <SummaryItem label="Approved" value={data.summary.approved} />
+        <SummaryItem label="Rejected" value={data.summary.rejected} />
+        <SummaryItem label="Cancelled" value={data.summary.cancelled} />
       </div>
 
+      <ActionNotice notice={notice} />
+
       {requests.length === 0 ? (
-        <div className="rounded-2xl border border-dashed p-6 text-sm text-muted-foreground">
-          No department leadership requests yet.
-        </div>
+        <ChurchEmptyState
+          title="No leadership requests"
+          message="Department leadership requests will appear here when members submit or administrators create them."
+        />
       ) : (
-        <div className="space-y-4">
+        <div className="min-w-0 overflow-hidden rounded-lg border border-border">
+          <Table className="min-w-[1120px]">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Member</TableHead>
+                <TableHead>Department</TableHead>
+                <TableHead>Role</TableHead>
+                <TableHead>Source</TableHead>
+                <TableHead>Requested</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="w-[320px]">Review</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
           {requests.map((request) => (
-            <div key={request.id} className="rounded-2xl border p-4">
-              <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                <div className="space-y-3">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-medium text-foreground">
-                      {request.memberName ?? request.memberEmail ?? "Unnamed request"}
-                    </p>
-                    <StatusBadge status={request.status} context="approval" />
-                  </div>
-
-                  <div className="grid gap-1 text-sm text-muted-foreground sm:grid-cols-2">
-                    <p>
-                      Department: <span className="font-medium text-foreground">{request.departmentName}</span>
-                    </p>
-                    <p>
-                      Leadership role: <span className="font-medium text-foreground">{request.requestedRoleName}</span>
-                    </p>
-                    <p>
-                      Role code: <span className="font-medium text-foreground">{request.requestedRoleCode ?? "—"}</span>
-                    </p>
-                    <p>
-                      Member code: <span className="font-medium text-foreground">{request.memberCode ?? "—"}</span>
-                    </p>
-                    <p>
-                      Requested at: <span className="font-medium text-foreground">{formatDate(request.requestedAt)}</span>
-                    </p>
-                    <p>
-                      Reviewed at: <span className="font-medium text-foreground">{formatDate(request.reviewedAt)}</span>
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl bg-muted/40 p-3 text-xs text-muted-foreground">
-                    Source: <span className="font-medium text-foreground">{getLabel(requestSourceLabels, request.source)}</span>
-                    {request.approvalStage ? (
-                      <>
-                        {" "}• Approval stage:{" "}
-                        <span className="font-medium text-foreground">{getLabel(approvalStageLabels, request.approvalStage)}</span>
-                      </>
-                    ) : null}
-                    {request.approvalStatus ? (
-                      <>
-                        {" "}• Approval status:{" "}
-                        <StatusBadge status={request.approvalStatus} context="approval" />
-                      </>
-                    ) : null}
-                    {request.reviewerNote ? (
-                      <>
-                        {" "}• Reviewer note:{" "}
-                        <span className="font-medium text-foreground">{request.reviewerNote}</span>
-                      </>
-                    ) : null}
-                  </div>
+            <TableRow key={request.id}>
+              <TableCell>
+                <div className="min-w-0">
+                  <p className="truncate font-medium text-foreground">
+                    {request.memberName ?? request.memberEmail ?? "Unnamed request"}
+                  </p>
+                  <p className="mt-1 truncate text-xs text-muted-foreground">
+                    {request.memberCode ?? request.memberEmail ?? "No member code"}
+                  </p>
                 </div>
-
-                <div className="w-full max-w-md space-y-3">
-                  <textarea
+              </TableCell>
+              <TableCell className="font-medium text-foreground">{request.departmentName}</TableCell>
+              <TableCell>
+                <div className="min-w-0">
+                  <p className="truncate text-sm text-foreground">{request.requestedRoleName}</p>
+                  <p className="mt-1 text-xs text-muted-foreground">{request.requestedRoleCode ?? "No role code"}</p>
+                </div>
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {getLabel(requestSourceLabels, request.source)}
+              </TableCell>
+              <TableCell className="text-muted-foreground">{formatDate(request.requestedAt)}</TableCell>
+              <TableCell>
+                <div className="flex flex-col items-start gap-2">
+                  <StatusBadge status={request.status} context="approval" />
+                  {request.approvalStage ? (
+                    <ChurchStatusPill
+                      status={request.approvalStage}
+                      label={getLabel(approvalStageLabels, request.approvalStage)}
+                    />
+                  ) : null}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex min-w-0 flex-col gap-3">
+                  <Textarea
                     value={noteMap[request.id] ?? ""}
                     onChange={(e) => setNote(request.id, e.target.value)}
-                    placeholder="Optional reviewer note"
-                    className="min-h-[96px] w-full rounded-xl border bg-background px-3 py-2 text-sm outline-none transition focus:ring-2 focus:ring-ring"
+                    placeholder={request.reviewerNote ?? "Optional reviewer note"}
+                    className="min-h-20 resize-none rounded-lg"
+                    disabled={request.status !== "pending"}
                   />
-
                   {request.status === "pending" ? (
                     <div className="flex flex-wrap gap-2">
-                      <button
+                      <Button
                         type="button"
+                        size="sm"
                         disabled={isPending}
                         onClick={() => handleApprove(request.id)}
-                        className="inline-flex h-10 items-center justify-center rounded-xl bg-foreground px-4 text-sm font-medium text-background transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-lg"
                       >
-                        Approve
-                      </button>
-                      <button
+                        {isPending ? <ButtonSpinner /> : "Approve"}
+                      </Button>
+                      <Button
                         type="button"
+                        size="sm"
+                        variant="destructive"
                         disabled={isPending}
                         onClick={() => handleReject(request.id)}
-                        className="inline-flex h-10 items-center justify-center rounded-xl border border-rose-500/30 px-4 text-sm font-medium text-rose-700 transition hover:bg-rose-500/10 disabled:cursor-not-allowed disabled:opacity-60 dark:text-rose-300"
+                        className="rounded-lg"
                       >
                         Reject
-                      </button>
+                      </Button>
                     </div>
                   ) : (
-                    <div className="rounded-xl border border-dashed p-3 text-sm text-muted-foreground">
-                      This request has already been reviewed.
-                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Reviewed {formatDate(request.reviewedAt)}
+                    </p>
                   )}
                 </div>
-              </div>
-            </div>
+              </TableCell>
+            </TableRow>
           ))}
+            </TableBody>
+          </Table>
         </div>
       )}
+    </div>
+  );
+}
+
+function ActionNotice({ notice }: { notice: Notice }) {
+  if (!notice) return null;
+
+  return (
+    <div
+      className={
+        notice.ok
+          ? "rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-700"
+          : "rounded-lg border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive"
+      }
+    >
+      {notice.ok ? notice.message : notice.error}
     </div>
   );
 }
