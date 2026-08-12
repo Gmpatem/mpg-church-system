@@ -662,6 +662,7 @@ export async function reassignMemberHouseholdAction(
   const churchSlug = getString(formData, "churchSlug");
   const memberId = getString(formData, "memberId");
   const householdId = getString(formData, "householdId") || null;
+  const householdRole = getString(formData, "householdRole") || null;
 
   const ctx = await requireChurchRole(churchSlug, CHURCH_MANAGEMENT_ROLE_CODES);
   const supabase = await createClient();
@@ -675,10 +676,16 @@ export async function reassignMemberHouseholdAction(
     return { ok: false, error: "Selected household does not belong to this church." };
   }
 
+  const validHouseholdRoles = new Set(["head", "spouse", "child", "relative", "guardian", "other"]);
+  if (householdRole && !validHouseholdRoles.has(householdRole)) {
+    return { ok: false, error: "Selected household role is not valid." };
+  }
+
   const { error } = await supabase
     .from("members")
     .update({
       household_id: householdId,
+      household_role: householdId ? householdRole : null,
       updated_at: new Date().toISOString(),
     })
     .eq("church_id", ctx.churchId)

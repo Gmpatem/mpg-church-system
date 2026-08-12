@@ -167,15 +167,16 @@ export async function getChurchMembers(
  * Narrow field selection for member lookup - avoids over-fetching.
  * Includes all commonly used member fields for detail views.
  * Previous: select("*") - fetched all 30+ fields including unused ones
- * Now: explicit 24 fields that are actually used across the app
+ * Now: explicit fields that are actually used across the app
  */
 const MEMBER_DETAIL_FIELDS = `
-  id, church_id, profile_id, household_id,
+  id, church_id, profile_id, household_id, household_role,
   first_name, last_name, display_name, member_code,
   email, phone, gender, date_of_birth,
+  address, city, country, profession, marital_status,
   membership_status, membership_type, date_joined,
   baptism_date, transfer_in_date, transfer_out_date, previous_church,
-  emergency_contact_name, emergency_contact_phone, emergency_contact_relationship,
+  emergency_contact_name, emergency_contact_phone, notes,
   created_at, updated_at
 `;
 
@@ -286,6 +287,104 @@ export const getChurchHouseholds = cache(async (churchSlug: string) => {
 
   return data ?? [];
 });
+
+export type MemberLeadershipRoleDefinition = {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+};
+
+export type MemberLeadershipAssignment = {
+  id: string;
+  roleId: string;
+  roleCode: string;
+  roleName: string;
+  roleDescription: string | null;
+  isActive: boolean;
+  startDate: string | null;
+  endDate: string | null;
+  notes: string | null;
+};
+
+export type MemberLeadershipEditorData = {
+  profileId: string | null;
+  roleDefinitions: MemberLeadershipRoleDefinition[];
+  assignments: MemberLeadershipAssignment[];
+};
+
+export async function getMemberLeadershipEditorData(
+  churchSlug: string,
+  memberId: string
+): Promise<MemberLeadershipEditorData> {
+  const ctx = await requireChurchAccess(churchSlug);
+  const supabase = await createClient();
+
+  const { data: member, error: memberError } = await supabase
+    .from("members")
+    .select("id, profile_id")
+    .eq("church_id", ctx.churchId)
+    .eq("id", memberId)
+    .maybeSingle();
+
+  if (memberError) throw new Error(memberError.message);
+  if (!member?.profile_id) {
+    return {
+      profileId: null,
+      roleDefinitions: [],
+      assignments: [],
+    };
+  }
+
+  const [roleDefinitionsResult, assignmentsResult] = await Promise.all([
+    supabase
+      .from("role_definitions")
+      .select("id, code, name, description")
+      .order("name", { ascending: true }),
+    supabase
+      .from("church_role_assignments")
+      .select("id, role_id, is_active, start_date, end_date, notes, role_definitions(id, code, name, description)")
+      .eq("church_id", ctx.churchId)
+      .eq("user_id", member.profile_id)
+      .order("is_active", { ascending: false })
+      .order("updated_at", { ascending: false }),
+  ]);
+
+  if (roleDefinitionsResult.error) throw new Error(roleDefinitionsResult.error.message);
+  if (assignmentsResult.error) throw new Error(assignmentsResult.error.message);
+
+  const assignments = ((assignmentsResult.data ?? []) as any[])
+    .map<MemberLeadershipAssignment | null>((row) => {
+      const role = Array.isArray(row.role_definitions)
+        ? row.role_definitions[0]
+        : row.role_definitions;
+      if (!role) return null;
+
+      return {
+        id: row.id,
+        roleId: row.role_id,
+        roleCode: role.code,
+        roleName: role.name,
+        roleDescription: role.description ?? null,
+        isActive: row.is_active,
+        startDate: row.start_date ?? null,
+        endDate: row.end_date ?? null,
+        notes: row.notes ?? null,
+      };
+    })
+    .filter((row): row is MemberLeadershipAssignment => Boolean(row));
+
+  return {
+    profileId: member.profile_id,
+    roleDefinitions: ((roleDefinitionsResult.data ?? []) as any[]).map((row) => ({
+      id: row.id,
+      code: row.code,
+      name: row.name,
+      description: row.description ?? null,
+    })),
+    assignments,
+  };
+}
 
 export async function getMemberReportSummary(churchSlug: string) {
   const ctx = await requireChurchAccess(churchSlug);
