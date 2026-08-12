@@ -101,6 +101,15 @@ export type MinistryOperationsData = {
   duties: MinistryDutyAssignment[];
   tasks: MinistryTask[];
   reports: MinistryReport[];
+  template: {
+    key: "deacons" | "children" | "media" | "sabbath_school" | "generic";
+    title: string;
+    subtitle: string;
+    greeting: string;
+    description: string;
+    dutySectionTitle: string;
+    privacyNote: string | null;
+  };
 };
 
 export type MemberMinistryPortalData = {

@@ -12,7 +12,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ChevronDown, ChevronUp, Plus, Trash2 } from "lucide-react";
+import { Baby, ChevronDown, ChevronUp, Pencil, Plus, Trash2 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import type { RegistrationHouseholdMemberInput } from "@/features/member-registration/schemas";
 import type { PublicRegistrationPageData } from "@/features/member-registration/public-queries";
@@ -79,19 +79,21 @@ export function HouseholdMembersStep({ members, onAdd, onUpdate, onRemove, setti
   }
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-lg font-semibold text-stone-900">Other Household Members</h2>
-        <p className="text-sm text-stone-600">Add family members you&apos;d like to register together.</p>
+    <div className="flex flex-col gap-5">
+      <div className="text-center">
+        <h2 className="text-xl font-semibold text-stone-950">Add Children</h2>
+        <p className="mt-1 text-sm leading-6 text-stone-600">
+          Add children or other household members you want the church office to review with this registration.
+        </p>
       </div>
 
       {members.length === 0 && (
-        <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50 p-6 text-center text-sm text-stone-500">
-          No additional household members added yet.
+        <div className="rounded-2xl border border-dashed border-emerald-300 bg-emerald-50/40 p-6 text-center text-sm text-stone-600">
+          No children or household members added yet. You can continue and add them later.
         </div>
       )}
 
-      <div className="space-y-4">
+      <div className="grid gap-3">
         {members.map((member, index) => (
           <FamilyMemberCard
             key={index}
@@ -109,10 +111,10 @@ export function HouseholdMembersStep({ members, onAdd, onUpdate, onRemove, setti
         type="button"
         variant="outline"
         onClick={handleAdd}
-        className="h-12 w-full gap-2 rounded-xl border-stone-200 text-stone-700"
+        className="h-12 w-full gap-2 rounded-xl border-emerald-700 border-dashed text-emerald-900"
       >
         <Plus className="size-4" />
-        Add family member
+        Add another child
       </Button>
 
       <ConfirmDialog
@@ -151,7 +153,7 @@ function FamilyMemberCard({
   const contentId = `family-${index}-details`;
 
   return (
-    <div className="overflow-hidden rounded-xl border border-stone-200 bg-white shadow-sm">
+    <div className="overflow-hidden rounded-2xl border border-stone-200 bg-white shadow-sm">
       <div className="flex items-center gap-2 p-3">
         <button
           type="button"
@@ -160,6 +162,9 @@ function FamilyMemberCard({
           aria-expanded={expanded}
           aria-controls={contentId}
         >
+          <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-emerald-50 text-emerald-900">
+            <Baby className="size-5" aria-hidden="true" />
+          </span>
           <span className="min-w-0">
             <span className="block text-sm font-semibold text-stone-900">Family member {index + 1}</span>
             <span className="block truncate text-sm text-stone-600">{summary}</span>
@@ -181,6 +186,10 @@ function FamilyMemberCard({
         id={contentId}
         className={cn("border-t border-stone-100 p-4", expanded ? "block" : "hidden")}
       >
+        <div className="mb-4 flex items-center gap-2 text-xs font-medium text-emerald-900">
+          <Pencil className="size-4" aria-hidden="true" />
+          Child will be reviewed with this household.
+        </div>
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-1.5">
             <Label htmlFor={`family-${index}-firstName`}>First name</Label>

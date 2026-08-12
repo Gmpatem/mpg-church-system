@@ -19,9 +19,9 @@ type MembershipInformationStepProps = {
 
 export function MembershipInformationStep({ data, onChange, settings }: MembershipInformationStepProps) {
   return (
-    <div className="space-y-5">
+    <div className="flex flex-col gap-5">
       <div>
-        <h2 className="text-lg font-semibold text-stone-900">Church Membership</h2>
+        <h2 className="text-xl font-semibold text-stone-950">Church Background</h2>
         <p className="text-sm text-stone-600">Help us understand your church background.</p>
       </div>
 

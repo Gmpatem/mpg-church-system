@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { requireChurchAccess, requireMemberPortalAccess } from "@/features/access/queries";
 import { templateForScopeName } from "./constants";
+import { resolveDepartmentWorkspaceTemplate } from "./department-templates";
 import type {
   AttendanceSupportData,
   AttendanceSupportMember,
@@ -295,6 +296,21 @@ export async function getDepartmentOperationsData(churchSlug: string, department
     duties,
     tasks,
     reports,
+    template: (() => {
+      const template = resolveDepartmentWorkspaceTemplate({
+        name: department.department_name,
+        code: department.code ?? null,
+      });
+      return {
+        key: template.key,
+        title: template.title,
+        subtitle: template.subtitle,
+        greeting: template.greeting,
+        description: template.description,
+        dutySectionTitle: template.dutySectionTitle,
+        privacyNote: template.privacyNote ?? null,
+      };
+    })(),
   };
 }
 

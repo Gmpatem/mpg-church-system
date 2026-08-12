@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createAdminClient } from "@/lib/supabase/admin";
+import { createClient } from "@/lib/supabase/server";
 import type { ChurchAccessContext } from "@/features/access/types";
 import {
   createAttendanceDeviceToken,
@@ -23,6 +24,12 @@ import type {
 } from "./types";
 
 type DbClient = ReturnType<typeof createAdminClient>;
+
+type AttendanceSessionMemberResult =
+  | { status: "no_session"; profileId: null; message: null }
+  | { status: "linked"; profileId: string; member: any; message: null }
+  | { status: "unlinked"; profileId: string; message: string }
+  | { status: "ambiguous"; profileId: string; message: string };
 
 interface ResolvedQr {
   qrCode: any;
@@ -82,6 +89,110 @@ export function mapPublicMember(row: any, householdName: string | null = null): 
 
 export function ensureAttendanceError(error: any, fallback: string): never {
   throw new Error(error?.message || fallback);
+}
+
+export async function resolveAttendanceSessionMember(
+  db: DbClient,
+  churchId: string
+): Promise<AttendanceSessionMemberResult> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.auth.getUser();
+
+  if (error || !data.user) {
+    return { status: "no_session", profileId: null, message: null };
+  }
+
+  const profileId = data.user.id;
+  const { data: members, error: memberError } = await (db as any)
+    .from("members")
+    .select("id, church_id, display_name, first_name, last_name, member_code, household_id, membership_status, profile_id")
+    .eq("church_id", churchId)
+    .eq("profile_id", profileId)
+    .eq("membership_status", "active")
+    .limit(2);
+
+  if (memberError) ensureAttendanceError(memberError, "Member Portal account could not be checked.");
+
+  if (!members || members.length === 0) {
+    return {
+      status: "unlinked",
+      profileId,
+      message:
+        "We found your account, but it is not linked to an active church member record yet. Please contact the church secretary or use member lookup.",
+    };
+  }
+
+  if (members.length > 1) {
+    return {
+      status: "ambiguous",
+      profileId,
+      message:
+        "We found more than one active member record linked to your account. Please ask Attendance Support to review the link before using automatic attendance.",
+    };
+  }
+
+  return {
+    status: "linked",
+    profileId,
+    member: members[0],
+    message: null,
+  };
+}
+
+export async function recognizeAttendanceFromSession(
+  db: DbClient,
+  params: { churchId: string; occurrenceId: string }
+) {
+  const sessionMember = await resolveAttendanceSessionMember(db, params.churchId);
+
+  if (sessionMember.status !== "linked") {
+    return sessionMember;
+  }
+
+  const result = await recordMemberAttendance(db, {
+    churchId: params.churchId,
+    occurrenceId: params.occurrenceId,
+    memberId: sessionMember.member.id,
+    method: "recognized_device",
+    actorUserId: sessionMember.profileId,
+    notes: "Recognized account via Member Portal session.",
+  });
+
+  return {
+    status: "recognized" as const,
+    source: "session" as const,
+    profileId: sessionMember.profileId,
+    member: sessionMember.member,
+    record: result.record,
+    duplicate: result.duplicate,
+  };
+}
+
+export async function recognizeAttendanceFromDevice(
+  db: DbClient,
+  params: { churchId: string; occurrenceId: string }
+) {
+  const recognized = await findRecognizedMember(db, params.churchId);
+  if (!recognized) return { status: "no_device" as const };
+
+  const result = await recordMemberAttendance(db, {
+    churchId: params.churchId,
+    occurrenceId: params.occurrenceId,
+    memberId: recognized.member.id,
+    method: "recognized_device",
+    actorUserId: recognized.member.profile_id ?? null,
+    deviceTokenHash: recognized.tokenHash,
+  });
+
+  return {
+    status: "recognized" as const,
+    source: "trusted_phone" as const,
+    profileId: recognized.member.profile_id ?? null,
+    member: recognized.member,
+    tokenHash: recognized.tokenHash,
+    record: result.record,
+    duplicate: result.duplicate,
+  };
 }
 
 export async function resolveQrByPublicCode(db: DbClient, publicCode: string): Promise<ResolvedQr | null> {
@@ -327,7 +438,10 @@ export async function recordMemberAttendance(
   return { record: data, duplicate: false };
 }
 
-export async function rememberMemberDevice(db: DbClient, params: { churchId: string; memberId: string }) {
+export async function rememberMemberDevice(
+  db: DbClient,
+  params: { churchId: string; memberId: string; profileId?: string | null }
+) {
   const existingToken = await getAttendanceDeviceToken();
   const token = existingToken || createAttendanceDeviceToken();
   const tokenHash = hashAttendanceDeviceToken(token);
@@ -335,31 +449,44 @@ export async function rememberMemberDevice(db: DbClient, params: { churchId: str
 
   const { data: existing, error: existingError } = await (db as any)
     .from("attendance_member_devices")
-    .select("id, member_id, revoked_at")
+    .select("id, church_id, member_id, revoked_at")
     .eq("device_token_hash", tokenHash)
     .maybeSingle();
 
   if (existingError) ensureAttendanceError(existingError, "Device recognition could not be checked.");
-  if (existing && existing.member_id !== params.memberId && !existing.revoked_at) {
-    throw new Error("This device is already remembered for another member. Please ask an usher to help reset it.");
+  if (existing && !existing.revoked_at && (existing.member_id !== params.memberId || existing.church_id !== params.churchId)) {
+    throw new Error("This phone is already remembered for another member. Please ask Attendance Support to help reset it.");
   }
+
+  const upsertPayload = {
+    church_id: params.churchId,
+    member_id: params.memberId,
+    profile_id: params.profileId ?? null,
+    device_token_hash: tokenHash,
+    label: "Trusted phone for Sabbath attendance",
+    last_seen_at: now,
+    confirmed_at: now,
+    revoked_at: null,
+  };
 
   const { error } = await (db as any)
     .from("attendance_member_devices")
-    .upsert(
-      {
-        church_id: params.churchId,
-        member_id: params.memberId,
-        device_token_hash: tokenHash,
-        label: "Confirmed Sabbath attendance device",
-        last_seen_at: now,
-        confirmed_at: now,
-        revoked_at: null,
-      },
-      { onConflict: "device_token_hash" }
-    );
+    .upsert(upsertPayload, { onConflict: "device_token_hash" });
 
-  if (error) ensureAttendanceError(error, "This device could not be remembered.");
+  if (error) {
+    const message = String(error.message ?? "").toLowerCase();
+    if (message.includes("profile_id") || message.includes("schema cache")) {
+      const { profile_id: _profileId, ...fallbackPayload } = upsertPayload;
+      const { error: fallbackError } = await (db as any)
+        .from("attendance_member_devices")
+        .upsert(fallbackPayload, { onConflict: "device_token_hash" });
+
+      if (fallbackError) ensureAttendanceError(fallbackError, "This phone could not be remembered.");
+    } else {
+      ensureAttendanceError(error, "This phone could not be remembered.");
+    }
+  }
+
   await setAttendanceDeviceToken(token);
 
   return tokenHash;
@@ -378,25 +505,26 @@ export async function findRecognizedMember(db: DbClient, churchId: string) {
     .is("revoked_at", null)
     .maybeSingle();
 
-  if (deviceError) ensureAttendanceError(deviceError, "Remembered device could not be checked.");
+  if (deviceError) ensureAttendanceError(deviceError, "Trusted phone could not be checked.");
   if (!device) return null;
 
   const { data: member, error: memberError } = await (db as any)
     .from("members")
-    .select("id, display_name, first_name, last_name, member_code, household_id, membership_status")
+    .select("id, display_name, first_name, last_name, member_code, household_id, membership_status, profile_id")
     .eq("church_id", churchId)
     .eq("id", device.member_id)
+    .eq("membership_status", "active")
     .maybeSingle();
 
   if (memberError) ensureAttendanceError(memberError, "Remembered member could not be loaded.");
-  if (!member || member.membership_status === "transferred") return null;
+  if (!member) return null;
 
   await (db as any)
     .from("attendance_member_devices")
     .update({ last_used_at: new Date().toISOString(), last_seen_at: new Date().toISOString() })
     .eq("id", device.id);
 
-  return { member, tokenHash };
+  return { member, tokenHash, profileId: member.profile_id ?? null };
 }
 
 export async function recordVisitorAttendance(

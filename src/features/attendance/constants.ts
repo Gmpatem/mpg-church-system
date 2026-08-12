@@ -24,11 +24,11 @@ export const ATTENDANCE_WELCOME_MESSAGES = [
 
 export const ATTENDANCE_METHOD_LABELS: Record<AttendanceCheckInMethod, string> = {
   qr_self: "Self QR",
-  recognized_device: "Remembered device",
-  household: "Family attendance",
-  kiosk: "Attendance support",
-  manual_admin: "Secretary correction",
-  visitor: "Visitor welcome",
+  recognized_device: "Recognized phone",
+  household: "Family marked",
+  kiosk: "Attendance Support",
+  manual_admin: "Attendance Support",
+  visitor: "Visitor form",
 };
 
 export const ATTENDANCE_STATUS_LABELS: Record<AttendanceRecordStatus, string> = {

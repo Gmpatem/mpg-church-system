@@ -1,8 +1,26 @@
 "use client";
 
+import type { ElementType } from "react";
 import { useActionState, useMemo, useState } from "react";
 import Link from "next/link";
-import { CalendarPlus, CheckCircle2, ClipboardCheck, FileText, Home, ListChecks, Plus, UserPlus, Users } from "lucide-react";
+import {
+  Baby,
+  BookOpen,
+  CalendarPlus,
+  ClipboardCheck,
+  DoorOpen,
+  FileText,
+  HeartHandshake,
+  Home,
+  ListChecks,
+  MonitorPlay,
+  ShieldCheck,
+  UserPlus,
+  Users,
+  Video,
+  WalletCards,
+} from "lucide-react";
+import { resolveDepartmentWorkspaceTemplate } from "../department-templates";
 import {
   createDutyAssignmentAction,
   createDutyTypeAction,
@@ -24,10 +42,50 @@ function StatusMessage({ state }: { state: MinistryActionState }) {
   );
 }
 
-function StatCard({ label, value, icon }: { label: string; value: string | number; icon: React.ReactNode }) {
+const operationIconMap = {
+  Baby,
+  BookOpen,
+  CalendarPlus,
+  ClipboardCheck,
+  DoorOpen,
+  FileText,
+  HeartHandshake,
+  MonitorPlay,
+  ShieldCheck,
+  UserPlus,
+  Users,
+  Video,
+  WalletCards,
+};
+
+function getOperationIcon(name: keyof typeof operationIconMap) {
+  return operationIconMap[name] ?? ClipboardCheck;
+}
+
+function iconNameForStat(key: string, templateKey: string): keyof typeof operationIconMap {
+  if (templateKey === "children" && key === "members") return "Baby";
+  if ((templateKey === "children" || templateKey === "sabbath_school") && key === "upcomingDuties") return "BookOpen";
+  if (templateKey === "media" && key === "upcomingDuties") return "MonitorPlay";
+  if (key === "members") return "Users";
+  if (key === "openTasks") return "ClipboardCheck";
+  if (key === "reportsDue") return "FileText";
+  return "ClipboardCheck";
+}
+
+function dutyIconName(templateKey: string): keyof typeof operationIconMap {
+  if (templateKey === "deacons") return "DoorOpen";
+  if (templateKey === "children") return "Baby";
+  if (templateKey === "media") return "MonitorPlay";
+  if (templateKey === "sabbath_school") return "BookOpen";
+  return "ClipboardCheck";
+}
+
+function StatCard({ label, value, icon: Icon }: { label: string; value: string | number; icon: ElementType }) {
   return (
     <div className="rounded-2xl border border-amber-100 bg-white/90 p-3 text-center shadow-sm">
-      <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-amber-50 text-emerald-900">{icon}</div>
+      <div className="mx-auto flex size-10 items-center justify-center rounded-full bg-amber-50 text-emerald-900">
+        <Icon className="size-5" aria-hidden="true" />
+      </div>
       <p className="mt-2 text-xs text-slate-600">{label}</p>
       <p className="mt-1 text-2xl font-semibold text-emerald-950">{value}</p>
       <div className="mx-auto mt-1 h-0.5 w-8 rounded-full bg-amber-500" />
@@ -52,6 +110,17 @@ export function MinistryOperationsMobileWorkspace({ data }: { data: MinistryOper
   const [reportState, submitReport] = useActionState(submitMinistryReportAction, initialState);
   const [statusState, updateStatus] = useActionState(updateDutyStatusAction, initialState);
   const canManage = data.access.canManage;
+  const template = useMemo(() => resolveDepartmentWorkspaceTemplate({
+    name: data.scope.name,
+    code: data.scope.code,
+  }), [data.scope.code, data.scope.name]);
+  const headerTitle = data.template?.title ?? template.title;
+  const headerSubtitle = data.template?.subtitle ?? template.subtitle;
+  const greeting = data.template?.greeting ?? template.greeting;
+  const description = data.template?.description ?? template.description;
+  const dutySectionTitle = data.template?.dutySectionTitle ?? template.dutySectionTitle;
+  const privacyNote = data.template?.privacyNote ?? template.privacyNote ?? null;
+  const DutyIcon = getOperationIcon(dutyIconName(template.key));
 
   const nextDuties = useMemo(() => data.duties.slice(0, 8), [data.duties]);
 
@@ -63,8 +132,8 @@ export function MinistryOperationsMobileWorkspace({ data }: { data: MinistryOper
         </Link>
         <div className="flex size-12 items-center justify-center rounded-full bg-emerald-900 text-sm font-semibold text-amber-300">GC</div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-2xl font-semibold text-emerald-950">{data.scope.name} Operations</p>
-          <p className="text-sm text-slate-600">{data.church.name ?? "Church"}</p>
+          <p className="truncate text-2xl font-semibold text-emerald-950">{headerTitle}</p>
+          <p className="text-sm text-slate-600">{headerSubtitle}</p>
         </div>
       </header>
 
@@ -72,18 +141,29 @@ export function MinistryOperationsMobileWorkspace({ data }: { data: MinistryOper
         <div className="flex items-start gap-3">
           <div className="flex size-12 items-center justify-center rounded-full border border-amber-300 text-amber-700">♕</div>
           <div>
-            <h1 className="text-2xl font-semibold text-emerald-950">Happy Sabbath, Leader</h1>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Manage this week’s ministry operations with clarity and care.</p>
+            <h1 className="text-2xl font-semibold text-emerald-950">{greeting}</h1>
+            <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
             <div className="mt-4 h-0.5 w-12 rounded-full bg-amber-500" />
           </div>
         </div>
       </section>
 
+      {privacyNote ? (
+        <section className="mt-4 rounded-2xl border border-emerald-100 bg-emerald-50/70 p-4 text-sm leading-6 text-emerald-950">
+          <ShieldCheck className="mb-2 size-5" aria-hidden="true" />
+          {privacyNote}
+        </section>
+      ) : null}
+
       <section className="mt-5 grid grid-cols-4 gap-3">
-        <StatCard label="Members" value={data.stats.members} icon={<Users className="size-5" />} />
-        <StatCard label="Duties" value={data.stats.upcomingDuties} icon={<ClipboardCheck className="size-5" />} />
-        <StatCard label="Tasks" value={data.stats.openTasks} icon={<ListChecks className="size-5" />} />
-        <StatCard label="Reports" value={data.stats.reportsDue} icon={<FileText className="size-5" />} />
+        {template.stats.map((stat) => (
+          <StatCard
+            key={stat.key}
+            label={stat.label}
+            value={data.stats[stat.key]}
+            icon={getOperationIcon(iconNameForStat(stat.key, template.key))}
+          />
+        ))}
       </section>
 
       <nav className="sticky top-0 z-10 mt-5 rounded-2xl border border-amber-100 bg-white/95 p-1 shadow-sm backdrop-blur">
@@ -105,11 +185,11 @@ export function MinistryOperationsMobileWorkspace({ data }: { data: MinistryOper
       {activeTab === "overview" ? (
         <div className="mt-5 space-y-5">
           <section>
-            <h2 className="mb-3 flex items-center gap-2 text-xl font-semibold text-emerald-950"><span className="text-amber-600">☘</span>This Sabbath</h2>
+            <h2 className="mb-3 flex items-center gap-2 text-xl font-semibold text-emerald-950"><span className="text-amber-600">☘</span>{dutySectionTitle}</h2>
             <div className="overflow-hidden rounded-2xl border border-amber-100 bg-white shadow-sm">
               {nextDuties.length === 0 ? <p className="p-4 text-sm text-slate-500">No upcoming duties yet.</p> : nextDuties.map((duty: any) => (
                 <div key={duty.id} className="flex items-center gap-3 border-b border-amber-50 p-4 last:border-b-0">
-                  <div className="flex size-11 items-center justify-center rounded-full bg-amber-50 text-emerald-900"><ClipboardCheck className="size-5" /></div>
+                  <div className="flex size-11 items-center justify-center rounded-full bg-amber-50 text-emerald-900"><DutyIcon className="size-5" /></div>
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-semibold text-emerald-950">{duty.dutyName}</p>
                     <p className="text-sm text-slate-600">{duty.memberName} • {duty.serviceDate}</p>
@@ -123,10 +203,20 @@ export function MinistryOperationsMobileWorkspace({ data }: { data: MinistryOper
           {canManage ? (
             <section>
               <h2 className="mb-3 flex items-center gap-2 text-xl font-semibold text-emerald-950"><span className="text-amber-600">⚡</span>Quick Actions</h2>
-              <div className="grid grid-cols-3 gap-3">
-                <button onClick={() => setActiveTab("duties")} className="rounded-2xl border border-amber-100 bg-white p-4 text-sm font-medium shadow-sm"><CalendarPlus className="mx-auto mb-2 size-6 text-emerald-900" />Add Duty</button>
-                <button onClick={() => setActiveTab("tasks")} className="rounded-2xl border border-amber-100 bg-white p-4 text-sm font-medium shadow-sm"><Plus className="mx-auto mb-2 size-6 text-emerald-900" />Create Task</button>
-                <button onClick={() => setActiveTab("reports")} className="rounded-2xl border border-amber-100 bg-white p-4 text-sm font-medium shadow-sm"><FileText className="mx-auto mb-2 size-6 text-emerald-900" />Submit Report</button>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                {template.quickActions.map((action) => {
+                  const Icon = action.icon;
+                  return (
+                    <button
+                      key={`${action.target}-${action.label}`}
+                      onClick={() => setActiveTab(action.target)}
+                      className="rounded-2xl border border-amber-100 bg-white p-4 text-sm font-medium shadow-sm"
+                    >
+                      <Icon className="mx-auto mb-2 size-6 text-emerald-900" />
+                      {action.label}
+                    </button>
+                  );
+                })}
               </div>
             </section>
           ) : null}

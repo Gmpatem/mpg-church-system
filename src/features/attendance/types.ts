@@ -154,6 +154,14 @@ export interface PublicAttendanceHouseholdMember extends PublicAttendanceMember 
   presentToday: boolean;
 }
 
+export type PublicAttendanceRecognitionSource = "session" | "trusted_phone";
+
+export interface PublicAttendanceRecognizedRecord {
+  id: string;
+  checkedInAt: string | null;
+  method: AttendanceCheckInMethod;
+}
+
 
 export interface PublicMemberLookupResult {
   id: string;
@@ -173,7 +181,11 @@ export interface PublicAttendanceInitialData {
   unavailableReason: string | null;
   welcomeMessage: string;
   recognizedMember: PublicAttendanceMember | null;
+  recognizedSource: PublicAttendanceRecognitionSource | null;
+  recognizedRecord: PublicAttendanceRecognizedRecord | null;
   recognizedDuplicate: boolean;
+  recognitionMessage: string | null;
+  recognitionIssue: string | null;
   householdMembers: PublicAttendanceHouseholdMember[];
   memberOptions: PublicAttendanceMember[];
 }
@@ -188,6 +200,8 @@ export interface AttendanceActionState {
   publicCode?: string;
   scanUrl?: string;
   resetDevice?: boolean;
+  rememberedDevice?: boolean;
+  reviewRequested?: boolean;
 }
 
 export interface AttendanceSummaryRecord {

@@ -18,10 +18,26 @@ type HouseholdFamilyStepProps = {
 };
 
 const householdOptions = [
-  { value: "self_only", label: "Registering only myself" },
-  { value: "existing_household", label: "I belong to an existing household" },
-  { value: "new_household", label: "I want to create a new household" },
-  { value: "not_sure", label: "I'm not sure" },
+  {
+    value: "new_household",
+    label: "My household",
+    description: "Register myself and my family members.",
+  },
+  {
+    value: "self_only",
+    label: "Just me",
+    description: "Register myself only.",
+  },
+  {
+    value: "existing_household",
+    label: "I already belong to a household",
+    description: "I want to be added to an existing household.",
+  },
+  {
+    value: "not_sure",
+    label: "Not sure",
+    description: "The church office can help me decide.",
+  },
 ];
 
 export function HouseholdFamilyStep({ data, onChange, settings }: HouseholdFamilyStepProps) {
@@ -34,28 +50,36 @@ export function HouseholdFamilyStep({ data, onChange, settings }: HouseholdFamil
   }
 
   return (
-    <div className="space-y-5">
-      <div>
-        <h2 className="text-lg font-semibold text-stone-900">Household & Family</h2>
-        <p className="text-sm text-stone-600">Let us know about your household situation.</p>
+    <div className="flex flex-col gap-5">
+      <div className="text-center">
+        <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-900">
+          <span className="text-4xl" aria-hidden="true">⌂</span>
+        </div>
+        <h2 className="mt-4 text-xl font-semibold text-stone-950">Your Household</h2>
+        <p className="mt-1 text-sm leading-6 text-stone-600">Select the option that best describes you.</p>
       </div>
 
-      <div className="space-y-3">
+      <div className="grid gap-3">
         {householdOptions.map(option => {
           const selected = data.householdAction === option.value;
           return (
             <button
               key={option.value}
               type="button"
-            onClick={() => onChange("householdAction", option.value as WizardData["householdAction"])}
-              className={`flex min-h-14 w-full cursor-pointer items-center justify-between gap-3 rounded-xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 ${
+              onClick={() => onChange("householdAction", option.value as WizardData["householdAction"])}
+              className={`flex min-h-20 w-full cursor-pointer items-center gap-3 rounded-2xl border p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2 ${
                 selected
-                  ? "border-emerald-300 bg-emerald-50/50"
+                  ? "border-emerald-400 bg-emerald-50/80"
                   : "border-stone-200 hover:border-emerald-200 hover:bg-emerald-50/30"
               }`}
             >
-              <span className="text-sm font-medium text-stone-700">{option.label}</span>
-              {selected && <Check className="size-5 text-emerald-700" />}
+              <span className={selected ? "flex size-5 items-center justify-center rounded-full bg-emerald-800 text-white" : "size-5 rounded-full border border-stone-300 bg-white"}>
+                {selected ? <Check className="size-3.5" aria-hidden="true" /> : null}
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-stone-950">{option.label}</span>
+                <span className="mt-1 block text-xs leading-5 text-stone-600">{option.description}</span>
+              </span>
             </button>
           );
         })}

@@ -8,6 +8,8 @@ import type { TreasuryDialog } from "../types";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, TreasuryAmount, TreasuryEmptyState, TreasuryFilterSelect, TreasuryPagination, TreasuryPanel, TreasuryRowActions, TreasurySearchField, TreasuryStatusBadge, TreasurySummaryStrip, TreasuryToolbar } from "../shared";
 import { formatDateTime, formatTreasuryAmount, humanize } from "../utils";
 
+const EMPTY_FUNDS: any[] = [];
+
 export function TreasuryFundsTab({
   churchSlug,
   data,
@@ -19,11 +21,38 @@ export function TreasuryFundsTab({
   onOpenDialog: (dialog: TreasuryDialog) => void;
   onOpenTransactions: () => void;
 }) {
-  const funds = data.workspace?.funds ?? [];
+  const funds = data.workspace?.funds ?? EMPTY_FUNDS;
   const [search, setSearch] = useState("");
   const [type, setType] = useState("");
   const [status, setStatus] = useState("");
   const [selectedId, setSelectedId] = useState(funds[0]?.fund_id ?? "");
+
+  const fundStats = useMemo(() => {
+    const fundTypes = new Set<string>();
+    let activeCount = 0;
+    let negativeBalanceCount = 0;
+    let totalBalance = 0;
+
+    for (const fund of funds) {
+      const fundType = String(fund.fund_type || "");
+      if (fundType) fundTypes.add(fundType);
+      if (fund.is_active) activeCount += 1;
+      const balance = Number(fund.balance || 0);
+      totalBalance += balance;
+      if (balance < 0) negativeBalanceCount += 1;
+    }
+
+    return {
+      activeCount,
+      inactiveCount: funds.length - activeCount,
+      negativeBalanceCount,
+      totalBalance,
+      typeOptions: Array.from(fundTypes).map((value) => ({
+        value,
+        label: humanize(value),
+      })),
+    };
+  }, [funds]);
 
   const filteredFunds = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -41,33 +70,21 @@ export function TreasuryFundsTab({
   }, [funds, search, status, type]);
 
   const selected = filteredFunds.find((fund: any) => fund.fund_id === selectedId) ?? filteredFunds[0] ?? null;
-  const fundTypes = Array.from(
-    new Set<string>(
-      funds
-        .map((fund: any) => String(fund.fund_type || ""))
-        .filter((value: string) => value.length > 0)
-    )
-  );
-  const typeOptions = fundTypes.map((value) => ({
-    value,
-    label: humanize(value),
-  }));
-  const totalBalance = funds.reduce((sum: number, fund: any) => sum + Number(fund.balance || 0), 0);
 
   return (
     <div className="min-w-0 space-y-4">
       <TreasurySummaryStrip
         items={[
           { label: "Total Funds", value: funds.length, hint: "All configured funds", icon: <Landmark className="size-6" />, tone: "green" },
-          { label: "Active Funds", value: funds.filter((fund: any) => fund.is_active).length, hint: `${funds.filter((fund: any) => !fund.is_active).length} inactive`, icon: <ShieldCheck className="size-6" />, tone: "green" },
-          { label: "Combined Balance", value: formatTreasuryAmount(totalBalance), hint: "Across all funds", icon: <WalletCards className="size-6" />, tone: totalBalance >= 0 ? "green" : "red" },
-          { label: "Funds Requiring Attention", value: funds.filter((fund: any) => Number(fund.balance || 0) < 0).length, hint: "Negative balances", icon: <TriangleAlert className="size-6" />, tone: "amber" },
+          { label: "Active Funds", value: fundStats.activeCount, hint: `${fundStats.inactiveCount} inactive`, icon: <ShieldCheck className="size-6" />, tone: "green" },
+          { label: "Combined Balance", value: formatTreasuryAmount(fundStats.totalBalance), hint: "Across all funds", icon: <WalletCards className="size-6" />, tone: fundStats.totalBalance >= 0 ? "green" : "red" },
+          { label: "Funds Requiring Attention", value: fundStats.negativeBalanceCount, hint: "Negative balances", icon: <TriangleAlert className="size-6" />, tone: "amber" },
         ]}
       />
 
       <TreasuryToolbar>
         <TreasurySearchField value={search} onChange={setSearch} placeholder="Search funds..." />
-        <TreasuryFilterSelect label="All Types" value={type} onValueChange={setType} options={typeOptions} />
+        <TreasuryFilterSelect label="All Types" value={type} onValueChange={setType} options={fundStats.typeOptions} />
         <TreasuryFilterSelect label="All Statuses" value={status} onValueChange={setStatus} options={[{ value: "active", label: "Active" }, { value: "inactive", label: "Inactive" }]} />
         <Button type="button" onClick={() => onOpenDialog({ type: "create-fund" })} className="ml-auto h-10 gap-2 rounded-lg">
           <Plus className="size-4" aria-hidden="true" />

@@ -70,9 +70,11 @@ export function RegistrationReviewStep({
 
   return (
     <div className="space-y-5">
-      <div>
-        <h2 className="text-lg font-semibold text-stone-900">Review & Submit</h2>
-        <p className="text-sm text-stone-600">Please review your information before submitting.</p>
+      <div className="text-center">
+        <h2 className="text-xl font-semibold text-stone-950">Portal Account</h2>
+        <p className="mt-1 text-sm leading-6 text-stone-600">
+          Review your registration and choose how you will access the member portal after approval.
+        </p>
       </div>
 
       <div className="space-y-4 rounded-xl border border-stone-100 bg-stone-50 p-4 text-sm">
@@ -114,8 +116,8 @@ export function RegistrationReviewStep({
       </div>
 
       <div className="rounded-xl border border-emerald-100 bg-emerald-50/40 p-4 sm:p-5">
-        <div className="flex items-start gap-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-white text-emerald-800">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <div className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-white text-emerald-800">
             <LockKeyhole className="size-5" aria-hidden="true" />
           </div>
           <div className="min-w-0">

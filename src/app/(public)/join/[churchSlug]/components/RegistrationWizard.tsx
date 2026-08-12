@@ -17,8 +17,7 @@ import type { PublicRegistrationPageData } from "@/features/member-registration/
 import { RegistrationHeader } from "./RegistrationHeader";
 import { RegistrationProgress } from "./RegistrationProgress";
 import { WelcomeStep } from "./WelcomeStep";
-import { PersonalInformationStep } from "./PersonalInformationStep";
-import { ContactAddressStep } from "./ContactAddressStep";
+import { RegistrationDetailsStep } from "./RegistrationDetailsStep";
 import { MembershipInformationStep } from "./MembershipInformationStep";
 import { HouseholdFamilyStep } from "./HouseholdFamilyStep";
 import { HouseholdMembersStep } from "./HouseholdMembersStep";
@@ -27,16 +26,15 @@ import { RegistrationReviewStep } from "./RegistrationReviewStep";
 import { RegistrationSuccess } from "./RegistrationSuccess";
 import type { RegistrationHouseholdMemberInput } from "@/features/member-registration/schemas";
 
-const TOTAL_STEPS = 8;
+const TOTAL_STEPS = 7;
 const STEP_TITLES = [
   "Welcome",
-  "Personal information",
-  "Contact details",
-  "Membership background",
-  "Household",
-  "Family members",
-  "Ministry interests",
-  "Review & account",
+  "Your details",
+  "Your household",
+  "Add children",
+  "Church background",
+  "Department interests",
+  "Portal account",
 ] as const;
 
 const ERROR_FIELD_IDS: Record<string, string> = {
@@ -256,19 +254,16 @@ export function RegistrationWizard({ church, settings, departments, registration
     if (currentStep === 2) {
       if (!data.firstName.trim()) nextErrors.firstName = t.common?.required || "First name is required.";
       if (!data.lastName.trim()) nextErrors.lastName = t.common?.required || "Last name is required.";
-    }
-
-    if (currentStep === 3) {
       if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
         nextErrors.email = "Invalid email address.";
       }
     }
 
-    if (currentStep === 8 && !data.privacyConsent) {
+    if (currentStep === TOTAL_STEPS && !data.privacyConsent) {
       nextErrors.privacyConsent = "Privacy consent is required.";
     }
 
-    if (currentStep === 8) {
+    if (currentStep === TOTAL_STEPS) {
       const loginValue = data.loginIdentifierType === "phone"
         ? data.loginPhone
         : data.loginEmail || data.email;
@@ -339,6 +334,7 @@ export function RegistrationWizard({ church, settings, departments, registration
   const addHouseholdMember = useCallback(() => {
     setData(prev => ({
       ...prev,
+      householdAction: prev.householdAction === "self_only" ? "new_household" : prev.householdAction,
       householdMembers: [
         ...prev.householdMembers,
         {
@@ -673,7 +669,7 @@ export function RegistrationWizard({ church, settings, departments, registration
     <div className="mx-auto min-h-dvh max-w-2xl">
       <RegistrationHeader church={church} currentStep={currentStepTitle} />
 
-      <div className="mt-4 rounded-2xl border border-stone-200 bg-white p-4 shadow-sm sm:mt-6 sm:p-6 md:p-8">
+      <div className="mt-4 rounded-[28px] border border-stone-200 bg-white p-4 shadow-sm shadow-stone-950/5 sm:mt-6 sm:p-6 md:p-8">
         <RegistrationProgress current={step} total={TOTAL_STEPS} label={currentStepTitle} />
 
         <div className="mt-6">
@@ -686,7 +682,7 @@ export function RegistrationWizard({ church, settings, departments, registration
           )}
 
           {step === 2 && (
-            <PersonalInformationStep
+            <RegistrationDetailsStep
               data={data}
               onChange={updateField}
               errors={touchedSteps.has(2) ? errors : {}}
@@ -695,23 +691,6 @@ export function RegistrationWizard({ church, settings, departments, registration
           )}
 
           {step === 3 && (
-            <ContactAddressStep
-              data={data}
-              onChange={updateField}
-              errors={touchedSteps.has(3) ? errors : {}}
-              settings={settings}
-            />
-          )}
-
-          {step === 4 && (
-            <MembershipInformationStep
-              data={data}
-              onChange={updateField}
-              settings={settings}
-            />
-          )}
-
-          {step === 5 && (
             <HouseholdFamilyStep
               data={data}
               onChange={updateField}
@@ -719,7 +698,7 @@ export function RegistrationWizard({ church, settings, departments, registration
             />
           )}
 
-          {step === 6 && (
+          {step === 4 && (
             <HouseholdMembersStep
               members={data.householdMembers}
               onAdd={addHouseholdMember}
@@ -729,7 +708,15 @@ export function RegistrationWizard({ church, settings, departments, registration
             />
           )}
 
-          {step === 7 && (
+          {step === 5 && (
+            <MembershipInformationStep
+              data={data}
+              onChange={updateField}
+              settings={settings}
+            />
+          )}
+
+          {step === 6 && (
             <MinistryInterestsStep
               departments={departments}
               selectedIds={data.departmentInterestIds}
@@ -738,11 +725,11 @@ export function RegistrationWizard({ church, settings, departments, registration
             />
           )}
 
-          {step === 8 && (
+          {step === 7 && (
             <RegistrationReviewStep
               data={data}
               departments={departments}
-              errors={touchedSteps.has(8) ? errors : {}}
+              errors={touchedSteps.has(TOTAL_STEPS) ? errors : {}}
               onChange={updateField}
               accountCreated={Boolean(createdAccountLink)}
               phoneVerification={phoneVerification}
@@ -773,7 +760,7 @@ export function RegistrationWizard({ church, settings, departments, registration
           )}
         </div>
 
-        {step > 1 && step < 9 && (
+        {step > 1 && step <= TOTAL_STEPS && (
           <div
             className="sticky bottom-0 z-20 mt-8 -mx-4 -mb-4 border-t border-stone-100 bg-white/95 px-4 py-3 shadow-[0_-8px_24px_rgba(41,37,36,0.06)] backdrop-blur sm:-mx-6 sm:-mb-6 sm:px-6 md:-mx-8 md:-mb-8 md:px-8"
             style={{ paddingBottom: "calc(0.75rem + env(safe-area-inset-bottom))" }}

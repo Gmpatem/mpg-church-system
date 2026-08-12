@@ -49,6 +49,11 @@ const requestViews: Array<{ key: RequestView; label: string }> = [
   { key: "all", label: "All" },
 ];
 
+const EMPTY_DEPARTMENTS: any[] = [];
+const EMPTY_FUNDS: any[] = [];
+const EMPTY_REQUESTS: any[] = [];
+const EMPTY_SUMMARY = {};
+
 function getRequestedAt(row: any) {
   return row.requested_date || row.outflow_date_effective || row.created_at || row.updated_at || null;
 }
@@ -74,8 +79,8 @@ export function TreasuryRequestsTab({
   initialSearch?: string;
   initialStatus?: string;
 }) {
-  const requests = data.workspace?.requests?.rows ?? [];
-  const summary = data.workspace?.requests?.summary ?? {};
+  const requests = data.workspace?.requests?.rows ?? EMPTY_REQUESTS;
+  const summary = data.workspace?.requests?.summary ?? EMPTY_SUMMARY;
   const initialView =
     initialStatus === "pending" ||
     initialStatus === "approved" ||
@@ -94,8 +99,8 @@ export function TreasuryRequestsTab({
   const [fundId, setFundId] = useState("");
   const [selectedId, setSelectedId] = useState(requests[0]?.id ?? "");
 
-  const departments = data.formOptions?.departments ?? [];
-  const funds = data.workspace?.funds ?? [];
+  const departments = data.formOptions?.departments ?? EMPTY_DEPARTMENTS;
+  const funds = data.workspace?.funds ?? EMPTY_FUNDS;
 
   const filteredRequests = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -123,8 +128,41 @@ export function TreasuryRequestsTab({
   }, [departmentId, fundId, requests, search, status, view]);
 
   const selected = filteredRequests.find((row: any) => row.id === selectedId) ?? filteredRequests[0] ?? null;
-  const totalRequested = requests.reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
-  const awaitingProcessingCount = requests.filter((row: any) => isAwaitingProcessing(row)).length;
+  const requestStats = useMemo(() => {
+    const viewCounts: Record<RequestView, number> = {
+      pending: 0,
+      approved: 0,
+      awaiting_processing: 0,
+      processed: 0,
+      rejected: 0,
+      all: requests.length,
+    };
+    let totalRequested = 0;
+
+    for (const row of requests) {
+      totalRequested += Number(row.amount || 0);
+      if (row.status in viewCounts) {
+        viewCounts[row.status as RequestView] += 1;
+      }
+      if (isAwaitingProcessing(row)) {
+        viewCounts.awaiting_processing += 1;
+      }
+    }
+
+    return {
+      totalRequested,
+      awaitingProcessingCount: viewCounts.awaiting_processing,
+      viewCounts,
+    };
+  }, [requests]);
+  const departmentOptions = useMemo(
+    () => departments.map((department: any) => ({ value: department.id, label: department.department_name })),
+    [departments]
+  );
+  const fundOptions = useMemo(
+    () => funds.map((fund: any) => ({ value: fund.fund_id, label: fund.fund_name })),
+    [funds]
+  );
 
   return (
     <div className="min-w-0 space-y-4">
@@ -132,8 +170,8 @@ export function TreasuryRequestsTab({
         items={[
           { label: "Pending Review", value: summary.pending ?? 0, hint: "Needs Treasury decision", icon: <FileClock className="size-6" />, tone: "amber" },
           { label: "Approved", value: summary.approved ?? 0, hint: "Approved requests", icon: <CheckCircle2 className="size-6" />, tone: "green" },
-          { label: "Awaiting Processing", value: awaitingProcessingCount, hint: "Approved, not yet paid", icon: <Hourglass className="size-6" />, tone: "blue" },
-          { label: "Total Requested", value: formatTreasuryAmount(totalRequested), hint: "Across all requests", icon: <WalletCards className="size-6" />, tone: "purple" },
+          { label: "Awaiting Processing", value: requestStats.awaitingProcessingCount, hint: "Approved, not yet paid", icon: <Hourglass className="size-6" />, tone: "blue" },
+          { label: "Total Requested", value: formatTreasuryAmount(requestStats.totalRequested), hint: "Across all requests", icon: <WalletCards className="size-6" />, tone: "purple" },
         ]}
       />
 
@@ -144,8 +182,8 @@ export function TreasuryRequestsTab({
               item.key === "all"
                 ? requests.length
                 : item.key === "awaiting_processing"
-                  ? awaitingProcessingCount
-                  : requests.filter((row: any) => row.status === item.key).length;
+                  ? requestStats.awaitingProcessingCount
+                  : requestStats.viewCounts[item.key];
             const active = view === item.key;
             return (
               <button
@@ -171,7 +209,7 @@ export function TreasuryRequestsTab({
             label="Department"
             value={departmentId}
             onValueChange={setDepartmentId}
-            options={departments.map((department: any) => ({ value: department.id, label: department.department_name }))}
+            options={departmentOptions}
           />
           <TreasuryFilterSelect
             label="Status"
@@ -189,7 +227,7 @@ export function TreasuryRequestsTab({
             label="Requested Fund"
             value={fundId}
             onValueChange={setFundId}
-            options={funds.map((fund: any) => ({ value: fund.fund_id, label: fund.fund_name }))}
+            options={fundOptions}
             className="w-[180px]"
           />
         </TreasuryToolbar>

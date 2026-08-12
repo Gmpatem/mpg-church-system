@@ -3,14 +3,14 @@ import "server-only";
 import QRCode from "qrcode";
 import { requireChurchAccess, requireChurchWorkspaceAccess } from "@/features/access/queries";
 import {
-  findRecognizedMember,
   getAttendanceAdminClient,
   isQrAvailable,
   mapChurch,
   mapOccurrence,
   mapPublicMember,
   mapQrCode,
-  recordMemberAttendance,
+  recognizeAttendanceFromDevice,
+  recognizeAttendanceFromSession,
   resolveQrByPublicCode,
   ensureTodayOccurrence,
 } from "./server";
@@ -332,7 +332,11 @@ export async function getPublicAttendanceScanData(publicCode: string): Promise<P
       unavailableReason: "This attendance link could not be found. Please ask an usher or deacon for today’s QR code.",
       welcomeMessage,
       recognizedMember: null,
+      recognizedSource: null,
+      recognizedRecord: null,
       recognizedDuplicate: false,
+      recognitionMessage: null,
+      recognitionIssue: null,
       householdMembers: [],
       memberOptions: [],
     };
@@ -351,7 +355,11 @@ export async function getPublicAttendanceScanData(publicCode: string): Promise<P
       unavailableReason: "This attendance link is not open right now. Please ask a church team member for help.",
       welcomeMessage,
       recognizedMember: null,
+      recognizedSource: null,
+      recognizedRecord: null,
       recognizedDuplicate: false,
+      recognitionMessage: null,
+      recognitionIssue: null,
       householdMembers: [],
       memberOptions: [],
     };
@@ -359,20 +367,56 @@ export async function getPublicAttendanceScanData(publicCode: string): Promise<P
 
   const occurrence = await ensureTodayOccurrence(db, qrCode, church, null);
   const memberOptions: PublicAttendanceMember[] = [];
-  const recognized = await findRecognizedMember(db, church.id);
+  let recognized: { member: any; tokenHash: string | null; profileId?: string | null } | null = null;
   let recognizedMember: PublicAttendanceMember | null = null;
+  let recognizedSource: PublicAttendanceInitialData["recognizedSource"] = null;
+  let recognizedRecord: PublicAttendanceInitialData["recognizedRecord"] = null;
   let recognizedDuplicate = false;
+  let recognitionMessage: string | null = null;
+  let recognitionIssue: string | null = null;
 
-  if (recognized) {
-    const result = await recordMemberAttendance(db, {
+  const sessionRecognition = await recognizeAttendanceFromSession(db, {
+    churchId: church.id,
+    occurrenceId: occurrence.id,
+  });
+
+  if (sessionRecognition.status === "recognized") {
+    recognized = {
+      member: sessionRecognition.member,
+      tokenHash: null,
+      profileId: sessionRecognition.profileId,
+    };
+    recognizedSource = "session";
+    recognizedDuplicate = sessionRecognition.duplicate;
+    recognizedRecord = {
+      id: sessionRecognition.record.id,
+      checkedInAt: sessionRecognition.record.checked_in_at ?? null,
+      method: sessionRecognition.record.check_in_method,
+    };
+    recognizedMember = mapPublicMember(sessionRecognition.member, null);
+  } else if (sessionRecognition.status === "no_session") {
+    const deviceRecognition = await recognizeAttendanceFromDevice(db, {
       churchId: church.id,
       occurrenceId: occurrence.id,
-      memberId: recognized.member.id,
-      method: "recognized_device",
-      deviceTokenHash: recognized.tokenHash,
     });
-    recognizedDuplicate = result.duplicate;
-    recognizedMember = mapPublicMember(recognized.member, null);
+
+    if (deviceRecognition.status === "recognized") {
+      recognized = {
+        member: deviceRecognition.member,
+        tokenHash: deviceRecognition.tokenHash,
+        profileId: deviceRecognition.profileId,
+      };
+      recognizedSource = "trusted_phone";
+      recognizedDuplicate = deviceRecognition.duplicate;
+      recognizedRecord = {
+        id: deviceRecognition.record.id,
+        checkedInAt: deviceRecognition.record.checked_in_at ?? null,
+        method: deviceRecognition.record.check_in_method,
+      };
+      recognizedMember = mapPublicMember(deviceRecognition.member, null);
+    }
+  } else {
+    recognitionIssue = sessionRecognition.message;
   }
 
   let householdMembers: PublicAttendanceHouseholdMember[] = [];
@@ -424,7 +468,11 @@ export async function getPublicAttendanceScanData(publicCode: string): Promise<P
     unavailableReason: null,
     welcomeMessage,
     recognizedMember,
+    recognizedSource,
+    recognizedRecord,
     recognizedDuplicate,
+    recognitionMessage,
+    recognitionIssue,
     householdMembers,
     memberOptions,
   };

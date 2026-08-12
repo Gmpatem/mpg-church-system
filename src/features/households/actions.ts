@@ -6,6 +6,11 @@ import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/features/access/types";
 import { CHURCH_MANAGEMENT_ROLE_CODES } from "@/lib/domain/church-access";
 import { getString } from "@/lib/domain/validation";
+import { createMemberRecord } from "@/features/members/services/create-member-record";
+import {
+  assignMemberToDepartmentById,
+  ensureCoreDepartment,
+} from "@/features/departments/core";
 import { createHouseholdRecord } from "./services/create-household-record";
 import { linkMemberToHousehold } from "./services/link-member-household";
 import { setHouseholdHead } from "./services/set-household-head";
@@ -175,6 +180,99 @@ async function assignMemberToHouseholdActionImpl(
   return { ok: true, message: "Member assigned to household." };
 }
 
+export async function addChildToHouseholdAction(
+  _prevState: ActionState | null,
+  formData: FormData
+): Promise<ActionState> {
+  const churchSlug = getString(formData, "churchSlug");
+  const householdId = getString(formData, "householdId");
+  const firstName = getString(formData, "firstName");
+  const lastName = getString(formData, "lastName");
+  const dateOfBirth = getString(formData, "dateOfBirth") || null;
+  const submittedGender = getString(formData, "gender");
+  const gender = submittedGender && submittedGender !== "__none" ? submittedGender : null;
+  const careNote = getString(formData, "careNote");
+  const shouldAssignChildrenDepartment = formData.get("assignChildrenDepartment") === "true";
+
+  const ctx = await requireChurchRole(churchSlug, CHURCH_MANAGEMENT_ROLE_CODES);
+  const supabase = await createClient();
+
+  if (!householdId) {
+    return { ok: false, error: "Household is required." };
+  }
+
+  if (!firstName || !lastName) {
+    return { ok: false, error: "Child first and last name are required." };
+  }
+
+  const { data: household, error: householdError } = await supabase
+    .from("households")
+    .select("id")
+    .eq("church_id", ctx.churchId)
+    .eq("id", householdId)
+    .maybeSingle();
+
+  if (householdError) return { ok: false, error: householdError.message };
+  if (!household) return { ok: false, error: "Household not found." };
+
+  const createResult = await createMemberRecord(supabase, {
+    churchId: ctx.churchId,
+    churchSlug,
+    actorUserId: ctx.userId,
+    firstName,
+    lastName,
+    gender,
+    membershipStatus: "active",
+    membershipType: "child",
+    dateOfBirth,
+    householdId,
+    householdRole: "child",
+    notes: careNote || null,
+  });
+
+  if (!createResult.ok) {
+    return { ok: false, error: createResult.error };
+  }
+
+  const linkResult = await linkMemberToHousehold(supabase, {
+    churchId: ctx.churchId,
+    householdId,
+    memberId: createResult.memberId,
+    householdRole: "child",
+  });
+
+  if (!linkResult.ok) {
+    return { ok: false, error: linkResult.error };
+  }
+
+  if (shouldAssignChildrenDepartment) {
+    const departmentResult = await ensureCoreDepartment(supabase, ctx.churchId, "children");
+    if (!departmentResult.ok) {
+      return { ok: false, error: departmentResult.error };
+    }
+
+    const assignResult = await assignMemberToDepartmentById({
+      supabase,
+      churchId: ctx.churchId,
+      memberId: createResult.memberId,
+      department: departmentResult.department,
+      roleTitle: "Child",
+    });
+
+    if (!assignResult.ok) {
+      return { ok: false, error: assignResult.error };
+    }
+  }
+
+  revalidatePath(`/c/${churchSlug}/households`);
+  revalidatePath(`/c/${churchSlug}/households/${householdId}`);
+  revalidatePath(`/c/${churchSlug}/members`);
+  revalidatePath(`/c/${churchSlug}/departments`);
+  revalidatePath(`/c/${churchSlug}/dashboard`);
+
+  return { ok: true, message: "Child added to household." };
+}
+
 export async function setHouseholdHeadAction(formData: FormData): Promise<void> {
   const result = await setHouseholdHeadActionImpl(null, formData);
   if (!result.ok) {
@@ -214,4 +312,3 @@ async function setHouseholdHeadActionImpl(
 
   return { ok: true, message: "Head of household updated." };
 }
-

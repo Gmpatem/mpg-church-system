@@ -13,9 +13,10 @@ import {
   logAttendanceAudit,
   lookupPublicMembers,
   markVisitorContactFollowUp,
+  rememberMemberDevice,
   recordMemberAttendance,
   recordVisitorAttendance,
-  rememberMemberDevice,
+  resolveAttendanceSessionMember,
   removeAttendanceRecordForChurch,
   replaceUniversalQrForChurch,
   resolveQrByPublicCode,
@@ -282,6 +283,33 @@ export async function confirmPublicMemberAttendanceAction(
   }
 }
 
+export async function rememberPublicAttendancePhoneAction(
+  first: ActionInput,
+  second?: FormData
+): Promise<AttendanceActionState> {
+  try {
+    const formData = resolveFormData(first, second);
+    const publicCode = getStringFromForm(formData, "publicCode");
+    const memberId = getStringFromForm(formData, "memberId");
+    const { db, church } = await getPublicScanContext(publicCode);
+    const sessionMember = await resolveAttendanceSessionMember(db, church.id);
+
+    if (sessionMember.status !== "linked" || sessionMember.member.id !== memberId) {
+      throw new Error("We could not confirm this Member Portal session for that member. Please use member lookup or ask Attendance Support.");
+    }
+
+    await rememberMemberDevice(db, {
+      churchId: church.id,
+      memberId: sessionMember.member.id,
+      profileId: sessionMember.profileId,
+    });
+
+    return success("This phone is now trusted for future Sabbath attendance.", { rememberedDevice: true });
+  } catch (error) {
+    return failure(error);
+  }
+}
+
 export async function forgetPublicAttendanceDeviceAction(
   first: ActionInput,
   second?: FormData
@@ -291,7 +319,73 @@ export async function forgetPublicAttendanceDeviceAction(
     const publicCode = getStringFromForm(formData, "publicCode");
     const { db, church } = await getPublicScanContext(publicCode);
     await forgetRecognizedAttendanceDevice(db, church.id);
-    return success("This device has been reset. Please choose how to record attendance.", { resetDevice: true });
+    return success("This phone will no longer mark attendance automatically.", { resetDevice: true });
+  } catch (error) {
+    return failure(error);
+  }
+}
+
+export async function requestPublicAttendanceReviewAction(
+  first: ActionInput,
+  second?: FormData
+): Promise<AttendanceActionState> {
+  try {
+    const formData = resolveFormData(first, second);
+    const publicCode = getStringFromForm(formData, "publicCode");
+    const memberId = getStringFromForm(formData, "memberId");
+    const attendanceRecordId = getStringFromForm(formData, "attendanceRecordId");
+    const { db, church, occurrence } = await getPublicScanContext(publicCode);
+
+    const { data: record, error: recordError } = await db
+      .from("attendance_records")
+      .select("id, member_id")
+      .eq("church_id", church.id)
+      .eq("occurrence_id", occurrence.id)
+      .eq("id", attendanceRecordId)
+      .eq("member_id", memberId)
+      .neq("status", "removed")
+      .maybeSingle();
+
+    if (recordError) throw new Error(recordError.message);
+    if (!record) throw new Error("We could not find today’s attendance mark to send for review.");
+
+    const { data: existingReview, error: existingError } = await db
+      .from("attendance_review_items")
+      .select("id")
+      .eq("church_id", church.id)
+      .eq("occurrence_id", occurrence.id)
+      .eq("attendance_record_id", record.id)
+      .eq("item_type", "manual_review")
+      .eq("status", "open")
+      .maybeSingle();
+
+    if (existingError) throw new Error(existingError.message);
+
+    if (!existingReview) {
+      const { error: reviewError } = await db
+        .from("attendance_review_items")
+        .insert({
+          church_id: church.id,
+          occurrence_id: occurrence.id,
+          attendance_record_id: record.id,
+          member_id: memberId,
+          item_type: "manual_review",
+          title: "Attendance identity review requested",
+          description: "A scanner tapped This is not me after automatic attendance recognition.",
+        });
+
+      if (reviewError) throw new Error(reviewError.message);
+    }
+
+    await logAttendanceAudit(db, {
+      churchId: church.id,
+      action: "attendance_identity_review_requested",
+      entityType: "attendance_records",
+      entityId: record.id,
+      metadata: { member_id: memberId, public_code: publicCode },
+    });
+
+    return success("We’ll ask an admin/deacon to review this attendance mark.", { reviewRequested: true });
   } catch (error) {
     return failure(error);
   }

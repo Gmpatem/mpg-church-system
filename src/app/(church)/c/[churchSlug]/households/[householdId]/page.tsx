@@ -14,6 +14,7 @@ import {
   getChurchMembersForHouseholdAssignment,
 } from "@/features/households/queries";
 import { requireChurchAccess } from "@/features/access/queries";
+import { AddChildToHouseholdDialog } from "./AddChildToHouseholdDialog";
 
 const householdRoleLabels: Record<string, string> = {
   head: "Head of Household",
@@ -219,11 +220,20 @@ export default async function HouseholdDetailPage({ params }: HouseholdDetailPag
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-        <div className="border-b border-slate-200 px-6 py-4">
-          <h3 className="text-lg font-semibold text-slate-900">Household Members</h3>
-          <p className="mt-1 text-sm text-slate-600">
-            Members currently linked to this household.
-          </p>
+        <div className="flex flex-col gap-3 border-b border-slate-200 px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-slate-900">Household Members</h3>
+            <p className="mt-1 text-sm text-slate-600">
+              Members currently linked to this household.
+            </p>
+          </div>
+          {canManage ? (
+            <AddChildToHouseholdDialog
+              churchSlug={churchSlug}
+              householdId={householdId}
+              householdName={household.household_name}
+            />
+          ) : null}
         </div>
 
         {members.length === 0 ? (

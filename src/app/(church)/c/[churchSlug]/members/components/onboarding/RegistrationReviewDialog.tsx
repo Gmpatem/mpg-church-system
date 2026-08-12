@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useState, useActionState, useEffect } from "react";
+import { startTransition, useState, useActionState, useEffect, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { InlineAlert } from "@/components/ui/InlineAlert";
@@ -86,6 +86,49 @@ export function RegistrationReviewDialog({
   const loginMethod = registration.login_identifier_type === "phone" || registration.login_phone
     ? "Mobile number"
     : "Email";
+
+  const defaultFamilyResolutions = useMemo(() => {
+    return familyMembers.reduce<
+      Record<string, { resolution: "create" | "link" | "skip"; memberId: string; householdRole: string }>
+    >((acc, member) => {
+      const relationship = member.relationship === "child" ? "child" : member.relationship || "";
+      acc[member.id] = {
+        resolution: member.relationship === "child" ? "create" : "skip",
+        memberId: "",
+        householdRole: relationship,
+      };
+      return acc;
+    }, {});
+  }, [familyMembers]);
+
+  useEffect(() => {
+    setFamilyResolutions(defaultFamilyResolutions);
+  }, [defaultFamilyResolutions, registration.id]);
+
+  useEffect(() => {
+    if (familyMembers.some((member) => member.relationship === "child")) {
+      if (householdResolution === "none") {
+        setHouseholdResolution("new");
+      }
+      if (!newHouseholdName.trim()) {
+        const fallbackName =
+          registration.suggested_household_name ||
+          `${registration.last_name || registration.first_name} Household`;
+        setNewHouseholdName(fallbackName);
+      }
+      if (!householdRole) {
+        setHouseholdRole("head");
+      }
+    }
+  }, [
+    familyMembers,
+    householdResolution,
+    householdRole,
+    newHouseholdName,
+    registration.first_name,
+    registration.last_name,
+    registration.suggested_household_name,
+  ]);
 
   useEffect(() => {
     if (conversionState?.ok) {
@@ -331,12 +374,28 @@ export function RegistrationReviewDialog({
                 <p className="text-sm text-muted-foreground">No additional family members were submitted.</p>
               )}
               {familyMembers.map(member => {
-                const res = familyResolutions[member.id] || { resolution: "skip", memberId: "", householdRole: "" };
+                const res =
+                  familyResolutions[member.id] ||
+                  defaultFamilyResolutions[member.id] ||
+                  { resolution: "skip", memberId: "", householdRole: "" };
+                const isChild = member.relationship === "child";
                 return (
-                  <div key={member.id} className="rounded-lg border p-3">
-                    <p className="font-medium">
-                      {member.first_name} {member.last_name} ({member.relationship})
-                    </p>
+                  <div key={member.id} className={isChild ? "rounded-lg border border-emerald-200 bg-emerald-50/40 p-3" : "rounded-lg border p-3"}>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <p className="font-medium">
+                        {member.first_name} {member.last_name} ({member.relationship})
+                      </p>
+                      {isChild ? (
+                        <span className="rounded-full border border-emerald-200 bg-white px-2.5 py-1 text-xs font-medium text-emerald-800">
+                          Defaults to child member
+                        </span>
+                      ) : null}
+                    </div>
+                    {isChild ? (
+                      <p className="mt-1 text-xs leading-5 text-emerald-900">
+                        Approval will create this child as a household child and assign them to Children&apos;s Department when it exists.
+                      </p>
+                    ) : null}
                     <div className="mt-2 grid gap-2 sm:grid-cols-3">
                       <Select
                         value={res.resolution}
@@ -350,12 +409,12 @@ export function RegistrationReviewDialog({
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="create">Create</SelectItem>
-                          <SelectItem value="link">Link existing</SelectItem>
-                          <SelectItem value="skip">Skip</SelectItem>
-                        </SelectContent>
-                      </Select>
+                          <SelectContent>
+                            <SelectItem value="create">Create</SelectItem>
+                            <SelectItem value="link">Link existing</SelectItem>
+                            <SelectItem value="skip" disabled={isChild}>Skip</SelectItem>
+                          </SelectContent>
+                        </Select>
                       {res.resolution === "link" && (
                         <Input
                           placeholder="Member ID"

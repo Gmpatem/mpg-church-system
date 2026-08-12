@@ -792,7 +792,7 @@ function MobileMemberCard({
           {t.pages.membersWorkspace.directory.viewMember}
         </Link>
         <Link
-          href={`/c/${churchSlug}/members/${member.id}/edit`}
+          href={`/c/${churchSlug}/members/${member.id}?editor=1`}
           className="mobile-touch-feedback inline-flex min-h-[42px] flex-1 items-center justify-center rounded-lg border border-slate-200 bg-white px-2 py-2 text-xs font-medium text-slate-700 transition hover:bg-slate-50"
         >
           {t.pages.membersWorkspace.directory.edit}
@@ -1015,7 +1015,7 @@ function MemberInspectorActions({
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [isDeleting, startDeleteTransition] = useTransition();
   const memberProfileHref = `/c/${churchSlug}/members/${member.id}`;
-  const memberEditHref = `/c/${churchSlug}/members/${member.id}/edit`;
+  const memberEditHref = `/c/${churchSlug}/members/${member.id}?editor=1`;
   const memberLabel = getMemberLabel(member);
 
   function handleDeleteMember() {

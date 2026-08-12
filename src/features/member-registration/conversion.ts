@@ -10,6 +10,10 @@ import { createMemberRecord } from "@/features/members/services/create-member-re
 import { createHouseholdRecord } from "@/features/households/services/create-household-record";
 import { linkMemberToHousehold } from "@/features/households/services/link-member-household";
 import { setHouseholdHead } from "@/features/households/services/set-household-head";
+import {
+  assignMemberToDepartmentById,
+  ensureCoreDepartment,
+} from "@/features/departments/core";
 import { registrationReviewDecisionSchema } from "./schemas";
 import {
   normalizeLoginEmail,
@@ -431,6 +435,19 @@ export async function convertRegistrationAction(
     }
 
     const familyMembers = familyRows ?? [];
+    const childrenDepartmentResult =
+      familyMembers.some((familyMember: any) => familyMember.relationship === "child")
+        ? await ensureCoreDepartment(supabase, ctx.churchId, "children")
+        : null;
+    const childrenDepartment = childrenDepartmentResult?.ok
+      ? childrenDepartmentResult.department
+      : null;
+
+    if (childrenDepartmentResult && !childrenDepartmentResult.ok) {
+      return conversionFailure(
+        `Children's Department could not be prepared: ${childrenDepartmentResult.error}`
+      );
+    }
 
     // Resolve primary member
     let primaryMemberId: string;
@@ -525,7 +542,16 @@ export async function convertRegistrationAction(
       const familyRow = familyMembers.find(f => f.id === familyResolution.registrationHouseholdMemberId);
       if (!familyRow) continue;
 
-      if (familyResolution.resolution === "skip") {
+      const isChildFamilyMember = familyRow.relationship === "child";
+      const effectiveResolution = isChildFamilyMember && familyResolution.resolution === "skip"
+        ? {
+          ...familyResolution,
+          resolution: "create" as const,
+          householdRole: familyResolution.householdRole || "child",
+        }
+        : familyResolution;
+
+      if (effectiveResolution.resolution === "skip") {
         await supabase
           .from("church_member_registration_household_members")
           .update({ status: "skipped", updated_at: new Date().toISOString() })
@@ -534,8 +560,11 @@ export async function convertRegistrationAction(
       }
 
       let familyMemberId: string;
-      if (familyResolution.resolution === "link" && familyResolution.memberId) {
-        familyMemberId = familyResolution.memberId;
+      const resolvedHouseholdRole =
+        effectiveResolution.householdRole ||
+        (isChildFamilyMember ? "child" : familyRow.relationship || null);
+      if (effectiveResolution.resolution === "link" && effectiveResolution.memberId) {
+        familyMemberId = effectiveResolution.memberId;
       } else {
         const createResult = await createMemberRecord(supabase, {
           churchId: ctx.churchId,
@@ -546,7 +575,8 @@ export async function convertRegistrationAction(
           email: familyRow.email,
           phone: familyRow.phone,
           gender: familyRow.gender,
-          membershipStatus: familyRow.membership_status_suggestion || decision.membershipStatus,
+          membershipStatus: familyRow.membership_status_suggestion || (isChildFamilyMember ? "active" : decision.membershipStatus),
+          membershipType: isChildFamilyMember ? "child" : null,
           dateOfBirth: familyRow.date_of_birth,
         });
 
@@ -578,17 +608,33 @@ export async function convertRegistrationAction(
           churchId: ctx.churchId,
           householdId,
           memberId: familyMemberId,
-          householdRole: familyResolution.householdRole,
+          householdRole: resolvedHouseholdRole,
         });
         if (!familyLinkResult.ok) {
           return conversionFailure("Family member could not be linked to the selected household.");
         }
       }
 
+      if (isChildFamilyMember && childrenDepartment) {
+        const childDepartmentResult = await assignMemberToDepartmentById({
+          supabase,
+          churchId: ctx.churchId,
+          memberId: familyMemberId,
+          department: childrenDepartment,
+          roleTitle: "Child",
+        });
+
+        if (!childDepartmentResult.ok) {
+          return conversionFailure(
+            `Family member was created, but could not be assigned to Children's Department: ${childDepartmentResult.error}`
+          );
+        }
+      }
+
       await supabase
         .from("church_member_registration_household_members")
         .update({
-          status: familyResolution.resolution === "link" ? "matched" : "created",
+          status: effectiveResolution.resolution === "link" ? "matched" : "created",
           resulting_member_id: familyMemberId,
           updated_at: new Date().toISOString(),
         })

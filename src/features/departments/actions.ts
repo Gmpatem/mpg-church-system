@@ -242,6 +242,13 @@ function revalidateDepartmentPaths(churchSlug: string) {
   revalidatePath(`/c/${churchSlug}/members`);
 }
 
+function revalidateMemberDepartmentPaths(churchSlug: string, memberId?: string | null) {
+  revalidateDepartmentPaths(churchSlug);
+  if (memberId) {
+    revalidatePath(`/c/${churchSlug}/members/${memberId}`);
+  }
+}
+
 async function ensureDepartmentBelongsToChurch(supabase: any, churchId: string, departmentId: string) {
   const { data, error } = await supabase
     .from("church_departments")
@@ -516,7 +523,7 @@ export async function assignMemberToDepartmentAction(
 
     if (reactivateError) return { ok: false, error: reactivateError.message };
 
-    revalidateDepartmentPaths(churchSlug);
+    revalidateMemberDepartmentPaths(churchSlug, member_id);
     return { ok: true, message: "Inactive assignment reactivated successfully." };
   }
 
@@ -534,7 +541,7 @@ export async function assignMemberToDepartmentAction(
 
   if (error) return { ok: false, error: error.message };
 
-  revalidateDepartmentPaths(churchSlug);
+  revalidateMemberDepartmentPaths(churchSlug, member_id);
   return { ok: true, message: "Member assigned successfully." };
 }
 
@@ -614,7 +621,7 @@ export async function updateAssignmentAction(
 
   if (error) return { ok: false, error: error.message };
 
-  revalidateDepartmentPaths(churchSlug);
+  revalidateMemberDepartmentPaths(churchSlug, member_id);
   return { ok: true, message: is_active ? "Assignment updated successfully." : "Assignment archived successfully." };
 }
 
@@ -629,6 +636,15 @@ export async function removeAssignmentAction(
 
   if (!assignmentId) return { ok: false, error: "Assignment ID is required." };
 
+  const { data: assignment, error: assignmentLookupError } = await supabase
+    .from("member_departments")
+    .select("member_id")
+    .eq("church_id", ctx.churchId)
+    .eq("id", assignmentId)
+    .maybeSingle();
+
+  if (assignmentLookupError) return { ok: false, error: assignmentLookupError.message };
+
   const { error } = await supabase
     .from("member_departments")
     .update({
@@ -639,6 +655,6 @@ export async function removeAssignmentAction(
 
   if (error) return { ok: false, error: error.message };
 
-  revalidateDepartmentPaths(churchSlug);
+  revalidateMemberDepartmentPaths(churchSlug, assignment?.member_id ?? null);
   return { ok: true, message: "Assignment removed successfully." };
 }

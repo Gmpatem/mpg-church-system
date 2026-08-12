@@ -28,11 +28,24 @@ import {
   lookupPublicMemberAction,
   recordPublicHouseholdAttendanceAction,
   recordPublicVisitorAttendanceAction,
+  rememberPublicAttendancePhoneAction,
+  requestPublicAttendanceReviewAction,
 } from "../actions";
 import type { AttendanceActionState, PublicAttendanceInitialData, PublicMemberLookupResult } from "../types";
 
 const initialState: AttendanceActionState = { ok: false };
 type ViewState = "recognizing" | "recognized" | "choose" | "member" | "visitor";
+
+function formatPublicAttendanceTime(value: string | null | undefined) {
+  if (!value) return "--";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "--";
+
+  return new Intl.DateTimeFormat("en", {
+    hour: "numeric",
+    minute: "2-digit",
+  }).format(date);
+}
 
 function PublicSubmitButton({ children, icon }: { children: ReactNode; icon?: ReactNode }) {
   const { pending } = useFormStatus();
@@ -90,23 +103,58 @@ function RecognizingCard({ data }: { data: PublicAttendanceInitialData }) {
           )}
         </div>
       </div>
-      <h2 className="mt-8 text-2xl font-semibold text-emerald-950">Recognizing your device...</h2>
-      <p className="mx-auto mt-3 max-w-xs text-base leading-7 text-slate-600">Please wait while we prepare your attendance.</p>
+      <h2 className="mt-8 text-2xl font-semibold text-emerald-950">Recognizing your phone...</h2>
+      <p className="mx-auto mt-3 max-w-xs text-base leading-7 text-slate-600">Please wait while we confirm this Sabbath attendance.</p>
     </div>
   );
 }
 
-function ForgetDeviceForm({ publicCode, onReset }: { publicCode: string; onReset: () => void }) {
+function RememberPhoneForm({ data }: { data: PublicAttendanceInitialData }) {
+  const [state, action] = useActionState(rememberPublicAttendancePhoneAction, initialState);
+
+  if (data.recognizedSource !== "session" || !data.recognizedMember) return null;
+
+  return (
+    <form action={action} className="flex flex-col gap-2">
+      <input type="hidden" name="publicCode" value={data.publicCode} />
+      <input type="hidden" name="memberId" value={data.recognizedMember.id} />
+      <PublicSubmitButton icon={<ShieldCheck className="size-4" aria-hidden="true" />}>Remember this phone</PublicSubmitButton>
+      <PublicNotice state={state} />
+    </form>
+  );
+}
+
+function ReviewIdentityForm({ data }: { data: PublicAttendanceInitialData }) {
+  const [state, action] = useActionState(requestPublicAttendanceReviewAction, initialState);
+
+  if (!data.recognizedMember || !data.recognizedRecord) return null;
+
+  return (
+    <form action={action} className="flex flex-col gap-2">
+      <input type="hidden" name="publicCode" value={data.publicCode} />
+      <input type="hidden" name="memberId" value={data.recognizedMember.id} />
+      <input type="hidden" name="attendanceRecordId" value={data.recognizedRecord.id} />
+      <Button type="submit" variant="outline" className="h-12 w-full rounded-2xl border-amber-300 bg-white/85 text-emerald-950">
+        This is not me
+      </Button>
+      <PublicNotice state={state} />
+    </form>
+  );
+}
+
+function ForgetPhoneForm({ publicCode, onReset, label = "Forget this phone" }: { publicCode: string; onReset: () => void; label?: string }) {
   const [state, action] = useActionState(forgetPublicAttendanceDeviceAction, initialState);
   useEffect(() => {
-    if (state.ok && state.resetDevice) onReset();
+    if (!state.ok || !state.resetDevice) return;
+    const id = window.setTimeout(onReset, 1200);
+    return () => window.clearTimeout(id);
   }, [state, onReset]);
 
   return (
-    <form action={action} className="space-y-2">
+    <form action={action} className="flex flex-col gap-2">
       <input type="hidden" name="publicCode" value={publicCode} />
       <Button type="submit" variant="outline" className="h-12 w-full rounded-2xl border-emerald-900/15 bg-white/85 text-emerald-950">
-        Not you? Forget this device and use another option
+        {label}
       </Button>
       <PublicNotice state={state} />
     </form>
@@ -116,21 +164,40 @@ function ForgetDeviceForm({ publicCode, onReset }: { publicCode: string; onReset
 function RecognizedFlow({ data, onReset }: { data: PublicAttendanceInitialData; onReset: () => void }) {
   const member = data.recognizedMember;
   if (!member) return null;
+  const isTrustedPhone = data.recognizedSource === "trusted_phone";
+  const methodLabel = data.recognizedSource === "session" ? "Recognized account" : "Recognized phone";
+  const checkedInTime = formatPublicAttendanceTime(data.recognizedRecord?.checkedInAt);
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       <div className="animate-in fade-in slide-in-from-bottom-2 rounded-[2rem] border border-emerald-200 bg-emerald-50/80 p-6 text-center shadow-sm duration-500">
         <div className="mx-auto flex size-20 items-center justify-center rounded-full bg-emerald-600 text-white shadow-md ring-8 ring-emerald-100">
           <CheckCircle2 className="size-11" aria-hidden="true" />
         </div>
-        <h2 className="mt-6 text-3xl font-semibold leading-tight text-emerald-950">Welcome,<br />{member.displayName}.</h2>
+        <h2 className="mt-6 text-3xl font-semibold leading-tight text-emerald-950">
+          {isTrustedPhone ? "Welcome back," : "Welcome,"}
+          <br />
+          {member.displayName}
+        </h2>
         <div className="mx-auto mt-5 h-px w-44 bg-emerald-200" />
         <p className="mx-auto mt-5 max-w-xs text-base leading-7 text-slate-700">
-          {data.recognizedDuplicate ? "You are already marked present for today. Happy Sabbath again." : "Your attendance has been recorded for today. Happy Sabbath."}
+          {data.recognizedDuplicate ? "You are already marked present today." : "You are marked present for Sabbath Worship."}
         </p>
+        <div className="mt-5 rounded-2xl border border-emerald-200 bg-white/80 p-4 text-left text-sm text-slate-700">
+          <div className="flex items-center justify-between gap-3">
+            <span className="font-medium text-slate-500">Method</span>
+            <span className="font-semibold text-emerald-950">{methodLabel}</span>
+          </div>
+          <div className="mt-2 flex items-center justify-between gap-3">
+            <span className="font-medium text-slate-500">Time</span>
+            <span className="font-semibold text-emerald-950">{checkedInTime}</span>
+          </div>
+        </div>
       </div>
       <FamilyAttendancePanel data={data} />
-      <ForgetDeviceForm publicCode={data.publicCode} onReset={onReset} />
+      <RememberPhoneForm data={data} />
+      <ReviewIdentityForm data={data} />
+      {isTrustedPhone ? <ForgetPhoneForm publicCode={data.publicCode} onReset={onReset} /> : null}
     </div>
   );
 }
@@ -142,7 +209,7 @@ function FamilyAttendancePanel({ data }: { data: PublicAttendanceInitialData }) 
   if (!data.recognizedMember || data.householdMembers.length <= 1) return null;
 
   return (
-    <form action={action} className="space-y-4 rounded-[1.7rem] border border-emerald-900/10 bg-white/90 p-5 shadow-sm">
+    <form action={action} className="flex flex-col gap-4 rounded-[1.7rem] border border-emerald-900/10 bg-white/90 p-5 shadow-sm">
       <input type="hidden" name="publicCode" value={data.publicCode} />
       <div className="flex items-center gap-3">
         <Users className="size-5 text-emerald-900" aria-hidden="true" />
@@ -170,10 +237,10 @@ function FamilyAttendancePanel({ data }: { data: PublicAttendanceInitialData }) 
 
 function IdentityChoice({ onChoose }: { onChoose: (view: ViewState) => void }) {
   return (
-    <div className="space-y-4 rounded-[2rem] border border-emerald-900/10 bg-white/90 p-5 shadow-sm">
+    <div className="flex flex-col gap-4 rounded-[2rem] border border-emerald-900/10 bg-white/90 p-5 shadow-sm">
       <div className="text-center">
-        <h2 className="text-2xl font-semibold text-emerald-950">We’re glad you’re here!</h2>
-        <p className="mt-2 text-sm leading-6 text-slate-600">How should we record your attendance today?</p>
+        <h2 className="text-2xl font-semibold text-emerald-950">Welcome</h2>
+        <p className="mt-2 text-sm leading-6 text-slate-600">How would you like to record attendance?</p>
       </div>
       <button type="button" onClick={() => onChoose("member")} className="flex w-full items-center justify-between rounded-2xl border border-emerald-900/10 bg-white p-4 text-left shadow-sm">
         <span className="flex items-center gap-4"><span className="flex size-12 items-center justify-center rounded-full bg-emerald-900 text-white"><UserCheck className="size-6" /></span><span><span className="block text-lg font-semibold text-emerald-950">I am a church member</span><span className="mt-1 block text-sm text-slate-600">Find your profile and record attendance.</span></span></span>
@@ -194,7 +261,7 @@ function BackButton({ onBack }: { onBack: () => void }) {
 function MemberConfirmCard({ match, publicCode, lookupValue }: { match: PublicMemberLookupResult; publicCode: string; lookupValue: string }) {
   const [state, action] = useActionState(confirmPublicMemberAttendanceAction, initialState);
   return (
-    <form action={action} className="space-y-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+    <form action={action} className="flex flex-col gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
       <input type="hidden" name="publicCode" value={publicCode} />
       <input type="hidden" name="memberId" value={match.id} />
       <input type="hidden" name="lookupValue" value={lookupValue} />
@@ -208,10 +275,10 @@ function MemberConfirmCard({ match, publicCode, lookupValue }: { match: PublicMe
       </div>
       <label className="flex items-start gap-3 rounded-2xl border border-emerald-900/10 bg-emerald-50/50 p-3 text-sm text-slate-700">
         <Checkbox name="rememberDevice" value="true" defaultChecked className="mt-0.5" />
-        <span><span className="font-medium text-emerald-950">Remember this device</span><span className="block text-xs text-slate-500">Quickly mark me present on this device next time.</span></span>
+        <span><span className="font-medium text-emerald-950">Remember this phone</span><span className="block text-xs text-slate-500">Quickly mark me present on this phone next time.</span></span>
       </label>
       <PublicNotice state={state} />
-      <PublicSubmitButton icon={<ShieldCheck className="size-4" aria-hidden="true" />}>Record my attendance</PublicSubmitButton>
+      <PublicSubmitButton icon={<ShieldCheck className="size-4" aria-hidden="true" />}>Mark present</PublicSubmitButton>
     </form>
   );
 }
@@ -219,11 +286,11 @@ function MemberConfirmCard({ match, publicCode, lookupValue }: { match: PublicMe
 function MemberLookup({ data, onBack }: { data: PublicAttendanceInitialData; onBack: () => void }) {
   const [state, action] = useActionState(lookupPublicMemberAction, initialState);
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       <BackButton onBack={onBack} />
       <Header data={data} compact />
       <div className="text-center"><h2 className="text-3xl font-semibold text-emerald-950">I am a church member</h2><p className="mt-2 text-slate-600">Enter your phone, email, or member code.</p></div>
-      <form action={action} className="space-y-3 rounded-[1.7rem] border border-slate-200 bg-white/90 p-4 shadow-sm">
+      <form action={action} className="flex flex-col gap-3 rounded-[1.7rem] border border-slate-200 bg-white/90 p-4 shadow-sm">
         <input type="hidden" name="publicCode" value={data.publicCode} />
         <div className="relative"><Input name="lookupValue" placeholder="Phone, email, or member code" className="h-14 rounded-2xl pl-4 pr-12 text-base" required /><Search className="absolute right-4 top-4 size-5 text-emerald-800" /></div>
         <PublicSubmitButton icon={<Search className="size-4" />}>Find my profile</PublicSubmitButton>
@@ -238,11 +305,11 @@ function MemberLookup({ data, onBack }: { data: PublicAttendanceInitialData; onB
 function VisitorForm({ data, onBack }: { data: PublicAttendanceInitialData; onBack: () => void }) {
   const [state, action] = useActionState(recordPublicVisitorAttendanceAction, initialState);
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       <BackButton onBack={onBack} />
       <Header data={data} compact />
       <div className="text-center"><h2 className="text-3xl font-semibold text-emerald-950">I am visiting today</h2><p className="mt-2 text-slate-600">We’d love to welcome you well.</p></div>
-      <form action={action} className="space-y-3">
+      <form action={action} className="flex flex-col gap-3">
         <input type="hidden" name="publicCode" value={data.publicCode} />
         <IconInput icon={<User className="size-5" />} name="fullName" placeholder="Your full name" autoComplete="name" required />
         <IconInput icon={<Phone className="size-5" />} name="phone" placeholder="Mobile number" autoComplete="tel" />
@@ -264,6 +331,19 @@ function IconInput({ icon, ...props }: React.InputHTMLAttributes<HTMLInputElemen
 
 function Footer() {
   return <footer className="mt-auto rounded-t-[2rem] bg-emerald-950 px-4 py-4 text-center text-sm font-medium text-white"><ShieldCheck className="mr-2 inline size-4 text-amber-400" /> Secure • Private • Faithful</footer>;
+}
+
+function RecognitionIssueNotice({ data }: { data: PublicAttendanceInitialData }) {
+  if (!data.recognitionIssue) return null;
+
+  return (
+    <div className="rounded-2xl border border-amber-200 bg-amber-50/80 p-4 text-sm leading-6 text-amber-950">
+      <div className="flex items-start gap-3">
+        <ShieldCheck className="mt-0.5 size-5 shrink-0 text-emerald-800" aria-hidden="true" />
+        <p>{data.recognitionIssue}</p>
+      </div>
+    </div>
+  );
 }
 
 export function PublicAttendanceScan({ data }: { data: PublicAttendanceInitialData }) {
@@ -291,7 +371,7 @@ export function PublicAttendanceScan({ data }: { data: PublicAttendanceInitialDa
         ) : view === "visitor" ? (
           <VisitorForm data={data} onBack={resetToChoice} />
         ) : (
-          <div className="flex flex-1 flex-col justify-center gap-7"><Header data={data} /><IdentityChoice onChoose={setView} /></div>
+          <div className="flex flex-1 flex-col justify-center gap-7"><Header data={data} /><RecognitionIssueNotice data={data} /><IdentityChoice onChoose={setView} /></div>
         )}
         <div className="mt-6 -mx-5"><Footer /></div>
       </div>

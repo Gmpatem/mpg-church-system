@@ -120,9 +120,13 @@ function DepartmentsRegistry({
                       : "rounded-2xl border border-slate-200 bg-white p-3"
                   }
                 >
-                  <button
-                    type="button"
-                    onClick={() => onSelectDepartment(department.id)}
+                  <Link
+                      href={`/c/${churchSlug}/departments/${department.id}/operations`}
+                      className="mobile-touch-feedback inline-flex min-h-[44px] items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-2 text-xs font-medium text-emerald-800 transition hover:bg-emerald-100"
+                    >
+                      Operations
+                    </Link>
+                    <button type="button" onClick={() => onSelectDepartment(department.id)}
                     className="w-full text-left"
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -173,9 +177,13 @@ function DepartmentsRegistry({
                   return (
                     <tr key={department.id} className={isSelected ? "bg-blue-50/50" : undefined}>
                       <td className="px-4 py-3.5">
-                        <button
-                          type="button"
-                          onClick={() => onSelectDepartment(department.id)}
+                        <Link
+                      href={`/c/${churchSlug}/departments/${department.id}/operations`}
+                      className="mobile-touch-feedback inline-flex min-h-[44px] items-center justify-center rounded-lg border border-emerald-200 bg-emerald-50 px-2 py-2 text-xs font-medium text-emerald-800 transition hover:bg-emerald-100"
+                    >
+                      Operations
+                    </Link>
+                    <button type="button" onClick={() => onSelectDepartment(department.id)}
                           className="text-left"
                         >
                           <p className="text-sm font-semibold text-slate-900">{department.department_name}</p>
@@ -210,8 +218,8 @@ function DepartmentsRegistry({
                             onClick={() => onSelectDepartment(department.id)}
                             className="rounded-lg border border-blue-200 bg-blue-50 px-2.5 py-1.5 text-xs font-medium text-blue-700 transition hover:bg-blue-100"
                           >
-                            Details
-                          </button>
+                      Details
+                    </button>
                         </div>
                       </td>
                     </tr>

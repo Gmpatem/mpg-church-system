@@ -31,6 +31,9 @@ import {
 } from "../shared";
 import { formatDate, formatTreasuryAmount } from "../utils";
 
+const EMPTY_FUNDS: any[] = [];
+const EMPTY_TRANSFER_HISTORY: any[] = [];
+
 export function TreasuryTransfersTab({
   data,
   onOpenDialog,
@@ -38,8 +41,8 @@ export function TreasuryTransfersTab({
   data: any;
   onOpenDialog: (dialog: TreasuryDialog) => void;
 }) {
-  const history = data.transfers?.history ?? [];
-  const funds = data.workspace?.funds ?? [];
+  const history = data.transfers?.history ?? EMPTY_TRANSFER_HISTORY;
+  const funds = data.workspace?.funds ?? EMPTY_FUNDS;
   const [search, setSearch] = useState("");
   const [fundId, setFundId] = useState("");
   const [selectedId, setSelectedId] = useState(history[0]?.id ?? "");
@@ -64,19 +67,46 @@ export function TreasuryTransfersTab({
   }, [fundId, history, search]);
 
   const selected = filteredHistory.find((row: any) => row.id === selectedId) ?? filteredHistory[0] ?? null;
-  const totalTransferred = history.reduce((sum: number, row: any) => sum + Number(row.amount || 0), 0);
-  const fundBalanceTotal = funds.reduce((sum: number, fund: any) => sum + Number(fund.balance || 0), 0);
-  const transferFunds = funds.filter((fund: any) => Number(fund.transfers_in || 0) > 0 || Number(fund.transfers_out || 0) > 0);
-  const largestTransfer = history.reduce((max: number, row: any) => Math.max(max, Number(row.amount || 0)), 0);
+  const transferStats = useMemo(() => {
+    let totalTransferred = 0;
+    let largestTransfer = 0;
+
+    for (const row of history) {
+      const amount = Number(row.amount || 0);
+      totalTransferred += amount;
+      if (amount > largestTransfer) largestTransfer = amount;
+    }
+
+    let fundBalanceTotal = 0;
+    let touchedFundCount = 0;
+
+    for (const fund of funds) {
+      fundBalanceTotal += Number(fund.balance || 0);
+      if (Number(fund.transfers_in || 0) > 0 || Number(fund.transfers_out || 0) > 0) {
+        touchedFundCount += 1;
+      }
+    }
+
+    return {
+      fundBalanceTotal,
+      largestTransfer,
+      totalTransferred,
+      touchedFundCount,
+    };
+  }, [funds, history]);
+  const fundOptions = useMemo(
+    () => funds.map((fund: any) => ({ value: fund.fund_id, label: fund.fund_name })),
+    [funds]
+  );
 
   return (
     <div className="min-w-0 space-y-4">
       <TreasurySummaryStrip
         items={[
           { label: "Transfers", value: history.length, hint: "Internal fund movements", icon: <ArrowRightLeft className="size-6" />, tone: "green" },
-          { label: "Total Moved", value: formatTreasuryAmount(totalTransferred), hint: "Across transfer history", icon: <WalletCards className="size-6" />, tone: "blue" },
-          { label: "Funds Touched", value: transferFunds.length, hint: "With transfer activity", icon: <Landmark className="size-6" />, tone: "purple" },
-          { label: "Largest Transfer", value: formatTreasuryAmount(largestTransfer), hint: "Highest single movement", icon: <CalendarClock className="size-6" />, tone: "neutral" },
+          { label: "Total Moved", value: formatTreasuryAmount(transferStats.totalTransferred), hint: "Across transfer history", icon: <WalletCards className="size-6" />, tone: "blue" },
+          { label: "Funds Touched", value: transferStats.touchedFundCount, hint: "With transfer activity", icon: <Landmark className="size-6" />, tone: "purple" },
+          { label: "Largest Transfer", value: formatTreasuryAmount(transferStats.largestTransfer), hint: "Highest single movement", icon: <CalendarClock className="size-6" />, tone: "neutral" },
         ]}
       />
 
@@ -92,7 +122,7 @@ export function TreasuryTransfersTab({
           label="Fund"
           value={fundId}
           onValueChange={setFundId}
-          options={funds.map((fund: any) => ({ value: fund.fund_id, label: fund.fund_name }))}
+          options={fundOptions}
         />
         <Button
           type="button"
@@ -189,7 +219,7 @@ export function TreasuryTransfersTab({
               </dl>
               <div className="rounded-xl border border-border bg-muted/30 p-4">
                 <p className="text-xs font-medium uppercase text-muted-foreground">Current Fund Balance Total</p>
-                <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">{formatTreasuryAmount(fundBalanceTotal)}</p>
+                <p className="mt-1 text-xl font-semibold tabular-nums text-foreground">{formatTreasuryAmount(transferStats.fundBalanceTotal)}</p>
               </div>
             </div>
           )}
