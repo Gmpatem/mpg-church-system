@@ -33,23 +33,6 @@ export function ServiceWorkerRegistration() {
 
     if (process.env.NODE_ENV !== "production") {
       clearChurchCaches();
-
-      void navigator.serviceWorker
-        .getRegistrations()
-        .then((registrations) =>
-          Promise.all(
-            registrations
-              .filter((registration) => registration.scope === `${window.location.origin}/`)
-              .map((registration) => registration.unregister())
-          )
-        )
-        .catch(() => {
-          // Development can continue without service-worker cleanup.
-        });
-
-      return () => {
-        aborted = true;
-      };
     }
 
     navigator.serviceWorker

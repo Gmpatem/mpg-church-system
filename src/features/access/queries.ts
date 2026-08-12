@@ -369,6 +369,35 @@ export async function resolvePostAuthDestination(userId?: string): Promise<strin
   return `/join/${primaryChurch.churchSlug}`;
 }
 
+export async function resolveMemberAppDestination(userId?: string): Promise<string> {
+  const state = await getUserAccessState(userId);
+  const memberChurch = state.churches.find((entry) => entry.hasMemberLink);
+
+  if (memberChurch) {
+    return `/my/${memberChurch.churchSlug}?tab=overview`;
+  }
+
+  const primaryChurch = pickPrimaryChurch(state.churches);
+
+  if (primaryChurch?.hasOperationalAccess) {
+    return `/c/${primaryChurch.churchSlug}/dashboard`;
+  }
+
+  if (state.platformRoles.some(isPlatformRole)) {
+    return "/platform";
+  }
+
+  if (!primaryChurch) {
+    if (await hasPendingRegistrationForUser({ userId: state.userId })) {
+      return "/registration-pending";
+    }
+
+    return "/create-church";
+  }
+
+  return `/join/${primaryChurch.churchSlug}`;
+}
+
 async function getChurchRouteAccessContext(
   churchSlug: string
 ): Promise<ChurchAccessContext> {

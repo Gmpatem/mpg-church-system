@@ -1,13 +1,23 @@
 const CACHE_PREFIX = "mpg-church-";
-const CACHE_NAME = `${CACHE_PREFIX}v2`;
+const CACHE_NAME = `${CACHE_PREFIX}v3`;
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"]);
 const IS_LOCALHOST = LOCAL_HOSTNAMES.has(self.location.hostname);
 const STATIC_ASSETS = [
-  "/",
   "/offline.html",
+  "/manifest.json",
+  "/manifest.webmanifest",
+  "/icons/icon-192.png",
+  "/icons/icon-192-maskable.png",
+  "/icons/icon-512.png",
+  "/icons/icon-512-maskable.png",
+  "/icons/apple-touch-icon.png",
   "/icons/icon-192x192.svg",
   "/icons/icon-512x512.svg",
 ];
+
+function isStaticAsset(url) {
+  return STATIC_ASSETS.includes(url.pathname);
+}
 
 // Install: cache shell assets
 self.addEventListener("install", (event) => {
@@ -60,19 +70,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // Static assets (JS, CSS, fonts, images, SVG): cache-first
-  if (
-    request.destination === "script" ||
-    request.destination === "style" ||
-    request.destination === "font" ||
-    request.destination === "image" ||
-    url.pathname.endsWith(".svg") ||
-    url.pathname.endsWith(".png") ||
-    url.pathname.endsWith(".jpg") ||
-    url.pathname.endsWith(".jpeg") ||
-    url.pathname.endsWith(".webp") ||
-    url.pathname.endsWith(".ico")
-  ) {
+  // Known public app assets: cache-first. Do not cache arbitrary same-origin images.
+  if (isStaticAsset(url)) {
     event.respondWith(
       caches.match(request).then((cached) => {
         if (cached) return cached;
@@ -91,37 +90,24 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // HTML navigations: network-first, fallback to cache, then offline.html
+  // HTML navigations: network-first with an offline shell only.
+  // Do not cache authenticated member/admin pages or private church data.
   if (request.mode === "navigate" || request.destination === "document") {
     event.respondWith(
       fetch(request)
-        .then((response) => {
-          if (response && response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-          }
-          return response;
-        })
+        .then((response) => response)
         .catch(() =>
           caches
-            .match(request)
-            .then((cached) => cached || caches.match("/offline.html"))
+            .match("/offline.html")
             .then((fallback) => fallback || new Response("Offline", { status: 503 }))
         )
     );
     return;
   }
 
-  // Everything else: network with cache fallback
+  // Everything else: network only. Private app data must not be written to Cache Storage.
   event.respondWith(
     fetch(request)
-      .then((response) => {
-        if (response && response.status === 200) {
-          const clone = response.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(request, clone));
-        }
-        return response;
-      })
-      .catch(() => caches.match(request).then((cached) => cached || fetch(request)))
+      .catch(() => caches.match(request).then((cached) => cached || new Response("Offline", { status: 503 })))
   );
 });

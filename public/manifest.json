@@ -1,23 +1,39 @@
 {
-  "name": "MPG Church Systems",
-  "short_name": "MPG Church",
-  "description": "Church management platform for modern ministries",
-  "start_url": "/",
+  "id": "/",
+  "name": "MPG Church Member Portal",
+  "short_name": "My Church",
+  "description": "Member portal for church duties, events, giving, attendance, and profile access.",
+  "start_url": "/app",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#0f172a",
-  "orientation": "portrait-primary",
+  "background_color": "#fffaf0",
+  "theme_color": "#064e3b",
+  "orientation": "portrait",
   "scope": "/",
+  "categories": ["productivity", "lifestyle"],
   "icons": [
     {
-      "src": "/icons/icon-192x192.svg",
+      "src": "/icons/icon-192.png",
       "sizes": "192x192",
-      "type": "image/svg+xml"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
-      "src": "/icons/icon-512x512.svg",
+      "src": "/icons/icon-192-maskable.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
       "sizes": "512x512",
-      "type": "image/svg+xml"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }

@@ -17,6 +17,7 @@ import {
   MemberPortalBottomNav,
   type MemberPortalNavItem,
 } from "@/features/member-portal/components/MemberPortalBottomNav";
+import { PwaInstallPrompt } from "@/components/pwa/PwaInstallPrompt";
 import {
   getInitials,
   MemberPortalChurchMark,
@@ -231,6 +232,8 @@ export function MemberPortalShell({
               routeMotionClass
             )}
           >
+            {activeTab === "overview" ? <PwaInstallPrompt variant="member-portal" className="mb-4" /> : null}
+
             {showWelcome ? (
               <div className="mobile-fade-up mb-4 rounded-[22px] border border-emerald-100 bg-white p-4 text-sm text-slate-700 shadow-sm">
                 <p className="font-medium text-foreground">{t.memberPortal?.welcome || "Welcome to"} {churchName}.</p>
