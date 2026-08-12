@@ -1,5 +1,7 @@
 import "server-only";
 
+import { getMemberMinistryPortalData } from "@/features/ministry-operations/queries";
+
 import { createClient } from "@/lib/supabase/server";
 import { requireMemberPortalAccess } from "@/features/access/queries";
 import { getPublishedEvents } from "@/features/calendar/queries";
@@ -583,6 +585,11 @@ export async function getMemberPortalTabData(
     }
     return { tab: "overview", data };
   }
+  if (tab === "ministries") {
+    const data = await getMemberMinistryPortalData(churchSlug);
+    return { tab: "ministries", data };
+  }
+
 
   if (tab === "profile") {
     const data = await getMemberPortalProfile(churchSlug);

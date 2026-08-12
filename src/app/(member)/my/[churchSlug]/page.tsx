@@ -14,6 +14,7 @@ type PageProps = {
 
 const VALID_TABS: MemberPortalTabKey[] = [
   "overview",
+  "ministries",
   "departments",
   "events",
   "giving",
@@ -24,6 +25,9 @@ const TAB_ALIASES: Record<string, MemberPortalTabKey> = {
   home: "overview",
   directory: "departments",
   calendar: "events",
+  service: "ministries",
+  ministries: "ministries",
+  duties: "ministries",
 };
 
 function normalizeTab(value: string | undefined): MemberPortalTabKey {

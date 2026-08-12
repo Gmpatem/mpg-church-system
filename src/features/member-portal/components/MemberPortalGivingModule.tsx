@@ -1,106 +1,119 @@
-import { WorkspaceEmptyState, WorkspaceSectionCard } from "@/components/workspace";
-import { getLabel, inflowTypeLabels } from "@/lib/display-maps";
+import { BarChart3, CalendarDays, ChevronRight, HandHeart } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import type { MemberPortalGivingData } from "@/features/member-portal/types";
-import { MemberPortalChipRow } from "./MemberPortalChipRow";
+import {
+  MemberPortalCard,
+  MemberPortalIconBubble,
+  MemberPortalSectionHeader,
+} from "./MemberPortalAppPrimitives";
 import { MemberPortalModuleHero } from "./MemberPortalModuleHero";
-import { formatDate, formatMoney } from "./memberPortalUiUtils";
+import { formatMoney } from "./memberPortalUiUtils";
 
 type MemberPortalGivingModuleProps = {
   data: MemberPortalGivingData;
 };
 
+const quickAmounts = [500, 1000, 2000, 5000, 10000] as const;
+
 export function MemberPortalGivingModule({ data }: MemberPortalGivingModuleProps) {
   const currentYear = new Date().getFullYear();
-
-  const years = Array.from(
-    new Set(
-      data.recent
-        .map((item) => new Date(item.inflowDate).getFullYear())
-        .filter((value) => Number.isFinite(value))
-        .slice(0, 3)
-    )
-  );
+  const currentMonth = new Date().getMonth();
+  const currentMonthTotal = data.recent.reduce((sum, item) => {
+    const date = new Date(item.inflowDate);
+    if (Number.isNaN(date.getTime())) return sum;
+    if (date.getFullYear() !== currentYear || date.getMonth() !== currentMonth) return sum;
+    return sum + item.amount;
+  }, 0);
+  const currentMonthCount = data.recent.filter((item) => {
+    const date = new Date(item.inflowDate);
+    return !Number.isNaN(date.getTime()) && date.getFullYear() === currentYear && date.getMonth() === currentMonth;
+  }).length;
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <MemberPortalModuleHero
-        eyebrow="My Giving"
-        title="Stewardship Summary"
-        description="Review your contributions and year-to-date giving totals."
-        badges={[`YTD ${formatMoney(data.yearToDateTotal)}`]}
-      />
+    <div className="flex flex-col gap-5">
+      <MemberPortalModuleHero title="Giving" description="Cheerful giver" />
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="mb-3 h-1 w-12 rounded-full bg-gradient-to-r from-blue-600 via-cyan-500 to-teal-500" />
-        <div className="flex items-end justify-between gap-3">
-          <div>
-            <p className="text-sm font-medium text-slate-600">Year-to-date {currentYear}</p>
-            <p className="text-3xl font-bold tracking-tight text-slate-950">
-              {formatMoney(data.yearToDateTotal)}
-            </p>
-          </div>
-          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
-            Total {formatMoney(data.totalGiving)}
-          </span>
+      <MemberPortalCard className="bg-amber-50/50 py-8 text-center">
+        <div className="mx-auto flex size-16 items-center justify-center rounded-full text-emerald-950">
+          <HandHeart className="size-12 text-emerald-950" />
         </div>
-        <div className="mt-4 space-y-2 text-sm">
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500">Tithe</span>
-            <span className="font-medium text-slate-900">{formatMoney(data.totalTithe)}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500">Offering</span>
-            <span className="font-medium text-slate-900">{formatMoney(data.totalOffering)}</span>
-          </div>
-          <div className="flex items-center justify-between">
-            <span className="text-slate-500">Donation</span>
-            <span className="font-medium text-slate-900">{formatMoney(data.totalDonation)}</span>
-          </div>
+        <h2 className="mt-4 text-lg font-semibold text-emerald-950">Give with a cheerful heart</h2>
+        <p className="mt-1 text-sm text-slate-600">Your giving makes a difference.</p>
+      </MemberPortalCard>
+
+      <section className="flex flex-col gap-3">
+        <MemberPortalSectionHeader title="Quick Give" />
+        <div className="grid grid-cols-3 gap-2">
+          {quickAmounts.map((amount) => (
+            <button
+              key={amount}
+              type="button"
+              className="mobile-touch-feedback flex min-h-[74px] flex-col items-center justify-center rounded-[14px] border border-amber-100 bg-white px-2 py-3 text-center shadow-sm shadow-amber-950/5 hover:bg-amber-50"
+            >
+              <span className="text-lg font-semibold leading-none text-emerald-950">
+                {new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(amount)}
+              </span>
+              <span className="mt-1 text-xs text-slate-600">XAF</span>
+            </button>
+          ))}
+          <button
+            type="button"
+            className="mobile-touch-feedback flex min-h-[74px] items-center justify-center rounded-[14px] border border-amber-100 bg-white px-2 py-3 text-sm font-medium text-slate-950 shadow-sm shadow-amber-950/5 hover:bg-amber-50"
+          >
+            Other
+          </button>
         </div>
-      </div>
+        <Button
+          type="button"
+          disabled
+          className="mt-1 h-12 rounded-[14px] bg-emerald-900 text-white hover:bg-emerald-900 disabled:opacity-80"
+          title="Online giving is not connected yet"
+        >
+          Give Now
+          <ChevronRight data-icon="inline-end" />
+        </Button>
+      </section>
 
-      <WorkspaceSectionCard
-        title="Contribution History"
-        description="Most recent giving records linked to your member account."
-        contentClassName="space-y-3"
-      >
-        <MemberPortalChipRow
-          chips={[
-            { label: "All", active: true },
-            ...years.map((year) => ({ label: String(year) })),
-          ]}
-        />
-
-        {data.recent.length > 0 ? (
-          <div className="space-y-2">
-            {data.recent.map((item) => (
-              <div
-                key={item.id}
-                className="mobile-touch-feedback flex items-center justify-between gap-3 rounded-2xl border border-slate-200 bg-white p-3"
-              >
-                <div className="min-w-0">
-                  <p className="font-medium text-slate-900">
-                    {getLabel(inflowTypeLabels, item.inflowType)}
-                  </p>
-                  <p className="text-xs text-slate-500">{formatDate(item.inflowDate)}</p>
-                  {item.note?.trim() ? (
-                    <p className="truncate text-xs text-slate-500">{item.note}</p>
-                  ) : null}
-                </div>
-                <span className="shrink-0 font-semibold text-emerald-700">
-                  +{formatMoney(item.amount)}
-                </span>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <WorkspaceEmptyState
-            title="No giving records yet"
-            message="When your contributions are recorded, they will appear here."
-            className="min-h-[180px]"
+      <section className="flex flex-col gap-3">
+        <MemberPortalSectionHeader title="Giving Summary" actionLabel="View all" />
+        <MemberPortalCard className="p-0">
+          <SummaryRow
+            icon={BarChart3}
+            title="This Month"
+            subtitle={`${currentMonthCount} transaction${currentMonthCount === 1 ? "" : "s"}`}
+            amount={formatMoney(currentMonthTotal)}
           />
-        )}
-      </WorkspaceSectionCard>
+          <SummaryRow
+            icon={CalendarDays}
+            title="Year to Date"
+            subtitle={String(currentYear)}
+            amount={formatMoney(data.yearToDateTotal)}
+          />
+        </MemberPortalCard>
+      </section>
+    </div>
+  );
+}
+
+function SummaryRow({
+  icon,
+  title,
+  subtitle,
+  amount,
+}: {
+  icon: typeof BarChart3;
+  title: string;
+  subtitle: string;
+  amount: string;
+}) {
+  return (
+    <div className="flex min-h-[82px] items-center gap-3 border-b border-amber-50 px-4 py-3 last:border-b-0">
+      <MemberPortalIconBubble icon={icon} className="size-12" />
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium text-slate-700">{title}</p>
+        <p className="mt-1 truncate text-xs text-slate-500">{subtitle}</p>
+      </div>
+      <p className="shrink-0 text-right text-sm font-semibold text-emerald-950">{amount}</p>
     </div>
   );
 }

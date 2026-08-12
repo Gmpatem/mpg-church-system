@@ -1,8 +1,10 @@
 import type { CalendarEvent } from "@/features/calendar/types";
+import type { MemberMinistryPortalData } from "@/features/ministry-operations/types";
 export type { CalendarEvent };
 
 export type MemberPortalTabKey =
   | "overview"
+  | "ministries"
   | "profile"
   | "giving"
   | "departments"
@@ -164,6 +166,10 @@ export type MemberPortalTabData =
   | {
       tab: "overview";
       data: MemberPortalOverviewData;
+    }
+  | {
+      tab: "ministries";
+      data: MemberMinistryPortalData;
     }
   | {
       tab: "profile";

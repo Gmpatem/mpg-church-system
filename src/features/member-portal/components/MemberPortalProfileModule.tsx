@@ -1,16 +1,14 @@
-import {
-  WorkspaceSectionCard,
-  WorkspaceStatCard,
-} from "@/components/workspace";
-import {
-  genderLabels,
-  getLabel,
-  maritalStatusLabels,
-  memberStatusLabels,
-  memberTypeLabels,
-} from "@/lib/display-maps";
+import { Bell, Camera, FileText, HelpCircle, LockKeyhole, UserRound, Users } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { signOutMemberPortalAction } from "@/features/member-portal/actions";
 import type { MemberPortalProfileData } from "@/features/member-portal/types";
+import { cn } from "@/lib/utils/cn";
+import {
+  MemberPortalAvatar,
+  MemberPortalCard,
+  MemberPortalListRow,
+  MemberPortalSectionHeader,
+} from "./MemberPortalAppPrimitives";
 import { MemberPortalModuleHero } from "./MemberPortalModuleHero";
 import { formatDate } from "./memberPortalUiUtils";
 
@@ -38,13 +36,10 @@ function completionPercent(fields: MemberPortalProfileData["fields"]) {
   return Math.round((completed / values.length) * 100);
 }
 
-function renderField(label: string, value: string | null | undefined) {
-  return (
-    <div className="rounded-xl border border-slate-200 bg-white p-3">
-      <p className="text-[11px] uppercase tracking-[0.18em] text-slate-500">{label}</p>
-      <p className="mt-1 font-medium text-slate-900">{value?.trim() ? value : "Not provided"}</p>
-    </div>
-  );
+function memberSince(value: string | null | undefined) {
+  const parsed = value ? new Date(value) : null;
+  if (!parsed || Number.isNaN(parsed.getTime())) return "Member since this year";
+  return `Member since ${parsed.getFullYear()}`;
 }
 
 export function MemberPortalProfileModule({
@@ -56,96 +51,88 @@ export function MemberPortalProfileModule({
   const completion = completionPercent(fields);
 
   return (
-    <div className="space-y-4 sm:space-y-6">
-      <MemberPortalModuleHero
-        eyebrow="My Profile"
-        title={memberName}
-        description={`Manage your member profile, household details, and account settings for ${churchName}.`}
-        badges={[`${completion}% complete`]}
+    <div className="flex flex-col gap-5">
+      <MemberPortalModuleHero title="My Profile" description="Manage your information" />
+
+      <MemberPortalCard className="pt-4 text-center">
+        <div className="relative mx-auto w-fit">
+          <MemberPortalAvatar name={memberName} className="size-24" />
+          <span className="absolute bottom-1 right-1 flex size-8 items-center justify-center rounded-full border-2 border-white bg-emerald-950 text-white shadow-sm">
+            <Camera className="size-4" />
+          </span>
+        </div>
+        <h2 className="mt-4 text-xl font-semibold text-slate-950">{memberName}</h2>
+        <p className="mt-1 text-sm text-slate-600">{memberSince(fields.dateJoined)}</p>
+
+        <div className="mt-6 text-left">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-sm text-slate-600">Profile completion</p>
+            <p className="text-sm font-semibold text-emerald-950">{completion}%</p>
+          </div>
+          <Progress value={completion} className="mt-2 bg-slate-100" />
+        </div>
+      </MemberPortalCard>
+
+      <ProfileRowGroup
+        title="Account"
+        rows={[
+          { icon: UserRound, label: "Personal Information", detail: fields.email ?? fields.phone ?? "Member profile" },
+          { icon: LockKeyhole, label: "Login & Security", detail: fields.memberCode ? `Code ${fields.memberCode}` : "Account access" },
+          { icon: Bell, label: "Notification Preferences", detail: "Church updates" },
+        ]}
       />
 
-      <div className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-semibold text-slate-800">Profile completion</p>
-          <p className="text-sm font-medium text-blue-700">{completion}%</p>
-        </div>
-        <div className="mt-2 h-2 overflow-hidden rounded-full bg-slate-200">
-          <div
-            className="h-full rounded-full bg-gradient-to-r from-blue-600 to-cyan-500"
-            style={{ width: `${completion}%` }}
-          />
-        </div>
-      </div>
+      <ProfileRowGroup
+        title="Church"
+        rows={[
+          { icon: UserRound, label: "My Membership", detail: fields.membershipType ?? fields.membershipStatus },
+          { icon: Users, label: "My Family", detail: fields.householdName ?? "Household not linked" },
+          { icon: FileText, label: "My Documents", detail: `Joined ${formatDate(fields.dateJoined)}` },
+        ]}
+      />
 
-      <div className="mobile-stagger grid grid-cols-2 gap-3 md:grid-cols-4">
-        <WorkspaceStatCard
-          label="Membership"
-          value={getLabel(memberStatusLabels, fields.membershipStatus)}
-          hint="Current status"
-          valueClassName="text-xl md:text-2xl"
-        />
-        <WorkspaceStatCard
-          label="Member Type"
-          value={getLabel(memberTypeLabels, fields.membershipType)}
-          hint="Member category"
-          valueClassName="text-xl md:text-2xl"
-        />
-        <WorkspaceStatCard
-          label="Member Code"
-          value={fields.memberCode ?? "Not assigned"}
-          hint="Church reference"
-          valueClassName="text-xl md:text-2xl"
-        />
-        <WorkspaceStatCard
-          label="Joined"
-          value={formatDate(fields.dateJoined)}
-          hint="Membership date"
-          valueClassName="text-xl md:text-2xl"
-        />
-      </div>
+      <ProfileRowGroup
+        title="Support & About"
+        rows={[{ icon: HelpCircle, label: "Help & Support", detail: churchName }]}
+      />
 
-      <WorkspaceSectionCard
-        title="Personal Information"
-        description="Core identity and contact details."
-        contentClassName="grid gap-3 md:grid-cols-2"
-      >
-        {renderField("Full name", fields.fullName)}
-        {renderField("Display name", fields.displayName)}
-        {renderField("Email", fields.email)}
-        {renderField("Phone", fields.phone)}
-        {renderField("Birth date", formatDate(fields.dateOfBirth))}
-        {renderField("Gender", getLabel(genderLabels, fields.gender))}
-        {renderField("Marital status", getLabel(maritalStatusLabels, fields.maritalStatus))}
-        {renderField("Address", fields.address)}
-        {renderField("City", fields.city)}
-        {renderField("Country", fields.country)}
-      </WorkspaceSectionCard>
-
-      <WorkspaceSectionCard
-        title="Church Record"
-        description="Membership and household details on file."
-        contentClassName="grid gap-3 md:grid-cols-2"
-      >
-        {renderField("Household", fields.householdName)}
-        {renderField("Previous church", fields.previousChurch)}
-        {renderField("Baptism date", formatDate(fields.baptismDate))}
-        {renderField("Member code", fields.memberCode)}
-      </WorkspaceSectionCard>
-
-      <WorkspaceSectionCard
-        title="Account"
-        description="Sign out of your member portal account."
-        contentClassName="space-y-3"
-      >
-        <form action={signOutMemberPortalAction}>
-          <button
-            type="submit"
-            className="mobile-touch-feedback inline-flex w-full items-center justify-center rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-700 transition hover:bg-rose-100"
-          >
-            Sign Out
-          </button>
-        </form>
-      </WorkspaceSectionCard>
+      <form action={signOutMemberPortalAction}>
+        <button
+          type="submit"
+          className="mobile-touch-feedback min-h-[44px] w-full rounded-[18px] border border-rose-100 bg-white px-4 py-3 text-sm font-medium text-rose-700 shadow-sm hover:bg-rose-50"
+        >
+          Sign Out
+        </button>
+      </form>
     </div>
+  );
+}
+
+function ProfileRowGroup({
+  title,
+  rows,
+}: {
+  title: string;
+  rows: Array<{
+    icon: typeof UserRound;
+    label: string;
+    detail?: string | null;
+  }>;
+}) {
+  return (
+    <section className="flex flex-col gap-3">
+      <MemberPortalSectionHeader title={title} />
+      <MemberPortalCard className="divide-y divide-amber-50 p-0">
+        {rows.map((row) => (
+          <div key={row.label} className={cn(!row.detail && "py-1")}>
+            <MemberPortalListRow
+              icon={row.icon}
+              label={row.label}
+              detail={row.detail?.trim() ? row.detail : undefined}
+            />
+          </div>
+        ))}
+      </MemberPortalCard>
+    </section>
   );
 }

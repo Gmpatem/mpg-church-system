@@ -1,3 +1,4 @@
+import { MemberMinistriesPortal } from "@/features/ministry-operations/components/MemberMinistriesPortal";
 import { WorkspaceEmptyState } from "@/components/workspace";
 import { MemberPortalDirectoryModule } from "@/features/member-portal/components/MemberPortalDirectoryModule";
 import { MemberPortalEventsModule } from "@/features/member-portal/components/MemberPortalEventsModule";
@@ -62,6 +63,10 @@ function renderActiveModule({
     );
   }
 
+  if (activeTab === "ministries" && tabData.tab === "ministries" && tabData.data) {
+    return <MemberMinistriesPortal data={tabData.data} />;
+  }
+
   if (activeTab === "departments" && tabData.tab === "departments" && tabData.data) {
     return <MemberPortalDirectoryModule data={tabData.data} />;
   }
@@ -108,7 +113,7 @@ export function MemberPortalWorkspace({
 
   if (!isLinked || !identity) {
     return (
-      <div className="mx-auto w-full max-w-7xl space-y-4 sm:space-y-6">
+      <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 sm:gap-6">
         <MemberPortalModuleHero
           eyebrow="Member Portal"
           title={`Welcome to ${churchName}`}
@@ -126,7 +131,7 @@ export function MemberPortalWorkspace({
   }
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-4 sm:space-y-6">
+    <div className="mx-auto w-full max-w-7xl">
       {renderActiveModule({ foundation, activeTab, tabData })}
     </div>
   );

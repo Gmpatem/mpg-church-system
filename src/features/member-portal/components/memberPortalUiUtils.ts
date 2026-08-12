@@ -27,10 +27,9 @@ export function formatDateTime(value: string | null | undefined) {
 }
 
 export function formatMoney(value: number) {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 2,
+  const amount = new Intl.NumberFormat(undefined, {
+    maximumFractionDigits: 0,
   }).format(value);
-}
 
+  return `${amount} XAF`;
+}
