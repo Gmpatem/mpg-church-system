@@ -4,12 +4,12 @@ import {
   WorkspaceStatCard,
 } from "@/components/workspace";
 import type { MemberPortalDepartmentsData } from "@/features/member-portal/types";
-import { MemberPortalChipRow } from "./MemberPortalChipRow";
 import { MemberPortalModuleHero } from "./MemberPortalModuleHero";
 import { formatDate } from "./memberPortalUiUtils";
 
 type MemberPortalDirectoryModuleProps = {
   data: MemberPortalDepartmentsData;
+  unreadNotificationCount?: number;
 };
 
 function statusBadge(active: boolean) {
@@ -20,30 +20,18 @@ function statusBadge(active: boolean) {
 
 export function MemberPortalDirectoryModule({
   data,
+  unreadNotificationCount = 0,
 }: MemberPortalDirectoryModuleProps) {
   return (
     <div className="space-y-4 sm:space-y-6">
       <MemberPortalModuleHero
-        eyebrow="Member Directory"
-        title="Find Your Church Teams"
+        eyebrow="My Involvement"
+        title="My Church Assignments"
         description="View your church roles, departments, and service assignments in one place."
+        unreadNotificationCount={unreadNotificationCount}
         badges={[
           `${data.activeRoleCount} active roles`,
           `${data.activeDepartmentCount} active departments`,
-        ]}
-      />
-
-      <div className="rounded-2xl border border-blue-200 bg-blue-50 p-3 text-sm text-blue-800">
-        Directory visibility follows church privacy rules.
-      </div>
-
-      <MemberPortalChipRow
-        chips={[
-          { label: "All Assignments", active: true },
-          { label: "Roles" },
-          { label: "Departments" },
-          { label: "Active" },
-          { label: "Inactive" },
         ]}
       />
 

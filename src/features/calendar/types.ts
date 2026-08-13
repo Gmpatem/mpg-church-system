@@ -7,6 +7,7 @@ export interface CalendarEvent {
   department_id: string | null;
   location: string | null;
   is_all_day: boolean;
+  description: string | null;
 }
 
 export interface ChurchCalendarEvent {

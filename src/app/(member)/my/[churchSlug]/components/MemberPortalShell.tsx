@@ -105,6 +105,7 @@ export function MemberPortalShell({
   const churchSlug = foundation.churchSlug;
   const memberName = getMemberName(foundation);
   const memberCode = foundation.identity?.member.member_code ?? null;
+  const unreadNotificationCount = foundation.unreadNotificationCount;
   const navItems = getNavItems(t, churchSlug);
   const profileHref = buildTabHref(churchSlug, "profile");
   const [profileSheetOpen, setProfileSheetOpen] = useState(false);
@@ -206,14 +207,18 @@ export function MemberPortalShell({
               </div>
 
               <div className="flex items-center gap-2">
-                <button
-                  type="button"
+                <Link
+                  href={`${buildTabHref(churchSlug, "overview")}#church-updates`}
                   className="mobile-touch-feedback relative inline-flex size-10 items-center justify-center rounded-full bg-amber-50 text-emerald-950 transition hover:bg-amber-100"
-                  aria-label="Notifications"
+                  aria-label={unreadNotificationCount > 0 ? `${unreadNotificationCount} unread notifications` : "No unread notifications"}
                 >
                   <Bell className="size-5" />
-                  <span className="absolute right-2 top-2 size-2 rounded-full bg-red-500 ring-2 ring-white" />
-                </button>
+                  {unreadNotificationCount > 0 ? (
+                    <span className="absolute -right-0.5 -top-0.5 flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-5 text-white ring-2 ring-white">
+                      {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
+                    </span>
+                  ) : null}
+                </Link>
                 <Link
                   href={profileHref}
                   className="inline-flex size-10 items-center justify-center rounded-full border border-amber-100 bg-white text-sm font-semibold text-emerald-950 transition hover:bg-amber-50"

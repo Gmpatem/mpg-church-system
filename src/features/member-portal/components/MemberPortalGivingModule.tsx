@@ -1,5 +1,6 @@
-import { BarChart3, CalendarDays, ChevronRight, HandHeart } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { BarChart3, CalendarDays, HandHeart, ReceiptText } from "lucide-react";
+import { WorkspaceEmptyState } from "@/components/workspace";
+import { getLabel, inflowTypeLabels } from "@/lib/display-maps";
 import type { MemberPortalGivingData } from "@/features/member-portal/types";
 import {
   MemberPortalCard,
@@ -11,27 +12,22 @@ import { formatMoney } from "./memberPortalUiUtils";
 
 type MemberPortalGivingModuleProps = {
   data: MemberPortalGivingData;
+  unreadNotificationCount?: number;
 };
 
-const quickAmounts = [500, 1000, 2000, 5000, 10000] as const;
-
-export function MemberPortalGivingModule({ data }: MemberPortalGivingModuleProps) {
+export function MemberPortalGivingModule({
+  data,
+  unreadNotificationCount = 0,
+}: MemberPortalGivingModuleProps) {
   const currentYear = new Date().getFullYear();
-  const currentMonth = new Date().getMonth();
-  const currentMonthTotal = data.recent.reduce((sum, item) => {
-    const date = new Date(item.inflowDate);
-    if (Number.isNaN(date.getTime())) return sum;
-    if (date.getFullYear() !== currentYear || date.getMonth() !== currentMonth) return sum;
-    return sum + item.amount;
-  }, 0);
-  const currentMonthCount = data.recent.filter((item) => {
-    const date = new Date(item.inflowDate);
-    return !Number.isNaN(date.getTime()) && date.getFullYear() === currentYear && date.getMonth() === currentMonth;
-  }).length;
 
   return (
     <div className="flex flex-col gap-5">
-      <MemberPortalModuleHero title="Giving" description="Cheerful giver" />
+      <MemberPortalModuleHero
+        title="Giving"
+        description="Your recorded contributions"
+        unreadNotificationCount={unreadNotificationCount}
+      />
 
       <MemberPortalCard className="bg-amber-50/50 py-8 text-center">
         <div className="mx-auto flex size-16 items-center justify-center rounded-full text-emerald-950">
@@ -42,46 +38,13 @@ export function MemberPortalGivingModule({ data }: MemberPortalGivingModuleProps
       </MemberPortalCard>
 
       <section className="flex flex-col gap-3">
-        <MemberPortalSectionHeader title="Quick Give" />
-        <div className="grid grid-cols-3 gap-2">
-          {quickAmounts.map((amount) => (
-            <button
-              key={amount}
-              type="button"
-              className="mobile-touch-feedback flex min-h-[74px] flex-col items-center justify-center rounded-[14px] border border-amber-100 bg-white px-2 py-3 text-center shadow-sm shadow-amber-950/5 hover:bg-amber-50"
-            >
-              <span className="text-lg font-semibold leading-none text-emerald-950">
-                {new Intl.NumberFormat(undefined, { maximumFractionDigits: 0 }).format(amount)}
-              </span>
-              <span className="mt-1 text-xs text-slate-600">XAF</span>
-            </button>
-          ))}
-          <button
-            type="button"
-            className="mobile-touch-feedback flex min-h-[74px] items-center justify-center rounded-[14px] border border-amber-100 bg-white px-2 py-3 text-sm font-medium text-slate-950 shadow-sm shadow-amber-950/5 hover:bg-amber-50"
-          >
-            Other
-          </button>
-        </div>
-        <Button
-          type="button"
-          disabled
-          className="mt-1 h-12 rounded-[14px] bg-emerald-900 text-white hover:bg-emerald-900 disabled:opacity-80"
-          title="Online giving is not connected yet"
-        >
-          Give Now
-          <ChevronRight data-icon="inline-end" />
-        </Button>
-      </section>
-
-      <section className="flex flex-col gap-3">
         <MemberPortalSectionHeader title="Giving Summary" actionLabel="View all" />
         <MemberPortalCard className="p-0">
           <SummaryRow
             icon={BarChart3}
             title="This Month"
-            subtitle={`${currentMonthCount} transaction${currentMonthCount === 1 ? "" : "s"}`}
-            amount={formatMoney(currentMonthTotal)}
+            subtitle={`${data.currentMonthCount} transaction${data.currentMonthCount === 1 ? "" : "s"}`}
+            amount={formatMoney(data.currentMonthTotal)}
           />
           <SummaryRow
             icon={CalendarDays}
@@ -91,8 +54,49 @@ export function MemberPortalGivingModule({ data }: MemberPortalGivingModuleProps
           />
         </MemberPortalCard>
       </section>
+
+      <section className="flex flex-col gap-3">
+        <MemberPortalSectionHeader title="Recent Contributions" />
+        {data.recent.length > 0 ? (
+          <MemberPortalCard className="divide-y divide-amber-50 p-0">
+            {data.recent.map((item) => (
+              <div key={item.id} className="flex min-h-[76px] items-center gap-3 px-4 py-3">
+                <MemberPortalIconBubble icon={ReceiptText} className="size-11" />
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-slate-900">
+                    {getLabel(inflowTypeLabels, item.inflowType)}
+                  </p>
+                  <p className="mt-1 truncate text-xs text-slate-500">
+                    {formatContributionDate(item.inflowDate)}
+                    {item.referenceNumber?.trim() ? ` · ${item.referenceNumber}` : ""}
+                  </p>
+                </div>
+                <p className="shrink-0 text-sm font-semibold text-emerald-950">
+                  {formatMoney(item.amount)}
+                </p>
+              </div>
+            ))}
+          </MemberPortalCard>
+        ) : (
+          <WorkspaceEmptyState
+            title="No recorded contributions"
+            message="Contributions connected to your member record will appear here after the church treasury records them."
+            className="min-h-[180px] border-amber-100 bg-white"
+          />
+        )}
+      </section>
     </div>
   );
+}
+
+function formatContributionDate(value: string) {
+  const date = new Date(`${value}T00:00:00`);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleDateString(undefined, {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+  });
 }
 
 function SummaryRow({

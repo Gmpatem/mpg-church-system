@@ -32,6 +32,8 @@ export type MinistryDutyType = {
 
 export type MinistryDutyAssignment = {
   id: string;
+  scopeType: MinistryScopeType | null;
+  scopeId: string | null;
   dutyTypeId: string | null;
   dutyName: string;
   dutySystemKey: string | null;

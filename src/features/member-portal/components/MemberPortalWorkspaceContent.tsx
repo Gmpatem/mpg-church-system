@@ -59,27 +59,48 @@ function renderActiveModule({
         memberName={memberName}
         identity={identity}
         data={tabData.data}
+        unreadNotificationCount={foundation.unreadNotificationCount}
       />
     );
   }
 
   if (activeTab === "ministries" && tabData.tab === "ministries" && tabData.data) {
-    return <MemberMinistriesPortal data={tabData.data} />;
+    return (
+      <MemberMinistriesPortal
+        data={tabData.data}
+        unreadNotificationCount={foundation.unreadNotificationCount}
+      />
+    );
   }
 
   if (activeTab === "departments" && tabData.tab === "departments" && tabData.data) {
-    return <MemberPortalDirectoryModule data={tabData.data} />;
+    return (
+      <MemberPortalDirectoryModule
+        data={tabData.data}
+        unreadNotificationCount={foundation.unreadNotificationCount}
+      />
+    );
   }
 
   if (
     (activeTab === "events" && tabData.tab === "events") ||
     (activeTab === "calendar" && tabData.tab === "calendar")
   ) {
-    return <MemberPortalEventsModule events={tabData.data} />;
+    return (
+      <MemberPortalEventsModule
+        events={tabData.data}
+        unreadNotificationCount={foundation.unreadNotificationCount}
+      />
+    );
   }
 
   if (activeTab === "giving" && tabData.tab === "giving" && tabData.data) {
-    return <MemberPortalGivingModule data={tabData.data} />;
+    return (
+      <MemberPortalGivingModule
+        data={tabData.data}
+        unreadNotificationCount={foundation.unreadNotificationCount}
+      />
+    );
   }
 
   if (activeTab === "profile" && tabData.tab === "profile" && tabData.data) {
@@ -88,6 +109,7 @@ function renderActiveModule({
         churchName={churchName}
         memberName={memberName}
         data={tabData.data}
+        unreadNotificationCount={foundation.unreadNotificationCount}
       />
     );
   }

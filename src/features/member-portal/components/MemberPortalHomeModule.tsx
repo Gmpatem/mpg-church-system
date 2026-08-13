@@ -1,8 +1,8 @@
 import Link from "next/link";
 import {
-  BookOpen,
   CalendarDays,
   CheckCircle2,
+  CircleMinus,
   ChevronRight,
   HandHeart,
   Heart,
@@ -35,6 +35,7 @@ type MemberPortalHomeModuleProps = {
   memberName: string;
   identity: MemberPortalIdentity;
   data: MemberPortalOverviewData;
+  unreadNotificationCount?: number;
 };
 
 const QUICK_LINKS = [
@@ -44,19 +45,24 @@ const QUICK_LINKS = [
   { tab: "profile", label: "Profile", icon: User2 },
 ] as const;
 
-const FALLBACK_NEXT_UP: MemberPortalUpcomingEventItem = {
-  id: "fallback-youth-bible-study",
-  title: "Youth Bible Study",
-  event_type: "small_group",
-  location: "Room 3",
-  start_datetime: new Date().toISOString(),
-  end_datetime: new Date().toISOString(),
-  status: "scheduled",
-};
-
-function nextUpTime(event: MemberPortalUpcomingEventItem, isFallback: boolean) {
-  if (isFallback) return "Today · 4:00 PM";
+function nextUpTime(event: MemberPortalUpcomingEventItem) {
   return `${formatCompactDate(event.start_datetime)} · ${formatClockTime(event.start_datetime)}`;
+}
+
+function attendanceLabel(attendance: MemberPortalOverviewData["attendance"]) {
+  if (!attendance.lastSeenAt) return "No records";
+
+  const date = new Date(attendance.lastSeenAt);
+  if (Number.isNaN(date.getTime())) return "Recorded";
+
+  return `${attendance.presentCountLast90Days} in 90 days`;
+}
+
+function greetingForNow() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "Good morning";
+  if (hour < 18) return "Good afternoon";
+  return "Good evening";
 }
 
 export function MemberPortalHomeModule({
@@ -65,10 +71,10 @@ export function MemberPortalHomeModule({
   memberName,
   identity,
   data,
+  unreadNotificationCount = 0,
 }: MemberPortalHomeModuleProps) {
   const firstName = getFirstName(memberName);
-  const nextUp = data.upcomingEvents[0] ?? FALLBACK_NEXT_UP;
-  const usingFallbackNextUp = data.upcomingEvents.length === 0;
+  const nextUp = data.upcomingEvents[0] ?? null;
   const membershipStatus = getLabel(memberStatusLabels, identity.member.membership_status);
   const membershipType = getLabel(memberTypeLabels, identity.member.membership_type);
 
@@ -80,13 +86,16 @@ export function MemberPortalHomeModule({
             <MemberPortalChurchMark className="size-11" />
             <p className="truncate text-sm font-semibold text-emerald-950">{churchName}</p>
           </div>
-          <MemberPortalNotificationBell />
+          <MemberPortalNotificationBell
+            unreadCount={unreadNotificationCount}
+            href="#church-updates"
+          />
         </div>
       </header>
 
       <section className="flex items-center justify-between gap-4">
         <div className="min-w-0">
-          <p className="text-sm text-slate-700">Good morning,</p>
+          <p className="text-sm text-slate-700">{greetingForNow()},</p>
           <h1 className="text-3xl font-semibold leading-tight tracking-normal text-emerald-950">
             {firstName}!
           </h1>
@@ -95,20 +104,34 @@ export function MemberPortalHomeModule({
         <MemberPortalAvatar name={memberName} className="size-16" />
       </section>
 
-      <MemberPortalCard>
-        <div className="flex items-center justify-between gap-4">
-          <div className="min-w-0">
-            <p className="text-sm font-semibold text-slate-950">Next Up</p>
-            <p className="mt-2 text-sm text-slate-600">{nextUpTime(nextUp, usingFallbackNextUp)}</p>
-            <p className="mt-1 truncate text-base font-semibold text-slate-950">{nextUp.title}</p>
-            <p className="mt-1 flex items-center gap-1 text-sm text-slate-600">
-              <MapPin className="size-4 shrink-0 text-slate-500" />
-              <span className="truncate">{nextUp.location?.trim() ? nextUp.location : "Location not set"}</span>
-            </p>
+      {nextUp ? (
+        <MemberPortalCard>
+          <div className="flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-slate-950">Next Up</p>
+              <p className="mt-2 text-sm text-slate-600">{nextUpTime(nextUp)}</p>
+              <p className="mt-1 truncate text-base font-semibold text-slate-950">{nextUp.title}</p>
+              <p className="mt-1 flex items-center gap-1 text-sm text-slate-600">
+                <MapPin className="size-4 shrink-0 text-slate-500" />
+                <span className="truncate">{nextUp.location?.trim() ? nextUp.location : "Location not set"}</span>
+              </p>
+            </div>
+            <MemberPortalIconBubble icon={CalendarDays} />
           </div>
-          <MemberPortalIconBubble icon={Users} />
-        </div>
-      </MemberPortalCard>
+        </MemberPortalCard>
+      ) : (
+        <MemberPortalCard>
+          <div className="flex items-center gap-3">
+            <MemberPortalIconBubble icon={CalendarDays} />
+            <div>
+              <p className="font-semibold text-slate-950">No upcoming published events</p>
+              <p className="mt-1 text-sm text-slate-600">
+                Events will appear here after the church publishes them.
+              </p>
+            </div>
+          </div>
+        </MemberPortalCard>
+      )}
 
       <section className="flex flex-col gap-3">
         <MemberPortalSectionHeader title="Quick Access" />
@@ -137,21 +160,25 @@ export function MemberPortalHomeModule({
           <MemberPortalCard className="flex min-h-[98px] flex-col justify-between rounded-[16px] p-3">
             <p className="text-xs text-slate-600">Attendance</p>
             <div className="flex items-center gap-1 text-xs font-semibold text-emerald-900">
-              <CheckCircle2 className="size-4" />
-              <span>Present</span>
+              {data.attendance.lastSeenAt ? (
+                <CheckCircle2 className="size-4" />
+              ) : (
+                <CircleMinus className="size-4 text-slate-400" />
+              )}
+              <span>{attendanceLabel(data.attendance)}</span>
             </div>
           </MemberPortalCard>
           <MemberPortalCard className="flex min-h-[98px] flex-col justify-between rounded-[16px] p-3 text-center">
             <p className="text-xs text-slate-600">Service</p>
             <div>
               <p className="text-2xl font-semibold leading-none text-emerald-950">
-                {data.activeRoleCount || data.activeDepartmentCount}
+                {data.upcomingDutyCount}
               </p>
               <p className="mt-1 text-xs text-slate-600">Duties</p>
             </div>
           </MemberPortalCard>
           <MemberPortalCard className="flex min-h-[98px] flex-col justify-between rounded-[16px] p-3 text-center">
-            <p className="text-xs text-slate-600">Groups</p>
+            <p className="text-xs text-slate-600">Teams</p>
             <div>
               <p className="text-2xl font-semibold leading-none text-emerald-950">
                 {data.activeDepartmentCount}
@@ -189,6 +216,28 @@ export function MemberPortalHomeModule({
           <ChevronRight className="size-5 text-emerald-950" />
         </Link>
       </div>
+
+      <section id="church-updates" className="scroll-mt-24 flex flex-col gap-3">
+        <MemberPortalSectionHeader title="Church Updates" />
+        <MemberPortalCard className="divide-y divide-amber-50 p-0">
+          {data.notifications.slice(0, 5).map((item) => {
+            const content = (
+              <div className="px-4 py-3">
+                <p className="text-sm font-medium text-slate-900">{item.title}</p>
+                <p className="mt-1 text-sm leading-5 text-slate-600">{item.description}</p>
+              </div>
+            );
+
+            return item.href ? (
+              <Link key={item.id} href={item.href} className="block hover:bg-amber-50">
+                {content}
+              </Link>
+            ) : (
+              <div key={item.id}>{content}</div>
+            );
+          })}
+        </MemberPortalCard>
+      </section>
     </div>
   );
 }

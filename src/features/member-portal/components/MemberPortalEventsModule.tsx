@@ -1,4 +1,5 @@
 import { CalendarDays, Clock, Star } from "lucide-react";
+import { WorkspaceEmptyState } from "@/components/workspace";
 import { eventTypeLabels, getLabel } from "@/lib/display-maps";
 import type { CalendarEvent } from "@/features/calendar/types";
 import {
@@ -6,89 +7,39 @@ import {
   MemberPortalCard,
   MemberPortalDateBlock,
   MemberPortalSectionHeader,
-  MemberPortalSegmentedControl,
   MemberPortalStatusPill,
 } from "./MemberPortalAppPrimitives";
 import { MemberPortalModuleHero } from "./MemberPortalModuleHero";
 
 type MemberPortalEventsModuleProps = {
   events: CalendarEvent[];
+  unreadNotificationCount?: number;
 };
 
-type DisplayEvent = CalendarEvent & {
-  description?: string;
-  responseLabel?: string;
-  responseTone?: "success" | "gold";
-};
-
-const fallbackEvents: DisplayEvent[] = [
-  {
-    id: "fallback-youth-bible-study",
-    title: "Youth Bible Study",
-    start: "2026-05-25T16:00:00",
-    end: "2026-05-25T17:30:00",
-    event_type: "study",
-    department_id: null,
-    location: "Room 3",
-    is_all_day: false,
-    description: "Study · Fellowship · Prayer",
-    responseLabel: "You're going",
-    responseTone: "success",
-  },
-  {
-    id: "fallback-choir-rehearsal",
-    title: "Choir Rehearsal",
-    start: "2026-05-31T17:00:00",
-    end: "2026-05-31T18:30:00",
-    event_type: "music",
-    department_id: null,
-    location: "Music Room",
-    is_all_day: false,
-    description: "All voices welcome!",
-    responseLabel: "Interested",
-    responseTone: "gold",
-  },
-  {
-    id: "fallback-community-outreach",
-    title: "Community Outreach",
-    start: "2026-06-07T09:00:00",
-    end: "2026-06-07T12:00:00",
-    event_type: "outreach",
-    department_id: null,
-    location: "City Center",
-    is_all_day: false,
-    description: "Let's serve our community",
-    responseLabel: "Interested",
-    responseTone: "gold",
-  },
-];
-
-export function MemberPortalEventsModule({ events }: MemberPortalEventsModuleProps) {
-  const displayEvents: DisplayEvent[] = events.length > 0
-    ? events.map((event) => ({
-        ...event,
-        description: getLabel(eventTypeLabels, event.event_type),
-        responseLabel: "Interested",
-        responseTone: "gold",
-      }))
-    : fallbackEvents;
+export function MemberPortalEventsModule({
+  events,
+  unreadNotificationCount = 0,
+}: MemberPortalEventsModuleProps) {
+  const displayEvents = events.map((event) => ({
+    ...event,
+    description: event.description?.trim()
+      ? event.description
+      : getLabel(eventTypeLabels, event.event_type),
+  }));
 
   return (
     <div className="flex flex-col gap-5">
-      <MemberPortalModuleHero title="Events" description="Stay connected" />
-
-      <MemberPortalSegmentedControl
-        items={[
-          { label: "Upcoming", active: true },
-          { label: "My Events" },
-          { label: "Calendar" },
-        ]}
+      <MemberPortalModuleHero
+        title="Events"
+        description="Published church events"
+        unreadNotificationCount={unreadNotificationCount}
       />
 
       <section className="flex flex-col gap-3">
         <MemberPortalSectionHeader title="Upcoming Events" />
-        <div className="flex flex-col gap-4">
-          {displayEvents.map((event, index) => (
+        {displayEvents.length > 0 ? (
+          <div className="flex flex-col gap-4">
+            {displayEvents.map((event, index) => (
             <MemberPortalCard key={event.id} className="overflow-hidden p-0">
               <div className="flex min-h-[156px]">
                 <MemberPortalDateBlock value={event.start} />
@@ -113,10 +64,10 @@ export function MemberPortalEventsModule({ events }: MemberPortalEventsModulePro
                     </p>
                     <p className="mt-1 truncate text-sm text-slate-600">{event.description}</p>
                     <div className="mt-3">
-                      <MemberPortalStatusPill tone={event.responseTone ?? "gold"}>
+                      <MemberPortalStatusPill tone="neutral">
                         <span className="inline-flex items-center gap-1">
-                          {event.responseTone === "gold" ? <Star className="size-3.5" /> : null}
-                          {event.responseLabel ?? "Interested"}
+                          <Star className="size-3.5" />
+                          Published
                         </span>
                       </MemberPortalStatusPill>
                     </div>
@@ -124,8 +75,15 @@ export function MemberPortalEventsModule({ events }: MemberPortalEventsModulePro
                 </div>
               </div>
             </MemberPortalCard>
-          ))}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <WorkspaceEmptyState
+            title="No upcoming events"
+            message="There are no upcoming published church events right now. New events will appear here after they are published."
+            className="min-h-[220px] border-amber-100 bg-white"
+          />
+        )}
       </section>
     </div>
   );

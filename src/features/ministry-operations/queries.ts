@@ -58,6 +58,8 @@ function mapDuty(row: any): MinistryDutyAssignment {
 
   return {
     id: row.id,
+    scopeType: row.scope_type ?? null,
+    scopeId: row.scope_id ?? null,
     dutyTypeId: row.duty_type_id ?? null,
     dutyName: dutyType?.name ?? "Ministry duty",
     dutySystemKey: dutyType?.system_key ?? null,

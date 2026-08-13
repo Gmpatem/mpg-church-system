@@ -2,15 +2,14 @@
 
 import Link from "next/link";
 import { BookOpen, CalendarCheck, Clock, MapPin, Music, Users } from "lucide-react";
+import { WorkspaceEmptyState } from "@/components/workspace";
 import type { MemberMinistryPortalData, MinistryDutyStatus } from "../types";
 import {
   formatClockTime,
-  formatReadableDate,
   MemberPortalCard,
   MemberPortalDateBlock,
   MemberPortalIconBubble,
   MemberPortalSectionHeader,
-  MemberPortalSegmentedControl,
   MemberPortalStatusPill,
 } from "@/features/member-portal/components/MemberPortalAppPrimitives";
 import { MemberPortalModuleHero } from "@/features/member-portal/components/MemberPortalModuleHero";
@@ -36,68 +35,34 @@ function statusLabel(status: MinistryDutyStatus) {
     .join(" ");
 }
 
-const fallbackDuties = [
-  {
-    id: "fallback-door-welcome",
-    dutyName: "Door Welcome",
-    location: "Main Entrance",
-    serviceDate: "2026-05-25",
-    startsAt: "08:15",
-    status: "confirmed" as MinistryDutyStatus,
-    team: "Team A",
-  },
-  {
-    id: "fallback-offering",
-    dutyName: "Offering Collection",
-    location: "During Service",
-    serviceDate: "2026-05-25",
-    startsAt: "12:15",
-    status: "scheduled" as MinistryDutyStatus,
-    team: "Team B",
-  },
-  {
-    id: "fallback-cleaning",
-    dutyName: "Sanctuary Cleaning",
-    location: "After Service",
-    serviceDate: "2026-05-31",
-    startsAt: "14:00",
-    status: "scheduled" as MinistryDutyStatus,
-    team: "Team C",
-  },
-];
-
-export function MemberMinistriesPortal({ data }: { data: MemberMinistryPortalData }) {
-  const duties = data.duties.length > 0 ? data.duties : fallbackDuties;
-  const groups = data.ministries.length > 0
-    ? data.ministries
-    : [
-        {
-          id: "fallback-youth-bible-study",
-          name: "Youth Bible Study",
-          roleTitle: "Saturday · 4:00 PM",
-          href: `/my/${data.church.slug}?tab=events`,
-          upcomingDutyCount: 1,
-          nextDutyLabel: "Room 3",
-        },
-      ];
+export function MemberMinistriesPortal({
+  data,
+  unreadNotificationCount = 0,
+}: {
+  data: MemberMinistryPortalData;
+  unreadNotificationCount?: number;
+}) {
+  const ministryNameByScopeId = new Map(
+    data.ministries.map((ministry) => [ministry.scopeId, ministry.name])
+  );
 
   return (
     <div className="flex flex-col gap-5">
-      <MemberPortalModuleHero title="My Ministries" description="Your service, your impact" />
-
-      <MemberPortalSegmentedControl
-        items={[
-          { label: "My Duties", active: true },
-          { label: "My Groups" },
-          { label: "My Teams" },
-        ]}
+      <MemberPortalModuleHero
+        title="My Ministries"
+        description="Your department assignments and duties"
+        unreadNotificationCount={unreadNotificationCount}
       />
 
       <section className="flex flex-col gap-3">
         <MemberPortalSectionHeader title="Upcoming Duties" actionLabel="View all" />
-        <div className="flex flex-col gap-3">
-          {duties.map((duty, index) => {
-            const href = data.duties.length > 0 ? `/my/${data.church.slug}/duties/${duty.id}` : undefined;
+        {data.duties.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            {data.duties.map((duty) => {
+            const href = `/my/${data.church.slug}/duties/${duty.id}`;
+            const ministryName = duty.scopeId
+              ? ministryNameByScopeId.get(duty.scopeId) ?? "Ministry service"
+              : "Ministry service";
             const content = (
               <MemberPortalCard className="flex min-h-[120px] overflow-hidden p-0">
                 <MemberPortalDateBlock value={duty.serviceDate} />
@@ -106,12 +71,9 @@ export function MemberMinistriesPortal({ data }: { data: MemberMinistryPortalDat
                     <div className="min-w-0">
                       <p className="truncate font-semibold text-slate-950">{duty.dutyName}</p>
                       <p className="mt-2 truncate text-sm text-slate-600">
-                        {"location" in duty ? duty.location : data.ministries[index]?.name ?? "Ministry service"}
+                        {ministryName}
                       </p>
                     </div>
-                    <MemberPortalStatusPill tone="success">
-                      {"team" in duty ? duty.team : `Team ${String.fromCharCode(65 + (index % 3))}`}
-                    </MemberPortalStatusPill>
                   </div>
                   <div className="mt-3 flex items-center justify-between gap-3">
                     <p className="flex items-center gap-1 text-sm text-slate-600">
@@ -126,21 +88,27 @@ export function MemberMinistriesPortal({ data }: { data: MemberMinistryPortalDat
               </MemberPortalCard>
             );
 
-            return href ? (
+            return (
               <Link key={duty.id} href={href} className="block">
                 {content}
               </Link>
-            ) : (
-              <div key={duty.id}>{content}</div>
             );
           })}
-        </div>
+          </div>
+        ) : (
+          <WorkspaceEmptyState
+            title="No upcoming duties"
+            message="Your upcoming ministry duties will appear here after a ministry leader assigns them."
+            className="min-h-[180px] border-amber-100 bg-white"
+          />
+        )}
       </section>
 
       <section className="flex flex-col gap-3">
-        <MemberPortalSectionHeader title="My Groups" actionLabel="View all" />
-        <div className="flex flex-col gap-3">
-          {groups.map((ministry) => {
+        <MemberPortalSectionHeader title="My Departments" actionLabel="View all" />
+        {data.ministries.length > 0 ? (
+          <div className="flex flex-col gap-3">
+            {data.ministries.map((ministry) => {
             const Icon = iconForName(ministry.name);
             return (
               <Link
@@ -154,7 +122,7 @@ export function MemberMinistriesPortal({ data }: { data: MemberMinistryPortalDat
                     <p className="truncate font-semibold text-emerald-950">{ministry.name}</p>
                     <p className="mt-1 flex items-center gap-1 text-sm text-slate-600">
                       <CalendarCheck className="size-4 text-slate-500" />
-                      <span className="truncate">{ministry.roleTitle ?? formatReadableDate(null)}</span>
+                      <span className="truncate">{ministry.roleTitle ?? "Member"}</span>
                     </p>
                     <p className="mt-1 flex items-center gap-1 text-xs text-slate-500">
                       <MapPin className="size-3.5" />
@@ -167,8 +135,15 @@ export function MemberMinistriesPortal({ data }: { data: MemberMinistryPortalDat
                 </div>
               </Link>
             );
-          })}
-        </div>
+            })}
+          </div>
+        ) : (
+          <WorkspaceEmptyState
+            title="No ministry assignments"
+            message="You are not linked to an active department yet. Assignments made by church leaders will appear here."
+            className="min-h-[180px] border-amber-100 bg-white"
+          />
+        )}
       </section>
     </div>
   );

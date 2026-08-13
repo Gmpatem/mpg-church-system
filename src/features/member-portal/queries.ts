@@ -1,4 +1,5 @@
 import "server-only";
+import { cache } from "react";
 
 import { getMemberMinistryPortalData } from "@/features/ministry-operations/queries";
 
@@ -99,6 +100,45 @@ type TreasuryInflowRow = {
   reference_number: string | null;
 };
 
+type AttendanceLatestRow = {
+  checked_in_at: string;
+  check_in_method: string | null;
+};
+
+type GivingSummaryRow = {
+  inflow_type: string | null;
+  amount: number | string | null;
+  inflow_date: string;
+};
+
+async function getAllMemberGivingRows(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  churchId: string,
+  memberId: string
+) {
+  const pageSize = 1000;
+  const rows: GivingSummaryRow[] = [];
+
+  for (let offset = 0; ; offset += pageSize) {
+    const { data, error } = await supabase
+      .from("treasury_inflows")
+      .select("inflow_type, amount, inflow_date")
+      .eq("church_id", churchId)
+      .eq("member_id", memberId)
+      .order("inflow_date", { ascending: false })
+      .range(offset, offset + pageSize - 1);
+
+    if (error) throw new Error(error.message);
+
+    const page = (data ?? []) as GivingSummaryRow[];
+    rows.push(...page);
+
+    if (page.length < pageSize) break;
+  }
+
+  return rows;
+}
+
 function mapProfile(profile: {
   id: string;
   full_name: string | null;
@@ -139,7 +179,7 @@ function formatFullName(member: MemberPortalMemberSummary) {
   return [member.first_name, member.last_name].filter(Boolean).join(" ").trim();
 }
 
-async function getCurrentLinkedMemberInternal(
+const getCurrentLinkedMemberInternal = cache(async function getCurrentLinkedMemberInternal(
   churchSlug: string
 ): Promise<(MemberPortalIdentity & { memberRow: MemberRow }) | null> {
   const ctx = await requireMemberPortalAccess(churchSlug);
@@ -219,7 +259,7 @@ async function getCurrentLinkedMemberInternal(
     household,
     memberRow: member,
   };
-}
+});
 
 export async function getCurrentLinkedMember(
   churchSlug: string
@@ -237,6 +277,17 @@ export async function getMemberPortalFoundation(
 ): Promise<MemberPortalFoundationData> {
   const ctx = await requireMemberPortalAccess(churchSlug);
   const identity = await getCurrentLinkedMemberInternal(churchSlug);
+  const supabase = await createClient();
+  const { count: unreadNotificationCount, error: notificationError } = await supabase
+    .from("church_notifications")
+    .select("id", { count: "exact", head: true })
+    .eq("church_id", ctx.churchId)
+    .eq("target_user_id", ctx.userId)
+    .eq("is_read", false);
+
+  if (notificationError) {
+    throw new Error(notificationError.message);
+  }
 
   if (!identity) {
     return {
@@ -246,7 +297,8 @@ export async function getMemberPortalFoundation(
       profile: mapProfile(ctx.profile ?? null),
       linkStatus: "unlinked",
       identity: null,
-    requiresPasswordChange: (ctx.profile as any)?.must_change_password ?? false,
+      unreadNotificationCount: unreadNotificationCount ?? 0,
+      requiresPasswordChange: (ctx.profile as any)?.must_change_password ?? false,
     };
   }
 
@@ -259,6 +311,7 @@ export async function getMemberPortalFoundation(
     profile: mapProfile(ctx.profile ?? null),
     linkStatus: "linked",
     identity: cleanIdentity,
+    unreadNotificationCount: unreadNotificationCount ?? 0,
     requiresPasswordChange: (ctx.profile as any)?.must_change_password ?? false,
   };
 }
@@ -270,12 +323,24 @@ export async function getMemberPortalOverview(
   if (!identity) return null;
 
   const supabase = await createClient();
+  const now = new Date();
+  const nowIso = now.toISOString();
+  const today = nowIso.slice(0, 10);
+  const nextDutyWindow = new Date(now);
+  nextDutyWindow.setDate(nextDutyWindow.getDate() + 45);
+  const attendanceSince = new Date(now);
+  attendanceSince.setDate(attendanceSince.getDate() - 90);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
 
   const [
     departmentCountResult,
     roleCountResult,
     eventsResult,
     churchNotificationsResult,
+    dutyCountResult,
+    latestAttendanceResult,
+    attendanceCountResult,
+    currentMonthAttendanceCountResult,
   ] = await Promise.all([
     supabase
       .from("member_departments")
@@ -295,9 +360,9 @@ export async function getMemberPortalOverview(
       .from("church_events")
       .select("id, title, event_type, location, start_datetime, end_datetime, status")
       .eq("church_id", identity.churchId)
-      .eq("status", "scheduled")
-      .in("workflow_state", ["approved", "published"])
-      .gte("start_datetime", new Date().toISOString())
+      .eq("workflow_state", "published")
+      .neq("status", "cancelled")
+      .gte("end_datetime", nowIso)
       .order("start_datetime", { ascending: true })
       .limit(5),
     identity.profile?.id
@@ -323,6 +388,38 @@ export async function getMemberPortalOverview(
           }>;
           error: null;
         }),
+    supabase
+      .from("ministry_duty_assignments")
+      .select("id", { count: "exact", head: true })
+      .eq("church_id", identity.churchId)
+      .eq("member_id", identity.member.id)
+      .gte("service_date", today)
+      .lte("service_date", nextDutyWindow.toISOString().slice(0, 10))
+      .not("status", "in", '("cancelled","replaced")'),
+    supabase
+      .from("attendance_records")
+      .select("checked_in_at, check_in_method")
+      .eq("church_id", identity.churchId)
+      .eq("member_id", identity.member.id)
+      .neq("status", "removed")
+      .gte("checked_in_at", attendanceSince.toISOString())
+      .order("checked_in_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    supabase
+      .from("attendance_records")
+      .select("id", { count: "exact", head: true })
+      .eq("church_id", identity.churchId)
+      .eq("member_id", identity.member.id)
+      .neq("status", "removed")
+      .gte("checked_in_at", attendanceSince.toISOString()),
+    supabase
+      .from("attendance_records")
+      .select("id", { count: "exact", head: true })
+      .eq("church_id", identity.churchId)
+      .eq("member_id", identity.member.id)
+      .neq("status", "removed")
+      .gte("checked_in_at", monthStart),
   ]);
 
   if (departmentCountResult.error) {
@@ -335,6 +432,26 @@ export async function getMemberPortalOverview(
 
   if (eventsResult.error) {
     throw new Error(eventsResult.error.message);
+  }
+
+  if (churchNotificationsResult.error) {
+    throw new Error(churchNotificationsResult.error.message);
+  }
+
+  if (dutyCountResult.error) {
+    throw new Error(dutyCountResult.error.message);
+  }
+
+  if (latestAttendanceResult.error) {
+    throw new Error(latestAttendanceResult.error.message);
+  }
+
+  if (attendanceCountResult.error) {
+    throw new Error(attendanceCountResult.error.message);
+  }
+
+  if (currentMonthAttendanceCountResult.error) {
+    throw new Error(currentMonthAttendanceCountResult.error.message);
   }
 
   const activeDepartmentCount = departmentCountResult.count ?? 0;
@@ -364,7 +481,7 @@ export async function getMemberPortalOverview(
     },
   ];
 
-  const liveNotifications = ((churchNotificationsResult.error ? [] : churchNotificationsResult.data) ?? []).map((row) => ({
+  const liveNotifications = (churchNotificationsResult.data ?? []).map((row) => ({
     id: `church-notification-${row.id}`,
     title: row.title ?? "Church update",
     description: row.message ?? "You have a new church notification.",
@@ -375,6 +492,7 @@ export async function getMemberPortalOverview(
   }));
 
   const notifications = [...liveNotifications, ...summaryNotifications];
+  const latestAttendance = latestAttendanceResult.data as AttendanceLatestRow | null;
 
   const { memberRow: _memberRow, ...cleanIdentity } = identity;
 
@@ -382,6 +500,13 @@ export async function getMemberPortalOverview(
     identity: cleanIdentity,
     activeDepartmentCount,
     activeRoleCount,
+    upcomingDutyCount: dutyCountResult.count ?? 0,
+    attendance: {
+      lastSeenAt: latestAttendance?.checked_in_at ?? null,
+      lastMethod: latestAttendance?.check_in_method ?? null,
+      presentCountLast90Days: attendanceCountResult.count ?? 0,
+      currentMonthPresent: currentMonthAttendanceCountResult.count ?? 0,
+    },
     upcomingEvents: (eventsResult.data ?? []) as EventRow[],
     notifications,
   };
@@ -522,20 +647,24 @@ export async function getMemberPortalGiving(
   if (!identity) return null;
 
   const supabase = await createClient();
+  const now = new Date();
+  const yearStart = new Date(now.getFullYear(), 0, 1).toISOString().slice(0, 10);
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10);
 
-  const { data, error } = await supabase
-    .from("treasury_inflows")
-    .select("id, inflow_type, amount, inflow_date, note, reference_number")
-    .eq("church_id", identity.churchId)
-    .eq("member_id", identity.member.id)
-    .order("inflow_date", { ascending: false })
-    .limit(20);
+  const [recentResult, allTimeRows] = await Promise.all([
+    supabase
+      .from("treasury_inflows")
+      .select("id, inflow_type, amount, inflow_date, note, reference_number")
+      .eq("church_id", identity.churchId)
+      .eq("member_id", identity.member.id)
+      .order("inflow_date", { ascending: false })
+      .limit(20),
+    getAllMemberGivingRows(supabase, identity.churchId, identity.member.id),
+  ]);
 
-  if (error) {
-    throw new Error(error.message);
-  }
+  if (recentResult.error) throw new Error(recentResult.error.message);
 
-  const inflows = ((data ?? []) as TreasuryInflowRow[]).map((row) => ({
+  const inflows = ((recentResult.data ?? []) as TreasuryInflowRow[]).map((row) => ({
     id: row.id,
     inflowType: row.inflow_type,
     amount: Number(row.amount ?? 0),
@@ -544,29 +673,24 @@ export async function getMemberPortalGiving(
     referenceNumber: row.reference_number,
   }));
 
-  const yearStart = new Date(new Date().getFullYear(), 0, 1);
-  const yearStartTime = yearStart.getTime();
+  const sumAmounts = (rows: GivingSummaryRow[]) =>
+    rows.reduce((sum, item) => sum + Number(item.amount ?? 0), 0);
 
-  const totalGiving = inflows.reduce((sum, item) => sum + item.amount, 0);
-  const yearToDateTotal = inflows.reduce((sum, item) => {
-    const parsed = new Date(item.inflowDate).getTime();
-    if (Number.isNaN(parsed) || parsed < yearStartTime) return sum;
-    return sum + item.amount;
-  }, 0);
+  const totalGiving = sumAmounts(allTimeRows);
+  const yearToDateRows = allTimeRows.filter((item) => item.inflow_date >= yearStart);
+  const currentMonthRows = allTimeRows.filter((item) => item.inflow_date >= monthStart);
+  const yearToDateTotal = sumAmounts(yearToDateRows);
+  const currentMonthTotal = sumAmounts(currentMonthRows);
 
-  const totalTithe = inflows
-    .filter((item) => item.inflowType === "tithe")
-    .reduce((sum, item) => sum + item.amount, 0);
-  const totalOffering = inflows
-    .filter((item) => item.inflowType === "offering")
-    .reduce((sum, item) => sum + item.amount, 0);
-  const totalDonation = inflows
-    .filter((item) => item.inflowType === "donation")
-    .reduce((sum, item) => sum + item.amount, 0);
+  const totalTithe = sumAmounts(allTimeRows.filter((item) => item.inflow_type === "tithe"));
+  const totalOffering = sumAmounts(allTimeRows.filter((item) => item.inflow_type === "offering"));
+  const totalDonation = sumAmounts(allTimeRows.filter((item) => item.inflow_type === "donation"));
 
   return {
     totalGiving,
     yearToDateTotal,
+    currentMonthTotal,
+    currentMonthCount: currentMonthRows.length,
     totalTithe,
     totalOffering,
     totalDonation,
@@ -609,13 +733,13 @@ export async function getMemberPortalTabData(
 
   if (tab === "calendar") {
     const ctx = await requireMemberPortalAccess(churchSlug);
-    const events = await getPublishedEvents(ctx.churchId);
+    const events = await getPublishedEvents(ctx.churchId, undefined, { upcomingOnly: true });
     return { tab: "calendar", data: events };
   }
 
   if (tab === "events") {
     const ctx = await requireMemberPortalAccess(churchSlug);
-    const events = await getPublishedEvents(ctx.churchId);
+    const events = await getPublishedEvents(ctx.churchId, undefined, { upcomingOnly: true });
     return { tab: "events", data: events };
   }
 
@@ -627,6 +751,8 @@ export async function getMemberPortalTabData(
         data: {
           totalGiving: 0,
           yearToDateTotal: 0,
+          currentMonthTotal: 0,
+          currentMonthCount: 0,
           totalTithe: 0,
           totalOffering: 0,
           totalDonation: 0,

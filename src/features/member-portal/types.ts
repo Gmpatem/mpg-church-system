@@ -56,6 +56,7 @@ export type MemberPortalFoundationData = {
   profile: MemberPortalProfileSummary | null;
   linkStatus: "linked" | "unlinked";
   identity: MemberPortalIdentity | null;
+  unreadNotificationCount: number;
   requiresPasswordChange?: boolean;
 };
 
@@ -83,6 +84,13 @@ export type MemberPortalOverviewData = {
   identity: MemberPortalIdentity;
   activeDepartmentCount: number;
   activeRoleCount: number;
+  upcomingDutyCount: number;
+  attendance: {
+    lastSeenAt: string | null;
+    lastMethod: string | null;
+    presentCountLast90Days: number;
+    currentMonthPresent: number;
+  };
   upcomingEvents: MemberPortalUpcomingEventItem[];
   notifications: MemberPortalOverviewNotificationItem[];
 };
@@ -156,6 +164,8 @@ export type MemberPortalGivingItem = {
 export type MemberPortalGivingData = {
   totalGiving: number;
   yearToDateTotal: number;
+  currentMonthTotal: number;
+  currentMonthCount: number;
   totalTithe: number;
   totalOffering: number;
   totalDonation: number;

@@ -7,6 +7,7 @@ type MemberPortalModuleHeroProps = {
   title: string;
   description?: string;
   badges?: string[];
+  unreadNotificationCount?: number;
   className?: string;
 };
 
@@ -15,6 +16,7 @@ export function MemberPortalModuleHero({
   title,
   description,
   badges,
+  unreadNotificationCount = 0,
   className,
 }: MemberPortalModuleHeroProps) {
   return (
@@ -35,7 +37,7 @@ export function MemberPortalModuleHero({
           </h1>
           {description ? <p className="mt-1 text-sm leading-5 text-emerald-50">{description}</p> : null}
         </div>
-        <MemberPortalNotificationBell light />
+        <MemberPortalNotificationBell light unreadCount={unreadNotificationCount} />
       </div>
       {badges && badges.length > 0 ? (
         <div className="relative mt-4 flex gap-2 overflow-x-auto">

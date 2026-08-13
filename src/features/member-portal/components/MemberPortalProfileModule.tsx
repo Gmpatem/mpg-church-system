@@ -16,6 +16,7 @@ type MemberPortalProfileModuleProps = {
   churchName: string;
   memberName: string;
   data: MemberPortalProfileData;
+  unreadNotificationCount?: number;
 };
 
 function completionPercent(fields: MemberPortalProfileData["fields"]) {
@@ -46,13 +47,18 @@ export function MemberPortalProfileModule({
   churchName,
   memberName,
   data,
+  unreadNotificationCount = 0,
 }: MemberPortalProfileModuleProps) {
   const fields = data.fields;
   const completion = completionPercent(fields);
 
   return (
     <div className="flex flex-col gap-5">
-      <MemberPortalModuleHero title="My Profile" description="Manage your information" />
+      <MemberPortalModuleHero
+        title="My Profile"
+        description="Your church member information"
+        unreadNotificationCount={unreadNotificationCount}
+      />
 
       <MemberPortalCard className="pt-4 text-center">
         <div className="relative mx-auto w-fit">

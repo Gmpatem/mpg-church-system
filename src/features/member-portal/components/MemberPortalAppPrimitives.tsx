@@ -91,20 +91,42 @@ export function MemberPortalChurchMark({ className }: { className?: string }) {
   );
 }
 
-export function MemberPortalNotificationBell({ light = false }: { light?: boolean }) {
-  return (
-    <button
-      type="button"
-      className={cn(
-        "mobile-touch-feedback relative flex size-10 shrink-0 items-center justify-center rounded-full",
-        light ? "text-white hover:bg-white/10" : "bg-white text-emerald-950 shadow-sm hover:bg-amber-50"
-      )}
-      aria-label="Notifications"
-    >
-      <Bell className="size-5" />
-      <span className="absolute right-2 top-2 size-2.5 rounded-full bg-red-500 ring-2 ring-white" />
-    </button>
+export function MemberPortalNotificationBell({
+  light = false,
+  unreadCount = 0,
+  href,
+}: {
+  light?: boolean;
+  unreadCount?: number;
+  href?: string;
+}) {
+  const className = cn(
+    "mobile-touch-feedback relative flex size-10 shrink-0 items-center justify-center rounded-full",
+    light ? "text-white hover:bg-white/10" : "bg-white text-emerald-950 shadow-sm hover:bg-amber-50"
   );
+  const label = unreadCount > 0
+    ? `${unreadCount} unread notifications`
+    : "No unread notifications";
+  const content = (
+    <>
+      <Bell className="size-5" />
+      {unreadCount > 0 ? (
+        <span className="absolute -right-0.5 -top-0.5 flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-5 text-white ring-2 ring-white">
+          {unreadCount > 99 ? "99+" : unreadCount}
+        </span>
+      ) : null}
+    </>
+  );
+
+  if (href) {
+    return (
+      <Link href={href} className={className} aria-label={label}>
+        {content}
+      </Link>
+    );
+  }
+
+  return <span className={className} aria-label={label}>{content}</span>;
 }
 
 export function MemberPortalAvatar({
@@ -279,7 +301,7 @@ export function MemberPortalListRow({
         <p className="truncate text-sm font-medium text-slate-950">{label}</p>
         {detail ? <p className="truncate text-xs text-slate-500">{detail}</p> : null}
       </div>
-      <ChevronRight className="size-4 shrink-0 text-emerald-950" />
+      {href ? <ChevronRight className="size-4 shrink-0 text-emerald-950" /> : null}
     </>
   );
 
