@@ -1,39 +1,20 @@
+import "server-only";
+
 import { normalizeSupabaseErrorMessage } from "@/lib/supabase/errors";
+import {
+  CORE_CHURCH_DEPARTMENTS as DEFAULT_CHURCH_DEPARTMENTS,
+  type CoreChurchDepartmentKey,
+} from "./catalog";
+import { ensureDepartmentFinanceSetup } from "./finance-setup";
+
+export { CORE_CHURCH_DEPARTMENTS } from "./catalog";
+export type { CoreChurchDepartmentKey } from "./catalog";
 
 type SupabaseLike = {
   from: (table: string) => any;
 };
 
-export const CORE_CHURCH_DEPARTMENTS = [
-  {
-    key: "sabbath_school",
-    name: "Sabbath School",
-    code: "SABBATH_SCHOOL",
-    description: "Bible study classes, lesson groups, and Sabbath School coordination.",
-  },
-  {
-    key: "deacons",
-    name: "Deacons Department",
-    code: "DEACONS",
-    description: "Deacon operations, service support, welcome, offering, and facility readiness.",
-  },
-  {
-    key: "children",
-    name: "Children's Department",
-    code: "CHILDREN",
-    description: "Children's ministry, child records, classes, safety, and parent follow-up.",
-  },
-  {
-    key: "media",
-    name: "Media Department",
-    code: "MEDIA",
-    description: "Media requests, livestream, audio visual support, and service run sheets.",
-  },
-] as const;
-
-export type CoreChurchDepartmentKey = (typeof CORE_CHURCH_DEPARTMENTS)[number]["key"];
-
-function departmentNameMatches(name: string, candidates: string[]) {
+function departmentNameMatches(name: string, candidates: readonly string[]) {
   const normalized = name.trim().toLowerCase();
   return candidates.some((candidate) => normalized === candidate.toLowerCase());
 }
@@ -43,13 +24,10 @@ export async function findCoreDepartment(
   churchId: string,
   key: CoreChurchDepartmentKey
 ) {
-  const template = CORE_CHURCH_DEPARTMENTS.find((department) => department.key === key);
+  const template = DEFAULT_CHURCH_DEPARTMENTS.find((department) => department.key === key);
   if (!template) return null;
 
-  const nameCandidates =
-    key === "children"
-      ? [template.name, "Children Department", "Children's Ministry", "Children Ministry"]
-      : [template.name];
+  const nameCandidates = [template.name, ...template.aliases];
 
   const { data, error } = await supabase
     .from("church_departments")
@@ -76,9 +54,26 @@ export async function ensureCoreDepartment(
   key: CoreChurchDepartmentKey
 ) {
   const existing = await findCoreDepartment(supabase, churchId, key);
-  if (existing) return { ok: true as const, department: existing, created: false };
+  if (existing) {
+    const financeResult = await ensureDepartmentFinanceSetup({
+      supabase,
+      churchId,
+      department: {
+        id: existing.id,
+        department_name: existing.department_name,
+        code: existing.code ?? null,
+        is_active: existing.is_active !== false,
+      },
+    });
 
-  const template = CORE_CHURCH_DEPARTMENTS.find((department) => department.key === key);
+    if (!financeResult.ok) {
+      return { ok: false as const, error: financeResult.error };
+    }
+
+    return { ok: true as const, department: existing, created: false };
+  }
+
+  const template = DEFAULT_CHURCH_DEPARTMENTS.find((department) => department.key === key);
   if (!template) {
     return { ok: false as const, error: "Core department template was not found." };
   }
@@ -100,6 +95,21 @@ export async function ensureCoreDepartment(
       ok: false as const,
       error: normalizeSupabaseErrorMessage(error, `Failed to create ${template.name}.`),
     };
+  }
+
+  const financeResult = await ensureDepartmentFinanceSetup({
+    supabase,
+    churchId,
+    department: {
+      id: data.id,
+      department_name: data.department_name,
+      code: data.code ?? null,
+      is_active: data.is_active !== false,
+    },
+  });
+
+  if (!financeResult.ok) {
+    return { ok: false as const, error: financeResult.error };
   }
 
   return { ok: true as const, department: data, created: true };
@@ -124,28 +134,64 @@ export async function ensureCoreChurchDepartments(
   const existing = data ?? [];
   const created: string[] = [];
 
-  for (const template of CORE_CHURCH_DEPARTMENTS) {
-    const alreadyExists = existing.some((department: any) => {
+  for (const template of DEFAULT_CHURCH_DEPARTMENTS) {
+    const matchedDepartment = existing.find((department: any) => {
       const code = String(department.code ?? "").trim().toUpperCase();
       const name = String(department.department_name ?? "");
-      return code === template.code || departmentNameMatches(name, [template.name]);
+      return code === template.code || departmentNameMatches(name, [template.name, ...template.aliases]);
     });
 
-    if (alreadyExists) continue;
+    if (matchedDepartment) {
+      const financeResult = await ensureDepartmentFinanceSetup({
+        supabase,
+        churchId,
+        department: {
+          id: matchedDepartment.id,
+          department_name: matchedDepartment.department_name,
+          code: matchedDepartment.code ?? null,
+          is_active: matchedDepartment.is_active !== false,
+        },
+      });
 
-    const { error: insertError } = await supabase.from("church_departments").insert({
-      church_id: churchId,
-      department_name: template.name,
-      code: template.code,
-      description: template.description,
-      is_active: true,
-    });
+      if (!financeResult.ok) {
+        return { ok: false as const, error: financeResult.error };
+      }
 
-    if (insertError) {
+      continue;
+    }
+
+    const { data: insertedDepartment, error: insertError } = await supabase
+      .from("church_departments")
+      .insert({
+        church_id: churchId,
+        department_name: template.name,
+        code: template.code,
+        description: template.description,
+        is_active: true,
+      })
+      .select("id, department_name, code, is_active")
+      .single();
+
+    if (insertError || !insertedDepartment) {
       return {
         ok: false as const,
         error: normalizeSupabaseErrorMessage(insertError, `Failed to create ${template.name}.`),
       };
+    }
+
+    const financeResult = await ensureDepartmentFinanceSetup({
+      supabase,
+      churchId,
+      department: {
+        id: insertedDepartment.id,
+        department_name: insertedDepartment.department_name,
+        code: insertedDepartment.code ?? null,
+        is_active: insertedDepartment.is_active !== false,
+      },
+    });
+
+    if (!financeResult.ok) {
+      return { ok: false as const, error: financeResult.error };
     }
 
     created.push(template.name);

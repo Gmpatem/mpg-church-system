@@ -1,0 +1,76 @@
+{
+  "passed": true,
+  "churchSlug": "grace-community-church",
+  "tenantNameRendered": "ghrace comunity church",
+  "ministriesVerified": 12,
+  "workspacesOpened": [
+    "Sabbath School",
+    "Children’s Ministries",
+    "Adventist Youth Ministries",
+    "Personal Ministries and Evangelism",
+    "Deacon and Deaconess Ministry",
+    "Media and Communications",
+    "Music Ministry",
+    "Health Ministries",
+    "Family Ministries",
+    "Community Services",
+    "Women’s Ministries",
+    "Education Ministry"
+  ],
+  "tabsVerified": [
+    "Overview",
+    "Action Plan",
+    "Activities",
+    "People",
+    "Budget",
+    "Documents"
+  ],
+  "responsive": [
+    {
+      "viewportWidth": 1440,
+      "documentWidth": 1440,
+      "bodyWidth": 1440,
+      "hasHorizontalOverflow": false
+    },
+    {
+      "viewportWidth": 1366,
+      "documentWidth": 1366,
+      "bodyWidth": 1366,
+      "hasHorizontalOverflow": false
+    },
+    {
+      "viewportWidth": 1024,
+      "documentWidth": 1024,
+      "bodyWidth": 1024,
+      "hasHorizontalOverflow": false
+    },
+    {
+      "viewportWidth": 768,
+      "documentWidth": 768,
+      "bodyWidth": 768,
+      "hasHorizontalOverflow": false
+    },
+    {
+      "viewportWidth": 390,
+      "documentWidth": 390,
+      "bodyWidth": 390,
+      "hasHorizontalOverflow": false
+    }
+  ],
+  "access": {
+    "adminWorkspace": true,
+    "leaderOwnDepartmentApiStatus": 200,
+    "leaderOtherDepartmentApiStatus": 403,
+    "leaderOtherDepartmentRedirected": true,
+    "ordinaryMemberRedirected": true
+  },
+  "consoleErrors": {
+    "admin": [],
+    "leader": [
+      "Failed to load resource: the server responded with a status of 403 (Forbidden)"
+    ],
+    "member": []
+  },
+  "fixturesRemoved": true,
+  "cleanupErrors": []
+}

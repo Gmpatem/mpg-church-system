@@ -103,11 +103,20 @@ export function DepartmentsWorkspaceHeader({
   );
 
   if (activeTab === "action-plan") {
-    action = (
+    action = selectedDepartmentId && capabilities.canMutateActionPlan ? (
+      <Button
+        type="button"
+        className="h-10 gap-2 rounded-lg font-semibold"
+        onClick={() => onDialogChange({ type: "create-action-item", departmentId: selectedDepartmentId })}
+      >
+        <FileText data-icon="inline-start" aria-hidden="true" />
+        New Action Item
+      </Button>
+    ) : (
       <DisabledAction
         icon={FileText}
         label="New Action Item"
-        reason="Department action-plan mutations are unavailable until church_assignments RLS and ownership checks are verified."
+        reason="You do not have permission to manage this department's action plan."
       />
     );
   }

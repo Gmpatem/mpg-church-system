@@ -29,10 +29,15 @@ import {
   updateAssignmentAction,
   updateDepartmentAction,
 } from "@/features/departments/actions";
+import {
+  createDepartmentActionPlanItemAction,
+  updateDepartmentActionPlanItemAction,
+} from "@/features/departments/action-plan-actions";
 import { createDepartmentEventDraftFormAction } from "@/features/department-events/actions";
 import { createDepartmentFundRequestAction } from "@/features/department-finance/actions";
 import type {
   DepartmentDialog,
+  ActionPlanItemViewModel,
   DepartmentViewModel,
   DepartmentWorkspaceBundle,
   DepartmentsWorkspaceData,
@@ -249,6 +254,128 @@ function AssignmentFormDialog({
       <DialogFooter className="gap-2 sm:gap-2 sm:space-x-0">
         <Button type="submit" disabled={pending} className="rounded-lg">
           {pending ? "Saving..." : isEdit ? "Save Assignment" : "Add Person"}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
+function ActionPlanFormDialog({
+  churchSlug,
+  bundle,
+  item,
+  onSuccess,
+}: {
+  churchSlug: string;
+  bundle: DepartmentWorkspaceBundle;
+  item?: ActionPlanItemViewModel | null;
+  onSuccess: () => void;
+}) {
+  const isEdit = Boolean(item);
+  const { state, formAction, pending } = useServerForm({
+    action: isEdit
+      ? updateDepartmentActionPlanItemAction
+      : createDepartmentActionPlanItemAction,
+    onSuccess,
+  });
+  const activePeople = bundle.people.filter((person) => person.isActive);
+
+  return (
+    <form action={formAction} className="grid gap-4">
+      <input type="hidden" name="churchSlug" value={churchSlug} />
+      <input type="hidden" name="departmentId" value={bundle.department.id} />
+      {item ? <input type="hidden" name="itemId" value={item.id} /> : null}
+
+      <Field label="Title">
+        <Input name="title" defaultValue={item?.title ?? ""} required maxLength={180} className="rounded-lg" />
+      </Field>
+
+      <Field label="Description">
+        <Textarea name="description" defaultValue={item?.description ?? ""} maxLength={2000} className="min-h-24 rounded-lg" />
+      </Field>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Ministry area">
+          <Input name="area" defaultValue={item?.area ?? ""} maxLength={120} className="rounded-lg" />
+        </Field>
+        <Field label="Responsible person">
+          <select
+            name="assignedToMemberId"
+            defaultValue={item?.assignedToMemberId ?? ""}
+            required
+            className="h-10 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="">Select a department member</option>
+            {activePeople.map((person) => (
+              <option key={person.id} value={person.id}>{person.name}</option>
+            ))}
+          </select>
+        </Field>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Field label="Due date">
+          <Input name="dueDate" type="date" defaultValue={item?.dueDate?.slice(0, 10) ?? ""} className="rounded-lg" />
+        </Field>
+        <Field label="Priority">
+          <select
+            name="priority"
+            defaultValue={item?.priority ?? "normal"}
+            className="h-10 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="low">Low</option>
+            <option value="normal">Normal</option>
+            <option value="high">High</option>
+            <option value="urgent">Urgent</option>
+          </select>
+        </Field>
+        <Field label="Status">
+          <select
+            name="status"
+            defaultValue={item?.status ?? "pending"}
+            className="h-10 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="pending">Planned</option>
+            <option value="accepted">Accepted</option>
+            <option value="in_progress">In Progress</option>
+            <option value="completed">Completed</option>
+            <option value="cancelled">Cancelled</option>
+          </select>
+        </Field>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2">
+        <Field label="Progress percentage">
+          <Input name="progress" type="number" min="0" max="100" step="1" defaultValue={item?.progress ?? 0} className="rounded-lg" />
+        </Field>
+        <Field label="Related event">
+          <select
+            name="relatedEventId"
+            defaultValue={item?.relatedEventId ?? ""}
+            className="h-10 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <option value="">No related event</option>
+            {bundle.eventOptions.map((event) => (
+              <option key={event.id} value={event.id}>{event.title}</option>
+            ))}
+          </select>
+        </Field>
+      </div>
+
+      <Field label="Notes">
+        <Textarea name="notes" defaultValue={item?.notes ?? ""} maxLength={2000} className="min-h-20 rounded-lg" />
+      </Field>
+
+      {activePeople.length === 0 ? (
+        <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
+          Add an active department member before creating an action-plan item.
+        </p>
+      ) : null}
+      <FormMessage state={state} />
+
+      <DialogFooter className="gap-2 sm:gap-2 sm:space-x-0">
+        <Button type="submit" disabled={pending || activePeople.length === 0} className="rounded-lg">
+          {pending ? "Saving..." : isEdit ? "Save Action Item" : "Create Action Item"}
         </Button>
       </DialogFooter>
     </form>
@@ -472,6 +599,7 @@ function RemoveAssignmentDialog({
         <form action={formAction} className="grid gap-4">
           <input type="hidden" name="churchSlug" value={churchSlug} />
           <input type="hidden" name="assignmentId" value={assignment?.assignmentId ?? ""} />
+          <input type="hidden" name="departmentId" value={assignment?.departmentId ?? ""} />
           <FormMessage state={state} />
           <AlertDialogFooter>
             <AlertDialogCancel type="button" disabled={pending}>
@@ -509,6 +637,10 @@ export function DepartmentsDialogHost({
     activeDialog?.type === "edit-member-assignment" || activeDialog?.type === "remove-member"
       ? bundle?.people.find((person) => person.assignmentId === activeDialog.assignmentId) ?? null
       : null;
+  const actionPlanItem =
+    activeDialog?.type === "edit-action-item"
+      ? bundle?.actionPlan.items.find((item) => item.id === activeDialog.itemId) ?? null
+      : null;
 
   function handleSuccess() {
     onDialogChange(null);
@@ -538,12 +670,16 @@ export function DepartmentsDialogHost({
         : activeDialog?.type === "add-member"
           ? "Add Person"
           : activeDialog?.type === "edit-member-assignment"
-            ? "Edit Assignment"
-            : activeDialog?.type === "create-activity"
-              ? "Add Activity"
-              : activeDialog?.type === "request-funds"
-                ? "Request Funds"
-                : "Departments";
+          ? "Edit Assignment"
+            : activeDialog?.type === "create-action-item"
+              ? "New Action Item"
+              : activeDialog?.type === "edit-action-item"
+                ? "Edit Action Item"
+                : activeDialog?.type === "create-activity"
+                  ? "Add Activity"
+                  : activeDialog?.type === "request-funds"
+                    ? "Request Funds"
+                    : "Departments";
   const description =
     activeDialog?.type === "request-funds"
       ? "Submit a department finance request for treasury review."
@@ -589,6 +725,15 @@ export function DepartmentsDialogHost({
             data={data}
             departmentId={assignment?.departmentId ?? bundle?.department.id ?? ""}
             assignment={assignment}
+            onSuccess={handleSuccess}
+          />
+        ) : null}
+
+        {(activeDialog?.type === "create-action-item" || activeDialog?.type === "edit-action-item") && bundle ? (
+          <ActionPlanFormDialog
+            churchSlug={churchSlug}
+            bundle={bundle}
+            item={activeDialog.type === "edit-action-item" ? actionPlanItem : null}
             onSuccess={handleSuccess}
           />
         ) : null}

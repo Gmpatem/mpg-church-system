@@ -387,6 +387,15 @@ export function DepartmentsWorkspace({
               onSelectItem={(itemId) =>
                 setState((current) => ({ ...current, selectedActionItemId: itemId }))
               }
+              canMutate={data.capabilities.canMutateActionPlan}
+              onEditItem={(itemId) => {
+                if (!selectedBundle) return;
+                setActiveDialog({
+                  type: "edit-action-item",
+                  departmentId: selectedBundle.department.id,
+                  itemId,
+                });
+              }}
             />
           )
         ) : null}

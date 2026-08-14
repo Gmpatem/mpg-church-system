@@ -21,12 +21,12 @@ export function MinistryInterestsStep({ departments, selectedIds, onToggle, sett
     <div className="space-y-5">
       <div>
         <h2 className="text-lg font-semibold text-stone-900">Ministry Interests</h2>
-        <p className="text-sm text-stone-600">Select departments you&apos;re interested in. This is for interest only.</p>
+        <p className="text-sm text-stone-600">Select the ministries you are interested in. This is for interest only.</p>
       </div>
 
       {departments.length === 0 && (
         <div className="rounded-xl border border-dashed border-stone-300 bg-stone-50 p-6 text-center text-sm text-stone-500">
-          No departments are available at this time.
+          No ministries are available at this time.
         </div>
       )}
 

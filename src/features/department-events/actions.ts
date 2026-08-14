@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { requireChurchRole } from "@/features/access/queries";
+import { requireDepartmentAccess } from "@/features/departments/access";
 import { createClient } from "@/lib/supabase/server";
 import type { ActionState } from "@/features/access/types";
 import { createApprovalRequest, reviewApprovalRequestAction } from "@/features/approvals/actions";
@@ -48,19 +49,14 @@ async function createDepartmentEventDraftActionImpl(
 ): Promise<ActionState> {
   const churchSlug = getString(formData, "churchSlug");
   const departmentId = getString(formData, "departmentId");
-  const ctx = await requireChurchRole(churchSlug, [
-    "church_admin",
-    "pastor",
-    "elder",
-    "clerk",
-    "church_secretary",
-  ]);
-  const supabase = await createClient();
 
   try {
     if (!departmentId) {
       return { ok: false, error: "Department is required." };
     }
+
+    const access = await requireDepartmentAccess(churchSlug, departmentId, "manage_activities");
+    const { ctx, supabase } = access;
 
     const department = await ensureDepartmentBelongsToChurch(supabase, ctx.churchId, departmentId);
     if (!department) {
@@ -135,18 +131,12 @@ async function submitDepartmentEventForApprovalActionImpl(
   const departmentId = getString(formData, "departmentId");
   const eventId = getString(formData, "eventId");
 
-  const ctx = await requireChurchRole(churchSlug, [
-    "church_admin",
-    "pastor",
-    "elder",
-    "clerk",
-    "church_secretary",
-  ]);
-  const supabase = await createClient();
-
   if (!departmentId || !eventId) {
     return { ok: false, error: "Department and event are required." };
   }
+
+  const access = await requireDepartmentAccess(churchSlug, departmentId, "manage_activities");
+  const { ctx, supabase } = access;
 
   const { data: eventRow, error: fetchError } = await supabase
     .from("church_events")

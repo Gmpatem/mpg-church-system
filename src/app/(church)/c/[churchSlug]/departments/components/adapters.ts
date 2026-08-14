@@ -2,6 +2,10 @@ import "server-only";
 
 import { createClient } from "@/lib/supabase/server";
 import { requireChurchAccess } from "@/features/access/queries";
+import {
+  DepartmentAccessDeniedError,
+  requireDepartmentAccess,
+} from "@/features/departments/access";
 import { getDepartmentFinanceWorkspaceData } from "@/features/department-finance/queries";
 import { getDepartmentMembers, getDepartmentOptions } from "@/features/departments/queries";
 import { isMissingColumnError, isMissingRelationError } from "@/lib/supabase/errors";
@@ -1007,7 +1011,9 @@ function actionItemBelongsToDepartment(row: any, departmentId: string) {
 async function fetchActionPlanBundle(ctx: ChurchAccess, supabase: any, departmentId: string): Promise<ActionPlanData> {
   const result = await supabase
     .from("church_assignments")
-    .select("*")
+    .select(
+      "*, assigned_member:members!church_assignments_assigned_to_member_id_fkey(first_name, last_name, display_name, member_code, email)"
+    )
     .eq("church_id", ctx.churchId)
     .order("created_at", { ascending: false })
     .limit(100);
@@ -1024,23 +1030,31 @@ async function fetchActionPlanBundle(ctx: ChurchAccess, supabase: any, departmen
   }
 
   const rows = (result.data ?? []).filter((row: any) => actionItemBelongsToDepartment(row, departmentId));
-  const items: ActionPlanItemViewModel[] = rows.map((row: any) => ({
-    id: row.id,
-    title: row.title ?? row.assignment_title ?? row.task_title ?? row.name ?? "Untitled action item",
-    description: row.description ?? row.details ?? row.note ?? null,
-    area: row.area ?? row.strategic_area ?? row.category ?? null,
-    status: row.status ?? row.workflow_state ?? "open",
-    priority: row.priority ?? null,
-    dueDate: row.due_date ?? row.deadline ?? row.target_date ?? null,
-    progress:
-      row.progress_percent === null || row.progress_percent === undefined
-        ? row.progress === null || row.progress === undefined
-          ? null
-          : Number(row.progress)
-        : Number(row.progress_percent),
-    assignedToName: row.assigned_to_name ?? row.owner_name ?? null,
-    relatedEventId: row.related_event_id ?? null,
-  }));
+  const items: ActionPlanItemViewModel[] = rows.map((row: any) => {
+    const metadata = row.metadata && typeof row.metadata === "object" ? row.metadata : {};
+    const assignedMember = Array.isArray(row.assigned_member)
+      ? row.assigned_member[0] ?? null
+      : row.assigned_member;
+    const progressValue = row.progress_percent ?? row.progress ?? metadata.progress ?? null;
+
+    return {
+      id: row.id,
+      title: row.title ?? row.assignment_title ?? row.task_title ?? row.name ?? "Untitled action item",
+      description: row.description ?? row.details ?? row.note ?? null,
+      area: row.area ?? row.strategic_area ?? row.category ?? metadata.area ?? null,
+      status: row.status ?? row.workflow_state ?? "open",
+      priority: row.priority ?? null,
+      dueDate: row.due_date ?? row.deadline ?? row.target_date ?? row.scheduled_date ?? null,
+      progress: progressValue === null || progressValue === undefined ? null : Number(progressValue),
+      assignedToName:
+        row.assigned_to_name ??
+        row.owner_name ??
+        (assignedMember ? normalizeName(assignedMember) : null),
+      assignedToMemberId: row.assigned_to_member_id ?? null,
+      relatedEventId: row.related_event_id ?? null,
+      notes: row.notes ?? null,
+    };
+  });
 
   return {
     isConfigured: true,
@@ -1062,8 +1076,8 @@ export async function getDepartmentWorkspaceBundle(
   churchSlug: string,
   departmentId: string
 ): Promise<DepartmentWorkspaceBundle | null> {
-  const ctx = await requireChurchAccess(churchSlug);
-  const supabase = await createClient();
+  const access = await requireDepartmentAccess(churchSlug, departmentId, "view");
+  const { ctx, supabase } = access;
 
   const { data: department, error: departmentError } = await supabase
     .from("church_departments")
@@ -1123,6 +1137,129 @@ export async function getDepartmentsUnifiedWorkspaceData({
   const ctx = await requireChurchAccess(churchSlug);
   const supabase = await createClient();
 
+  if (!ctx.isPlatformAdmin && !ctx.hasOperationalAccess) {
+    if (!departmentId) {
+      throw new DepartmentAccessDeniedError(
+        "Open a department workspace from your Member Portal ministry assignment."
+      );
+    }
+
+    const access = await requireDepartmentAccess(churchSlug, departmentId, "view");
+    const [selectedBundle, allOptions] = await Promise.all([
+      getDepartmentWorkspaceBundle(churchSlug, departmentId),
+      getDepartmentOptions(churchSlug),
+    ]);
+
+    if (!selectedBundle) throw new DepartmentAccessDeniedError();
+
+    const selectedDepartment = selectedBundle.department;
+    const reportingPeriod = buildReportingPeriod();
+    const now = Date.now();
+    const upcomingActivities = selectedBundle.activities
+      .filter((activity) => {
+        if (activity.source !== "event" || !activity.date) return false;
+        const eventTime = new Date(activity.date).getTime();
+        return Number.isFinite(eventTime) && eventTime >= now && normalizeLookupName(activity.status) !== "cancelled";
+      })
+      .sort((a, b) => new Date(a.date ?? 0).getTime() - new Date(b.date ?? 0).getTime())
+      .slice(0, 5)
+      .map((activity) => ({
+        id: activity.id,
+        title: activity.title,
+        departmentId: selectedDepartment.id,
+        departmentName: selectedDepartment.name,
+        eventType: activity.category,
+        startDatetime: activity.date as string,
+      }));
+    const recentUpdates = selectedBundle.activities
+      .filter((activity) => activity.source === "announcement" && activity.date)
+      .sort((a, b) => new Date(b.date ?? 0).getTime() - new Date(a.date ?? 0).getTime())
+      .slice(0, 5)
+      .map((activity) => ({
+        id: activity.id,
+        title: activity.title,
+        description: activity.description || "Department announcement",
+        departmentId: selectedDepartment.id,
+        departmentName: selectedDepartment.name,
+        actorName: activity.createdByName,
+        actorAvatarUrl: null,
+        createdAt: activity.date as string,
+        source: "announcement" as const,
+      }));
+    const budget = selectedBundle.budget;
+    const overview: DepartmentsOverviewData = {
+      reportingPeriod,
+      totalDepartments: 1,
+      activeDepartments: selectedDepartment.isActive ? 1 : 0,
+      inactiveDepartments: selectedDepartment.isActive ? 0 : 1,
+      uniqueDepartmentMembers: selectedDepartment.activeMemberCount,
+      finance: {
+        currencyCode: "XAF",
+        locale: "fr-CM",
+        totalAmount: budget?.totals.balance ?? null,
+        totalSpent: budget?.totals.totalExpenses ?? null,
+        utilizationPercent: null,
+        departmentBreakdown: [
+          {
+            departmentId: selectedDepartment.id,
+            departmentName: selectedDepartment.name,
+            primaryAmount: budget?.totals.balance ?? null,
+            spentAmount: budget?.totals.totalExpenses ?? null,
+            activityAmount: budget
+              ? budget.totals.totalIncome + budget.totals.totalExpenses
+              : null,
+            utilizationPercent: null,
+          },
+        ],
+      },
+      topDepartments:
+        selectedDepartment.activeMemberCount > 0
+          ? [
+              {
+                departmentId: selectedDepartment.id,
+                departmentName: selectedDepartment.name,
+                activeMemberCount: selectedDepartment.activeMemberCount,
+              },
+            ]
+          : [],
+      upcomingActivities,
+      recentUpdates,
+    };
+
+    return {
+      church: {
+        id: ctx.churchId,
+        slug: ctx.churchSlug,
+        name: ctx.churchName ?? ctx.churchSlug,
+      },
+      stats: {
+        totalDepartments: 1,
+        activeDepartments: selectedDepartment.isActive ? 1 : 0,
+        inactiveDepartments: selectedDepartment.isActive ? 0 : 1,
+        assignedMembers: selectedDepartment.activeMemberCount,
+        unassignedDepartments: selectedDepartment.memberCount === 0 ? 1 : 0,
+        eventLinkedDepartments: selectedDepartment.eventCount > 0 ? 1 : 0,
+        pendingFundRequests: selectedDepartment.pendingRequestCount,
+      },
+      overview,
+      departments: [selectedDepartment],
+      selectedDepartmentId: selectedDepartment.id,
+      selectedBundle,
+      options: {
+        ...allOptions,
+        departments: allOptions.departments.filter((option) => option.id === selectedDepartment.id),
+      },
+      capabilities: {
+        canManageDepartments: false,
+        canManageAssignments: access.can("manage_members"),
+        canManageActivities: access.can("manage_activities"),
+        canManageAnnouncements: access.can("manage_announcements"),
+        canMutateActionPlan: access.can("manage_action_plan"),
+        canUseDocuments: false,
+      },
+    };
+  }
+
   const [registry, options] = await Promise.all([
     fetchRegistryRows(ctx, supabase),
     getDepartmentOptions(churchSlug),
@@ -1137,9 +1274,12 @@ export async function getDepartmentsUnifiedWorkspaceData({
       ? departmentId
       : departments[0]?.id ?? null;
 
-  const selectedBundle = selectedDepartmentId
-    ? await getDepartmentWorkspaceBundle(churchSlug, selectedDepartmentId)
-    : null;
+  const [selectedBundle, selectedAccess] = selectedDepartmentId
+    ? await Promise.all([
+        getDepartmentWorkspaceBundle(churchSlug, selectedDepartmentId),
+        requireDepartmentAccess(churchSlug, selectedDepartmentId, "view"),
+      ])
+    : [null, null];
 
   const stats = {
     totalDepartments: departments.length,
@@ -1171,7 +1311,7 @@ export async function getDepartmentsUnifiedWorkspaceData({
       canManageAssignments: isManageRole(ctx),
       canManageActivities: isActivityRole(ctx),
       canManageAnnouncements: isActivityRole(ctx),
-      canMutateActionPlan: false,
+      canMutateActionPlan: selectedAccess?.can("manage_action_plan") ?? false,
       canUseDocuments: false,
     },
   };

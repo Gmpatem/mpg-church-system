@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { ensureCoreChurchDepartments } from "@/features/departments/core";
 import { validateCreateChurchInput } from "./validators";
 import type { ActionState } from "@/features/access/types";
 
@@ -60,10 +61,36 @@ export async function createChurchAction(
     return { ok: false, error: error.message };
   }
 
-  const slug =
+  const churchId =
     typeof data === "string"
       ? data
-      : data?.slug ?? input.slug;
+      : data?.id ?? null;
+  const slug =
+    typeof data === "object" && data?.slug
+      ? data.slug
+      : input.slug;
+
+  const { data: church, error: churchLookupError } = await supabase
+    .from("churches")
+    .select("id")
+    .eq(churchId ? "id" : "slug", churchId ?? slug)
+    .maybeSingle();
+
+  if (churchLookupError || !church) {
+    return {
+      ok: false,
+      error:
+        "The church was created, but its default ministries could not be initialized. Open the church and retry the ministry setup.",
+    };
+  }
+
+  const departmentSetup = await ensureCoreChurchDepartments(supabase, church.id);
+  if (!departmentSetup.ok) {
+    return {
+      ok: false,
+      error: `The church was created, but its default ministries could not be initialized: ${departmentSetup.error}`,
+    };
+  }
 
   // Redirect to the final destination - NOT inside try-catch
   // redirect() throws NEXT_REDIRECT which must not be caught

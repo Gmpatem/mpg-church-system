@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { requireChurchAccess } from "@/features/access/queries";
-import { isDepartmentLeaderForUser } from "@/features/department-finance/helpers";
+import {
+  DepartmentAccessDeniedError,
+  requireDepartmentAccess,
+} from "@/features/departments/access";
 
 const ALLOWED_OUTFLOW_TYPES = [
   "project",
@@ -20,8 +21,12 @@ export async function POST(
 ) {
   try {
     const { churchSlug, departmentId } = await params;
-    const ctx = await requireChurchAccess(churchSlug);
-    const supabase = await createClient();
+    const access = await requireDepartmentAccess(
+      churchSlug,
+      departmentId,
+      "submit_fund_request"
+    );
+    const { ctx, supabase } = access;
 
     // Validate department belongs to church
     const { data: department, error: deptError } = await supabase
@@ -33,21 +38,6 @@ export async function POST(
 
     if (deptError || !department) {
       return NextResponse.json({ error: "Department not found." }, { status: 404 });
-    }
-
-    // Validate submitter is department leader
-    const canSubmit = await isDepartmentLeaderForUser({
-      supabase,
-      churchId: ctx.churchId,
-      userId: ctx.userId,
-      departmentId,
-    });
-
-    if (!canSubmit) {
-      return NextResponse.json(
-        { error: "Only active department leaders can submit fund requests." },
-        { status: 403 }
-      );
     }
 
     const body = await request.json();
@@ -151,6 +141,10 @@ export async function POST(
 
     return NextResponse.json({ ok: true, id: inserted.id, message: "Fund request submitted." });
   } catch (error) {
+    if (error instanceof DepartmentAccessDeniedError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+
     const message = error instanceof Error ? error.message : "Failed to process request.";
     return NextResponse.json({ error: message }, { status: 500 });
   }

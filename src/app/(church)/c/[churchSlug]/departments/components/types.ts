@@ -29,6 +29,8 @@ export type DepartmentDialog =
   | { type: "add-member"; departmentId: string }
   | { type: "edit-member-assignment"; assignmentId: string }
   | { type: "remove-member"; assignmentId: string }
+  | { type: "create-action-item"; departmentId: string }
+  | { type: "edit-action-item"; departmentId: string; itemId: string }
   | { type: "create-activity"; departmentId: string }
   | { type: "request-funds"; departmentId: string };
 
@@ -121,7 +123,9 @@ export type ActionPlanItemViewModel = {
   dueDate: string | null;
   progress: number | null;
   assignedToName: string | null;
+  assignedToMemberId: string | null;
   relatedEventId: string | null;
+  notes: string | null;
 };
 
 export type ActionPlanData = {

@@ -48,6 +48,7 @@ export async function isDepartmentLeaderForUser(params: {
   const { supabase, churchId, userId, departmentId } = params;
   const memberIds = await getMemberIdsForUser(supabase, churchId, userId);
   if (memberIds.length === 0) return false;
+  const today = new Date().toISOString().slice(0, 10);
 
   const { data: leadershipRows, error: leadershipError } = await supabase
     .from("department_leadership_assignments")
@@ -55,40 +56,13 @@ export async function isDepartmentLeaderForUser(params: {
     .eq("church_id", churchId)
     .eq("department_id", departmentId)
     .eq("is_active", true)
+    .or(`start_date.is.null,start_date.lte.${today}`)
+    .or(`end_date.is.null,end_date.gte.${today}`)
     .in("member_id", memberIds)
     .limit(1);
 
   if (leadershipError) throw new Error(leadershipError.message);
-  if ((leadershipRows ?? []).length > 0) return true;
-
-  const { data: assignmentRows, error: assignmentError } = await supabase
-    .from("member_departments")
-    .select("role_title")
-    .eq("church_id", churchId)
-    .eq("department_id", departmentId)
-    .eq("is_active", true)
-    .in("member_id", memberIds);
-
-  if (assignmentError) throw new Error(assignmentError.message);
-
-  const leadershipKeywords = [
-    "leader",
-    "head",
-    "director",
-    "coordinator",
-    "pastor",
-    "elder",
-    "captain",
-    "chair",
-    "manager",
-    "supervisor",
-  ];
-
-  return (assignmentRows ?? []).some((row: any) => {
-    const roleTitle = String(row.role_title ?? "").toLowerCase();
-    if (!roleTitle) return false;
-    return leadershipKeywords.some((keyword) => roleTitle.includes(keyword));
-  });
+  return (leadershipRows ?? []).length > 0;
 }
 
 export async function getTreasuryManagerUserIds(supabase: any, churchId: string) {

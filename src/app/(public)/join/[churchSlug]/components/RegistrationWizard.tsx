@@ -32,7 +32,7 @@ const STEP_TITLES = [
   "Your household",
   "Add children",
   "Church background",
-  "Department interests",
+  "Ministry Interests",
   "Portal account",
 ] as const;
 

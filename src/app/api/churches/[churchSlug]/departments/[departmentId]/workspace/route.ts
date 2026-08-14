@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getDepartmentWorkspaceBundle } from "@/app/(church)/c/[churchSlug]/departments/components/adapters";
+import { DepartmentAccessDeniedError } from "@/features/departments/access";
 
 interface Ctx {
   params: Promise<{
@@ -19,6 +20,10 @@ export async function GET(_request: Request, ctx: Ctx) {
 
     return NextResponse.json({ bundle });
   } catch (error) {
+    if (error instanceof DepartmentAccessDeniedError) {
+      return NextResponse.json({ error: error.message }, { status: error.status });
+    }
+
     return NextResponse.json(
       {
         error: error instanceof Error ? error.message : "Failed to load department workspace data.",

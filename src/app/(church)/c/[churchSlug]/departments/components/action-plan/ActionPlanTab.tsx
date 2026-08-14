@@ -147,12 +147,16 @@ export function ActionPlanTab({
   selectedItem,
   onStateChange,
   onSelectItem,
+  canMutate,
+  onEditItem,
 }: {
   bundle: DepartmentWorkspaceBundle | null;
   state: ActionPlanState;
   selectedItem: ActionPlanItemViewModel | null;
   onStateChange: (next: Partial<ActionPlanState>) => void;
   onSelectItem: (itemId: string | null) => void;
+  canMutate: boolean;
+  onEditItem: (itemId: string) => void;
 }) {
   if (!bundle) {
     return (
@@ -279,7 +283,12 @@ export function ActionPlanTab({
                             <DropdownMenuItem onSelect={() => onSelectItem(item.id)}>
                               Inspect item
                             </DropdownMenuItem>
-                            <DropdownMenuItem disabled>Editing unavailable</DropdownMenuItem>
+                            <DropdownMenuItem
+                              disabled={!canMutate}
+                              onSelect={() => onEditItem(item.id)}
+                            >
+                              Edit item
+                            </DropdownMenuItem>
                           </RowActions>
                         </TableCell>
                       </TableRow>

@@ -1,8 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { requireChurchRole } from "@/features/access/queries";
-import { createClient } from "@/lib/supabase/server";
+import { requireDepartmentAccess } from "@/features/departments/access";
 import type { ActionState } from "@/features/access/types";
 import { parseCreateDepartmentAnnouncementInput } from "./validators";
 import { createApprovalRequest } from "@/features/approvals/actions";
@@ -41,19 +40,15 @@ async function createDepartmentAnnouncementActionImpl(
   formData: FormData
 ): Promise<ActionState> {
   const churchSlug = getString(formData, "churchSlug");
-  const ctx = await requireChurchRole(churchSlug, [
-    "church_admin",
-    "pastor",
-    "elder",
-    "clerk",
-    "church_secretary",
-  ]);
-  const supabase = await createClient();
+  const departmentId = getString(formData, "departmentId");
 
   try {
+    if (!departmentId) return { ok: false, error: "Department is required." };
+    const access = await requireDepartmentAccess(churchSlug, departmentId, "manage_announcements");
+    const { ctx, supabase } = access;
     const parsed = parseCreateDepartmentAnnouncementInput({
       churchId: ctx.churchId,
-      departmentId: getString(formData, "departmentId"),
+      departmentId,
       title: getString(formData, "title"),
       body: getString(formData, "body"),
       audienceScope: getString(formData, "audienceScope") || "department_members",
@@ -110,18 +105,12 @@ async function publishDepartmentAnnouncementActionImpl(
   const departmentId = getString(formData, "departmentId");
   const announcementId = getString(formData, "announcementId");
 
-  const ctx = await requireChurchRole(churchSlug, [
-    "church_admin",
-    "pastor",
-    "elder",
-    "clerk",
-    "church_secretary",
-  ]);
-  const supabase = await createClient();
-
   if (!departmentId || !announcementId) {
     return { ok: false, error: "Department and announcement are required." };
   }
+
+  const access = await requireDepartmentAccess(churchSlug, departmentId, "manage_announcements");
+  const { ctx, supabase } = access;
 
   const department = await ensureDepartmentBelongsToChurch(supabase, ctx.churchId, departmentId);
   if (!department) {
@@ -219,18 +208,13 @@ async function archiveDepartmentAnnouncementActionImpl(
   const departmentId = getString(formData, "departmentId");
   const announcementId = getString(formData, "announcementId");
 
-  const ctx = await requireChurchRole(churchSlug, [
-    "church_admin",
-    "pastor",
-    "elder",
-    "clerk",
-    "church_secretary",
-  ]);
-  const supabase = await createClient();
-
   if (!departmentId || !announcementId) {
     return { ok: false, error: "Department and announcement are required." };
   }
+
+
+  const access = await requireDepartmentAccess(churchSlug, departmentId, "manage_announcements");
+  const { ctx, supabase } = access;
 
   const { error } = await supabase
     .from("department_announcements")
@@ -246,9 +230,21 @@ async function archiveDepartmentAnnouncementActionImpl(
     return { ok: false, error: error.message };
   }
 
+  const { error: notificationError } = await supabase
+    .from("church_notifications")
+    .update({ expires_at: new Date().toISOString() })
+    .eq("church_id", ctx.churchId)
+    .eq("entity_type", "department_announcement")
+    .eq("entity_id", announcementId);
+
+  if (notificationError) {
+    return { ok: false, error: notificationError.message };
+  }
+
   revalidatePath(`/c/${churchSlug}/departments/${departmentId}/announcements`);
   revalidatePath(`/c/${churchSlug}/departments/${departmentId}`);
   revalidatePath(`/c/${churchSlug}/departments`);
+  revalidatePath(`/my/${churchSlug}`);
 
   return { ok: true, message: "Department announcement archived." };
 }

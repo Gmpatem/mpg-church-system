@@ -2,17 +2,17 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireChurchAccess, requireChurchRole } from "@/features/access/queries";
+import { requireChurchRole } from "@/features/access/queries";
 import type { ActionState } from "@/features/access/types";
 import type { DepartmentFundRequestRecord, DepartmentFundRequestStatus } from "@/features/department-finance/types";
 import { createTreasuryOutflowAction } from "@/features/treasury/actions";
+import { requireDepartmentAccess } from "@/features/departments/access";
 import {
   formatCurrencyLabel,
   getDepartmentLeaderProfileIds,
   getDepartmentMemberProfileIds,
   getTreasuryManagerUserIds,
   insertChurchNotifications,
-  isDepartmentLeaderForUser,
 } from "@/features/department-finance/helpers";
 import { getNumber, getString } from "@/lib/domain/validation";
 import {
@@ -258,26 +258,16 @@ export async function createDepartmentFundRequestAction(
       return { ok: false, error: "Invalid outflow category for department request." };
     }
 
-    const ctx = await requireChurchAccess(churchSlug);
-    const supabase = await createClient();
+    const access = await requireDepartmentAccess(
+      churchSlug,
+      departmentId,
+      "submit_fund_request"
+    );
+    const { ctx, supabase } = access;
 
     const department = await ensureDepartmentBelongsToChurch(supabase, ctx.churchId, departmentId);
     if (!department) {
       return { ok: false, error: "Selected department does not belong to this church." };
-    }
-
-    const canSubmitAsLeader = await isDepartmentLeaderForUser({
-      supabase,
-      churchId: ctx.churchId,
-      userId: ctx.userId,
-      departmentId,
-    });
-
-    if (!canSubmitAsLeader) {
-      return {
-        ok: false,
-        error: "Only active department leaders can submit department finance requests.",
-      };
     }
 
     const validFund = await ensureFundBelongsToChurch(supabase, ctx.churchId, fundId);

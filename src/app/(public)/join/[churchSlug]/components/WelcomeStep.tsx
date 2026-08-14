@@ -18,16 +18,13 @@ export function WelcomeStep({ church, settings, onNext }: WelcomeStepProps) {
           <div className="flex size-20 items-center justify-center rounded-[24px] bg-emerald-900 text-amber-300 shadow-lg shadow-emerald-950/15">
             <Church className="size-10" aria-hidden="true" />
           </div>
-          <div>
-            <p className="text-2xl font-semibold tracking-[0.18em] text-emerald-950">GRACE</p>
-            <p className="text-[0.65rem] font-semibold uppercase tracking-[0.2em] text-stone-500">
-              Community Church
-            </p>
-          </div>
+          <p className="max-w-md text-balance text-2xl font-semibold leading-tight text-emerald-950">
+            {church.name}
+          </p>
         </div>
 
         <div>
-          <h2 className="text-3xl font-semibold text-emerald-950">Welcome</h2>
+          <h2 className="text-3xl font-semibold text-emerald-950">Welcome to {church.name}</h2>
           <p className="mt-2 text-base font-semibold text-amber-700">We&apos;re glad you&apos;re here!</p>
           <p className="mx-auto mt-5 max-w-sm text-sm leading-7 text-stone-700">
             {settings.welcomeMessage ||

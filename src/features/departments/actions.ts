@@ -6,6 +6,8 @@ import { createClient } from "@/lib/supabase/server";
 import { getBoolean, getString } from "@/lib/domain/validation";
 import { normalizeSupabaseErrorMessage } from "@/lib/supabase/errors";
 import { requireDepartmentManager } from "./queries";
+import { requireDepartmentAccess } from "./access";
+import { ensureDepartmentFinanceSetup } from "./finance-setup";
 import type { ActionState } from "./types";
 
 const departmentSchema = z.object({
@@ -23,218 +25,34 @@ const assignmentSchema = z.object({
   is_active: z.boolean(),
 });
 
-function isMissingColumnError(error: any, column: string) {
-  const code = String(error?.code || "").toLowerCase();
-  const combined = [error?.message, error?.details, error?.hint]
-    .map((value) => (typeof value === "string" ? value.toLowerCase() : ""))
-    .join(" ");
-
-  if (!combined.includes(column.toLowerCase())) return false;
-  return (
-    code === "42703" ||
-    combined.includes("does not exist") ||
-    combined.includes("could not find the")
-  );
+function normalizeDepartmentLookup(value: string | null | undefined) {
+  return String(value ?? "").trim().toLowerCase();
 }
 
-function isDuplicateKeyError(error: any) {
-  const code = String(error?.code || "").toLowerCase();
-  const message = String(error?.message || "").toLowerCase();
-  return code === "23505" || message.includes("duplicate key");
-}
-
-function normalizeFundCodeSegment(value: string) {
-  const cleaned = value
-    .trim()
-    .replace(/[^a-zA-Z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "")
-    .toUpperCase();
-  return cleaned || "DEPARTMENT";
-}
-
-function buildDepartmentFundCode(args: {
-  departmentId: string;
-  departmentCode?: string | null;
-  departmentName: string;
-}) {
-  const { departmentId, departmentCode, departmentName } = args;
-  const base = normalizeFundCodeSegment(departmentCode || departmentName);
-  const suffix = departmentId.replace(/-/g, "").slice(0, 8).toUpperCase();
-  return `DEPT_${base}_${suffix}`.slice(0, 50);
-}
-
-async function ensureDepartmentFinanceSetup(params: {
+async function findDepartmentIdentityConflict(params: {
   supabase: any;
   churchId: string;
-  department: {
-    id: string;
-    department_name: string;
-    code: string | null;
-    is_active: boolean;
-  };
+  departmentName: string;
+  code: string | null;
+  excludeDepartmentId?: string;
 }) {
-  const { supabase, churchId, department } = params;
-  const fundCode = buildDepartmentFundCode({
-    departmentId: department.id,
-    departmentCode: department.code,
-    departmentName: department.department_name,
-  });
-  const fundName = `${department.department_name} Fund`;
-  const fundDescription = `Auto-generated department fund for ${department.department_name}.`;
+  const { supabase, churchId, departmentName, code, excludeDepartmentId } = params;
+  const { data, error } = await supabase
+    .from("church_departments")
+    .select("id, department_name, code")
+    .eq("church_id", churchId);
 
-  const existingByDepartment = await supabase
-    .from("treasury_funds")
-    .select("id")
-    .eq("church_id", churchId)
-    .eq("department_id", department.id)
-    .maybeSingle();
+  if (error) throw new Error(error.message);
 
-  const departmentColumnMissing =
-    !!existingByDepartment.error &&
-    isMissingColumnError(existingByDepartment.error, "department_id");
+  const normalizedName = normalizeDepartmentLookup(departmentName);
+  const normalizedCode = normalizeDepartmentLookup(code);
 
-  if (existingByDepartment.error && !departmentColumnMissing) {
-    return {
-      ok: false,
-      error: normalizeSupabaseErrorMessage(
-        existingByDepartment.error,
-        "Failed to verify existing department fund setup."
-      ),
-    } as const;
-  }
-
-  if (existingByDepartment.data) {
-    const { error: updateExistingError } = await supabase
-      .from("treasury_funds")
-      .update({
-        code: fundCode,
-        name: fundName,
-        fund_type: "department",
-        description: fundDescription,
-        is_active: department.is_active,
-      })
-      .eq("church_id", churchId)
-      .eq("id", existingByDepartment.data.id);
-
-    if (updateExistingError) {
-      return {
-        ok: false,
-        error: normalizeSupabaseErrorMessage(
-          updateExistingError,
-          "Failed to synchronize existing department fund."
-        ),
-      } as const;
-    }
-
-    return { ok: true } as const;
-  }
-
-  const existingByCode = await supabase
-    .from("treasury_funds")
-    .select("id")
-    .eq("church_id", churchId)
-    .eq("code", fundCode)
-    .maybeSingle();
-
-  if (existingByCode.error) {
-    return {
-      ok: false,
-      error: normalizeSupabaseErrorMessage(
-        existingByCode.error,
-        "Failed to verify department fund code uniqueness."
-      ),
-    } as const;
-  }
-
-  if (existingByCode.data) {
-    const updatePayload: Record<string, unknown> = {
-      name: fundName,
-      fund_type: "department",
-      description: fundDescription,
-      is_active: department.is_active,
-    };
-    if (!departmentColumnMissing) {
-      updatePayload.department_id = department.id;
-    }
-
-    const { error: updateByCodeError } = await supabase
-      .from("treasury_funds")
-      .update(updatePayload)
-      .eq("church_id", churchId)
-      .eq("id", existingByCode.data.id);
-
-    if (updateByCodeError) {
-      return {
-        ok: false,
-        error: normalizeSupabaseErrorMessage(
-          updateByCodeError,
-          "Failed to link existing department fund."
-        ),
-      } as const;
-    }
-
-    return { ok: true } as const;
-  }
-
-  const insertPayload: Record<string, unknown> = {
-    church_id: churchId,
-    code: fundCode,
-    name: fundName,
-    fund_type: "department",
-    description: fundDescription,
-    is_active: department.is_active,
-  };
-  if (!departmentColumnMissing) {
-    insertPayload.department_id = department.id;
-  }
-
-  const withDepartmentInsert = await supabase
-    .from("treasury_funds")
-    .insert(insertPayload);
-
-  if (!withDepartmentInsert.error) {
-    return { ok: true } as const;
-  }
-
-  if (
-    !departmentColumnMissing &&
-    isMissingColumnError(withDepartmentInsert.error, "department_id")
-  ) {
-    const legacyInsert = await supabase
-      .from("treasury_funds")
-      .insert({
-        church_id: churchId,
-        code: fundCode,
-        name: fundName,
-        fund_type: "department",
-        description: fundDescription,
-        is_active: department.is_active,
-      });
-
-    if (!legacyInsert.error || isDuplicateKeyError(legacyInsert.error)) {
-      return { ok: true } as const;
-    }
-
-    return {
-      ok: false,
-      error: normalizeSupabaseErrorMessage(
-        legacyInsert.error,
-        "Failed to create department treasury fund."
-      ),
-    } as const;
-  }
-
-  if (isDuplicateKeyError(withDepartmentInsert.error)) {
-    return { ok: true } as const;
-  }
-
-  return {
-    ok: false,
-    error: normalizeSupabaseErrorMessage(
-      withDepartmentInsert.error,
-      "Failed to create department treasury fund."
-    ),
-  } as const;
+  return (data ?? []).find((department: any) => {
+    if (excludeDepartmentId && department.id === excludeDepartmentId) return false;
+    const sameName = normalizeDepartmentLookup(department.department_name) === normalizedName;
+    const sameCode = normalizedCode && normalizeDepartmentLookup(department.code) === normalizedCode;
+    return sameName || sameCode;
+  }) ?? null;
 }
 
 function revalidateDepartmentPaths(churchSlug: string) {
@@ -293,6 +111,27 @@ export async function createDepartmentAction(
   }
 
   const { department_name, code, description, is_active } = parsed.data;
+
+  const identityConflict = await findDepartmentIdentityConflict({
+    supabase,
+    churchId: ctx.churchId,
+    departmentName: department_name,
+    code: code || null,
+  });
+
+  if (identityConflict) {
+    const exactMatch =
+      normalizeDepartmentLookup(identityConflict.department_name) ===
+        normalizeDepartmentLookup(department_name) &&
+      normalizeDepartmentLookup(identityConflict.code) === normalizeDepartmentLookup(code);
+
+    return exactMatch
+      ? { ok: true, message: "Department already exists; no duplicate was created." }
+      : {
+          ok: false,
+          error: "A department with the same name or code already exists in this church.",
+        };
+  }
 
   const { data: insertedDepartment, error } = await supabase
     .from("church_departments")
@@ -399,6 +238,21 @@ export async function updateDepartmentAction(
 
   const { department_name, code, description, is_active } = parsed.data;
 
+  const identityConflict = await findDepartmentIdentityConflict({
+    supabase,
+    churchId: ctx.churchId,
+    departmentName: department_name,
+    code: code || null,
+    excludeDepartmentId: departmentId,
+  });
+
+  if (identityConflict) {
+    return {
+      ok: false,
+      error: "A different department with the same name or code already exists in this church.",
+    };
+  }
+
   const { error } = await supabase
     .from("church_departments")
     .update({
@@ -447,8 +301,6 @@ export async function assignMemberToDepartmentAction(
   formData: FormData
 ): Promise<ActionState> {
   const churchSlug = getString(formData, "churchSlug");
-  const ctx = await requireDepartmentManager(churchSlug);
-  const supabase = await createClient();
 
   const parsed = assignmentSchema.safeParse({
     member_id: getString(formData, "member_id"),
@@ -463,6 +315,8 @@ export async function assignMemberToDepartmentAction(
   }
 
   const { member_id, department_id, role_title, start_date, is_active } = parsed.data;
+  const access = await requireDepartmentAccess(churchSlug, department_id, "manage_members");
+  const { ctx, supabase } = access;
 
   const validMember = await ensureMemberBelongsToChurch(supabase, ctx.churchId, member_id);
   if (!validMember) return { ok: false, error: "Member does not belong to this church." };
@@ -551,8 +405,6 @@ export async function updateAssignmentAction(
 ): Promise<ActionState> {
   const churchSlug = getString(formData, "churchSlug");
   const assignmentId = getString(formData, "assignmentId");
-  const ctx = await requireDepartmentManager(churchSlug);
-  const supabase = await createClient();
 
   if (!assignmentId) return { ok: false, error: "Assignment ID is required." };
 
@@ -569,6 +421,8 @@ export async function updateAssignmentAction(
   }
 
   const { member_id, department_id, role_title, start_date, is_active } = parsed.data;
+  const access = await requireDepartmentAccess(churchSlug, department_id, "manage_members");
+  const { ctx, supabase } = access;
 
   const validMember = await ensureMemberBelongsToChurch(supabase, ctx.churchId, member_id);
   if (!validMember) return { ok: false, error: "Member does not belong to this church." };
@@ -631,15 +485,20 @@ export async function removeAssignmentAction(
 ): Promise<ActionState> {
   const churchSlug = getString(formData, "churchSlug");
   const assignmentId = getString(formData, "assignmentId");
-  const ctx = await requireDepartmentManager(churchSlug);
-  const supabase = await createClient();
+  const departmentId = getString(formData, "departmentId");
 
-  if (!assignmentId) return { ok: false, error: "Assignment ID is required." };
+  if (!assignmentId || !departmentId) {
+    return { ok: false, error: "Assignment and department are required." };
+  }
+
+  const access = await requireDepartmentAccess(churchSlug, departmentId, "manage_members");
+  const { ctx, supabase } = access;
 
   const { data: assignment, error: assignmentLookupError } = await supabase
     .from("member_departments")
-    .select("member_id")
+    .select("member_id, department_id")
     .eq("church_id", ctx.churchId)
+    .eq("department_id", departmentId)
     .eq("id", assignmentId)
     .maybeSingle();
 
@@ -651,6 +510,7 @@ export async function removeAssignmentAction(
       is_active: false,
     })
     .eq("church_id", ctx.churchId)
+    .eq("department_id", departmentId)
     .eq("id", assignmentId);
 
   if (error) return { ok: false, error: error.message };

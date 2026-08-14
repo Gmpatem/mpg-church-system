@@ -13,7 +13,17 @@ function startsWithAny(pathname: string, prefixes: string[]) {
 }
 
 export async function proxy(request: NextRequest) {
-  const response = NextResponse.next();
+  const pathname = request.nextUrl.pathname;
+  const requestHeaders = new Headers(request.headers);
+  const departmentId = request.nextUrl.searchParams.get("department") ?? "";
+  requestHeaders.set("x-mpg-pathname", pathname);
+  requestHeaders.set(
+    "x-mpg-department-id",
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(departmentId)
+      ? departmentId
+      : ""
+  );
+  const response = NextResponse.next({ request: { headers: requestHeaders } });
 
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -32,8 +42,6 @@ export async function proxy(request: NextRequest) {
       },
     }
   );
-
-  const pathname = request.nextUrl.pathname;
 
   if (
     pathname.startsWith("/_next") ||
