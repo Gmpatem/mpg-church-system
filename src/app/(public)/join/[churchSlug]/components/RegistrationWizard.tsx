@@ -14,7 +14,6 @@ import {
   type LoginCountryCode,
 } from "@/lib/auth/login-identifier";
 import type { PublicRegistrationPageData } from "@/features/member-registration/public-queries";
-import { RegistrationHeader } from "./RegistrationHeader";
 import { RegistrationProgress } from "./RegistrationProgress";
 import { WelcomeStep } from "./WelcomeStep";
 import { RegistrationDetailsStep } from "./RegistrationDetailsStep";
@@ -667,8 +666,6 @@ export function RegistrationWizard({ church, settings, departments, registration
 
   return (
     <div className="mx-auto min-h-dvh max-w-2xl">
-      <RegistrationHeader church={church} currentStep={currentStepTitle} />
-
       <div className="mt-4 rounded-[28px] border border-stone-200 bg-white p-4 shadow-sm shadow-stone-950/5 sm:mt-6 sm:p-6 md:p-8">
         <RegistrationProgress current={step} total={TOTAL_STEPS} label={currentStepTitle} />
 

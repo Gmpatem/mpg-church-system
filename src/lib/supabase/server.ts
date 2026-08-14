@@ -3,6 +3,26 @@ import "server-only";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 import { cookies } from "next/headers";
 
+const READ_REQUEST_RETRY_DELAY_MS = 150;
+
+async function fetchWithReadRetry(input: RequestInfo | URL, init?: RequestInit) {
+  const method = (init?.method ?? (input instanceof Request ? input.method : "GET")).toUpperCase();
+
+  try {
+    return await fetch(input, init);
+  } catch (error) {
+    const isRetryableRead = method === "GET" || method === "HEAD";
+    const isTransportFailure = error instanceof TypeError && error.message.toLowerCase().includes("fetch failed");
+
+    if (!isRetryableRead || !isTransportFailure) {
+      throw error;
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, READ_REQUEST_RETRY_DELAY_MS));
+    return fetch(input, init);
+  }
+}
+
 export async function createClient() {
   const cookieStore = await cookies();
 
@@ -14,6 +34,9 @@ export async function createClient() {
   }
 
   return createServerClient(url, anonKey, {
+    global: {
+      fetch: fetchWithReadRetry,
+    },
     cookies: {
       getAll() {
         return cookieStore.getAll();
@@ -41,4 +64,3 @@ export async function createClient() {
     },
   });
 }
-

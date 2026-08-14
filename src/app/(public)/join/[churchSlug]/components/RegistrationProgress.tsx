@@ -5,7 +5,6 @@ type RegistrationProgressProps = {
 };
 
 export function RegistrationProgress({ current, total, label }: RegistrationProgressProps) {
-  const progress = Math.min(100, Math.round((current / total) * 100));
   const dots = Array.from({ length: total }, (_, index) => index + 1);
 
   return (
@@ -23,12 +22,6 @@ export function RegistrationProgress({ current, total, label }: RegistrationProg
             className={dot <= current ? "h-2 flex-1 rounded-full bg-emerald-800" : "h-2 flex-1 rounded-full bg-stone-200"}
           />
         ))}
-      </div>
-      <div className="h-1.5 overflow-hidden rounded-full bg-stone-100" aria-hidden="true">
-        <div
-          className="h-full rounded-full bg-amber-600 transition-all duration-300"
-          style={{ width: `${progress}%` }}
-        />
       </div>
     </div>
   );
