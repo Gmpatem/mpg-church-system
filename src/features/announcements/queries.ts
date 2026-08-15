@@ -201,10 +201,35 @@ export async function getAnnouncementWorkspaceItems(
     );
   }
 
+  const announcementIds = [...churchRows, ...departmentRows].map((item) => item.id);
+  const acknowledgementMap = new Map<string, { acknowledged: number; recipients: number }>();
+
+  if (announcementIds.length > 0) {
+    const { data: acknowledgementRows, error: acknowledgementError } = await supabase
+      .from("church_notifications")
+      .select("entity_type, entity_id, acknowledged_at")
+      .eq("church_id", ctx.churchId)
+      .eq("requires_acknowledgement", true)
+      .in("entity_id", announcementIds);
+
+    if (acknowledgementError) throw new Error(acknowledgementError.message);
+
+    for (const row of acknowledgementRows ?? []) {
+      if (!row.entity_type || !row.entity_id) continue;
+      const key = `${row.entity_type}:${row.entity_id}`;
+      const current = acknowledgementMap.get(key) ?? { acknowledged: 0, recipients: 0 };
+      current.recipients += 1;
+      if (row.acknowledged_at) current.acknowledged += 1;
+      acknowledgementMap.set(key, current);
+    }
+  }
+
   const churchItems: AnnouncementWorkspaceItem[] = churchRows.map((item) => {
     const approval = approvalQueue.find(
       (entry) => entry.entity_type === "church_announcement" && entry.entity_id === item.id
     );
+
+    const acknowledgement = acknowledgementMap.get(`church_announcement:${item.id}`);
 
     return {
       ...item,
@@ -218,6 +243,8 @@ export async function getAnnouncementWorkspaceItems(
       approval_status: approval?.status ?? null,
       approval_stage: approval?.current_stage ?? null,
       approval_request_id: approval?.id ?? null,
+      acknowledgement_count: acknowledgement?.acknowledged ?? 0,
+      acknowledgement_recipient_count: acknowledgement?.recipients ?? 0,
     };
   });
 
@@ -226,6 +253,8 @@ export async function getAnnouncementWorkspaceItems(
       (entry) => entry.entity_type === "department_announcement" && entry.entity_id === item.id
     );
     const departmentName = departmentMap.get(item.department_id) ?? "Department";
+
+    const acknowledgement = acknowledgementMap.get(`department_announcement:${item.id}`);
 
     return {
       ...item,
@@ -239,6 +268,8 @@ export async function getAnnouncementWorkspaceItems(
       approval_status: approval?.status ?? null,
       approval_stage: approval?.current_stage ?? null,
       approval_request_id: approval?.id ?? null,
+      acknowledgement_count: acknowledgement?.acknowledged ?? 0,
+      acknowledgement_recipient_count: acknowledgement?.recipients ?? 0,
     };
   });
 

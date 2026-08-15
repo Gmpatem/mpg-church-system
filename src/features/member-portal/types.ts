@@ -57,7 +57,23 @@ export type MemberPortalFoundationData = {
   linkStatus: "linked" | "unlinked";
   identity: MemberPortalIdentity | null;
   unreadNotificationCount: number;
+  notifications: MemberPortalNotificationItem[];
   requiresPasswordChange?: boolean;
+};
+
+export type MemberPortalNotificationItem = {
+  id: string;
+  title: string;
+  message: string;
+  eventType: string;
+  entityType: string | null;
+  entityId: string | null;
+  isRead: boolean;
+  readAt: string | null;
+  requiresAcknowledgement: boolean;
+  acknowledgedAt: string | null;
+  expiresAt: string | null;
+  createdAt: string;
 };
 
 export type MemberPortalOverviewNotificationItem = {

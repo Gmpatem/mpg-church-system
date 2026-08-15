@@ -214,6 +214,8 @@ async function insertChurchNotifications(
     message: string;
     href: string;
     is_read: boolean;
+    requires_acknowledgement?: boolean;
+    expires_at?: string | null;
   }>
 ) {
   if (rows.length === 0) return;
@@ -222,12 +224,18 @@ async function insertChurchNotifications(
     new Map(
       rows.map((row) => [
         `${row.church_id}:${row.target_user_id}:${row.entity_type}:${row.entity_id}:${row.event_type}`,
-        row,
+        {
+          ...row,
+          delivery_key: `${row.event_type}:${row.entity_type}:${row.entity_id}`,
+        },
       ])
     ).values()
   );
 
-  const { error } = await supabase.from("church_notifications").insert(deduped);
+  const { error } = await supabase.from("church_notifications").upsert(deduped, {
+    onConflict: "church_id,target_user_id,delivery_key",
+    ignoreDuplicates: true,
+  });
 
   if (error) {
     throw new Error(error.message);
@@ -416,11 +424,26 @@ async function notifyChurchAnnouncementPublished(params: {
   churchSlug: string;
   announcementId: string;
   title: string;
+  body: string;
   audienceScope: string;
   departmentId: string | null;
   createdByUserId: string | null;
+  requiresAcknowledgement: boolean;
+  expiresAt: string | null;
 }) {
-  const { supabase, churchId, churchSlug, announcementId, title, audienceScope, departmentId, createdByUserId } =
+  const {
+    supabase,
+    churchId,
+    churchSlug,
+    announcementId,
+    title,
+    body,
+    audienceScope,
+    departmentId,
+    createdByUserId,
+    requiresAcknowledgement,
+    expiresAt,
+  } =
     params;
 
   const audienceUserIds = await getChurchAnnouncementAudienceUserIds({
@@ -440,10 +463,12 @@ async function notifyChurchAnnouncementPublished(params: {
       event_type: "announcement",
       entity_type: "church_announcement",
       entity_id: announcementId,
-      title: "New church announcement",
-      message: title,
+      title,
+      message: body,
       href: `/c/${churchSlug}/announcements`,
       is_read: false,
+      requires_acknowledgement: requiresAcknowledgement,
+      expires_at: expiresAt,
     }))
   );
 }
@@ -455,10 +480,25 @@ async function notifyDepartmentAnnouncementPublished(params: {
   announcementId: string;
   departmentId: string;
   title: string;
+  body: string;
   audienceScope: string;
   createdByUserId: string | null;
+  requiresAcknowledgement: boolean;
+  expiresAt: string | null;
 }) {
-  const { supabase, churchId, churchSlug, announcementId, departmentId, title, audienceScope, createdByUserId } =
+  const {
+    supabase,
+    churchId,
+    churchSlug,
+    announcementId,
+    departmentId,
+    title,
+    body,
+    audienceScope,
+    createdByUserId,
+    requiresAcknowledgement,
+    expiresAt,
+  } =
     params;
 
   const audienceUserIds = await getDepartmentAnnouncementAudienceUserIds({
@@ -478,10 +518,12 @@ async function notifyDepartmentAnnouncementPublished(params: {
       event_type: "department_announcement",
       entity_type: "department_announcement",
       entity_id: announcementId,
-      title: "New department announcement",
-      message: title,
+      title,
+      message: body,
       href: `/c/${churchSlug}/departments/${departmentId}/announcements`,
       is_read: false,
+      requires_acknowledgement: requiresAcknowledgement,
+      expires_at: expiresAt,
     }))
   );
 }
@@ -616,7 +658,7 @@ async function applyApprovalEntityDecision(params: {
   if (request.entity_type === "church_announcement") {
     const { data: announcementRow, error: fetchError } = await supabase
       .from("church_announcements")
-      .select("id, title, audience_scope, department_id, created_by_user_id")
+      .select("id, title, body, audience_scope, department_id, created_by_user_id, requires_acknowledgement, expires_at")
       .eq("church_id", churchId)
       .eq("id", request.entity_id)
       .maybeSingle();
@@ -645,9 +687,12 @@ async function applyApprovalEntityDecision(params: {
         churchSlug,
         announcementId: announcementRow.id,
         title: announcementRow.title,
+        body: announcementRow.body,
         audienceScope: announcementRow.audience_scope,
         departmentId: announcementRow.department_id,
         createdByUserId: announcementRow.created_by_user_id,
+        requiresAcknowledgement: announcementRow.requires_acknowledgement,
+        expiresAt: announcementRow.expires_at,
       });
 
       return;
@@ -690,7 +735,7 @@ async function applyApprovalEntityDecision(params: {
   if (request.entity_type === "department_announcement") {
     const { data: announcementRow, error: fetchError } = await supabase
       .from("department_announcements")
-      .select("id, title, audience_scope, department_id, created_by_user_id")
+      .select("id, title, body, audience_scope, department_id, created_by_user_id, requires_acknowledgement, expires_at")
       .eq("church_id", churchId)
       .eq("id", request.entity_id)
       .maybeSingle();
@@ -721,8 +766,11 @@ async function applyApprovalEntityDecision(params: {
         announcementId: announcementRow.id,
         departmentId: announcementRow.department_id,
         title: announcementRow.title,
+        body: announcementRow.body,
         audienceScope: announcementRow.audience_scope,
         createdByUserId: announcementRow.created_by_user_id,
+        requiresAcknowledgement: announcementRow.requires_acknowledgement,
+        expiresAt: announcementRow.expires_at,
       });
 
       return;

@@ -182,7 +182,9 @@ function PersonInspector({
               disabled={!canManageAssignments}
               onClick={() =>
                 onDialogChange({
-                  type: "edit-member-assignment",
+                  type: "manage-department",
+                  departmentId: selectedPerson.departmentId,
+                  section: "members",
                   assignmentId: selectedPerson.assignmentId,
                 })
               }
@@ -196,7 +198,9 @@ function PersonInspector({
               disabled={!canManageAssignments || !selectedPerson.isActive}
               onClick={() =>
                 onDialogChange({
-                  type: "remove-member",
+                  type: "manage-department",
+                  departmentId: selectedPerson.departmentId,
+                  section: "members",
                   assignmentId: selectedPerson.assignmentId,
                 })
               }
@@ -298,7 +302,13 @@ export function PeopleTab({
                     <Button
                       type="button"
                       className="rounded-lg"
-                      onClick={() => onDialogChange({ type: "add-member", departmentId: bundle.department.id })}
+                      onClick={() =>
+                        onDialogChange({
+                          type: "manage-department",
+                          departmentId: bundle.department.id,
+                          section: "members",
+                        })
+                      }
                     >
                       <UserPlus data-icon="inline-start" aria-hidden="true" />
                       Add Person
@@ -369,7 +379,9 @@ export function PeopleTab({
                                 disabled={!canManageAssignments}
                                 onSelect={() =>
                                   onDialogChange({
-                                    type: "edit-member-assignment",
+                                    type: "manage-department",
+                                    departmentId: person.departmentId,
+                                    section: "members",
                                     assignmentId: person.assignmentId,
                                   })
                                 }
@@ -380,7 +392,9 @@ export function PeopleTab({
                                 disabled={!canManageAssignments || !person.isActive}
                                 onSelect={() =>
                                   onDialogChange({
-                                    type: "remove-member",
+                                    type: "manage-department",
+                                    departmentId: person.departmentId,
+                                    section: "members",
                                     assignmentId: person.assignmentId,
                                   })
                                 }

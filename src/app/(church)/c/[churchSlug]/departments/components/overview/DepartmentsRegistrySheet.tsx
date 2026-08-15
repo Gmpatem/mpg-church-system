@@ -187,8 +187,9 @@ export function DepartmentsRegistrySheet({
                             aria-label={`Edit ${department.name}`}
                             onClick={() =>
                               onDialogChange({
-                                type: "edit-department",
+                                type: "manage-department",
                                 departmentId: department.id,
+                                section: "details",
                               })
                             }
                           >

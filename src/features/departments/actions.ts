@@ -233,8 +233,14 @@ export async function updateDepartmentAction(
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid department data." };
   }
 
-  const validDepartment = await ensureDepartmentBelongsToChurch(supabase, ctx.churchId, departmentId);
-  if (!validDepartment) return { ok: false, error: "Department not found in this church." };
+  const { data: currentDepartment, error: currentDepartmentError } = await supabase
+    .from("church_departments")
+    .select("id, department_name, code, description, is_active")
+    .eq("church_id", ctx.churchId)
+    .eq("id", departmentId)
+    .maybeSingle();
+  if (currentDepartmentError) return { ok: false, error: currentDepartmentError.message };
+  if (!currentDepartment) return { ok: false, error: "Department not found in this church." };
 
   const { department_name, code, description, is_active } = parsed.data;
 
@@ -253,14 +259,27 @@ export async function updateDepartmentAction(
     };
   }
 
+  const updatePayload: Record<string, string | boolean | null> = {};
+  if (currentDepartment.department_name !== department_name) {
+    updatePayload.department_name = department_name;
+  }
+  if ((currentDepartment.code ?? null) !== (code || null)) {
+    updatePayload.code = code || null;
+  }
+  if ((currentDepartment.description ?? null) !== (description || null)) {
+    updatePayload.description = description || null;
+  }
+  if (currentDepartment.is_active !== is_active) {
+    updatePayload.is_active = is_active;
+  }
+
+  if (Object.keys(updatePayload).length === 0) {
+    return { ok: true, message: "Department details are already up to date." };
+  }
+
   const { error } = await supabase
     .from("church_departments")
-    .update({
-      department_name,
-      code: code || null,
-      description: description || null,
-      is_active,
-    })
+    .update(updatePayload)
     .eq("church_id", ctx.churchId)
     .eq("id", departmentId);
 
@@ -275,24 +294,7 @@ export async function updateDepartmentAction(
     return { ok: false, error: error.message };
   }
 
-  const financeSetupResult = await ensureDepartmentFinanceSetup({
-    supabase,
-    churchId: ctx.churchId,
-    department: {
-      id: departmentId,
-      department_name,
-      code: code || null,
-      is_active,
-    },
-  });
-
   revalidateDepartmentPaths(churchSlug);
-  if (!financeSetupResult.ok) {
-    return {
-      ok: true,
-      message: `Department updated, but finance setup sync needs attention: ${financeSetupResult.error}`,
-    };
-  }
   return { ok: true, message: "Department updated successfully." };
 }
 
@@ -399,6 +401,132 @@ export async function assignMemberToDepartmentAction(
   return { ok: true, message: "Member assigned successfully." };
 }
 
+export async function assignMembersToDepartmentAction(
+  _prevState: ActionState | null,
+  formData: FormData
+): Promise<ActionState> {
+  const churchSlug = getString(formData, "churchSlug");
+  const departmentId = getString(formData, "department_id");
+  const roleTitle = getString(formData, "role_title");
+  const startDate = getString(formData, "start_date");
+  const isActive = getBoolean(formData, "is_active");
+  const memberIds = Array.from(
+    new Set(
+      formData
+        .getAll("member_ids")
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => value.trim())
+        .filter(Boolean)
+    )
+  );
+
+  const parsed = z.object({
+    departmentId: z.string().uuid("Valid department is required."),
+    memberIds: z.array(z.string().uuid("Every selected member must be valid.")).min(1, "Select at least one member.").max(50),
+    roleTitle: z.string().max(120),
+    startDate: z.string().optional(),
+  }).safeParse({ departmentId, memberIds, roleTitle, startDate });
+
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid member assignments." };
+  }
+
+  const access = await requireDepartmentAccess(churchSlug, departmentId, "manage_members");
+  const { ctx, supabase } = access;
+  const [{ data: department, error: departmentError }, { data: members, error: membersError }] =
+    await Promise.all([
+      supabase
+        .from("church_departments")
+        .select("id, department_name")
+        .eq("church_id", ctx.churchId)
+        .eq("id", departmentId)
+        .maybeSingle(),
+      supabase
+        .from("members")
+        .select("id")
+        .eq("church_id", ctx.churchId)
+        .in("id", memberIds),
+    ]);
+
+  if (departmentError) return { ok: false, error: departmentError.message };
+  if (membersError) return { ok: false, error: membersError.message };
+  if (!department) return { ok: false, error: "Department does not belong to this church." };
+  if ((members ?? []).length !== memberIds.length) {
+    return { ok: false, error: "One or more selected members do not belong to this church." };
+  }
+
+  const { data: existingAssignments, error: existingError } = await supabase
+    .from("member_departments")
+    .select("id, member_id, is_active, updated_at")
+    .eq("church_id", ctx.churchId)
+    .eq("department_id", departmentId)
+    .in("member_id", memberIds)
+    .order("updated_at", { ascending: false });
+
+  if (existingError) return { ok: false, error: existingError.message };
+  const activeDuplicates = (existingAssignments ?? []).filter((row: any) => row.is_active);
+  if (activeDuplicates.length > 0) {
+    return {
+      ok: false,
+      error: `${activeDuplicates.length} selected member${activeDuplicates.length === 1 ? " is" : "s are"} already active in this department. No assignments were changed.`,
+    };
+  }
+
+  const latestInactiveByMemberId = new Map<string, string>();
+  for (const row of existingAssignments ?? []) {
+    if (!row.is_active && !latestInactiveByMemberId.has(row.member_id)) {
+      latestInactiveByMemberId.set(row.member_id, row.id);
+    }
+  }
+
+  const memberIdsToInsert = memberIds.filter((memberId) => !latestInactiveByMemberId.has(memberId));
+  if (memberIdsToInsert.length > 0) {
+    const { error: insertError } = await supabase.from("member_departments").insert(
+      memberIdsToInsert.map((memberId) => ({
+        church_id: ctx.churchId,
+        member_id: memberId,
+        department_id: departmentId,
+        department_name: department.department_name,
+        role_title: roleTitle || null,
+        role_in_department: roleTitle || null,
+        start_date: startDate || null,
+        joined_date: startDate || null,
+        is_active: isActive,
+      }))
+    );
+    if (insertError) return { ok: false, error: insertError.message };
+  }
+
+  const reactivationResults = await Promise.all(
+    Array.from(latestInactiveByMemberId.entries()).map(([, assignmentId]) =>
+      supabase
+        .from("member_departments")
+        .update({
+          department_name: department.department_name,
+          role_title: roleTitle || null,
+          role_in_department: roleTitle || null,
+          start_date: startDate || null,
+          joined_date: startDate || null,
+          is_active: isActive,
+        })
+        .eq("church_id", ctx.churchId)
+        .eq("department_id", departmentId)
+        .eq("id", assignmentId)
+    )
+  );
+  const reactivationError = reactivationResults.find((result) => result.error)?.error;
+  if (reactivationError) {
+    return { ok: false, error: `Some assignments were added, but reactivation failed: ${reactivationError.message}` };
+  }
+
+  revalidateDepartmentPaths(churchSlug);
+  memberIds.forEach((memberId) => revalidatePath(`/c/${churchSlug}/members/${memberId}`));
+  return {
+    ok: true,
+    message: `${memberIds.length} member${memberIds.length === 1 ? "" : "s"} added to the department.`,
+  };
+}
+
 export async function updateAssignmentAction(
   _prevState: ActionState | null,
   formData: FormData
@@ -503,6 +631,24 @@ export async function removeAssignmentAction(
     .maybeSingle();
 
   if (assignmentLookupError) return { ok: false, error: assignmentLookupError.message };
+  if (!assignment) return { ok: false, error: "Assignment not found in this department." };
+
+  const { data: activeLeadership, error: leadershipLookupError } = await supabase
+    .from("department_leadership_assignments")
+    .select("id")
+    .eq("church_id", ctx.churchId)
+    .eq("department_id", departmentId)
+    .eq("member_id", assignment.member_id)
+    .eq("is_active", true)
+    .limit(1);
+
+  if (leadershipLookupError) return { ok: false, error: leadershipLookupError.message };
+  if ((activeLeadership ?? []).length > 0) {
+    return {
+      ok: false,
+      error: "Remove this person's active department leadership assignments before archiving their membership.",
+    };
+  }
 
   const { error } = await supabase
     .from("member_departments")

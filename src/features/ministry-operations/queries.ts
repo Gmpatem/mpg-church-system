@@ -1,7 +1,11 @@
 import "server-only";
 import { redirect } from "next/navigation";
-import { createAdminClient } from "@/lib/supabase/admin";
-import { requireChurchAccess, requireMemberPortalAccess } from "@/features/access/queries";
+import { createClient } from "@/lib/supabase/server";
+import { requireMemberPortalAccess } from "@/features/access/queries";
+import {
+  requireWorkspaceCapability,
+  resolveWorkspaceAccessCatalog,
+} from "@/features/workspace-access/server";
 import { templateForScopeName } from "./constants";
 import { resolveDepartmentWorkspaceTemplate } from "./department-templates";
 import type {
@@ -46,11 +50,6 @@ function normalizeJoined<T>(value: T | T[] | null | undefined): T | null {
   return Array.isArray(value) ? value[0] ?? null : value;
 }
 
-function roleCanManage(roleTitle: string | null | undefined) {
-  const value = String(roleTitle ?? "").toLowerCase();
-  return ["leader", "head", "assistant", "coordinator", "deacon", "usher", "secretary", "clerk"].some((word) => value.includes(word));
-}
-
 function mapDuty(row: any): MinistryDutyAssignment {
   const member = normalizeJoined<any>(row.member);
   const dutyType = normalizeJoined<any>(row.duty_type);
@@ -92,8 +91,8 @@ function mapDutyType(row: any): MinistryDutyType {
   };
 }
 
-async function getLinkedMember(admin: any, churchId: string, userId: string) {
-  const { data, error } = await admin
+async function getLinkedMember(supabase: any, churchId: string, userId: string) {
+  const { data, error } = await supabase
     .from("members")
     .select("id, first_name, last_name, display_name, member_code, email, phone, profile_id")
     .eq("church_id", churchId)
@@ -144,95 +143,89 @@ async function ensureDutyTemplates(params: {
 }
 
 async function getDepartmentAccess(churchSlug: string, departmentId: string) {
-  const ctx = await requireChurchAccess(churchSlug);
-  const admin = createAdminClient();
+  const access = await requireWorkspaceCapability(
+    churchSlug,
+    "department",
+    departmentId,
+    "department.view"
+  );
+  const supabase = await createClient();
 
-  const { data: department, error: departmentError } = await admin
+  const { data: department, error: departmentError } = await supabase
     .from("church_departments")
     .select("id, church_id, department_name, code, description, is_active")
-    .eq("church_id", ctx.churchId)
+    .eq("church_id", access.churchId)
     .eq("id", departmentId)
     .maybeSingle();
 
   if (departmentError) throw new Error(departmentError.message);
   if (!department) redirect(`/c/${churchSlug}/departments`);
 
-  const linkedMember = await getLinkedMember(admin, ctx.churchId, ctx.userId);
-  let assignment: any = null;
+  const linkedMember = access.memberId
+    ? await getLinkedMember(supabase, access.churchId, access.userId)
+    : null;
+  const canManage = access.capabilities.some((capability) =>
+    ["department.manage_duties", "department.manage_tasks", "department.submit_reports"].includes(capability)
+  );
 
-  if (linkedMember?.id) {
-    const { data, error } = await admin
-      .from("member_departments")
-      .select("id, role_title, is_active")
-      .eq("church_id", ctx.churchId)
-      .eq("department_id", departmentId)
-      .eq("member_id", linkedMember.id)
-      .maybeSingle();
-    if (error) throw new Error(error.message);
-    assignment = data ?? null;
-  }
-
-  const canManage = Boolean(ctx.isPlatformAdmin || ctx.hasOperationalAccess || (assignment?.is_active && roleCanManage(assignment.role_title)));
-  const canView = Boolean(canManage || assignment?.is_active);
-
-  if (!canView) redirect(`/my/${churchSlug}?tab=ministries`);
-
-  return { ctx, admin, department, linkedMember, canManage };
+  return { access, supabase, department, linkedMember, canManage };
 }
 
 export async function getDepartmentOperationsData(churchSlug: string, departmentId: string): Promise<MinistryOperationsData> {
-  const { ctx, admin, department, linkedMember, canManage } = await getDepartmentAccess(churchSlug, departmentId);
+  const { access, supabase, department, linkedMember, canManage } = await getDepartmentAccess(churchSlug, departmentId);
 
-  await ensureDutyTemplates({
-    admin,
-    churchId: ctx.churchId,
-    userId: ctx.userId,
-    scopeType: "department",
-    scopeId: departmentId,
-    scopeName: department.department_name,
-  });
+  if (access.capabilities.includes("department.manage_duties")) {
+    await ensureDutyTemplates({
+      admin: supabase,
+      churchId: access.churchId,
+      userId: access.userId,
+      scopeType: "department",
+      scopeId: departmentId,
+      scopeName: department.department_name,
+    });
+  }
 
   const today = todayIsoDate();
   const nextMonth = addDaysIso(45);
 
   const [membersResult, dutyTypesResult, dutiesResult, tasksResult, reportsResult] = await Promise.all([
-    admin
+    supabase
       .from("member_departments")
       .select("id, member_id, role_title, is_active, member:members(id, first_name, last_name, display_name, member_code, email, phone)")
-      .eq("church_id", ctx.churchId)
+      .eq("church_id", access.churchId)
       .eq("department_id", departmentId)
       .eq("is_active", true)
       .order("role_title", { ascending: true }),
-    admin
+    supabase
       .from("ministry_duty_types")
       .select("id, name, system_key, icon_key, description, requires_attendance_support, is_active, sort_order")
-      .eq("church_id", ctx.churchId)
+      .eq("church_id", access.churchId)
       .eq("scope_type", "department")
       .eq("scope_id", departmentId)
       .order("sort_order", { ascending: true })
       .order("name", { ascending: true }),
-    admin
+    supabase
       .from("ministry_duty_assignments")
       .select("id, duty_type_id, member_id, service_date, starts_at, ends_at, status, leader_note, member_note, replacement_reason, confirmed_at, served_at, requested_replacement_at, member:members(id, first_name, last_name, display_name, member_code), duty_type:ministry_duty_types(id, name, system_key, icon_key, requires_attendance_support)")
-      .eq("church_id", ctx.churchId)
+      .eq("church_id", access.churchId)
       .eq("scope_type", "department")
       .eq("scope_id", departmentId)
       .gte("service_date", today)
       .lte("service_date", nextMonth)
       .order("service_date", { ascending: true })
       .order("starts_at", { ascending: true, nullsFirst: false }),
-    admin
+    supabase
       .from("ministry_tasks")
       .select("id, title, description, assigned_to_member_id, due_date, priority, status, assignee:members(id, first_name, last_name, display_name, member_code)")
-      .eq("church_id", ctx.churchId)
+      .eq("church_id", access.churchId)
       .eq("scope_type", "department")
       .eq("scope_id", departmentId)
       .neq("status", "cancelled")
       .order("due_date", { ascending: true, nullsFirst: false }),
-    admin
+    supabase
       .from("ministry_reports")
       .select("id, title, report_type, period_start, period_end, summary, status, submitted_at")
-      .eq("church_id", ctx.churchId)
+      .eq("church_id", access.churchId)
       .eq("scope_type", "department")
       .eq("scope_id", departmentId)
       .order("period_end", { ascending: false, nullsFirst: false })
@@ -284,9 +277,13 @@ export async function getDepartmentOperationsData(churchSlug: string, department
   }));
 
   return {
-    church: { id: ctx.churchId, slug: ctx.churchSlug, name: ctx.churchName ?? null },
+    church: { id: access.churchId, slug: churchSlug, name: null },
     scope: { type: "department", id: department.id, name: department.department_name, subtitle: "Department Operations", code: department.code ?? null },
-    access: { canManage, viewerMemberId: linkedMember?.id ?? null },
+    access: {
+      canManage,
+      viewerMemberId: linkedMember?.id ?? null,
+      capabilities: access.capabilities,
+    },
     stats: {
       members: members.length,
       upcomingDuties: duties.length,
@@ -318,8 +315,9 @@ export async function getDepartmentOperationsData(churchSlug: string, department
 
 export async function getMemberMinistryPortalData(churchSlug: string): Promise<MemberMinistryPortalData> {
   const ctx = await requireMemberPortalAccess(churchSlug);
-  const admin = createAdminClient();
-  const linkedMember = await getLinkedMember(admin, ctx.churchId, ctx.userId);
+  const supabase = await createClient();
+  const catalog = await resolveWorkspaceAccessCatalog(churchSlug);
+  const linkedMember = await getLinkedMember(supabase, ctx.churchId, ctx.userId);
 
   if (!linkedMember?.id) redirect(`/my/${churchSlug}?tab=overview`);
 
@@ -327,13 +325,13 @@ export async function getMemberMinistryPortalData(churchSlug: string): Promise<M
   const nextMonth = addDaysIso(45);
 
   const [departmentsResult, dutiesResult] = await Promise.all([
-    admin
+    supabase
       .from("member_departments")
       .select("id, department_id, department_name, role_title, is_active, church_departments(id, department_name, code)")
       .eq("church_id", ctx.churchId)
       .eq("member_id", linkedMember.id)
       .eq("is_active", true),
-    admin
+    supabase
       .from("ministry_duty_assignments")
       .select("id, scope_type, scope_id, duty_type_id, member_id, service_date, starts_at, ends_at, status, leader_note, member_note, replacement_reason, confirmed_at, served_at, requested_replacement_at, member:members(id, first_name, last_name, display_name, member_code), duty_type:ministry_duty_types(id, name, system_key, icon_key, requires_attendance_support)")
       .eq("church_id", ctx.churchId)
@@ -361,13 +359,14 @@ export async function getMemberMinistryPortalData(churchSlug: string): Promise<M
     const name = department?.department_name ?? row.department_name ?? "Department";
     const key = `department:${row.department_id}`;
     const scopeDuties = dutiesByScope.get(key) ?? [];
+    const workspace = catalog.departments.find((item) => item.scopeId === row.department_id);
     return {
       id: row.id,
       scopeType: "department" as const,
       scopeId: row.department_id,
       name,
-      roleTitle: row.role_title ?? null,
-      href: `/c/${churchSlug}/departments/${row.department_id}/operations`,
+      roleTitle: workspace?.positionName ?? row.role_title ?? null,
+      href: `/my/${churchSlug}/work/departments/${row.department_id}`,
       upcomingDutyCount: scopeDuties.length,
       nextDutyLabel: scopeDuties[0] ? `${scopeDuties[0].dutyName} • ${scopeDuties[0].serviceDate}` : null,
     };
@@ -385,11 +384,12 @@ export async function getMemberMinistryPortalData(churchSlug: string): Promise<M
 
 export async function getMemberDutyDetail(churchSlug: string, assignmentId: string): Promise<MemberDutyDetailData> {
   const ctx = await requireMemberPortalAccess(churchSlug);
-  const admin = createAdminClient();
-  const linkedMember = await getLinkedMember(admin, ctx.churchId, ctx.userId);
+  await requireWorkspaceCapability(churchSlug, "personal", null, "personal.view_duties");
+  const supabase = await createClient();
+  const linkedMember = await getLinkedMember(supabase, ctx.churchId, ctx.userId);
   if (!linkedMember?.id) redirect(`/my/${churchSlug}?tab=overview`);
 
-  const { data, error } = await admin
+  const { data, error } = await supabase
     .from("ministry_duty_assignments")
     .select("id, church_id, scope_type, scope_id, duty_type_id, member_id, service_date, starts_at, ends_at, status, leader_note, member_note, replacement_reason, confirmed_at, served_at, requested_replacement_at, member:members(id, first_name, last_name, display_name, member_code), duty_type:ministry_duty_types(id, name, system_key, icon_key, requires_attendance_support)")
     .eq("church_id", ctx.churchId)
@@ -402,7 +402,7 @@ export async function getMemberDutyDetail(churchSlug: string, assignmentId: stri
 
   let scopeName = "Ministry";
   if (data.scope_type === "department") {
-    const { data: dept } = await admin
+    const { data: dept } = await supabase
       .from("church_departments")
       .select("department_name")
       .eq("church_id", ctx.churchId)
@@ -428,7 +428,7 @@ export async function getAttendanceSupportData(churchSlug: string, assignmentId:
   if (!detail.canOpenAttendanceSupport) redirect(`/my/${churchSlug}/duties/${assignmentId}`);
 
   const ctx = await requireMemberPortalAccess(churchSlug);
-  const admin = createAdminClient();
+  const admin = await createClient();
   const today = todayIsoDate();
 
   const { data: occurrence, error: occurrenceError } = await admin

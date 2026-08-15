@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createClient } from "@/lib/supabase/server";
-import { requireChurchAccess } from "@/features/access/queries";
+import { requireChurchAccess, requireMemberPortalAccess } from "@/features/access/queries";
 
 function isUuid(value: string) {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
@@ -22,6 +22,10 @@ function revalidateChurchNotificationSurfaces(churchSlug: string) {
   revalidatePath(`/c/${churchSlug}/access-control`);
   revalidatePath(`/c/${churchSlug}/leadership`);
   revalidatePath(`/c/${churchSlug}/approvals`);
+}
+
+function revalidateMemberNotificationSurface(churchSlug: string) {
+  revalidatePath(`/my/${churchSlug}`);
 }
 
 export async function markChurchNotificationReadAction(formData: FormData) {
@@ -81,4 +85,69 @@ export async function markAllChurchNotificationsReadAction(formData: FormData) {
   }
 
   revalidateChurchNotificationSurfaces(churchSlug);
+}
+
+export async function markMemberPortalNotificationReadAction(params: {
+  churchSlug: string;
+  notificationId: string;
+}) {
+  if (!params.churchSlug || !isUuid(params.notificationId)) return;
+
+  const ctx = await requireMemberPortalAccess(params.churchSlug);
+  const supabase = await createClient();
+  const nowIso = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("church_notifications")
+    .update({ is_read: true, read_at: nowIso })
+    .eq("church_id", ctx.churchId)
+    .eq("target_user_id", ctx.userId)
+    .eq("id", params.notificationId);
+
+  if (error) throw new Error(error.message);
+  revalidateMemberNotificationSurface(params.churchSlug);
+}
+
+export async function markAllMemberPortalNotificationsReadAction(churchSlug: string) {
+  if (!churchSlug) return;
+
+  const ctx = await requireMemberPortalAccess(churchSlug);
+  const supabase = await createClient();
+  const nowIso = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("church_notifications")
+    .update({ is_read: true, read_at: nowIso })
+    .eq("church_id", ctx.churchId)
+    .eq("target_user_id", ctx.userId)
+    .eq("is_read", false);
+
+  if (error) throw new Error(error.message);
+  revalidateMemberNotificationSurface(churchSlug);
+}
+
+export async function acknowledgeMemberPortalNotificationAction(params: {
+  churchSlug: string;
+  notificationId: string;
+}) {
+  if (!params.churchSlug || !isUuid(params.notificationId)) return;
+
+  const ctx = await requireMemberPortalAccess(params.churchSlug);
+  const supabase = await createClient();
+  const nowIso = new Date().toISOString();
+
+  const { error } = await supabase
+    .from("church_notifications")
+    .update({
+      acknowledged_at: nowIso,
+      is_read: true,
+      read_at: nowIso,
+    })
+    .eq("church_id", ctx.churchId)
+    .eq("target_user_id", ctx.userId)
+    .eq("id", params.notificationId)
+    .eq("requires_acknowledgement", true);
+
+  if (error) throw new Error(error.message);
+  revalidateMemberNotificationSurface(params.churchSlug);
 }

@@ -2,15 +2,6 @@
 
 import { useActionState, useEffect, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
-import {
-  AlertDialog,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,10 +14,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import {
-  assignMemberToDepartmentAction,
   createDepartmentAction,
-  removeAssignmentAction,
-  updateAssignmentAction,
   updateDepartmentAction,
 } from "@/features/departments/actions";
 import {
@@ -41,8 +29,8 @@ import type {
   DepartmentViewModel,
   DepartmentWorkspaceBundle,
   DepartmentsWorkspaceData,
-  PersonViewModel,
 } from "../types";
+import { ManageDepartmentDialog } from "../manage/ManageDepartmentDialog";
 
 type ActionState = {
   ok: boolean;
@@ -168,92 +156,6 @@ function DepartmentFormDialog({
       <DialogFooter className="gap-2 sm:gap-2 sm:space-x-0">
         <Button type="submit" disabled={pending} className="rounded-lg">
           {pending ? "Saving..." : isEdit ? "Save Department" : "Create Department"}
-        </Button>
-      </DialogFooter>
-    </form>
-  );
-}
-
-function AssignmentFormDialog({
-  churchSlug,
-  data,
-  departmentId,
-  assignment,
-  onSuccess,
-}: {
-  churchSlug: string;
-  data: DepartmentsWorkspaceData;
-  departmentId: string;
-  assignment?: PersonViewModel | null;
-  onSuccess: () => void;
-}) {
-  const isEdit = Boolean(assignment);
-  const { state, formAction, pending } = useServerForm({
-    action: isEdit ? updateAssignmentAction : assignMemberToDepartmentAction,
-    onSuccess,
-  });
-  const availableMembers = isEdit
-    ? data.options.members
-    : data.options.members.filter((member) => member.id !== assignment?.id);
-
-  return (
-    <form action={formAction} className="grid gap-4">
-      <input type="hidden" name="churchSlug" value={churchSlug} />
-      <input type="hidden" name="department_id" value={assignment?.departmentId ?? departmentId} />
-      {assignment ? <input type="hidden" name="assignmentId" value={assignment.assignmentId} /> : null}
-
-      <Field label="Member">
-        <select
-          name="member_id"
-          defaultValue={assignment?.id ?? ""}
-          required
-          disabled={isEdit}
-          className="h-10 rounded-lg border border-input bg-background px-3 text-sm text-foreground outline-none transition focus-visible:ring-2 focus-visible:ring-ring disabled:opacity-60"
-        >
-          <option value="">Select a member</option>
-          {availableMembers.map((member) => (
-            <option key={member.id} value={member.id}>
-              {member.label}
-              {member.member_code ? ` (${member.member_code})` : ""}
-            </option>
-          ))}
-        </select>
-      </Field>
-      {isEdit && assignment ? <input type="hidden" name="member_id" value={assignment.id} /> : null}
-
-      <Field label="Role title">
-        <Input
-          name="role_title"
-          defaultValue={assignment?.roleTitle ?? ""}
-          maxLength={120}
-          className="rounded-lg"
-        />
-      </Field>
-
-      <Field label="Start date">
-        <Input
-          name="start_date"
-          type="date"
-          defaultValue={assignment?.startDate?.slice(0, 10) ?? ""}
-          className="rounded-lg"
-        />
-      </Field>
-
-      <label className="inline-flex items-center gap-2 text-sm text-foreground">
-        <input
-          type="checkbox"
-          name="is_active"
-          defaultChecked={assignment?.isActive ?? true}
-          className="size-4 rounded border-border"
-        />
-        Active assignment
-      </label>
-
-      <FormMessage state={state} />
-
-      <DialogFooter className="gap-2 sm:gap-2 sm:space-x-0">
-        <Button type="submit" disabled={pending} className="rounded-lg">
-          {pending ? "Saving..." : isEdit ? "Save Assignment" : "Add Person"}
         </Button>
       </DialogFooter>
     </form>
@@ -569,74 +471,22 @@ function FundRequestFormDialog({
   );
 }
 
-function RemoveAssignmentDialog({
-  churchSlug,
-  assignment,
-  open,
-  onOpenChange,
-  onSuccess,
-}: {
-  churchSlug: string;
-  assignment: PersonViewModel | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-  onSuccess: () => void;
-}) {
-  const { state, formAction, pending } = useServerForm({
-    action: removeAssignmentAction,
-    onSuccess,
-  });
-
-  return (
-    <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Remove Assignment</AlertDialogTitle>
-          <AlertDialogDescription>
-            This archives the department assignment for {assignment?.name ?? "this person"}.
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <form action={formAction} className="grid gap-4">
-          <input type="hidden" name="churchSlug" value={churchSlug} />
-          <input type="hidden" name="assignmentId" value={assignment?.assignmentId ?? ""} />
-          <input type="hidden" name="departmentId" value={assignment?.departmentId ?? ""} />
-          <FormMessage state={state} />
-          <AlertDialogFooter>
-            <AlertDialogCancel type="button" disabled={pending}>
-              Cancel
-            </AlertDialogCancel>
-            <Button type="submit" variant="destructive" disabled={pending || !assignment}>
-              {pending ? "Removing..." : "Remove Assignment"}
-            </Button>
-          </AlertDialogFooter>
-        </form>
-      </AlertDialogContent>
-    </AlertDialog>
-  );
-}
-
 export function DepartmentsDialogHost({
   churchSlug,
   data,
   bundle,
   activeDialog,
   onDialogChange,
+  onDepartmentSelect,
 }: {
   churchSlug: string;
   data: DepartmentsWorkspaceData;
   bundle: DepartmentWorkspaceBundle | null;
   activeDialog: DepartmentDialog;
   onDialogChange: (dialog: DepartmentDialog) => void;
+  onDepartmentSelect: (departmentId: string) => void;
 }) {
   const router = useRouter();
-  const department =
-    activeDialog && "departmentId" in activeDialog
-      ? data.departments.find((item) => item.id === activeDialog.departmentId) ?? null
-      : null;
-  const assignment =
-    activeDialog?.type === "edit-member-assignment" || activeDialog?.type === "remove-member"
-      ? bundle?.people.find((person) => person.assignmentId === activeDialog.assignmentId) ?? null
-      : null;
   const actionPlanItem =
     activeDialog?.type === "edit-action-item"
       ? bundle?.actionPlan.items.find((item) => item.id === activeDialog.itemId) ?? null
@@ -647,16 +497,16 @@ export function DepartmentsDialogHost({
     router.refresh();
   }
 
-  if (activeDialog?.type === "remove-member") {
+  if (activeDialog?.type === "manage-department") {
     return (
-      <RemoveAssignmentDialog
+      <ManageDepartmentDialog
         churchSlug={churchSlug}
-        assignment={assignment}
-        open={true}
-        onOpenChange={(open) => {
-          if (!open) onDialogChange(null);
-        }}
-        onSuccess={handleSuccess}
+        data={data}
+        bundle={bundle}
+        dialog={activeDialog}
+        onDialogChange={onDialogChange}
+        onDepartmentSelect={onDepartmentSelect}
+        onMutationSuccess={() => router.refresh()}
       />
     );
   }
@@ -665,13 +515,7 @@ export function DepartmentsDialogHost({
   const title =
     activeDialog?.type === "create-department"
       ? "Add Department"
-      : activeDialog?.type === "edit-department"
-        ? "Edit Department"
-        : activeDialog?.type === "add-member"
-          ? "Add Person"
-          : activeDialog?.type === "edit-member-assignment"
-          ? "Edit Assignment"
-            : activeDialog?.type === "create-action-item"
+      : activeDialog?.type === "create-action-item"
               ? "New Action Item"
               : activeDialog?.type === "edit-action-item"
                 ? "Edit Action Item"
@@ -700,33 +544,6 @@ export function DepartmentsDialogHost({
 
         {activeDialog?.type === "create-department" ? (
           <DepartmentFormDialog churchSlug={churchSlug} onSuccess={handleSuccess} />
-        ) : null}
-
-        {activeDialog?.type === "edit-department" ? (
-          <DepartmentFormDialog
-            churchSlug={churchSlug}
-            department={department}
-            onSuccess={handleSuccess}
-          />
-        ) : null}
-
-        {activeDialog?.type === "add-member" ? (
-          <AssignmentFormDialog
-            churchSlug={churchSlug}
-            data={data}
-            departmentId={activeDialog.departmentId}
-            onSuccess={handleSuccess}
-          />
-        ) : null}
-
-        {activeDialog?.type === "edit-member-assignment" ? (
-          <AssignmentFormDialog
-            churchSlug={churchSlug}
-            data={data}
-            departmentId={assignment?.departmentId ?? bundle?.department.id ?? ""}
-            assignment={assignment}
-            onSuccess={handleSuccess}
-          />
         ) : null}
 
         {(activeDialog?.type === "create-action-item" || activeDialog?.type === "edit-action-item") && bundle ? (

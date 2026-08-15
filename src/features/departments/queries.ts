@@ -191,7 +191,7 @@ export async function getDepartmentOptions(churchSlug: string) {
         .order("department_name", { ascending: true }),
       supabase
         .from("members")
-        .select("id, first_name, last_name, display_name, member_code, membership_status")
+        .select("id, first_name, last_name, display_name, member_code, membership_status, email, phone")
         .eq("church_id", ctx.churchId)
         .order("first_name", { ascending: true }),
     ]);
@@ -215,6 +215,8 @@ export async function getDepartmentOptions(churchSlug: string) {
         item.id,
       member_code: item.member_code,
       membership_status: item.membership_status,
+      email: item.email,
+      phone: item.phone,
     })),
   };
 }
@@ -504,7 +506,6 @@ export async function getDepartmentsWorkspaceData(
     assignments: filteredAssignments.slice(0, 50),
   };
 }
-
 
 
 

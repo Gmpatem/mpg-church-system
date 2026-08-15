@@ -1,9 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import type { ComponentType, ReactNode } from "react";
 import { Bell, ChevronRight, Church } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils/cn";
+import { useMemberPortalNotifications } from "./MemberPortalNotifications";
 
 type IconComponent = ComponentType<{ className?: string }>;
 
@@ -94,39 +97,40 @@ export function MemberPortalChurchMark({ className }: { className?: string }) {
 export function MemberPortalNotificationBell({
   light = false,
   unreadCount = 0,
-  href,
 }: {
   light?: boolean;
   unreadCount?: number;
-  href?: string;
 }) {
+  const notifications = useMemberPortalNotifications();
+  const displayedUnreadCount = notifications?.unreadCount ?? unreadCount;
   const className = cn(
     "mobile-touch-feedback relative flex size-10 shrink-0 items-center justify-center rounded-full",
     light ? "text-white hover:bg-white/10" : "bg-white text-emerald-950 shadow-sm hover:bg-amber-50"
   );
-  const label = unreadCount > 0
-    ? `${unreadCount} unread notifications`
+  const label = displayedUnreadCount > 0
+    ? `${displayedUnreadCount} unread notifications`
     : "No unread notifications";
   const content = (
     <>
       <Bell className="size-5" />
-      {unreadCount > 0 ? (
+      {displayedUnreadCount > 0 ? (
         <span className="absolute -right-0.5 -top-0.5 flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-5 text-white ring-2 ring-white">
-          {unreadCount > 99 ? "99+" : unreadCount}
+          {displayedUnreadCount > 99 ? "99+" : displayedUnreadCount}
         </span>
       ) : null}
     </>
   );
 
-  if (href) {
-    return (
-      <Link href={href} className={className} aria-label={label}>
-        {content}
-      </Link>
-    );
-  }
-
-  return <span className={className} aria-label={label}>{content}</span>;
+  return (
+    <button
+      type="button"
+      className={className}
+      aria-label={label}
+      onClick={notifications?.openNotifications}
+    >
+      {content}
+    </button>
+  );
 }
 
 export function MemberPortalAvatar({

@@ -91,6 +91,7 @@ export type MinistryOperationsData = {
   access: {
     canManage: boolean;
     viewerMemberId: string | null;
+    capabilities: import("@/features/workspace-access/types").WorkspaceCapability[];
   };
   stats: {
     members: number;

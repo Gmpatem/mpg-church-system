@@ -9,7 +9,6 @@ import {
   Home,
   CalendarDays,
   HandHeart,
-  Bell,
 } from "lucide-react";
 import { LanguageSwitcher } from "@/components/marketing/LanguageSwitcher";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
@@ -21,7 +20,9 @@ import { PwaInstallPrompt } from "@/components/pwa/PwaInstallPrompt";
 import {
   getInitials,
   MemberPortalChurchMark,
+  MemberPortalNotificationBell,
 } from "@/features/member-portal/components/MemberPortalAppPrimitives";
+import { MemberPortalNotificationsProvider } from "@/features/member-portal/components/MemberPortalNotifications";
 import { useI18n } from "@/features/i18n";
 import { signOutMemberPortalAction } from "@/features/member-portal/actions";
 import { cn } from "@/lib/utils/cn";
@@ -138,7 +139,13 @@ export function MemberPortalShell({
   }, [activeTab]);
 
   return (
-    <div className="church-workspace min-h-screen bg-[hsl(var(--church-bg))]">
+    <MemberPortalNotificationsProvider
+      churchId={foundation.churchId}
+      churchSlug={churchSlug}
+      userId={foundation.profile?.id ?? null}
+      initialNotifications={foundation.notifications}
+    >
+      <div className="church-workspace min-h-screen bg-[hsl(var(--church-bg))]">
       <div className="mx-auto flex min-h-screen w-full max-w-[1600px]">
         <aside className="hidden w-72 shrink-0 border-r border-amber-100 bg-white lg:flex lg:flex-col">
           <div className="border-b border-amber-100 p-6">
@@ -207,18 +214,7 @@ export function MemberPortalShell({
               </div>
 
               <div className="flex items-center gap-2">
-                <Link
-                  href={`${buildTabHref(churchSlug, "overview")}#church-updates`}
-                  className="mobile-touch-feedback relative inline-flex size-10 items-center justify-center rounded-full bg-amber-50 text-emerald-950 transition hover:bg-amber-100"
-                  aria-label={unreadNotificationCount > 0 ? `${unreadNotificationCount} unread notifications` : "No unread notifications"}
-                >
-                  <Bell className="size-5" />
-                  {unreadNotificationCount > 0 ? (
-                    <span className="absolute -right-0.5 -top-0.5 flex min-w-5 items-center justify-center rounded-full bg-red-500 px-1 text-[10px] font-semibold leading-5 text-white ring-2 ring-white">
-                      {unreadNotificationCount > 99 ? "99+" : unreadNotificationCount}
-                    </span>
-                  ) : null}
-                </Link>
+                <MemberPortalNotificationBell unreadCount={unreadNotificationCount} />
                 <Link
                   href={profileHref}
                   className="inline-flex size-10 items-center justify-center rounded-full border border-amber-100 bg-white text-sm font-semibold text-emerald-950 transition hover:bg-amber-50"
@@ -301,6 +297,7 @@ export function MemberPortalShell({
       </Sheet>
 
       <MemberPortalBottomNav activeTab={activeTab} items={navItems} />
-    </div>
+      </div>
+    </MemberPortalNotificationsProvider>
   );
 }

@@ -1,7 +1,7 @@
 import "server-only";
 
 import { requireChurchAccess } from "@/features/access/queries";
-import { isDepartmentLeaderForUser } from "@/features/department-finance/helpers";
+import { resolveWorkspaceAccess } from "@/features/workspace-access/server";
 import { createClient } from "@/lib/supabase/server";
 import {
   hasDepartmentCapability,
@@ -38,26 +38,24 @@ export async function getDepartmentAccess(
     throw new DepartmentAccessDeniedError("Department not found in this church.");
   }
 
-  const isDepartmentLeader = await isDepartmentLeaderForUser({
-    supabase,
-    churchId: ctx.churchId,
-    userId: ctx.userId,
-    departmentId,
-  });
+  const workspaceAccess = await resolveWorkspaceAccess(
+    churchSlug,
+    "department",
+    departmentId
+  );
+  const isDepartmentLeader = Boolean(
+    workspaceAccess.positionCode && workspaceAccess.positionCode !== "department_worker"
+  );
 
   function can(capability: DepartmentCapability) {
-    return hasDepartmentCapability({
-      capability,
-      roles: ctx.roles,
-      isPlatformAdmin: ctx.isPlatformAdmin,
-      isDepartmentLeader,
-    });
+    return hasDepartmentCapability(workspaceAccess.capabilities, capability);
   }
 
   return {
     ctx,
     supabase,
     department,
+    workspaceAccess,
     isDepartmentLeader,
     isDepartmentScoped: isDepartmentLeader && !ctx.isPlatformAdmin && !ctx.hasOperationalAccess,
     can,

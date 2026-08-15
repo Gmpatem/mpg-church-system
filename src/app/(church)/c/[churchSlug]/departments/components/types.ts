@@ -25,14 +25,19 @@ export type SelectOption = {
 export type DepartmentDialog =
   | null
   | { type: "create-department" }
-  | { type: "edit-department"; departmentId: string }
-  | { type: "add-member"; departmentId: string }
-  | { type: "edit-member-assignment"; assignmentId: string }
-  | { type: "remove-member"; assignmentId: string }
+  | {
+      type: "manage-department";
+      departmentId?: string | null;
+      section?: ManageDepartmentSection;
+      assignmentId?: string;
+      leadershipAssignmentId?: string;
+    }
   | { type: "create-action-item"; departmentId: string }
   | { type: "edit-action-item"; departmentId: string; itemId: string }
   | { type: "create-activity"; departmentId: string }
   | { type: "request-funds"; departmentId: string };
+
+export type ManageDepartmentSection = "details" | "leadership" | "members";
 
 export type DepartmentViewModel = {
   id: string;
@@ -258,6 +263,8 @@ export type DepartmentsWorkspaceData = {
       label: string;
       member_code: string | null;
       membership_status: string | null;
+      email: string | null;
+      phone: string | null;
     }>;
   };
   capabilities: DepartmentWorkspaceCapabilities;

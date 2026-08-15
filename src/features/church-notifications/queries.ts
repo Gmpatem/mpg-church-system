@@ -19,6 +19,7 @@ export async function getChurchNotifications(churchId: string) {
       .select("id, title, message, href, event_type, entity_type, entity_id, is_read, read_at, created_at")
       .eq("church_id", churchId)
       .eq("target_user_id", user.id)
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
       .order("created_at", { ascending: false })
       .limit(12);
 

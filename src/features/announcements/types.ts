@@ -44,6 +44,8 @@ export interface AnnouncementWorkspaceItem {
   approval_status?: string | null;
   approval_stage?: string | null;
   approval_request_id?: string | null;
+  acknowledgement_count: number;
+  acknowledgement_recipient_count: number;
 }
 
 export interface CreateChurchAnnouncementInput {

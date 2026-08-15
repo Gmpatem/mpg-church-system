@@ -19,7 +19,11 @@ function isMissingColumnError(error: any, column: string) {
 function isDuplicateKeyError(error: any) {
   const code = String(error?.code || "").toLowerCase();
   const message = String(error?.message || "").toLowerCase();
-  return code === "23505" || message.includes("duplicate key");
+  return (
+    code === "23505" ||
+    message.includes("duplicate key") ||
+    (message.includes("fund") && message.includes("already exists"))
+  );
 }
 
 function normalizeFundCodeSegment(value: string) {
@@ -94,6 +98,28 @@ export async function ensureDepartmentFinanceSetup(params: {
       })
       .eq("church_id", churchId)
       .eq("id", existingByDepartment.data.id);
+
+    if (updateExistingError && isDuplicateKeyError(updateExistingError)) {
+      const { error: retryWithoutCodeError } = await supabase
+        .from("treasury_funds")
+        .update({
+          name: fundName,
+          fund_type: "department",
+          description: fundDescription,
+          is_active: department.is_active,
+        })
+        .eq("church_id", churchId)
+        .eq("id", existingByDepartment.data.id);
+
+      if (!retryWithoutCodeError) return { ok: true } as const;
+      return {
+        ok: false,
+        error: normalizeSupabaseErrorMessage(
+          retryWithoutCodeError,
+          "Failed to synchronize existing department fund."
+        ),
+      } as const;
+    }
 
     if (updateExistingError) {
       return {

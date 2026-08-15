@@ -4,6 +4,7 @@ import {
   CalendarPlus,
   FileText,
   Plus,
+  Settings2,
   Upload,
   UserPlus,
   WalletCards,
@@ -90,20 +91,10 @@ export function DepartmentsWorkspaceHeader({
   const selectedDepartmentId = selectedBundle?.department.id ?? null;
   const budgetPermissions = selectedBundle?.budget?.permissions ?? null;
 
-  let action = (
-    <Button
-      type="button"
-      className="h-11 gap-2 rounded-lg font-semibold"
-      disabled={!capabilities.canManageDepartments}
-      onClick={() => onDialogChange({ type: "create-department" })}
-    >
-      <Plus data-icon="inline-start" aria-hidden="true" />
-      Add Department
-    </Button>
-  );
+  let contextualAction = null;
 
   if (activeTab === "action-plan") {
-    action = selectedDepartmentId && capabilities.canMutateActionPlan ? (
+    contextualAction = selectedDepartmentId && capabilities.canMutateActionPlan ? (
       <Button
         type="button"
         className="h-10 gap-2 rounded-lg font-semibold"
@@ -122,7 +113,7 @@ export function DepartmentsWorkspaceHeader({
   }
 
   if (activeTab === "activities") {
-    action = selectedDepartmentId && capabilities.canManageActivities ? (
+    contextualAction = selectedDepartmentId && capabilities.canManageActivities ? (
       <Button
         type="button"
         className="h-10 gap-2 rounded-lg font-semibold"
@@ -140,11 +131,17 @@ export function DepartmentsWorkspaceHeader({
   }
 
   if (activeTab === "people") {
-    action = selectedDepartmentId && capabilities.canManageAssignments ? (
+    contextualAction = selectedDepartmentId && capabilities.canManageAssignments ? (
       <Button
         type="button"
         className="h-10 gap-2 rounded-lg font-semibold"
-        onClick={() => onDialogChange({ type: "add-member", departmentId: selectedDepartmentId })}
+        onClick={() =>
+          onDialogChange({
+            type: "manage-department",
+            departmentId: selectedDepartmentId,
+            section: "members",
+          })
+        }
       >
         <UserPlus data-icon="inline-start" aria-hidden="true" />
         Add Person
@@ -158,7 +155,7 @@ export function DepartmentsWorkspaceHeader({
   }
 
   if (activeTab === "budget") {
-    action =
+    contextualAction =
       selectedDepartmentId && budgetPermissions?.canSubmitRequests ? (
         <Button
           type="button"
@@ -178,7 +175,7 @@ export function DepartmentsWorkspaceHeader({
   }
 
   if (activeTab === "documents") {
-    action = (
+    contextualAction = (
       <DisabledAction
         icon={Upload}
         label="Upload Document"
@@ -194,7 +191,34 @@ export function DepartmentsWorkspaceHeader({
         <p className="mt-1 text-sm text-muted-foreground">{copy.description}</p>
       </div>
 
-      <div className="flex shrink-0 items-center gap-2">{action}</div>
+      <div className="flex shrink-0 flex-wrap items-center gap-2 md:justify-end">
+        {contextualAction}
+        <Button
+          type="button"
+          className="h-11 gap-2 rounded-lg font-semibold"
+          disabled={!selectedDepartmentId || (!capabilities.canManageDepartments && !capabilities.canManageAssignments)}
+          onClick={() =>
+            onDialogChange({
+              type: "manage-department",
+              departmentId: selectedDepartmentId,
+              section: "details",
+            })
+          }
+        >
+          <Settings2 data-icon="inline-start" aria-hidden="true" />
+          Manage Department
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="h-11 gap-2 rounded-lg bg-background font-semibold"
+          disabled={!capabilities.canManageDepartments}
+          onClick={() => onDialogChange({ type: "create-department" })}
+        >
+          <Plus data-icon="inline-start" aria-hidden="true" />
+          Add Department
+        </Button>
+      </div>
     </header>
   );
 }

@@ -88,7 +88,6 @@ export function MemberPortalHomeModule({
           </div>
           <MemberPortalNotificationBell
             unreadCount={unreadNotificationCount}
-            href="#church-updates"
           />
         </div>
       </header>
@@ -217,27 +216,6 @@ export function MemberPortalHomeModule({
         </Link>
       </div>
 
-      <section id="church-updates" className="scroll-mt-24 flex flex-col gap-3">
-        <MemberPortalSectionHeader title="Church Updates" />
-        <MemberPortalCard className="divide-y divide-amber-50 p-0">
-          {data.notifications.slice(0, 5).map((item) => {
-            const content = (
-              <div className="px-4 py-3">
-                <p className="text-sm font-medium text-slate-900">{item.title}</p>
-                <p className="mt-1 text-sm leading-5 text-slate-600">{item.description}</p>
-              </div>
-            );
-
-            return item.href ? (
-              <Link key={item.id} href={item.href} className="block hover:bg-amber-50">
-                {content}
-              </Link>
-            ) : (
-              <div key={item.id}>{content}</div>
-            );
-          })}
-        </MemberPortalCard>
-      </section>
     </div>
   );
 }

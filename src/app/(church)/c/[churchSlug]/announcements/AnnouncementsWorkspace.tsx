@@ -451,7 +451,9 @@ function DetailRail({
             <div className="flex justify-between gap-3">
               <dt className="text-muted-foreground">Acknowledgement</dt>
               <dd className="text-right font-medium text-foreground">
-                {selectedItem.requires_acknowledgement ? "Requested" : "Not requested"}
+                {selectedItem.requires_acknowledgement
+                  ? `${selectedItem.acknowledgement_count} of ${selectedItem.acknowledgement_recipient_count} received`
+                  : "Not requested"}
               </dd>
             </div>
           </dl>

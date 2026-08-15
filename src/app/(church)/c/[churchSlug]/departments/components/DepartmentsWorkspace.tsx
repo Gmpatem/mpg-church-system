@@ -496,6 +496,7 @@ export function DepartmentsWorkspace({
         bundle={selectedBundle}
         activeDialog={activeDialog}
         onDialogChange={setActiveDialog}
+        onDepartmentSelect={selectDepartment}
       />
     </ChurchPageFrame>
   );

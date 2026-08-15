@@ -278,16 +278,37 @@ export async function getMemberPortalFoundation(
   const ctx = await requireMemberPortalAccess(churchSlug);
   const identity = await getCurrentLinkedMemberInternal(churchSlug);
   const supabase = await createClient();
-  const { count: unreadNotificationCount, error: notificationError } = await supabase
+  const nowIso = new Date().toISOString();
+  const { data: notificationRows, error: notificationError } = await supabase
     .from("church_notifications")
-    .select("id", { count: "exact", head: true })
+    .select(
+      "id, title, message, event_type, entity_type, entity_id, is_read, read_at, requires_acknowledgement, acknowledged_at, expires_at, created_at"
+    )
     .eq("church_id", ctx.churchId)
     .eq("target_user_id", ctx.userId)
-    .eq("is_read", false);
+    .or(`expires_at.is.null,expires_at.gt.${nowIso}`)
+    .order("created_at", { ascending: false })
+    .limit(50);
 
   if (notificationError) {
     throw new Error(notificationError.message);
   }
+
+  const notifications = (notificationRows ?? []).map((row) => ({
+    id: row.id,
+    title: row.title,
+    message: row.message,
+    eventType: row.event_type,
+    entityType: row.entity_type,
+    entityId: row.entity_id,
+    isRead: row.is_read,
+    readAt: row.read_at,
+    requiresAcknowledgement: row.requires_acknowledgement ?? false,
+    acknowledgedAt: row.acknowledged_at,
+    expiresAt: row.expires_at,
+    createdAt: row.created_at,
+  }));
+  const unreadNotificationCount = notifications.filter((item) => !item.isRead).length;
 
   if (!identity) {
     return {
@@ -297,7 +318,8 @@ export async function getMemberPortalFoundation(
       profile: mapProfile(ctx.profile ?? null),
       linkStatus: "unlinked",
       identity: null,
-      unreadNotificationCount: unreadNotificationCount ?? 0,
+      unreadNotificationCount,
+      notifications,
       requiresPasswordChange: (ctx.profile as any)?.must_change_password ?? false,
     };
   }
@@ -311,7 +333,8 @@ export async function getMemberPortalFoundation(
     profile: mapProfile(ctx.profile ?? null),
     linkStatus: "linked",
     identity: cleanIdentity,
-    unreadNotificationCount: unreadNotificationCount ?? 0,
+    unreadNotificationCount,
+    notifications,
     requiresPasswordChange: (ctx.profile as any)?.must_change_password ?? false,
   };
 }

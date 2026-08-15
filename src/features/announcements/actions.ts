@@ -216,8 +216,20 @@ async function archiveChurchAnnouncementActionImpl(
     return { ok: false, error: error.message };
   }
 
+  const { error: notificationError } = await supabase
+    .from("church_notifications")
+    .update({ expires_at: new Date().toISOString() })
+    .eq("church_id", ctx.churchId)
+    .eq("entity_type", "church_announcement")
+    .eq("entity_id", announcementId);
+
+  if (notificationError) {
+    return { ok: false, error: notificationError.message };
+  }
+
   revalidatePath(`/c/${churchSlug}/announcements`);
   revalidatePath(`/c/${churchSlug}/dashboard`);
+  revalidatePath(`/my/${churchSlug}`);
 
   return { ok: true, message: "Announcement archived." };
 }
